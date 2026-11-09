@@ -8514,7 +8514,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 function srvPump() {
   if (!SRV_Q.length) return;
   var isRead = SRV_READS.test(SRV_Q[0].name);
@@ -41530,6 +41530,93 @@ html[data-bizkind="brand"] #tabbar button[data-tab="invoice"],html[data-bizkind=
       }
       D.busy = 'ap' + did; draw();
       srv('erpBrandDeskDraftDecide', [args2], function (r) { D.busy = ''; D.data = r; toast(what === 'approve' ? 'Approved - queued for ' + ((r.queued || []).length) + ' account(s).' : 'Rejected.'); draw(); }, function (e3) { D.busy = ''; toast(msg(e3), true, 9000); draw(); });
+    }
+  });
+})();
+</script>
+<!-- brand-11 (10 Nov 2026): Brand desk > Listen. What Bangladeshi K-beauty buyers and sellers ask under other creators'
+     YouTube videos (official API, read daily ~04:00 KST) and comments he pastes from anywhere. AI sorts each one (question,
+     problem, price, authenticity, wholesale interest); leads go to a business's Leads with one tap; "Make ideas" turns the most
+     asked questions into ideas for Write drafts. Read-only: nothing is posted or sent to anyone. -->
+<style>
+.bd11-c{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--fd-border,#eef)}
+.bd11-c .c{flex:1;min-width:0;overflow-wrap:anywhere}
+.bd11-c .t{white-space:pre-wrap;font-size:13px;color:var(--fd-text-2,#444)}
+.bd-tag.lead{background:#e6f8ec;color:#15803d}
+</style>
+<script>
+(function () {
+  var L = { on: false, data: null, busy: '', f: 'all', poll: 0 };
+  var WORD = { question: 'question', problem: 'problem', price: 'price', authenticity: 'is it real?', wholesale_interest: 'wholesale', complaint: 'complaint', other: 'other' };
+  function msg(e) { return esc((e && e.message) || String(e)); }
+  function load() { if (L.busy === 'load') return; L.busy = 'load'; srv('erpBrandDeskListen', [], function (r) { L.busy = ''; L.data = r; draw(); watch(); }, function (e) { L.busy = ''; L.data = { error: (e && e.message) || String(e) }; draw(); }); }
+  function watch() { var jobs = (L.data && L.data.jobs) || {}; var busy = Object.keys(jobs).some(function (k) { return jobs[k].state === 'reading'; }); clearTimeout(L.poll); if (busy) L.poll = setTimeout(function () { L.data = null; load(); }, 15000); }
+  function lastJob() { var jobs = (L.data && L.data.jobs) || {}, ks = Object.keys(jobs).sort(); if (!ks.length) return ''; var j = jobs[ks[ks.length - 1]];
+    return '<div class="bd-meta">' + (j.state === 'reading' ? '<span class="wd-spin"></span>Reading and sorting comments…' : j.state === 'done' ? 'Last run: ' + (j.added || 0) + ' new, ' + (j.labelled || 0) + ' sorted' : 'Could not read: ' + esc(j.error || '')) + '</div>'; }
+  function html() {
+    var d = L.data;
+    if (!d) { load(); return '<div class="loading">Reading what people ask…</div>'; }
+    if (d.error) return '<div class="note"><div class="ico">!</div><div>' + esc(d.error) + '</div></div>';
+    var list = (d.comments || []).filter(function (c) { return L.f === 'all' || (L.f === 'leads' ? c.lead_kind && c.lead_kind !== 'none' : c.intent === L.f); });
+    var biz = d.businesses || [], opts = biz.map(function (b) { return '<option value="' + esc(b.id) + '">' + esc(b.name) + '</option>'; }).join('');
+    var nLead = (d.comments || []).filter(function (c) { return c.lead_kind && c.lead_kind !== 'none'; }).length;
+    var h = '<section><div class="card"><h3 style="margin:0 0 4px">Listen</h3><div class="bd-meta">What Bangladeshi K-beauty buyers and sellers ask under other creators\' YouTube videos (read every morning), plus comments you paste. Read-only: nothing is posted or sent.</div>' +
+      '<div class="ap-row" style="gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn small" type="button" data-bd11="pull"' + (L.busy ? ' disabled' : '') + '>Read YouTube now</button><button class="btn small ghost" type="button" data-bd11="ideas"' + (L.busy ? ' disabled' : '') + '>' + (L.busy === 'ideas' ? '<span class="wd-spin"></span>' : '') + 'Make ideas from the questions</button></div>' + lastJob() +
+      '<details style="margin-top:8px"><summary class="bd-meta" style="cursor:pointer">Paste comments from a Facebook or LinkedIn post</summary><textarea class="i" id="bd11_paste" rows="5" data-noi18n="1" placeholder="Copy the comments under a post and paste them here - names and dates can stay, the AI separates them."></textarea>' +
+      '<input class="i" id="bd11_src" data-noi18n="1" placeholder="Link of the post (optional)" style="margin-top:6px"><div class="ap-row" style="margin-top:6px"><button class="btn small" type="button" data-bd11="paste"' + (L.busy ? ' disabled' : '') + '>Sort these comments</button></div></details></div></section>';
+    h += '<section><div class="bd-chips">' + [['all', 'All'], ['leads', 'Leads (' + nLead + ')'], ['question', 'Questions'], ['problem', 'Problems'], ['price', 'Price'], ['authenticity', 'Is it real?'], ['wholesale_interest', 'Wholesale'], ['complaint', 'Complaints']].map(function (x) {
+      return '<button type="button" class="bd-chip' + (L.f === x[0] ? ' on' : '') + '" data-bd11="f" data-id="' + x[0] + '">' + esc(x[1]) + '</button>'; }).join('') + '</div>';
+    h += '<div class="card">' + (list.length ? list.slice(0, 60).map(function (c) {
+      var lead = c.lead_kind && c.lead_kind !== 'none';
+      return '<div class="bd11-c"><div class="c"><div><span class="bd-tag">' + esc(WORD[c.intent] || c.intent || '') + '</span>' + (lead ? ' <span class="bd-tag lead">' + esc(String(c.lead_kind).replace('_', ' ')) + '</span>' : '') + ' <b data-noi18n="1">' + esc(c.author_name || '') + '</b> <span class="bd-meta" data-noi18n="1">' + esc(c.channel_title || (c.platform === 'pasted' ? 'pasted' : '')) + (c.likes ? ' · ' + c.likes + ' likes' : '') + '</span></div>' +
+        '<div data-noi18n="1">' + esc(c.summary || '') + '</div><div class="t" data-noi18n="1">' + esc(String(c.text || '').slice(0, 400)) + '</div></div>' +
+        (lead && biz.length ? (c.handed_at ? '<span class="bd-meta">In Leads</span>' : '<div class="ap-row" style="gap:6px;flex-wrap:wrap"><select class="i" id="bd11_to_' + c.id + '" style="width:auto">' + opts + '</select><button class="btn small" type="button" data-bd11="lead" data-id="' + c.id + '">To Leads</button></div>') : '') + '</div>';
+    }).join('') : '<div class="bd-meta">Nothing here yet.</div>') + '</div></section>';
+    var cl = d.clusters || [];
+    if (cl.length) h += '<section><div class="card"><h3 style="margin:0 0 4px">Most asked (made into ideas)</h3>' + cl.map(function (k) { return '<div class="bd-item"><span class="bd-tag">' + k.mention_count + '</span><div class="c"><b data-noi18n="1">' + esc(k.label) + '</b><div class="bd-meta" data-noi18n="1">' + esc(k.summary || '') + '</div></div></div>'; }).join('') + '<div class="bd-meta" style="margin-top:6px">Each one is in the idea bank under Plan - press Write drafts there.</div></div></section>';
+    var ch = d.channels || [];
+    h += '<section><details><summary class="bd-meta" style="cursor:pointer">Channels we listen to (' + ch.filter(function (c) { return c.active; }).length + ')</summary><div class="card">' + ch.map(function (c) {
+      return '<div class="bd-item"><div class="c"><b data-noi18n="1">' + esc(c.title) + '</b> <span class="bd-meta">' + (c.subscribers ? Number(c.subscribers).toLocaleString() + ' subscribers' : '') + (c.is_suggestion ? ' · picked by the AI' : '') + '</span></div>' +
+        '<button class="btn small ghost" type="button" data-bd11="ch" data-id="' + esc(c.id) + '" data-on="' + (c.active ? '0' : '1') + '">' + (c.active ? 'Stop listening' : 'Listen again') + '</button></div>';
+    }).join('') + '</div></details></section>';
+    return h;
+  }
+  function draw() { var b = el('bd11_box'); if (b) b.innerHTML = html(); }
+  function inject() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'branddesk') return;
+    var v = el('view'); if (!v) return; var tabs = v.querySelector('.bd-tabs'); if (!tabs) return;
+    if (!tabs.querySelector('[data-bd11="tab"]')) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'bd-chip' + (L.on ? ' on' : ''); b.setAttribute('data-bd11', 'tab'); b.textContent = 'Listen';
+      var rules = tabs.querySelector('[data-bd7="tab"]'); if (rules) tabs.insertBefore(b, rules); else tabs.appendChild(b);
+    }
+    if (L.on && !el('bd11_box')) {
+      [].forEach.call(tabs.querySelectorAll('.bd-chip'), function (x) { if (x.getAttribute('data-bd11') !== 'tab') x.classList.remove('on'); });
+      var n = tabs.nextSibling; while (n) { var nx = n.nextSibling; n.parentNode.removeChild(n); n = nx; }
+      tabs.insertAdjacentHTML('afterend', '<div id="bd11_box">' + html() + '</div>');
+    }
+  }
+  var rp = repaint;
+  repaint = function () { var r = rp.apply(this, arguments); inject(); return r; };
+  try { new MutationObserver(function () { inject(); }).observe(el('view') || document.body, { childList: true }); } catch (e) {}
+  function act(name, args, label, done) {
+    L.busy = label; draw();
+    srv(name, [args], function (r) { L.busy = ''; L.data = r; if (done) done(r); draw(); watch(); }, function (e) { L.busy = ''; toast(msg(e), true, 9000); draw(); });
+  }
+  document.addEventListener('click', function (e) {
+    if (typeof VIEW === 'undefined' || VIEW !== 'branddesk') return;
+    var other = e.target.closest && e.target.closest('[data-bd="tab"],[data-bd7="tab"]');
+    if (other && L.on) { L.on = false; if (typeof repaint === 'function') setTimeout(repaint, 0); return; }
+    var t = e.target.closest && e.target.closest('[data-bd11]'); if (!t) return;
+    var what = t.getAttribute('data-bd11'), id = t.getAttribute('data-id');
+    if (what === 'tab') { L.on = true; if (typeof repaint === 'function') repaint(); }
+    else if (what === 'f') { L.f = id; draw(); }
+    else if (what === 'pull') act('erpBrandDeskListenPull', {}, 'pull', function () { toast('Reading the channels - it takes a few minutes.'); });
+    else if (what === 'ideas') act('erpBrandDeskListenIdeas', {}, 'ideas', function (r) { toast((r.made || 0) + ' new idea(s) in the idea bank.'); });
+    else if (what === 'paste') { var tx = el('bd11_paste'), sr = el('bd11_src'); act('erpBrandDeskListenPaste', { text: tx ? tx.value : '', source: sr ? sr.value.trim() : '' }, 'paste', function () { toast('Sorting the comments - a minute.'); }); }
+    else if (what === 'ch') act('erpBrandDeskListenChannel', { id: id, active: t.getAttribute('data-on') === '1' }, 'ch');
+    else if (what === 'lead') {
+      var sel = el('bd11_to_' + id); L.busy = 'lead'; draw();
+      srv('erpBrandDeskListenToLead', [{ id: Number(id), business: sel ? sel.value : '' }], function (r) { L.busy = ''; toast(r.added ? 'Added to that business\'s Leads.' : 'Already in that business\'s Leads.'); L.data = null; load(); }, function (e2) { L.busy = ''; toast(msg(e2), true, 9000); draw(); });
     }
   });
 })();

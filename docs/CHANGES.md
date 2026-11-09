@@ -4110,3 +4110,16 @@ The fourth critique used the ERP with real clicks and taps (desktop + phone) and
   payment (paid 2,000 / due 2,700 read back), receive due lands in the Cash statement, no foreign due box, Back works.
 - Known, not from this work: factory_test "upload address expired is asked for once more" fails today on this and on the
   final-1 code (date-dependent); ads_test 4 (old); golive needs IMPORT_DIR.
+
+## brand-11 (10 Nov 2026) - Brand desk: Listen (other creators' comments + pasted comments -> questions, leads, ideas)
+- New tab "Listen". Every morning (~04:00 KST) the Mac bridge reads the newest videos of ~6 Bangladeshi skincare / K-beauty
+  YouTube channels through the official YouTube Data API (own key, read-only, public comments), and the AI (gpt-5.6-luna)
+  sorts each comment: question, problem, price, "is it real?", wholesale interest, complaint; and whether the person is a
+  wholesale buyer, retail buyer or supplier. Comments he pastes from a Facebook or LinkedIn post are split and sorted the same way.
+- "To Leads" hands a commenter to one of his businesses (Leads, ref listen:<id>, with the comment and where it came from).
+- "Make ideas from the questions" groups the most asked questions (30 days) into topics and adds one idea per topic to the
+  idea bank, so Write drafts answers what people really ask.
+- Channels list: the AI picked them; "Stop listening" per channel (4 unrelated big channels were switched off on day one).
+- First run: 702 comments, 167 questions, 27 problems, 21 price, 8 idea topics (biggest: routines/safety 32, hair removal 31, price 20).
+- Calls (owner only): erpBrandDeskListen (read), ListenPull, ListenPaste, ListenIdeas, ListenChannel, ListenToLead. Tests green.
+- NOT done: screens not clicked in a browser; own-post comments (needs connected accounts) come with Stage 2b.

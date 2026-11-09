@@ -13,6 +13,7 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (url.endsWith('/today')) return { body: { pacer: { lines: { linkedin: { waiting: 1 } } }, posts: { posts: [] }, networks: [{ id: 'n1', platform: 'linkedin', name: 'Rahman' }] } };
   if (url.endsWith('/post')) return { body: { queued: ['a', 'b'] } };
   // brand-7: the claim check and the settings in the brand core database
+  if (/\/listen(\/(pull|paste|ideas|channel|handed))?$/.test(url)) return { body: { comments: [{ id: 9, platform: 'youtube_ext', author_name: 'Test Shop BD', text: 'Wholesale price for 50 pcs?', summary: 'Asks wholesale price', intent: 'wholesale_interest', lead_kind: 'wholesale_buyer', channel_title: 'Some Channel', source_ref: 'abc123' }], counts: [], channels: [], clusters: [], jobs: {}, made: 2 } };
   if (url.endsWith('/cards/make')) return { body: { job: 'c1', draft: 5, state: 'making' } };
   if (/\/cards\/\d+$/.test(url)) return { body: { draft: 5, pictures: [{ name: 'slide-01.png', src: 'data:image/png;base64,AAAA' }], hits: [], job: { state: 'done' } } };
   if (url.endsWith('/drafts') || url.endsWith('/drafts/make') || url.endsWith('/drafts/decide')) return { body: { waiting: [{ id: 5, platform: 'linkedin', lang: 'en', body: 'Draft', legal_flags: [] }], ideas: [{ id: 3, title_working: 'How to tell a genuine product' }], jobs: {}, networks: [], queued: url.endsWith('/decide') ? ['q1'] : undefined } };
@@ -181,6 +182,24 @@ check('the person becomes a supplier lead of that business', r.ok && r.result.ad
 r = await owner('erpBrandDeskToLeads', [{ id: 'p1', business: tgt.id }]);
 check('handing the same person twice adds nothing', r.ok && r.result.added === false, r);
 
+// 4a3. brand-11: Listen
+r = await owner('erpBrandDeskListen', []);
+check('listen shows the sorted comments and his businesses', r.ok && r.result.comments[0].id === 9 && Array.isArray(r.result.businesses), r);
+r = await owner('erpBrandDeskListenPaste', [{ text: 'short' }]);
+check('an empty paste is refused', !r.ok, r);
+r = await owner('erpBrandDeskListenPaste', [{ text: 'Shop A: price for 20 pcs?\nShop B: is it original?', source: 'https://facebook.com/x' }]);
+check('pasted comments go to the bridge', r.ok && seen.filter((x) => x.url.endsWith('/listen/paste')).pop().body.source.includes('facebook'), r);
+r = await owner('erpBrandDeskListenChannel', [{ id: 'not-a-channel', active: false }]);
+check('a strange channel id is refused', !r.ok, r);
+r = await owner('erpBrandDeskListenToLead', [{ id: 9, business: B }]);
+check('a brand desk business cannot receive leads', !r.ok, r);
+r = await owner('erpBrandDeskListenToLead', [{ id: 9, business: tgt.id }]);
+const ld = r.ok ? await sql`select * from inbox_leads where business_id = ${tgt.id} and source_ref = 'listen:9'` : [];
+check('a commenter becomes a lead of the other business, once', r.ok && ld.length === 1, { r, ld });
+r = await owner('erpBrandDeskListenToLead', [{ id: 9, business: tgt.id }]);
+check('handing the same commenter again does not double it', r.ok && r.result.added === false, r);
+r = await mgr('erpBrandDeskListen', []);
+check('a manager cannot listen', !r.ok, r);
 // 4e. videos (brand-5)
 r = await owner('erpBrandDeskVideos', [{}]);
 check('the newest videos come from the PC', r.ok && r.result.videos[0].id === 'v1' && r.result.q === '', r);

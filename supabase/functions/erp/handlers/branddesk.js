@@ -181,6 +181,48 @@ export async function erpBrandDeskCards(ctx, payload) {
   return bridge(ctx, '/cards/' + draftId(payload && payload.draft_id));
 }
 
+// brand-11: Listen - read-only; nothing is written to anyone, no account of his is used (official YouTube API + paste)
+export async function erpBrandDeskListen(ctx) {
+  await gate(ctx);
+  return { ...(await bridge(ctx, '/listen')), businesses: await leadTargets(ctx) };
+}
+export async function erpBrandDeskListenPull(ctx) {
+  await gate(ctx);
+  return { ...(await bridge(ctx, '/listen/pull', {})), businesses: await leadTargets(ctx) };
+}
+export async function erpBrandDeskListenPaste(ctx, payload) {
+  await gate(ctx);
+  const text = str(payload && payload.text), source = str(payload && payload.source);
+  if (text.length < 10) throw new Error('Paste the comments first.');
+  if (text.length > 20000) throw new Error('That is too much at once - paste up to about 20,000 letters.');
+  return { ...(await bridge(ctx, '/listen/paste', { text, source: source.slice(0, 500) })), businesses: await leadTargets(ctx) };
+}
+export async function erpBrandDeskListenIdeas(ctx) {
+  await gate(ctx);
+  return { ...(await bridge(ctx, '/listen/ideas', {})), businesses: await leadTargets(ctx) };
+}
+export async function erpBrandDeskListenChannel(ctx, payload) {
+  await gate(ctx);
+  const id = str(payload && payload.id);
+  if (!/^UC[A-Za-z0-9_-]{10,40}$/.test(id)) throw new Error('Pick a channel.');
+  return { ...(await bridge(ctx, '/listen/channel', { id, active: !!(payload && payload.active) })), businesses: await leadTargets(ctx) };
+}
+export async function erpBrandDeskListenToLead(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, id = parseInt(p.id, 10), target = str(p.business);
+  if (!(id > 0)) throw new Error('Pick a comment.');
+  if (!(await leadTargets(ctx)).some((b) => b.id === target)) throw new Error('Pick one of your businesses.');
+  const c = ((await bridge(ctx, '/listen')).comments || []).find((x) => Number(x.id) === id);
+  if (!c) throw new Error('That comment is not on the list any more.');
+  const where = c.platform === 'youtube_ext' ? 'YouTube comment under ' + str(c.channel_title) + (c.source_ref ? ' (https://youtu.be/' + str(c.source_ref) + ')' : '') : 'Pasted comment' + (c.source_ref ? ' from ' + str(c.source_ref) : '');
+  const r = await addLead({ ...ctx, biz: target, memo: {} }, {
+    kind: c.lead_kind === 'supplier' ? 'supplier' : 'customer', name: str(c.author_name) || 'Commenter', email: '', phone: '',
+    want: str(c.summary).slice(0, 300), ref: 'listen:' + id, note: 'From the brand desk (Listen) - ' + where + ': "' + str(c.text).slice(0, 400) + '"',
+  });
+  try { await bridge(ctx, '/listen/handed', { id }); } catch (_) { /* the mark is only a reminder */ }
+  return { added: r.added, business: target };
+}
+
 export const PILLARS = ['story', 'lesson', 'behind the scenes', 'market', 'announcement'];
 export const AUDIENCES = ['customer', 'supplier', 'brand'];
 const num = (v) => { const n = parseInt(v, 10); if (!(n > 0)) throw new Error('Pick a card.'); return n; };
@@ -299,4 +341,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
