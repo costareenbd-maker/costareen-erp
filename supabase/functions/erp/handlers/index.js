@@ -126,7 +126,7 @@ const core = {
   erpSetLook: shell.erpSetLook,
   erpSetFdPrefs: shell.erpSetFdPrefs,
   erpSetLang: shell.erpSetLang,
-  erpProfile: shell.erpProfile, erpProfileSave: shell.erpProfileSave, erpBg: shell.erpBg, erpBgSave: shell.erpBgSave, erpBgOff: shell.erpBgOff, erpGame: shell.erpGame, erpGameSet: shell.erpGameSet, erpFighters: shell.erpFighters, erpFightersSet: shell.erpFightersSet, erpFighterMine: shell.erpFighterMine, erpFighterRemove: shell.erpFighterRemove,
+  erpProfile: shell.erpProfile, erpProfileSave: shell.erpProfileSave, erpBg: shell.erpBg, erpBgSave: shell.erpBgSave, erpBgOff: shell.erpBgOff, erpGame: shell.erpGame, erpGameSet: shell.erpGameSet, erpGameMine: shell.erpGameMine, erpFighters: shell.erpFighters, erpFightersSet: shell.erpFightersSet, erpFighterMine: shell.erpFighterMine, erpFighterRemove: shell.erpFighterRemove,
   erpDocLang: shell.erpDocLang,
   erpBnWords: (ctx) => shell.erpBnWords(ctx, {}),
   erpBnWordsSet: (ctx, p) => shell.erpBnWords(ctx, { set: (p && p.set) || {} }),

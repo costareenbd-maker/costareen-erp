@@ -1,7 +1,10 @@
 // Game under New invoice: the owner decides who sees it (default: only the owner).
 import { owner, mgr, sales, check, done } from './harness.mjs';
 let r = await owner('erpGame', []);
-check('default: the owner sees it', r.ok && r.result.who === 'owner' && r.result.on, r);
+// crit2-ui (10 Nov 2026): the owner MAY turn games on, but they are off until he does it for himself
+check('default: the owner may, but it is off', r.ok && r.result.who === 'owner' && r.result.allowed && !r.result.on, r);
+r = await owner('erpGameMine', [{ on: true }]);
+check('...on once he turns it on for himself', r.ok && r.result.on, r);
 r = await sales('erpGame', []);
 check('default: staff do not', r.ok && !r.result.on, r);
 r = await mgr('erpGameSet', [{ who: 'all' }]);
@@ -9,7 +12,9 @@ check('only the owner changes it', !r.ok, r);
 r = await owner('erpGameSet', [{ who: 'all' }]);
 check('everyone', r.ok && r.result.who === 'all', r);
 r = await sales('erpGame', []);
-check('...staff see it now', r.ok && r.result.on, r);
+check('...staff may now, still off until they choose', r.ok && r.result.allowed && !r.result.on, r);
+r = await sales('erpGameMine', [{ on: true }]);
+check('...staff see it once they turn it on', r.ok && r.result.on, r);
 r = await owner('erpGameSet', [{ who: 'none' }]);
 r = await owner('erpGame', []);
 check('nobody, not even the owner', r.ok && !r.result.on, r);

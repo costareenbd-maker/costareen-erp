@@ -158,7 +158,9 @@ and logo lead in the top bar and menu; the palette below is the product's, not o
 
 **Key Characteristics:**
 - Pale grey canvas, white borderless cards, 20px corners.
-- Lime marks "you are here / this is on" and nothing else.
+- Lime marks "you are here / this is on" and nothing else - and only ONE lime row per screen (crit2-ui, 10 Nov 2026):
+  the screen's primary selection. Every other segment / chip row shows its selected item in the neutral selected style
+  (Deep Shelf grey, Ink text, bold, a hairline ring).
 - Dark (Ink) primary button in light mode; near-white primary button with Ink text in dark mode.
 - Pastel KPI tiles that cycle peach, lavender, mint, lemon, sky.
 - Flat tables with a muted head and hairline rows.
@@ -268,7 +270,9 @@ pill. No square corners on interactive things.
 
 ### Chips, tabs and segments
 - **Style:** pills on Shelf Grey (chips) or Card White (tabs), semibold Ink-2 text.
-- **State:** selected = Lime with Ink text. Never violet for a new selected state.
+- **State:** selected = Lime with Ink text for the screen's ONE primary selection row; any second row (view switch,
+  sub-filter, per-row segment) = neutral selected: Deep Shelf (surface-3), Ink text, 700, 1px Firm Hairline ring.
+  Never violet for a new selected state. A filter row longer than ~6 chips shows the common four + "More filters".
 
 ### Cards / Containers
 - **Corner Style:** 20px.

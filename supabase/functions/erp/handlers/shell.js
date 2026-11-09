@@ -189,12 +189,28 @@ export async function erpBgOff(ctx, payload) {
 
 // ---- game: a small print-head runner under New invoice. The owner decides who sees it.
 const GAME_WHO = ['owner', 'all', 'none'];
-/** {who: owner|all|none, on: whether I may see it}. Default: only the owner. */
+/** {who: owner|all|none (who MAY turn games on), allowed, mine (I turned them on myself), on: allowed && mine}.
+ *  crit2-ui (10 Nov 2026): off by default for every person, the owner too; nobody gets games just because the business allows them. */
+async function gameMine(ctx) {
+  try { const r = await ctx.tx.savepoint(() => ctx.tx`select games from erp_prefs where user_id = ${ctx.s.userId}`); return !!(r[0] && r[0].games); }
+  catch (_) { return false; }   // before 167
+}
 export async function erpGame(ctx) {
   const { getConfig } = await import('../lib/ext.js');
   let who = String(await getConfig(ctx, 'game_who', 'owner')) || 'owner';
   if (!GAME_WHO.includes(who)) who = 'owner';
-  return { who, on: who === 'all' || (who === 'owner' && ctx.s.role === 'owner') };
+  const allowed = who === 'all' || (who === 'owner' && ctx.s.role === 'owner');
+  const mine = await gameMine(ctx);
+  return { who, allowed, mine, on: allowed && mine };
+}
+/** Anyone: {on: true|false} - games for myself only (kept per person, every device). */
+export async function erpGameMine(ctx, payload) {
+  if (!payload || typeof payload.on !== 'boolean') throw new Error('Games on or off?');
+  const g = await erpGame(ctx);
+  if (payload.on && !g.allowed) throw new Error(g.who === 'none' ? 'Games are switched off for this business.' : 'Only the owner can turn games on in this business.');
+  await ctx.tx`insert into erp_prefs (user_id, games) values (${ctx.s.userId}, ${payload.on})
+               on conflict (user_id) do update set games = excluded.games`;
+  return erpGame(ctx);
 }
 /** Owner: {who: owner|all|none}. */
 export async function erpGameSet(ctx, payload) {

@@ -109,7 +109,7 @@ export const ERP_ALLOW = {
   erpAccessKeys: 'shareholder', erpAccessKeyNew: 'shareholder', erpAccessKeyRevoke: 'shareholder',
   // the list view (look 2); each list checks its own role as well
   erpListView: 'sales',
-  erpSetLook: 'sales', erpSetFdPrefs: 'sales', erpSetLang: 'sales', erpProfile: 'sales', erpProfileSave: 'sales', erpBg: 'sales', erpBgSave: 'manager', erpBgOff: 'sales', erpGame: 'sales', erpGameSet: 'shareholder', erpArena: 'sales', erpArenaResult: 'sales', erpArenaWorldSet: 'shareholder', erpWooConnectStart: 'shareholder', erpFighters: 'sales', erpFightersSet: 'shareholder', erpFighterMine: 'sales', erpFighterRemove: 'sales', erpDocLang: 'sales', erpBnWords: 'sales', erpBnWordsSet: 'manager',
+  erpSetLook: 'sales', erpSetFdPrefs: 'sales', erpSetLang: 'sales', erpProfile: 'sales', erpProfileSave: 'sales', erpBg: 'sales', erpBgSave: 'manager', erpBgOff: 'sales', erpGame: 'sales', erpGameSet: 'shareholder', erpGameMine: 'sales', erpArena: 'sales', erpArenaResult: 'sales', erpArenaWorldSet: 'shareholder', erpWooConnectStart: 'shareholder', erpFighters: 'sales', erpFightersSet: 'shareholder', erpFighterMine: 'sales', erpFighterRemove: 'sales', erpDocLang: 'sales', erpBnWords: 'sales', erpBnWordsSet: 'manager',
   erpFreezeSaleCosts: 'shareholder',
   // currencies (plan A5)
   erpCurrencies: 'manager', erpCurrencySave: 'manager',

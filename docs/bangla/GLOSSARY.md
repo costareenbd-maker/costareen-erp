@@ -38,6 +38,7 @@ kept with `data-noi18n`) are never checked or changed.
 | Banned bookish / wrong-sense words | error: ভারসাম্য, অবৈতনিক, ছাঁকনি, বকেয়া, প্রদত্ত, উদ্ধৃতি, পুনর্বিন্যাস, প্রচারাভিযান, ঋণাত্মক, বিক্রিত/বিক্রীত, -সমূহ, পরিচালন খরচ, মিটমাট, অনুসন্ধান, মাসিক আয় / এ মাসের আয় (the figure is sales), সংরক্ষণ (as "save"), ত্যাগ করুন | the house word from section 2 (ব্যালেন্স, বাকি, ফিল্টার, সেভ, খুঁজুন, এ মাসের বিক্রি ...) |
 | No English left inside a Bangla string | warning (error with `--strict`) | say it in Bangla; brand, product and code names stay Latin (rule 4) and are in the lint's ALLOW list |
 | No grey hint text beside a label | (not linted) | the ? help button |
+| **Digits (owner decision, 10 Nov 2026):** money (৳ amounts, money chart axes and tooltips), phone numbers, invoice / SKU / reference codes and anything a person copies or dials = **Latin** digits; counts inside prose and dates / times = **Bangla** digits | (not linted; the app enforces it: `bnKeepLatin` in trText, `bnDate` for dates) | "৳2,600 বাকি · ৩টি ইনভয়েস", "01712 345678", "INV-0042", "১৬ অক্টোবর ২০২৬, রাত ১:০২", "৪৮৫ ইউনিট" |
 
 A line that must keep a flagged word (for example a prompt quoting a word to avoid) ends with the comment
 `bangla-lint: ok`.
@@ -60,7 +61,7 @@ A line that must keep a flagged word (for example a prompt quoting a word to avo
 
    Never insert the owner's brand name ("Costareen") where the English says "ERP". The app is multi-tenant, so other shops use it too.
 5. **Digits:**
-   - Use Bangla digits ০-৯ in Bangla sentences and labels, money included: "৳১,২৫০", "১১ সংখ্যা", "৩০ দিন". TallyKhata's Bangla pages use Bangla numerals throughout ("৩০ মিনিটে", "১০ লাখের") [TK]. Android's Bangla strings write fixed numbers in Bangla digits ("১০", "৯৯৯+") [AOSP].
+   - **Superseded 10 Nov 2026 by the owner's rule in section 0:** money, phones and codes stay Latin ("৳1,250"); counts in prose and dates use Bangla digits ("১১টি", "৩০ দিন", "৬ নভেম্বর ২০২৬"). Earlier note: TallyKhata's Bangla pages use Bangla numerals throughout ("৩০ মিনিটে", "১০ লাখের") [TK]. Android's Bangla strings write fixed numbers in Bangla digits ("১০", "৯৯৯+") [AOSP].
    - Keep Latin digits inside codes, phone numbers shown in input fields, invoice and consignment numbers, and typed-format examples.
    - Group numbers the South Asian way: ১২,৩৪,৫৬৭ [MOZ].
    - Numbers that arrive through patterns ($1) are in Latin digits today. Converting them is a code job (see REVIEW.md), not a translation job.

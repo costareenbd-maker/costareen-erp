@@ -64,6 +64,7 @@ business brings its own name, logo and colours.
     of the glossary list;
   - no English left inside Bangla copy except brand / product / code names; people's own words are never translated
     (`data-noi18n`);
+  - digits (owner, 10 Nov 2026): money (৳, money charts), phones, invoice / SKU / reference codes = Latin digits; counts in prose and dates / times = Bangla digits (১৬ অক্টোবর ২০২৬, রাত ১:০২);
   - check with `python tools/bangla_lint.py` (errors: তুমি forms, banned words; warnings: English left in Bangla).
 
 ## Brand Commitments

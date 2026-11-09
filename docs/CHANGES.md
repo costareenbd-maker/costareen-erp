@@ -3949,3 +3949,22 @@ Owner answers: wrong numbers first, keep the New invoice form, fix everything + 
 - Settings: one "?" per label, Menu one sentence; greeting without emoji; AI screens one plain line each; Joint month-end
   preview + sums in the confirm; Money phone balance first, calm placement strip; English plurals everywhere ("2 parcels").
 - DESIGN.md: Hind Siliguri + mono stack + dark primary rule. No server change, no migration.
+
+## crit-2 (10 Nov 2026): fixes from the repeat critique (28/40)
+Owner answers: money and phone numbers in Latin digits, games off by default, fix everything + live. Blocks `<!-- crit2:bn -->`,
+`<!-- crit2:ui -->`, `<!-- crit2:lead -->` after `<!-- CRIT2-MERGE 2026-11-10 -->`. Snapshot .impeccable/critique/2026-11-09T10-38-38Z.
+- Bangla numerals, one rule (GLOSSARY §0, PRODUCT.md): money, phones, invoice/SKU/reference codes in Latin digits; counts in
+  prose, dates and times in Bangla digits (trText/trRich no longer turn phones and money into Bangla digits). One bn date format
+  (bnDate: "৬ নভেম্বর ২০২৬, দুপুর ১২:১৮") applied to every screen date. Dashboard Analytics/Profitability lines, chart axis
+  "4 লাখ" + tooltip, customer loyalty card, "days of cover", ledger words in Bangla; every screen subtitle in Bangla.
+- Running month: hollow dashed point + "month so far / চলতি মাস" on the revenue chart (no false cliff). Bangla type floor 13.5px.
+- One lime row per screen everywhere (others neutral). Products: Products/Product cost as page tabs, category = the lime row,
+  Items/Lots/Grouped in the table toolbar, Mine/Joint/Partner in + Filter; table head 720 -> 514 px. Sales: Invoice design moved to
+  Settings (button beside Excel), table fits 1366, phone rows customer-first. Money ledger: 4 chips + More filters.
+- Settings › Defaults: a plain form with one "Save changes (N)", inline errors, input kept. Lists under 20 rows: no table toolbar.
+- Games off by default for everyone (167_games_personal.sql: erp_prefs.games; erpGameMine per person; game_who = who may).
+- Page-head bug: after a repaint the head (title, pills, figures, Receive/Count) vanished on screens with a group crumb - fixed.
+- Crumbs no longer repeat; dark joint settle card dark; AI notices plain cards; invoice product column 208px; phone search closes
+  after a pick; revenue figure ink; consent hint behind "?"; Stock "Still coming" a real choice; one icon on empty Expenses.
+- Tests: uifinal 13, g1 15 (games default), arena, fdprefs, l1, u6, shellfinal, settings, serverfinal, access, erp_server, mgr_access,
+  powers green. Crawl 44 views x 2 sizes EN + BN: 0 errors.
