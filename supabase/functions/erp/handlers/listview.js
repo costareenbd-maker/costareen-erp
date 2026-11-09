@@ -165,7 +165,7 @@ const MODELS = {
         const lastMonth = c.daysSince === null ? '' : formatDate(new Date(ctx.now.getTime() - c.daysSince * 86400e3), 'yyyy-MM');
         const row = {
           key: c.phone || 'n:' + c.name, open: { customer: c.phone || '', name: c.name || '' },
-          name: c.name || '—', phone: c.phone, address: c.address || '', type: c.type || '—', source: c.source || '—', status: c.status || '—',
+          name: c.name || '—', phone: c.phone, otherPhones: c.otherPhones || '', address: c.address || '', type: c.type || '—', source: c.source || '—', status: c.status || '—',
           orders: c.orders, units: c.units, spent: c.spent, lastOrder: c.lastOrder || 'never bought',
           lastAgo: c.daysSince === null ? '' : c.daysSince === 0 ? 'today' : c.daysSince + ' days ago', daysSince: c.daysSince,
           lastMonth, mobile,
@@ -177,7 +177,7 @@ const MODELS = {
       }));
     },
     search: [
-      { field: 'customer', label: 'Customer', of: (r) => r.name + ' ' + r.phone },
+      { field: 'customer', label: 'Customer', of: (r) => r.name + ' ' + r.phone + (r.otherPhones ? ' ' + r.otherPhones : '') },
       { field: 'address', label: 'Address', of: (r) => r.address },
       { field: 'company', label: 'Company', of: (r) => r.company || '' },
     ],

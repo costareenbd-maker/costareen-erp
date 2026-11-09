@@ -63,7 +63,8 @@ check('receipt: unknown entry', !r.ok && r.error === 'That entry was not found.'
 r = await shareholder('erpExpenseReceipt', [{ id: EXP.id, file: { data: png, mime: 'image/png' } }]);
 check('receipt kept', r.ok && r.result.oneoff[0].receipt === true && files.list().some((k) => k.startsWith(FIX.B + '/receipts/' + EXP.id)), files.list());
 r = await shareholder('erpExpenseReceipt', [{ id: EXP.id, file: { data: png, mime: 'application/pdf' } }]);
-check('a new receipt replaces the old one', r.ok && files.list().filter((k) => k.includes('/receipts/')).length === 1 && files.list().some((k) => /\.pdf$/.test(k)), files.list());
+// final-money (10 Nov 2026): an expense keeps up to 8 receipts - a second one is added, the first is never deleted
+check('a second receipt is added beside the first (nothing deleted)', r.ok && files.list().filter((k) => k.includes('/receipts/')).length === 2 && files.list().some((k) => /receipts\/.+\.pdf$/.test(k)), files.list());
 r = await shareholder('erpExpenseReceiptUrl', [{ id: EXP.id }]);
 check('receipt link', r.ok && /^https:\/\/files\.test\/.+receipts/.test(r.result.url), r);
 r = await mgr('erpExpenseReceiptUrl', [{ id: EXP.id }]);

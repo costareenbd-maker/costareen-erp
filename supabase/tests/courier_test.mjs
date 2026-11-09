@@ -143,7 +143,7 @@ let log = (await sql`select * from courier_log where business_id = ${B} and invo
 check('COURIER_LOG row', log && log.consignment_id === '1001' && log.cod_amount === 1500 && log.invoice_total === 1500 &&
   log.booked_by === 'Mehedi' && log.note === '', log);
 r = await mgr('erpBookParcel', [{ invoiceNo: 'INV-A', expect: 1500 }]);
-check('book twice refused', !r.ok && r.error === 'Invoice INV-A already has a parcel (consignment 1001). Booking it again would send two.', r);
+check('book twice refused', !r.ok && /^Invoice INV-A already has a parcel \(consignment 1001\)\. Booking it again would send two\./.test(r.error), r);
 r = await mgr('erpParcelPreview', [{ invoiceNo: 'INV-A' }]);
 check('preview shows alreadyBooked', r.ok && r.result.alreadyBooked === '1001' && r.result.ready === false, r);
 

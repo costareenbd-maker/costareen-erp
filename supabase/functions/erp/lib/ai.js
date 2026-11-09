@@ -17,7 +17,7 @@
 // CUSTOM_AI_KEY + CUSTOM_AI_BASE.
 
 import { openJSON } from './bridge.js';
-import { getConfig, setConfig } from './ext.js';
+import { getConfig, setConfig, getSecret } from './ext.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 export const PROVIDERS = {
@@ -124,13 +124,23 @@ async function secret(ctx, name) {
   const mk = '__ai_secret_' + name;
   if (ctx.memo[mk] !== undefined) return ctx.memo[mk];
   let v = '';
+  // final-ai (10 Nov 2026): a business may hold its own key for a provider (Settings > AI models, the owner); it is used
+  // before the platform's key, so each company can pay for its own AI. Kept in business_secrets as AI_<SECRET>.
+  if (ctx.biz && ctx.sql) { try { v = str(await getSecret(ctx, 'AI_' + name)); } catch (_) { v = ''; } }
+  if (v) { ctx.memo[mk] = v; ctx.memo[mk + '_scope'] = 'business'; return v; }
   try {
     const r = (await ctl(ctx)`select value_enc from erp_provider_secrets where key = ${name}`)[0];
     if (r) { const e = str(r.value_enc); if (e.startsWith('v1.')) v = str((await openJSON(ctx.deps.bridgeKey, e)).v); else if (e.startsWith('v0.')) v = e.slice(3); }
   } catch (_) { v = ''; }
   if (!v && name === 'GEMINI_KEY') v = str(ctx.deps && ctx.deps.geminiKey);
-  ctx.memo[mk] = v;
+  ctx.memo[mk] = v; ctx.memo[mk + '_scope'] = v ? 'platform' : '';
   return v;
+}
+/** Where a provider's key comes from: 'business' (this company's own), 'platform' (the provider's), or '' (none). */
+export async function keyScope(ctx, provider) {
+  const name = PROVIDERS[provider] ? PROVIDERS[provider].secret : provider;
+  await secret(ctx, name);
+  return (ctx.memo && ctx.memo['__ai_secret_' + name + '_scope']) || '';
 }
 export async function providerKeys(ctx) {
   const out = {};

@@ -119,10 +119,25 @@ async function ledger(ctx, accs) {
                what: str(sc.label) + ' on a shipment', ref: str(sc.reference) });
   }
   for (const m of await ctx.tx`select id, account_id, at, amount, kind, pair_id, note, by, voided from money_moves where business_id = ${ctx.biz}`) {
-    if (str(m.voided)) continue;
+    // final-money (10 Nov 2026): a struck-out transfer or correction stays on the statement, crossed through with its
+    // reason (it counts for nothing) - before, it vanished and nobody could see what had been struck out
     out.push({ at: new Date(m.at), account: m.account_id, amount: num(m.amount), src: 'move', id: m.id, by: str(m.by), pair: m.pair_id,
-               what: str(m.kind) === 'transfer' ? (num(m.amount) < 0 ? 'Transfer out' : 'Transfer in') : 'Correction after counting', ref: str(m.note) });
+               what: str(m.kind) === 'transfer' ? (num(m.amount) < 0 ? 'Transfer out' : 'Transfer in') : 'Correction after counting', ref: str(m.note),
+               struck: str(m.voided) || '' });
   }
+  // final-money: the trail of lines moved to another account ("Wrong account"): who, from where, when, why
+  try {
+    const names = {};
+    accs.forEach((a) => { names[a.id] = str(a.name); });
+    const trail = {};
+    for (const r of await ctx.tx.savepoint(() => ctx.tx`select src, line_id, from_account, to_account, reason, by, at from money_reassigns
+                                                      where business_id = ${ctx.biz} order by at`)) {
+      const k = str(r.src) + ':' + str(r.line_id);
+      trail[k] = 'moved ' + formatDate(new Date(r.at), 'd MMM yy') + (str(r.by) ? ' by ' + str(r.by) : '') +
+                 (r.from_account ? ' from ' + (names[r.from_account] || 'another account') : ' from no account') + (str(r.reason) ? ': ' + str(r.reason) : '');
+    }
+    for (const e of out) { const t = trail[e.src + ':' + e.id]; if (t) e.moved = t; }
+  } catch (_) { /* the table is not there yet (migration 163 not applied): no trail shown */ }
   out.sort((a, b) => a.at - b.at);
   return out;
 }
@@ -139,10 +154,13 @@ export async function erpCashBook(ctx, payload) {
 
   const all = await ledger(ctx, accs);
   const bal = {}, count = {};
-  for (const e of all) { bal[e.account] = round2((bal[e.account] || 0) + e.amount); count[e.account] = (count[e.account] || 0) + 1; }
+  for (const e of all) { if (e.struck) continue; bal[e.account] = round2((bal[e.account] || 0) + e.amount); count[e.account] = (count[e.account] || 0) + 1; }
   const list = accs.map((a) => ({ id: a.id, name: str(a.name), kind: a.kind, kindLabel: KINDS[a.kind] || a.kind, archived: !!a.archived,
                                   opening: num(a.opening), openingDate: a.opening_date ? formatDate(new Date(a.opening_date), 'yyyy-MM-dd') : '',
-                                  balance: Math.round(bal[a.id] || 0), lines: count[a.id] || 0, note: str(a.note) }));
+                                  balance: Math.round(bal[a.id] || 0), lines: count[a.id] || 0, note: str(a.note),
+                                  // final-money: a balance below zero is flagged (the book says the account holds less than nothing:
+                                  // a payment is missing, or an expense was paid from the wrong account)
+                                  negative: Math.round(bal[a.id] || 0) < 0 }));
   const names = {};
   list.forEach((a) => { names[a.id] = a.name; });
 
@@ -151,12 +169,16 @@ export async function erpCashBook(ctx, payload) {
   let entries = [], more = 0;
   if (pick) {
     let run = 0;
-    const mine = all.filter((e) => e.account === pick).map((e) => { run = round2(run + e.amount); return { ...e, after: run }; });
+    const mine = all.filter((e) => e.account === pick).map((e) => { if (!e.struck) run = round2(run + e.amount); return { ...e, after: run }; });
     const limit = Math.min(1000, Math.max(20, Math.round(num(payload.limit)) || 200));
     more = Math.max(0, mine.length - limit);
     entries = mine.slice(-limit).reverse().map((e) => ({ when: when(e.at), what: e.what, ref: e.ref, invoice: e.invoice || '', amount: e.amount, after: Math.round(e.after),
-                                                         src: e.src, id: e.id, by: e.by, method: e.note || '' }));
+                                                         src: e.src, id: e.id, by: e.by, method: e.note || '', struck: e.struck || '', moved: e.moved || '' }));
   }
+  // final-money: what the owner should look at on this screen, in plain words
+  const warnings = [];
+  for (const a of list) if (!a.archived && a.negative) warnings.push({ kind: 'negative', account: a.id, name: a.name, amount: a.balance,
+    text: a.name + ' is below zero (' + a.balance + '): the book says it holds less than nothing. A payment into it is missing, or something was paid from the wrong account - check its statement.' });
 
   // courier payouts nobody has said the bank of
   const un = await ctx.tx`select id, payout_id, paid_at, created_src, paid_to_bank from courier_payouts
@@ -172,7 +194,7 @@ export async function erpCashBook(ctx, payload) {
     loose: loose.map((p) => ({ id: p.id, when: when(p.paid_at), customer: str(p.customer), invoice: str(p.invoice_no), amount: num(p.amount), method: str(p.method) })),
     accounts: list, total: list.filter((a) => !a.archived).reduce((t, a) => t + a.balance, 0),
     inHand: list.filter((a) => !a.archived && a.kind !== 'courier' && a.kind !== 'agent').reduce((t, a) => t + a.balance, 0),   // an agent's advance is not in hand
-    account: pick, entries, more,
+    account: pick, entries, more, warnings,
     unassigned: un.map((p) => ({ id: p.id, payout: str(p.payout_id), when: when(looseDate(p.paid_at) || looseDate(p.created_src)), amount: Math.round(num(p.paid_to_bank)) })),
     today: formatDate(ctx.now, 'yyyy-MM-dd'),
     lockedThrough: await lockedThrough(ctx),   // distill-money (9 Nov 2026): the month-lock chip on the Money screen
@@ -298,25 +320,45 @@ function moveDate(ctx, typed) {
   return new Date(dhakaDayStart(t).getTime() + 12 * 3600e3);
 }
 
-/** Money carried from one account to another: bank to drawer, drawer to bank, wallet to bank. */
+/** Money carried from one account to another: bank to drawer, drawer to bank, wallet to bank.
+ *  final-money (10 Nov 2026): one source, MANY destinations in one go - `splits: [{ to, amount }]` (the day's cash
+ *  deposited into two banks, say). Every leg is its own pair of lines; the whole batch is one transaction, and the
+ *  source must hold the total. Without `splits` it is the old one-to-one transfer. A double tap of the same transfer
+ *  within a minute is refused plainly. */
 export async function erpCashTransfer(ctx, payload) {
   payload = payload || {};
-  const from = await liveAccount(ctx, payload.from, 'the money leaves'), to = await liveAccount(ctx, payload.to, 'it goes to');
-  if (from.id === to.id) throw new Error('Choose two different accounts.');
-  const amount = money2(payload.amount);
-  if (!(amount > 0)) throw new Error('How much? Type an amount above 0.');
+  const from = await liveAccount(ctx, payload.from, 'the money leaves');
+  const legsIn = Array.isArray(payload.splits) && payload.splits.length ? payload.splits.slice(0, 20) : [{ to: payload.to, amount: payload.amount }];
+  const legs = [];
+  for (const l of legsIn) {
+    const to = await liveAccount(ctx, l && l.to, 'it goes to');
+    if (from.id === to.id) throw new Error('Choose two different accounts.');
+    const amount = money2(l && l.amount);
+    if (!(amount > 0)) throw new Error('How much? Type an amount above 0' + (legsIn.length > 1 ? ' on every line' : '') + '.');
+    if (legs.some((x) => x.to.id === to.id)) throw new Error(to.name + ' is on two lines. Put the whole amount on one.');
+    legs.push({ to, amount });
+  }
+  const total = round2(legs.reduce((t, l) => t + l.amount, 0));
   const at = moveDate(ctx, payload.date), note = str(payload.note).slice(0, 200);
   await assertOpen(ctx, at, 'a transfer cannot be dated there');
   // fix-5 L4: no more than the account holds (a courier account may run ahead of its payout)
   if (from.kind !== 'courier') {
     const bal = num(((await erpCashBook(ctx, {})).accounts || []).find((a) => a.id === from.id)?.balance);
-    if (amount > bal + 0.005) throw new Error(from.name + ' holds ' + Math.round(bal) + '. More than that cannot be moved out (correct its balance first if the book is wrong).');
+    if (total > bal + 0.005) throw new Error(from.name + ' holds ' + Math.round(bal) + '. More than that cannot be moved out (correct its balance first if the book is wrong).');
   }
-  const pair = (await ctx.tx`select gen_random_uuid() as id`)[0].id;
-  await ctx.tx`insert into money_moves (business_id, account_id, at, amount, kind, pair_id, note, by) values
-    (${ctx.biz}, ${from.id}, ${at}, ${-amount}, 'transfer', ${pair}, ${'to ' + to.name + (note ? ' · ' + note : '')}, ${whoIs(ctx)}),
-    (${ctx.biz}, ${to.id}, ${at}, ${amount}, 'transfer', ${pair}, ${'from ' + from.name + (note ? ' · ' + note : '')}, ${whoIs(ctx)})`;
-  return erpCashBook(ctx, { account: payload.show || from.id });
+  // a double tap: the very same transfer written a moment ago
+  const dup = await ctx.tx`select 1 from money_moves where business_id = ${ctx.biz} and account_id = ${from.id} and kind = 'transfer' and amount = ${-legs[0].amount}
+                           and note = ${'to ' + legs[0].to.name + (note ? ' · ' + note : '')} and coalesce(btrim(voided), '') = '' and created_at > now() - interval '60 seconds' limit 1`;
+  if (dup.length) throw new Error('This same transfer was written a moment ago (a double tap?). It is already on the statement; if it really is a second one, wait a minute and move it again.');
+  for (const l of legs) {
+    const pair = (await ctx.tx`select gen_random_uuid() as id`)[0].id;
+    await ctx.tx`insert into money_moves (business_id, account_id, at, amount, kind, pair_id, note, by) values
+      (${ctx.biz}, ${from.id}, ${at}, ${-l.amount}, 'transfer', ${pair}, ${'to ' + l.to.name + (note ? ' · ' + note : '')}, ${whoIs(ctx)}),
+      (${ctx.biz}, ${l.to.id}, ${at}, ${l.amount}, 'transfer', ${pair}, ${'from ' + from.name + (note ? ' · ' + note : '')}, ${whoIs(ctx)})`;
+  }
+  const book = await erpCashBook(ctx, { account: payload.show || from.id });
+  book.moved = { total, legs: legs.length };
+  return book;
 }
 
 /** The account was counted (or the bank statement read) and holds something else: bring the book to it, saying why. */
@@ -327,11 +369,12 @@ export async function erpCashAdjust(ctx, payload) {
   if (payload.counted === '' || payload.counted === null || payload.counted === undefined || !isFinite(Number(payload.counted))) throw new Error('Type what the account really holds.');
   const note = str(payload.note).slice(0, 200);
   if (!note) throw new Error('Say why the book was wrong, so it can be read later.');
+  await assertOpen(ctx, ctx.now, 'a correction cannot be written today');   // final-money: every money write checks the lock
   const book = (await erpCashBook(ctx, {})).accounts.find((x) => x.id === a.id).balance;
   const diff = round2(num(payload.counted) - book);
   if (Math.abs(diff) < 0.5) throw new Error('The book already says ' + book + '. Nothing to correct.');
   await ctx.tx`insert into money_moves (business_id, account_id, at, amount, kind, note, by)
-               values (${ctx.biz}, ${a.id}, ${new Date()}, ${diff}, 'adjust', ${'counted ' + num(payload.counted) + ', book said ' + book + ' · ' + note}, ${whoIs(ctx)})`;
+               values (${ctx.biz}, ${a.id}, ${ctx.now}, ${diff}, 'adjust', ${'counted ' + num(payload.counted) + ', book said ' + book + ' · ' + note}, ${whoIs(ctx)})`;
   return erpCashBook(ctx, { account: a.id });
 }
 
@@ -350,19 +393,32 @@ export async function erpCashMoveVoid(ctx, payload) {
   return erpCashBook(ctx, { account: m.account_id });
 }
 
-/** One line of money moved to another account (shared by erpCashReassign and erpCashPlaceMany). */
-async function moveLine(ctx, src, id, to) {
+/** One line of money moved to another account (shared by erpCashReassign and erpCashPlaceMany). The move leaves a
+ *  trail (money_reassigns: from, to, who, when, why) that the statement prints under the line - final-money. */
+async function moveLine(ctx, src, id, to, reason) {
   let n = [];
   if (!isId(id)) throw new Error('That line was not found.');
-  if (src === 'payment') n = await ctx.tx`update payments set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, paid_at as at`;
-  else if (src === 'expense') n = await ctx.tx`update expenses set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, recorded_at as at`;
-  else if (src === 'capital') n = await ctx.tx`update capital_book set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, on_date as at`;
-  else if (src === 'payout') n = await ctx.tx`update courier_payouts set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, synced_at as at`;
-  else if (src === 'shipcost') n = await ctx.tx`update shipment_costs set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, at`;
-  else if (src === 'supplier') n = await ctx.tx`update supplier_payments set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, at`;
-  else throw new Error('That line cannot be moved.');
+  const T = { payment: ['payments', 'paid_at'], expense: ['expenses', 'recorded_at'], capital: ['capital_book', 'on_date'],
+              payout: ['courier_payouts', 'synced_at'], shipcost: ['shipment_costs', 'at'], supplier: ['supplier_payments', 'at'] };
+  if (!T[src]) throw new Error('That line cannot be moved.');
+  const [table, atCol] = T[src];
+  n = await ctx.tx`update ${ctx.tx(table)} set account_id = ${to.id} where id = ${id} and business_id = ${ctx.biz} returning id, ${ctx.tx(atCol)} as at`;
   if (!n.length) throw new Error('That line was not found.');
   if (n[0].at) await assertOpen(ctx, new Date(n[0].at), 'its lines cannot be moved to another account');   // fix-2 M11 (the move is undone)
+  const before = ctx.memo['__was:' + src + ':' + id];   // read by accountOfLine before the update
+  try {
+    await ctx.tx.savepoint(() => ctx.tx`insert into money_reassigns (business_id, src, line_id, from_account, to_account, reason, by)
+                                        values (${ctx.biz}, ${src}, ${id}, ${isId(before) && before !== to.id ? before : null}, ${to.id}, ${str(reason).slice(0, 200) || null}, ${whoIs(ctx)})`);
+  } catch (_) { /* migration 163 not applied yet: the move still happens, without its trail */ }
+}
+/** The account a line sits in now (read BEFORE moveLine, so the trail can say where it came from). */
+async function accountOfLine(ctx, src, id) {
+  const T = { payment: 'payments', expense: 'expenses', capital: 'capital_book', payout: 'courier_payouts', shipcost: 'shipment_costs', supplier: 'supplier_payments' };
+  if (!T[src] || !isId(id)) return null;
+  const r = await ctx.tx`select account_id from ${ctx.tx(T[src])} where id = ${id} and business_id = ${ctx.biz}`;
+  const was = r[0] ? r[0].account_id : null;
+  ctx.memo['__was:' + src + ':' + id] = was;
+  return was;
 }
 
 /** A line was put on the wrong account (the payment went to the other bank): move that one line. */
@@ -370,7 +426,10 @@ export async function erpCashReassign(ctx, payload) {
   needOwner(ctx);
   payload = payload || {};
   const to = await liveAccount(ctx, payload.account);
-  await moveLine(ctx, str(payload.src), payload.id, to);
+  const src = str(payload.src);
+  const was = await accountOfLine(ctx, src, payload.id);
+  if (was === to.id) throw new Error('That line is already in ' + to.name + '.');
+  await moveLine(ctx, src, payload.id, to, payload.reason);
   return erpCashBook(ctx, { account: payload.show || to.id });
 }
 
@@ -387,7 +446,8 @@ export async function erpCashPlaceMany(ctx, payload) {
   for (const it of items) {
     const src = str(it && it.src);
     if (src !== 'payment' && src !== 'payout') throw new Error('Only payments and courier payouts are placed this way.');
-    await moveLine(ctx, src, it && it.id, to);
+    await accountOfLine(ctx, src, it && it.id);
+    await moveLine(ctx, src, it && it.id, to, payload.reason || 'placed from "no account"');
     placed++;
   }
   const book = await erpCashBook(ctx, { account: payload.show || to.id });

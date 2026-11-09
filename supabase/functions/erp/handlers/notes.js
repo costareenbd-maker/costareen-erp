@@ -37,30 +37,47 @@ export async function erpNotes(ctx, payload) {
                                      file: str(r.file) ? (str(r.file_name) || 'Attached file') : '', voided: str(r.voided) })) };
 }
 
+const FILES_MAX = 6;
+/** One attached file, checked and decoded (the sentence the page shows when it is not right). */
+function readFile(f, kind, n) {
+  const mime = str(f.mime);
+  const ext = FILE_TYPES[mime];
+  const which = n > 1 ? 'File ' + n + ' (' + (str(f.name) || mime) + ')' : 'That file';
+  if (!ext) throw new Error(which + ': a file here is a photo (JPG, PNG, WebP) or a PDF.');
+  let bytes;
+  try {
+    const bin = atob(String(f.data || ''));
+    bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  } catch (_) { throw new Error(which + ' could not be read. Try again.'); }
+  if (!bytes.length) throw new Error(which + ' is empty.');
+  if (bytes.length > 3 * 1024 * 1024) throw new Error(which + ' is over 3 MB. Use a smaller one.');
+  return { bytes, mime, name: kind + '-' + Date.now() + '-' + Math.floor(Math.random() * 900 + 100) + '-' + n + '.' + ext,
+           shown: str(f.name).replace(/[\\/]/g, ' ').slice(0, 120) || ('file.' + ext) };
+}
+
+/**
+ * A note, one file, or several files at once (final-contacts, 10 Nov 2026: a repair or a delivery has three photos,
+ * not one). `file` is kept for old pages; `files` is the list. Every file is checked BEFORE anything is saved, so a
+ * bad third photo leaves nothing half-written. The text goes on the first row; each extra file is its own row.
+ */
 export async function erpNoteAdd(ctx, payload) {
   const t = target(ctx, payload);
   const body = str(payload.body).slice(0, 2000);
-  const f = payload.file && payload.file.data ? payload.file : null;
-  if (!body && !f) throw new Error('Write a note or attach a file.');
-  let name = null, shown = null, mime = null;
-  if (f) {
-    mime = str(f.mime);
-    const ext = FILE_TYPES[mime];
-    if (!ext) throw new Error('A file here is a photo (JPG, PNG, WebP) or a PDF.');
-    let bytes;
-    try {
-      const bin = atob(String(f.data || ''));
-      bytes = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    } catch (_) { throw new Error('That file could not be read. Try again.'); }
-    if (!bytes.length) throw new Error('That file is empty.');
-    if (bytes.length > 3 * 1024 * 1024) throw new Error('That file is over 3 MB. Use a smaller one.');
-    name = t.kind + '-' + Date.now() + '-' + Math.floor(Math.random() * 900 + 100) + '.' + ext;
-    shown = str(f.name).replace(/[\\/]/g, ' ').slice(0, 120) || ('file.' + ext);
-    await saveFile(ctx, 'notes', name, bytes, mime);
+  const list = (Array.isArray(payload.files) ? payload.files : []).concat(payload.file && payload.file.data ? [payload.file] : []).filter((f) => f && f.data);
+  if (!body && !list.length) throw new Error('Write a note or attach a file.');
+  if (list.length > FILES_MAX) throw new Error('At most ' + FILES_MAX + ' files on one note. Add the rest as another note.');
+  const files = list.map((f, i) => readFile(f, t.kind, i + 1));
+  for (const f of files) await saveFile(ctx, 'notes', f.name, f.bytes, f.mime);
+  if (!files.length) {
+    await ctx.tx`insert into record_notes (business_id, kind, ref, body, file, file_name, file_mime, by)
+                 values (${ctx.biz}, ${t.kind}, ${t.ref}, ${body}, null, null, null, ${who(ctx)})`;
   }
-  await ctx.tx`insert into record_notes (business_id, kind, ref, body, file, file_name, file_mime, by)
-               values (${ctx.biz}, ${t.kind}, ${t.ref}, ${body}, ${name}, ${shown}, ${mime}, ${who(ctx)})`;
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    await ctx.tx`insert into record_notes (business_id, kind, ref, body, file, file_name, file_mime, by)
+                 values (${ctx.biz}, ${t.kind}, ${t.ref}, ${i === 0 ? body : ''}, ${f.name}, ${f.shown}, ${f.mime}, ${who(ctx)})`;
+  }
   return erpNotes(ctx, t);
 }
 

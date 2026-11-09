@@ -86,7 +86,9 @@ function itemActive(it, month) {
 
 function expRow(r) {
   const d = asDate(r.recorded_at);
+  const rc = Array.isArray(r.receipts) ? r.receipts : [];
   return { id: str(r.expense_no),
+           receipts: rc.length || (str(r.receipt) ? 1 : 0),   // final-money: how many receipts are kept with it
            when: d ? formatDate(d, 'd MMM, h:mm a') : '',
            ts: d ? d.getTime() : 0,
            kind: str(r.kind),
@@ -102,7 +104,7 @@ function expRow(r) {
 async function expRows(ctx, month) {
   const v = await ctx.tx`
     select expense_no, recorded_at, month, kind, category, description, amount, item_no,
-           recorded_by, voided, seq, receipt
+           recorded_by, voided, seq, receipt, receipts
     from expenses where business_id = ${ctx.biz} and btrim(month) = ${month}
     order by seq`;
   return v.map(expRow);
@@ -237,6 +239,11 @@ export async function erpExpenseAdd(ctx, payload) {
   const nowMonth = monthOf(ctx.now);
   const month = isMonth(payload.month) ? payload.month : nowMonth;
   if (month > nowMonth) throw new Error('That month has not begun yet.');
+  // final-money (10 Nov 2026): the very same expense written a moment ago (a double tap) is refused, not booked twice
+  const dup = await ctx.tx`select 1 from expenses where business_id = ${ctx.biz} and kind = 'oneoff' and description = ${what} and amount = ${amount}
+                           and coalesce(category, '') = ${str(payload.category) || 'Miscellaneous'} and coalesce(recorded_by, '') = ${who(ctx)}
+                           and coalesce(btrim(voided), '') = '' and recorded_at > now() - interval '60 seconds' limit 1`;
+  if (dup.length) throw new Error('This same expense was recorded a moment ago (a double tap?). It is already in the list; if it really is a second one, wait a minute and add it again.');
 
   await expWrite(ctx, [newId('E'), new Date(), month, 'oneoff',
     str(payload.category) || 'Miscellaneous', what,
@@ -308,9 +315,10 @@ export async function erpExpenseVoid(ctx, payload) {
   if (!id) throw new Error('Which entry?');
   if (!why) throw new Error('Say why it is being struck out, so the books can be read later.');
 
+  // final-server (10 Nov 2026): the one entry, by its number (was: every expense row of the business, then a loop)
   const v = await ctx.tx`select expense_no, month, kind, voided, seq from expenses
-                         where business_id = ${ctx.biz} order by seq`;
-  if (!v.length) throw new Error('There is nothing recorded yet.');
+                         where business_id = ${ctx.biz} and expense_no = ${id} order by seq limit 1`;
+  if (!v.length) throw new Error('That entry was not found.');
   for (const r of v) {
     if (str(r.expense_no) !== id) continue;
     if (str(r.voided)) throw new Error('That entry is already struck out.');
@@ -328,7 +336,7 @@ export async function erpExpenseVoid(ctx, payload) {
 /** erpStrikePosted_: strike out what a fixed item posted from a month onward. */
 async function strikePosted(ctx, itemId, from, why) {
   const v = await ctx.tx`select item_no, kind, month, voided, seq from expenses
-                         where business_id = ${ctx.biz} order by seq`;
+                         where business_id = ${ctx.biz} and item_no = ${itemId} and kind = 'fixed' order by seq`;   // final-server: only this item's rows
   for (const r of v) {
     if (str(r.item_no) !== itemId) continue;
     if (str(r.kind) !== 'fixed') continue;
@@ -442,10 +450,11 @@ export async function erpExpenseExport(ctx, payload) {
     summary.push(['', '']);
     summary.push([e.missing + ' recurring bill(s) had no figure entered', '']);
   }
-  const rows = [['Recorded', 'Kind', 'Category', 'What for', 'Amount', 'Recorded by', 'Struck out']];
+  if (e.lockedThrough && e.month <= e.lockedThrough) { summary.push(['', '']); summary.push(['This month is closed (the books are locked up to ' + e.lockedThrough + ')', '']); }
+  const rows = [['Recorded', 'Kind', 'Category', 'What for', 'Amount', 'Recorded by', 'Receipts', 'Struck out']];
   for (const x of e.all.slice().reverse()) {
     rows.push([x.when, x.kind === 'oneoff' ? 'one-off' : x.kind, x.category,
-      x.description, x.amount, x.by, x.voided]);
+      x.description, x.amount, x.by, x.receipts || 0, x.voided]);
   }
 
   const bytes = buildXlsx([
@@ -664,37 +673,52 @@ export async function erpExpenseCategory(ctx, payload) {
 
 const RECEIPT_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' };
 
-/** Keep a photo (or PDF) of the receipt with an expense. payload: {id, month, file:{data, mime}} */
+const MAX_RECEIPTS = 8;
+/** Keep a photo (or PDF) of the receipt with an expense. payload: {id, file:{data, mime}} or {id, files:[{data, mime}]}.
+ *  final-money (10 Nov 2026): an expense keeps EVERY receipt it is given (a bill and its payment slip, a long receipt in
+ *  two photos), up to 8 - before, a second photo replaced (and deleted) the first. `receipt` stays the newest file. */
 export async function erpExpenseReceipt(ctx, payload) {
   payload = payload || {};
   const id = str(payload.id);
   if (!id) throw new Error('Which entry?');
-  const row = (await ctx.tx`select seq, month, receipt from expenses where business_id = ${ctx.biz} and expense_no = ${id} limit 1`)[0];
+  const row = (await ctx.tx`select seq, month, receipt, receipts from expenses where business_id = ${ctx.biz} and expense_no = ${id} limit 1`)[0];
   if (!row) throw new Error('That entry was not found.');
-  const f = payload.file || {};
-  const ext = RECEIPT_TYPES[str(f.mime)];
-  if (!ext) throw new Error('A receipt is a photo (JPG, PNG) or a PDF.');
-  let bytes;
-  try {
-    const bin = atob(String(f.data || ''));
-    bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  } catch (_) { throw new Error('That file could not be read. Try again.'); }
-  if (!bytes.length) throw new Error('That file is empty.');
-  if (bytes.length > 3 * 1024 * 1024) throw new Error('That file is over 3 MB. Use a smaller photo.');
-  const name = id + '-' + Date.now() + '.' + ext;
-  if (str(row.receipt)) await deleteFile(ctx, 'receipts', str(row.receipt));
-  await saveFile(ctx, 'receipts', name, bytes, str(f.mime));
-  await ctx.tx`update expenses set receipt = ${name} where business_id = ${ctx.biz} and seq = ${row.seq}`;
+  const files = Array.isArray(payload.files) && payload.files.length ? payload.files.slice(0, MAX_RECEIPTS) : [payload.file || {}];
+  let kept = Array.isArray(row.receipts) ? row.receipts.slice() : [];
+  if (!kept.length && str(row.receipt)) kept = [{ name: str(row.receipt), at: null }];   // one receipt from before the list existed
+  if (kept.length + files.length > MAX_RECEIPTS) throw new Error('An expense keeps up to ' + MAX_RECEIPTS + ' receipts; this one has ' + kept.length + '.');
+  let last = '';
+  for (const f of files) {
+    const ext = RECEIPT_TYPES[str(f.mime)];
+    if (!ext) throw new Error('A receipt is a photo (JPG, PNG) or a PDF.');
+    let bytes;
+    try {
+      const bin = atob(String(f.data || ''));
+      bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    } catch (_) { throw new Error('That file could not be read. Try again.'); }
+    if (!bytes.length) throw new Error('That file is empty.');
+    if (bytes.length > 3 * 1024 * 1024) throw new Error('That file is over 3 MB. Use a smaller photo.');
+    const name = id + '-' + Date.now() + '-' + Math.floor(Math.random() * 900 + 100) + '.' + ext;
+    await saveFile(ctx, 'receipts', name, bytes, str(f.mime));
+    kept.push({ name, at: new Date().toISOString(), by: who(ctx), mime: str(f.mime) });
+    last = name;
+  }
+  await ctx.tx`update expenses set receipt = ${last || str(row.receipt) || null}, receipts = ${ctx.tx.json(kept)} where business_id = ${ctx.biz} and seq = ${row.seq}`;
   return erpExpenses(ctx, { month: monthText(row.month) });
 }
 
-/** A link to open the receipt (links expire, so one is made each time). */
+/** Links to open the receipts (links expire, so they are made each time): { url, urls: [{ name, url, at, by }] }. */
 export async function erpExpenseReceiptUrl(ctx, payload) {
   const id = str(payload && payload.id);
-  const row = (await ctx.tx`select receipt from expenses where business_id = ${ctx.biz} and expense_no = ${id} limit 1`)[0];
-  if (!row || !str(row.receipt)) throw new Error('No receipt is kept with that entry.');
-  return { url: await fileUrl(ctx, 'receipts', str(row.receipt)) };
+  const row = (await ctx.tx`select receipt, receipts from expenses where business_id = ${ctx.biz} and expense_no = ${id} limit 1`)[0];
+  if (!row) throw new Error('That entry was not found.');
+  let kept = Array.isArray(row.receipts) ? row.receipts : [];
+  if (!kept.length && str(row.receipt)) kept = [{ name: str(row.receipt) }];
+  if (!kept.length) throw new Error('No receipt is kept with that entry.');
+  const urls = [];
+  for (const k of kept) urls.push({ name: str(k.name), url: await fileUrl(ctx, 'receipts', str(k.name)), at: k.at ? formatDate(new Date(k.at), 'd MMM yyyy, h:mm a') : '', by: str(k.by), mime: str(k.mime) });
+  return { url: urls[urls.length - 1].url, urls };
 }
 
 export const HANDLERS = {

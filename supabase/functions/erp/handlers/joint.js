@@ -757,20 +757,28 @@ export async function erpJointSend(ctx, payload) {
   });
   return { ...(await erpJoint(ctx, { pool: pool.id })), moved: got };
 }
-/** The asker says the goods arrived. */
+/** The asker says the goods arrived - one request, or a whole parcel (final-goods 10 Nov 2026: `requests: [id, ...]`,
+ *  the five products of one Send confirmed with one tap; all or none). */
 export async function erpJointGot(ctx, payload) {
   payload = payload || {};
   await needOn(ctx);
   const pool = await poolOf(ctx, payload.pool);
   const me = await sellerId(ctx);
+  const ids = [...new Set((Array.isArray(payload.requests) ? payload.requests : [payload.request]).map((x) => str(x)).filter(Boolean))];
+  if (!ids.length) throw new Error('Which request arrived?');
+  if (ids.length > 100) throw new Error('At most 100 requests at once.');
+  let got = 0;
   await withPool(ctx, pool, async (pctx) => {
-    const r = (await pctx.tx`select * from pool_requests where pool_id = ${pool.id} and id = ${str(payload.request)}`)[0];
-    if (!r) throw new Error('That request is not here.');
-    if (r.status !== 'sent') throw new Error('That request is not on its way.');
-    if (r.asked_by !== me && !poolOwner(ctx, pool)) throw new Error('The company that asked confirms it.');
-    await pctx.tx`update pool_requests set status = 'received', received_name = ${who(ctx) + ' (' + str(ctx.s.businessName) + ')'}, received_at = now() where id = ${r.id}`;
+    for (const id of ids) {
+      const r = (await pctx.tx`select * from pool_requests where pool_id = ${pool.id} and id = ${id}`)[0];
+      if (!r) throw new Error('That request is not here.');
+      if (r.status !== 'sent') throw new Error((ids.length > 1 ? 'The request for ' + str(r.product_name) : 'That request') + ' is not on its way.');
+      if (r.asked_by !== me && !poolOwner(ctx, pool)) throw new Error('The company that asked confirms it.');
+      await pctx.tx`update pool_requests set status = 'received', received_name = ${who(ctx) + ' (' + str(ctx.s.businessName) + ')'}, received_at = now() where id = ${r.id}`;
+      got++;
+    }
   });
-  return erpJoint(ctx, { pool: pool.id });
+  return { ...(await erpJoint(ctx, { pool: pool.id })), got };
 }
 /** Decline (the holder) or cancel (the asker) a request not sent yet. */
 export async function erpJointAskAct(ctx, payload) {

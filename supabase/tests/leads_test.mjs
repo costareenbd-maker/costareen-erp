@@ -78,7 +78,8 @@ check('Google through the AI says plainly when no AI key is set', !r.ok && /AI k
 // ---- a list
 r = await mgr('erpLeadImport', [{ kind: 'supplier', source: 'linkedin', rows: [['Full Name', 'Company', 'Email', 'Country'], ['Li Wei', 'Shenzhen Parts Ltd', 'li@szparts.test', 'China'],
   ['', '', '', ''], ['Li Wei dup', 'Shenzhen Parts Ltd', 'li@szparts.test', 'China']] }]);
-check('an imported list: added, the empty row skipped, the repeat not added twice', r.ok && r.result.added === 1 && r.result.same === 1 && r.result.skipped === 1, r.result);
+// final-contacts (10 Nov 2026): an empty line in the sheet is passed over quietly, not counted as a skipped (bad) row
+check('an imported list: added, the empty row passed over, the repeat not added twice', r.ok && r.result.added === 1 && r.result.same === 1 && r.result.skipped === 0 && r.result.errors.length === 0, r.result);
 r = await mgr('erpLeadImport', [{ rows: [['Foo', 'Bar'], ['1', '2']] }]);
 check('a sheet with no Name / Company / Phone / Email column is refused', !r.ok, r);
 

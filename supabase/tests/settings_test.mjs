@@ -52,7 +52,7 @@ check('products keep their text', (await sql`select count(*)::int n from product
 // ---------------------------------------------------------------- config
 r = await shareholder('erpConfigSet', ['currency', 'BDT ']);
 check('config saved', r.ok && r.result.key === 'currency', r);
-check('config stored', (await sql`select value from business_config where business_id = ${B} and key = 'currency'`)[0].value === 'BDT ');
+check('config stored (final-shell: trimmed and upper-cased, a 3-letter code)', (await sql`select value from business_config where business_id = ${B} and key = 'currency'`)[0].value === 'BDT');
 r = await shareholder('erpConfigSet', ['website_sync_key', 'x']);
 check('credential refused', !r.ok && r.error === 'That value is a credential and is not editable from here.', r);
 r = await shareholder('erpConfigSet', ['no_such', 'x']);
@@ -213,7 +213,7 @@ for (const a of ['pullOrders', 'previewPush', 'pushStock', 'mergeCustomers', 'fi
   if (!r.ok && r.error === NOT_YET) console.log('  (' + a + ': other group not ported yet)');
 }
 r = await shareholder('erpTool', ['zzz']);
-check('unknown tool', !r.ok && r.error === 'Unknown action: zzz', r);
+check('unknown tool: a plain sentence (not "Unknown action", which the page reads as "old page")', !r.ok && r.error === 'There is no maintenance job called "zzz".', r);
 
 // ---------------------------------------------------------------- self-test
 r = await shareholder('erpSelfTest', []);

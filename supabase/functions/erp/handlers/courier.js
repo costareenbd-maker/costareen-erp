@@ -170,6 +170,7 @@ export async function sfBooked(ctx) {
   for (const v of await courierRows(ctx)) {
     const inv = str(v[1]);
     if (!inv) continue;
+    if (/\[extra box\]/.test(String(v[9] || '')) && out[inv]) continue;   // the first parcel is THE parcel; an extra box rides along
     out[inv] = { consignment: str(v[2]), cod: num(v[6]), when: asDate(v[0]),
                  customer: str(v[3]),
                  byHand: /\[by hand\]/.test(String(v[9] || '')), row: v[10] };
@@ -298,10 +299,14 @@ export async function erpBookParcel(ctx, payload) {
   await lock(ctx, 'courier');
 
   const pre = await erpParcelPreview(ctx, { invoiceNo });
-  if (pre.alreadyBooked) {
+  // final-sales: a big order goes in more than one box. The first parcel collects the money; an extra box
+  // (payload.extraBox) is booked at 0 to collect and logged as "[extra box]" so it is never counted twice.
+  const extraBox = !!payload.extraBox && !!pre.alreadyBooked;
+  if (pre.alreadyBooked && !extraBox) {
     throw new Error('Invoice ' + invoiceNo + ' already has a parcel (consignment ' +
-                    pre.alreadyBooked + '). Booking it again would send two.');
+                    pre.alreadyBooked + '). Booking it again would send two. If this order really goes in more than one box, press "Add another box".');
   }
+  if (extraBox) pre.collect = 0;
   if (pre.missing.length) {
     throw new Error('The courier needs a ' + pre.missing.join(', a ') + '. Add it to the invoice first.');
   }
@@ -349,7 +354,7 @@ export async function erpBookParcel(ctx, payload) {
                              cod_amount, invoice_total, booked_by, note)
     values (${ctx.biz}, ${new Date()}, ${invoiceNo}, ${cid}, ${toName}, ${toPhone}, ${toAddress},
             ${pre.collect}, ${pre.total}, ${who(ctx)},
-            ${(changed ? 'sent to a one-off address. ' : '') + str(payload.note)})`;
+            ${(extraBox ? '[extra box] the money is collected on parcel ' + pre.alreadyBooked + '. ' : '') + (changed ? 'sent to a one-off address. ' : '') + str(payload.note)})`;
   // the tracking code opens the courier's own tracking page (the Inbox's order page: Track)
   if (res.consignment.tracking_code) { try { await ctx.tx`update courier_log set tracking_code = ${String(res.consignment.tracking_code)} where business_id = ${ctx.biz} and invoice_no = ${invoiceNo} and consignment_id = ${cid}`; } catch (_) { /* before 123 */ } }
   forgetCourier(ctx);

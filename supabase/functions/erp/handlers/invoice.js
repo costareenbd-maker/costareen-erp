@@ -132,6 +132,22 @@ export async function createInvoice(ctx, payload, opts = {}) {
   if (!items.length) throw new Error('Add at least one product.');
 
   await lock(ctx, 'sale');
+  // final-sales: a Save pressed twice (or sent again after a slow answer) is ONE sale. The page sends a key it made
+  // for this sale; the second arrival finds the first invoice and answers with it (164_invoice_client_key.sql).
+  const clientKey = opts.mirror || opts.preview ? '' : String(payload.clientKey || '').trim().slice(0, 80);
+  if (clientKey) {
+    const dup = await ctx.tx`select invoice_no, grand_total, advance_paid, due_amount, source,
+                                    (select count(*)::int from invoice_lines l where l.invoice_id = i.id) as n
+                             from invoices i where business_id = ${ctx.biz} and client_key = ${clientKey} limit 1`;
+    if (dup.length) {
+      const d = dup[0];
+      let pdf = null;
+      try { const S = await import('./sales.js'); pdf = await ctx.tx.savepoint(() => S.erpInvoicePdf(ctx, { invoiceNo: String(d.invoice_no) })); } catch (_) { pdf = null; }
+      return { ok: true, repeated: true, invoiceNo: String(d.invoice_no), items: num(d.n), grandTotal: num(d.grand_total), paidNow: num(d.advance_paid),
+               creditUsed: 0, thisDue: num(d.due_amount), priorBalance: 0, totalOwed: num(d.due_amount), source: String(d.source || ''), serials: [], joint: [],
+               pdfUrl: (pdf && pdf.found && pdf.url) || '', pdfId: (pdf && pdf.id) || '', pdfName: 'Invoice_' + String(d.invoice_no) + '.pdf' };
+    }
+  }
   const now = new Date();
   const ts = saleTimestamp(payload.date, now);
   await assertOpen(ctx, ts instanceof Date ? ts : new Date(ts), 'a sale cannot be dated there');
@@ -239,7 +255,7 @@ export async function createInvoice(ctx, payload, opts = {}) {
     const qty = num(items[i].qty);
     const disc = DSC.line[i];
     lines.push({ productId: pr[0].id, sku: rec.sku, name: rec.name || pr[0].name, qty, unit,
-                 disc, total: Math.max(0, qty * unit - disc),
+                 disc, total: round2(Math.max(0, qty * unit - disc)),   // final-sales: a line total is money, two decimals (1349.999 is not a price)
                  own: Math.min(qty * unit, Math.max(0, num(items[i].discEach)) * qty) });   // this line's own discount, not its share of the order discount
   }
   // nobody sells joint stock under its floor price (the owner may: it is flagged for the partner)
@@ -289,6 +305,27 @@ export async function createInvoice(ctx, payload, opts = {}) {
   } else {
     method = '';   // nothing paid: no method
   }
+  // final-sales: one sale paid over several methods ("3,000 bKash + 1,350 cash"). Each part is its own payment row
+  // (its own money account); the invoice head says "bKash + Cash". Not for cash on delivery (the courier collects).
+  const split = [];
+  if (!opts.mirror && Array.isArray(payload.payments) && payload.payments.length && mode !== 'cod') {
+    let sum = 0;
+    for (const p of payload.payments) {
+      const amt = round2(num(p && p.amount)), m = String((p && p.method) || '').trim();
+      if (!(amt > 0)) continue;
+      if (!m) throw new Error('Each part of the payment needs a method (Cash, bKash, Bank...).');
+      if (isCod(m)) throw new Error('Cash on delivery is not a part payment: choose "Cash on delivery" instead.');
+      split.push({ method: m, amount: amt });
+      sum = round2(sum + amt);
+    }
+    if (split.length) {
+      if (sum > grand + 0.5) throw new Error('The payments add up to ' + sum + ', more than the invoice total ' + grand + '.');
+      if (mode === 'full' && Math.abs(sum - grand) > 0.5) throw new Error('"Paid now" means the whole ' + grand + ' - the payments add up to ' + sum + '. Choose "Part paid" to leave the rest due.');
+      took = Math.min(sum, grand);
+      mode = took >= grand - 0.5 ? 'full' : 'part';
+      method = payMethod = Array.from(new Set(split.map((p) => p.method))).join(' + ');
+    }
+  }
   if (walkIn && took < grand - 0.5) throw new Error('A walk-in with no phone number pays in full. Choose "Paid now", or add the customer\'s phone to leave a due.');
   const advance = took;
   const status = took >= grand - 0.5 ? 'Paid' : took > 0 ? 'Partial' : 'Pending';
@@ -317,12 +354,12 @@ export async function createInvoice(ctx, payload, opts = {}) {
     insert into invoices (business_id, invoice_no, customer_name, customer_phone, customer_address,
       source, subtotal, discount, delivery_charge, grand_total, advance_paid, due_amount,
       payment_method, payment_status, delivery_status, note, created_by, created_at,
-      item_discount, invoice_discount, customer_key, web_order_no, sold_by, seller_id, channel, price_reason)
+      item_discount, invoice_discount, customer_key, web_order_no, sold_by, seller_id, channel, price_reason, client_key)
     values (${ctx.biz}, ${invoiceNo}, ${name}, ${phoneIn}, ${address}, ${source}, ${round2(sub)},
       ${round2(discount)}, ${delivery}, ${grand}, ${round2(advance)}, ${round2(grand - advance)},
       ${method}, ${status}, 'Processing', ${noteText || 'Invoice submission'}, ${ctx.s.userId}, ${ts},
       ${round2(DSC.itemDisc)}, ${DSC.invDisc}, ${key}, ${opts.webOrderNo || null}, ${opts.mirror ? opts.mirror.seller : null},
-      ${sellerId}, ${channel}, ${payload.priceCheck && priceReason ? priceReason : null})
+      ${sellerId}, ${channel}, ${payload.priceCheck && priceReason ? priceReason : null}, ${clientKey || null})
     returning id`;
   const invoiceId = inv[0].id;
 
@@ -378,11 +415,29 @@ export async function createInvoice(ctx, payload, opts = {}) {
   if (payload.restockId) { const { restockInvoiced } = await import('./restock.js'); await restockInvoiced(ctx, String(payload.restockId), invoiceNo); }
 
   // money taken at the counter is money received
-  if (took > 0) {
+  if (took > 0 && split.length) {
+    // each part lands in its own account; the ids stay unique within the second
+    let k = 0;
+    for (const p of split) {
+      await addPayment(ctx, { id: 'P' + stamp() + (k ? '-' + k : ''), order: invoiceNo, customer: name, amount: p.amount, method: p.method,
+        note: (took >= grand - 0.5 ? 'paid in full at the till' : 'advance') + ' (part ' + (k + 1) + ' of ' + split.length + ')' });
+      k++;
+    }
+    await syncInvoiceStatus(ctx, invoiceNo);
+  } else if (took > 0) {
     await addPayment(ctx, { id: 'P' + stamp(), order: invoiceNo, customer: name,
       amount: Math.min(took, grand), method: payMethod,
       note: took >= grand ? 'paid in full at the till' : 'advance' });
     await syncInvoiceStatus(ctx, invoiceNo);
+  }
+  // final-sales: the quotation this sale came from is marked "Invoiced" and keeps the invoice number
+  const quoteRef = String(payload.quoteRef || (/^From quotation (\S+)/.exec(String(payload.note || '')) || [])[1] || '').trim();
+  if (quoteRef || payload.quoteId) {
+    try {
+      await ctx.tx.savepoint(() => ctx.tx`update quotations set status = 'Invoiced', updated_at = now(),
+        doc = jsonb_set(jsonb_set(doc, '{invoiceNo}', to_jsonb(${invoiceNo}::text)), '{status}', '"Invoiced"'::jsonb)
+        where business_id = ${ctx.biz} and (${String(payload.quoteId || '')} <> '' and id::text = ${String(payload.quoteId || '')} or (${quoteRef} <> '' and reference = ${quoteRef}))`);
+    } catch (e) { console.error('quote mark', e); }
   }
 
   // credit taken for goods that had not arrived is spent here, and only here

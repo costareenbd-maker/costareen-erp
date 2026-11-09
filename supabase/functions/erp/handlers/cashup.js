@@ -8,6 +8,7 @@
 
 import { str } from '../lib/tabs.js';
 import { num, round2, formatDate } from '../lib/time.js';
+import { assertOpen } from '../lib/period.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { erpCashBook } from './cash.js';
 import { powerOn, actRole, roleAtLeast } from '../allow.js';
@@ -20,6 +21,7 @@ export async function erpCashUp(ctx, payload) {
   payload = payload || {};
   // fix-2 M8: one cash-up at a time - a second one made at the same moment reads the book after the first one's correction
   await (await import('./money.js')).lock(ctx, 'cashup');
+  await assertOpen(ctx, ctx.now, 'a cash-up cannot be written today');   // final-money: every money write checks the lock
   const book = await erpCashBook(ctx, {});
   const acc = (book.accounts || []).find((a) => a.id === str(payload.account) && !a.archived);
   if (!acc) throw new Error('Choose the account you counted.');

@@ -340,6 +340,10 @@ export async function erpDiscontinued(ctx) {
 /** erpReceiveShipment (ERP:3174): the costing engine. */
 export async function receiveShipment(ctx, payload) {
   payload = payload || {};
+  // final-goods (10 Nov 2026): a quantity below zero was dropped in silence - the rest of the shipment went in and the typo
+  // was never seen. Now it is named and refused; nothing is half-saved.
+  const below = (payload.lines || []).find((l) => l && (str(l.sku) || l.isNew) && String(l.qty ?? '').trim() !== '' && num(l.qty) < 0);
+  if (below) throw new Error('A quantity cannot be below zero (' + (str(below.sku) || str((below.product || {}).product_name) || 'a line') + ': ' + num(below.qty) + ').');
   const lines = (payload.lines || []).filter((l) => l && num(l.qty) > 0 && (str(l.sku) || l.isNew));
   if (!lines.length) throw new Error('Add at least one product with a quantity.');
   // fix-1 M2: a price below zero makes the stock's cost and every later profit wrong

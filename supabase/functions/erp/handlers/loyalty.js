@@ -183,6 +183,10 @@ async function rhythms(ctx) {
 export async function refillFor(ctx, key) { const r = (await rhythms(ctx))[key]; return r ? refillView(r) : null; }
 function refillView(r) { return { buys: r.buys, avgDays: r.avgDays, lastAt: day(r.lastAt), nextAt: day(r.nextAt), due: Date.now() >= r.lastAt + r.avgDays * 0.9 * DAY, items: r.items }; }
 function waText(name, items, shop) { return 'Hello ' + (name || '') + ', time for more ' + items.map((i) => i.name).join(' / ') + '? Reply here and ' + (shop || 'we') + ' will keep it aside for you.'; }
+// final-contacts (10 Nov 2026): the same two messages in Bangla (আপনি forms); the page picks by its language
+function waTextBn(name, items, shop) { return 'আসসালামু আলাইকুম' + (name ? ' ' + name : '') + ', ' + items.map((i) => i.name).join(' / ') + ' কি শেষের দিকে? এখানে রিপ্লাই দিলে ' + (shop || 'আমরা') + ' আপনার জন্য রেখে দেবে।'; }
+const ASK_EN = (name) => 'Hello ' + (name || '') + ', may we message you when you are likely to need more filament? Reply YES and we will.';
+const ASK_BN = (name) => 'আসসালামু আলাইকুম' + (name ? ' ' + name : '') + ', ফিলামেন্ট শেষ হওয়ার সময় হলে আমরা কি আপনাকে মেসেজ দিতে পারি? হ্যাঁ লিখে রিপ্লাই দিলে আমরা জানাব।';
 export async function erpRefillDue(ctx) {
   const S = await settings(ctx);
   const all = Object.values(await rhythms(ctx));
@@ -191,8 +195,10 @@ export async function erpRefillDue(ctx) {
   const consent = {}; for (const r of await ctx.tx`select customer_key, reminders from customer_consent where business_id = ${ctx.biz}`) consent[str(r.customer_key)] = !!r.reminders;
   let shop = str(ctx.s.businessName); try { shop = str((await (await import('./sales.js')).qProfile(ctx)).name) || shop; } catch (_) { /* the business name */ }
   const due = all.filter((r) => now >= r.lastAt + r.avgDays * 0.9 * DAY && !(sent[r.key] && now - sent[r.key] < 14 * DAY)).sort((a, b) => (a.lastAt + a.avgDays * DAY) - (b.lastAt + b.avgDays * DAY));
-  const row = (r) => { const d = str(r.phone).replace(/[^0-9]/g, ''); return { key: r.key, name: r.name, phone: r.phone, buys: r.buys, avgDays: r.avgDays, lastAt: day(r.lastAt), nextAt: day(r.nextAt), overdueDays: Math.max(0, Math.round((now - r.nextAt) / DAY)), items: r.items, consent: !!consent[r.key],
-    whatsapp: d ? 'https://wa.me/' + (d.startsWith('0') ? '88' + d : d) + '?text=' + encodeURIComponent(consent[r.key] ? waText(r.name, r.items, shop) : 'Hello ' + (r.name || '') + ', may we message you when you are likely to need more filament? Reply YES and we will.') : '' }; };
+  const row = (r) => { const d = str(r.phone).replace(/[^0-9]/g, ''); const to = d ? 'https://wa.me/' + (d.startsWith('0') ? '88' + d : d) + '?text=' : '';
+    return { key: r.key, name: r.name, phone: r.phone, buys: r.buys, avgDays: r.avgDays, lastAt: day(r.lastAt), nextAt: day(r.nextAt), overdueDays: Math.max(0, Math.round((now - r.nextAt) / DAY)), items: r.items, consent: !!consent[r.key],
+    whatsapp: to ? to + encodeURIComponent(consent[r.key] ? waText(r.name, r.items, shop) : ASK_EN(r.name)) : '',
+    whatsappBn: to ? to + encodeURIComponent(consent[r.key] ? waTextBn(r.name, r.items, shop) : ASK_BN(r.name)) : '' }; };
   return { on: S.refillOn, ready: due.filter((r) => consent[r.key]).map(row), askFirst: due.filter((r) => !consent[r.key]).map(row), tracked: all.length };
 }
 export async function erpReminderSent(ctx, payload) {

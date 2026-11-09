@@ -333,11 +333,13 @@ export async function erpShipmentCostVoid(ctx, payload) {
   if (!c) throw new Error('No such cost on "' + ref + '".');
   if (str(c.voided)) throw new Error('That cost is already struck out.');
   const amount = num(c.amount);
-  const lots = await ctx.tx`select id, qty_in, qty_left, coalesce(unit_cost, 0) as unit_cost from stock_lots
+  const lots = await ctx.tx`select id, qty_in, qty_left, coalesce(unit_cost, 0) as unit_cost, received_at from stock_lots
                             where business_id = ${ctx.biz} and reference = ${ref} and source = 'receive' and qty_in > 0 for update`;
   if (!lots.length) throw new Error('No shipment called "' + ref + '".');
   const value = lots.reduce((t, l) => t + num(l.unit_cost) * num(l.qty_in), 0);
   if (!(value > 0)) throw new Error('The lots of this shipment carry no cost to take it off.');
+  // final-server (10 Nov 2026): a closed month keeps its costs - the shipment's month and every month a unit of it was sold in
+  if (lots[0].received_at) await assertOpen(ctx, new Date(lots[0].received_at), 'the costs of a shipment received there cannot be changed');
   const keep = Math.max(0, 1 - amount / value);   // every unit of the shipment keeps this much of its cost
   const who = str(ctx.s.name) || 'Someone';
   const changed = [];
@@ -346,9 +348,10 @@ export async function erpShipmentCostVoid(ctx, payload) {
     const before = num(l.unit_cost), after = round2(before * keep);
     await ctx.tx`update stock_lots set unit_cost = ${after} where id = ${l.id}`;
     offShelf += (before - after) * num(l.qty_left);
-    const draws = await ctx.tx`select d.id, d.qty, d.reversed, coalesce(d.unit_cost, 0) as unit_cost, d.movement_id, d.product_id, m.invoice_id
+    const draws = await ctx.tx`select d.id, d.qty, d.reversed, coalesce(d.unit_cost, 0) as unit_cost, d.movement_id, d.product_id, m.invoice_id, m.created_at as sold_at
                                from lot_draws d join stock_movements m on m.id = d.movement_id where d.lot_id = ${l.id}`;
     for (const d of draws) {
+      if (d.invoice_id && d.sold_at) await assertOpen(ctx, new Date(d.sold_at), 'the cost of goods sold there cannot be changed');   // final-server
       const dBefore = num(d.unit_cost), dAfter = round2(dBefore * keep);
       const nd = await ctx.tx`update lot_draws set unit_cost = ${dAfter} where id = ${d.id}`;
       if (!nd.count) throw new Error('The draw could not be re-costed.');

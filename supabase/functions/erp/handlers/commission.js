@@ -175,24 +175,34 @@ export async function erpCommissionRuleVoid(ctx, payload) {
   return erpCommission(ctx, { month: payload && payload.month });
 }
 
-/** Pay a seller: an expense row 'Commission paid to NAME for yyyy-MM' (the cost was counted when earned). */
+/** Pay a seller: an expense row 'Commission paid to NAME for yyyy-MM' (the cost was counted when earned).
+ *  final-money (10 Nov 2026): `items: [{ seller, amount }]` pays SEVERAL sellers in one go (month end), each with its
+ *  own expense line; one that cannot be paid stops the lot. Without `items` it is the one-seller payment it was. */
 export async function erpCommissionPay(ctx, payload) {
   if (!roleAtLeast(actRole(ctx.s), 'shareholder')) throw new Error('Only the owner or a shareholder pays commission.');
   payload = payload || {};
   await ctx.tx`select pg_advisory_xact_lock(hashtext(${'commpay:' + ctx.biz}))`;
   const month = isMonth(payload.month) ? payload.month : formatDate(ctx.now, 'yyyy-MM');
-  const amount = round2(num(payload.amount));
-  if (!(amount > 0)) throw new Error('How much is paid?');
-  const c = await erpCommission(ctx, { month });
-  const s = c.sellers.find((x) => x.id === str(payload.seller));
-  if (!s) throw new Error('That person earned no commission in ' + month + '.');
-  if (amount > s.left + 0.5) throw new Error(s.name + ' has ' + Math.max(0, s.left) + ' left to be paid' + (s.carried < -0.5 ? ' (' + Math.round(-s.carried) + ' taken back by returns comes off first)' : '') + ' for ' + month + '.');
+  const items = Array.isArray(payload.items) && payload.items.length ? payload.items.slice(0, 50) : [{ seller: payload.seller, amount: payload.amount }];
   const { erpExpenseAdd } = await import('./expenses.js');
-  const desc = 'Commission paid to ' + s.name + ' for ' + month;
-  await erpExpenseAdd(ctx, { amount, description: desc, category: 'Commission', month, account: str(payload.account) });
-  await ctx.tx`update expenses set item_no = ${'cm:' + s.id} where id = (select id from expenses where business_id = ${ctx.biz} and category = 'Commission'
-               and description = ${desc} and item_no is null and coalesce(btrim(voided), '') = '' order by recorded_at desc limit 1)`;   // fix-3 M15
-  return erpCommission(ctx, { month });
+  const paid = [];
+  for (const it of items) {
+    const amount = round2(num(it && it.amount));
+    if (!(amount > 0)) throw new Error('How much is paid?');
+    const c = await erpCommission(ctx, { month });
+    const s = c.sellers.find((x) => x.id === str(it && it.seller));
+    if (!s) throw new Error('That person earned no commission in ' + month + '.');
+    if (amount > s.left + 0.5) throw new Error(s.name + ' has ' + Math.max(0, s.left) + ' left to be paid' + (s.carried < -0.5 ? ' (' + Math.round(-s.carried) + ' taken back by returns comes off first)' : '') + ' for ' + month + '.');
+    const desc = 'Commission paid to ' + s.name + ' for ' + month;
+    await erpExpenseAdd(ctx, { amount, description: desc, category: 'Commission', month, account: str(payload.account) });
+    await ctx.tx`update expenses set item_no = ${'cm:' + s.id} where id = (select id from expenses where business_id = ${ctx.biz} and category = 'Commission'
+                 and description = ${desc} and item_no is null and coalesce(btrim(voided), '') = '' order by recorded_at desc limit 1)`;   // fix-3 M15
+    Object.keys(ctx.memo).forEach((k) => { if (k.indexOf('commission:') === 0 || k.indexOf('pnl:') === 0) delete ctx.memo[k]; });
+    paid.push({ seller: s.id, name: s.name, amount });
+  }
+  const out = await erpCommission(ctx, { month });
+  out.paidNow = paid;
+  return out;
 }
 
 /** Who can be named the seller on a sale (active members), the person asking first. */

@@ -13,13 +13,14 @@ import { roleAtLeast } from '../allow.js';
 import { platformAdmin } from './platform.js';
 import { sealJSON } from '../lib/bridge.js';
 import { formatDate } from '../lib/time.js';
-import { PROVIDERS, TASKS, providerKeys, routes, saveRoutes, bestModels, ai } from '../lib/ai.js';
+import { PROVIDERS, TASKS, providerKeys, routes, saveRoutes, bestModels, ai, keyScope } from '../lib/ai.js';
+import { setSecret } from '../lib/ext.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const ctl = (ctx) => (ctx.deps && ctx.deps.control) || ctx.sql;
 const KEY_RE = { openai: /^sk-[A-Za-z0-9_-]{20,300}$/, anthropic: /^sk-ant-[A-Za-z0-9_-]{20,300}$/, gemini: /^[A-Za-z0-9_-]{20,120}$/, custom: /^\S{1,300}$/ };
 
-function owner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder chooses the AI. If you need this, ask the owner to open it for you (Settings > Users).'); }
+function owner(ctx) { if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder chooses the AI. If you need this, ask the owner to open it for you (Settings > Users).'); }
 
 export async function erpAiBrain(ctx) {
   owner(ctx);
@@ -31,10 +32,13 @@ export async function erpAiBrain(ctx) {
                         from ai_work where business_id = ${ctx.biz} and at >= ${since} group by model order by 5 desc limit 20`))
       .map((r) => ({ model: str(r.model), n: r.n, tokensIn: Number(r.tin), tokensOut: Number(r.tout), bdt: Number(r.bdt) }));
   } catch (_) { use = []; }
+  // final-ai (10 Nov 2026): a company may keep its own key per provider (used before the platform's) - so canSetKeys is
+  // true for the owner / shareholder too; platformKeys says whether the keys saved here are the platform's (admin)
+  const scopes = {}; for (const p of Object.keys(PROVIDERS)) scopes[p] = await keyScope(ctx, p);
   return {
     providers: Object.keys(PROVIDERS).map((p) => ({ key: p, name: PROVIDERS[p].name, set: !!keys[p] && (p !== 'custom' || !!keys.customBase), last4: keys[p] ? keys[p].slice(-4) : '',
-      base: p === 'custom' ? keys.customBase : '', web: PROVIDERS[p].web, vision: PROVIDERS[p].vision, pdf: PROVIDERS[p].pdf, audio: PROVIDERS[p].audio })),
-    tasks: Object.keys(TASKS).map((t) => ({ key: t, name: TASKS[t] })), routes: R, canSetKeys: admin, use,
+      base: p === 'custom' ? keys.customBase : '', web: PROVIDERS[p].web, vision: PROVIDERS[p].vision, pdf: PROVIDERS[p].pdf, audio: PROVIDERS[p].audio, scope: keys[p] ? scopes[p] : '' })),
+    tasks: Object.keys(TASKS).map((t) => ({ key: t, name: TASKS[t] })), routes: R, canSetKeys: true, platformKeys: admin, use,
   };
 }
 
@@ -57,11 +61,26 @@ export async function erpAiBrainSet(ctx, payload) {
 
 export async function erpAiBrainKey(ctx, payload) {
   if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder keeps the AI key. If you need this, ask the owner.');   // keys stay the owner's
-  if (!(await platformAdmin(ctx))) throw new Error('Only the platform admin sets the AI keys.');
   const p = payload || {}, provider = str(p.provider);
   if (!PROVIDERS[provider]) throw new Error('Which AI?');
   const key = str(p.key);
   const c = ctl(ctx), name = PROVIDERS[provider].secret;
+  if (!(await platformAdmin(ctx)) || p.mine) {
+    // final-ai (10 Nov 2026): not the platform admin (or the admin asking for this company's own key): the key is this
+    // business's own, sealed in business_secrets, used before the platform's key for every AI call of this business
+    if (provider === 'custom') {
+      const base = str(p.base).replace(/\/+$/, '');
+      if (base && !/^https?:\/\/[^\s]+$/.test(base)) throw new Error('The server address is like https://ai.example.com/v1');
+      if (base || p.base !== undefined) await setSecret(ctx, 'AI_CUSTOM_AI_BASE', base);
+    }
+    if (!key) { if (p.remove) await setSecret(ctx, 'AI_' + name, ''); }
+    else {
+      if (!KEY_RE[provider].test(key)) throw new Error('That does not look like a ' + PROVIDERS[provider].name + ' API key.' + (provider === 'openai' ? ' It starts with sk-.' : provider === 'anthropic' ? ' It starts with sk-ant-.' : ''));
+      await setSecret(ctx, 'AI_' + name, key);
+    }
+    ctx.memo = {};
+    return erpAiBrain(ctx);
+  }
   const put = async (k, v) => {
     const enc = ctx.deps.bridgeKey ? await sealJSON(ctx.deps.bridgeKey, { v }) : 'v0.' + v;
     await c`insert into erp_provider_secrets (key, value_enc, updated_at, updated_by) values (${k}, ${enc}, now(), ${ctx.s.userId})

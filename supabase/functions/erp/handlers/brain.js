@@ -39,7 +39,7 @@ const KIND = ['fact', 'event', 'lesson'];
 const when = (t) => (t ? formatDate(new Date(t), 'd MMM yyyy') : '');
 
 async function gate(ctx) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder or a shareholder sets the Business Brain. If you need this, ask the owner to open it for you (Settings > Users).');
+  if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner or a shareholder sets the Business Brain. If you need this, ask the owner to open it for you (Settings > Users).');
   if (!(await platformAdmin(ctx)) && await appIsOff(ctx.deps, ctx.sql, 'engine', ctx)) throw new Error('The Engine is not open on this ERP yet.');
   await (await import('./engine.js')).markOn(ctx);
 }
@@ -61,8 +61,11 @@ export async function erpBrain(ctx) {
   const facts = (await ctx.tx`select * from engine_facts where business_id = ${ctx.biz} and invalid_at is null order by valid_from desc limit 150`)
     .map((f) => ({ id: f.id, kind: f.kind, text: f.text, source: f.source, since: when(f.valid_from), confidence: f.confidence }));
   const old = (await ctx.tx`select count(*)::int n from engine_facts where business_id = ${ctx.biz} and invalid_at is not null`)[0].n;
+  // final-ai (10 Nov 2026): the struck-out facts are shown (folded), each with its reason, and can be brought back
+  const oldList = (await ctx.tx`select * from engine_facts where business_id = ${ctx.biz} and invalid_at is not null order by invalid_at desc limit 50`)
+    .map((f) => ({ id: f.id, kind: f.kind, text: f.text, source: f.source, since: when(f.valid_from), until: when(f.invalid_at), why: str(f.invalid_why) }));
   return {
-    status: b.status, version: b.version, approvedAt: when(b.approved_at), approvedBy: str(b.approved_by), draftJob,
+    status: b.status, version: b.version, approvedAt: when(b.approved_at), approvedBy: str(b.approved_by), draftJob, oldList,
     blocks: BLOCKS.map((k) => { const v = bl[k.key] || {}; return { key: k.key, title: k.title, q: k.q, limit: k.limit, locked: !!k.locked,
       value: str(v.value), draft: str(v.draft), source: str(v.source), updated: when(v.updated) }; }),
     facts, oldFacts: old, dataStart: str(await getConfig(ctx, 'data_start', '')), engineOn: str(await getConfig(ctx, 'engine_on', '')) === '1',
@@ -131,7 +134,25 @@ export async function erpBrainFact(ctx, payload) {
   } else if (p.invalidate) {
     if (!UUID.test(str(p.invalidate))) throw new Error('Which fact?');
     await ctx.tx`update engine_facts set invalid_at = now(), invalid_why = ${str(p.why).slice(0, 200) || 'Removed by the owner'} where business_id = ${ctx.biz} and id = ${str(p.invalidate)} and invalid_at is null`;
-  } else throw new Error('Add or remove a fact?');
+  } else if (p.edit) {
+    // final-ai (10 Nov 2026): editing a fact = the old wording is struck out with the reason, the new one is kept (nothing lost)
+    if (!UUID.test(str(p.edit))) throw new Error('Which fact?');
+    const text = str(p.text).slice(0, 500);
+    if (text.length < 4) throw new Error('Write the fact.');
+    const old = (await ctx.tx`select * from engine_facts where business_id = ${ctx.biz} and id = ${str(p.edit)} and invalid_at is null`)[0];
+    if (!old) throw new Error('That fact is not there any more.');
+    if (text.toLowerCase() !== str(old.text).toLowerCase()) {
+      await ctx.tx`update engine_facts set invalid_at = now(), invalid_why = ${'Edited by ' + str(ctx.s.name)} where id = ${old.id}`;
+      await addFact(ctx, { kind: KIND.includes(str(p.kind)) ? str(p.kind) : old.kind, text, keywords: old.keywords || [], source: 'owner', confidence: 1 });
+    }
+  } else if (p.restore) {
+    if (!UUID.test(str(p.restore))) throw new Error('Which fact?');
+    const f = (await ctx.tx`select * from engine_facts where business_id = ${ctx.biz} and id = ${str(p.restore)} and invalid_at is not null`)[0];
+    if (!f) throw new Error('That fact is not struck out.');
+    const dup = (await ctx.tx`select id from engine_facts where business_id = ${ctx.biz} and invalid_at is null and lower(text) = lower(${str(f.text)})`)[0];
+    if (dup) throw new Error('The same fact is already in the list.');
+    await ctx.tx`update engine_facts set invalid_at = null, invalid_why = null where id = ${f.id}`;
+  } else throw new Error('Add, edit, strike out or bring back a fact?');
   return erpBrain(ctx);
 }
 

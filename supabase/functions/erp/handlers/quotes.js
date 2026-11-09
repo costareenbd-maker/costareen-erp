@@ -198,16 +198,16 @@ async function erpQuoteList(ctx, payload) {
   const status = String(payload.status || 'All');
   const offset = Math.max(0, Math.round(num(payload.offset)));
   const rows = await ctx.tx`select id, reference, version, status, title, customer, kind, total, currency,
-                                   issue_date, created_at, updated_at, created_by
+                                   issue_date, created_at, updated_at, created_by, doc->>'invoiceNo' as invoice_no
                             from quotations where business_id = ${ctx.biz}
                             order by updated_at desc`;
   const all = rows.map((r) => ({
-    id: String(r.id), reference: String(r.reference ?? ''), version: num(r.version), status: String(r.status ?? ''),
+    id: String(r.id), reference: String(r.reference ?? ''), version: num(r.version), status: String(r.status ?? ''), invoiceNo: String(r.invoice_no ?? ''),
     title: String(r.title ?? ''), customer: String(r.customer ?? ''), kind: String(r.kind ?? ''), total: num(r.total),
     currency: String(r.currency ?? ''), issueDate: ymd(r.issue_date), createdAt: iso(r.created_at),
     updatedAt: iso(r.updated_at), createdBy: String(r.created_by ?? '') }));
-  const counts = { total: all.length, draft: 0, ready: 0 };
-  all.forEach((x) => { if (x.status === 'Ready') counts.ready++; else counts.draft++; });
+  const counts = { total: all.length, draft: 0, ready: 0, invoiced: 0 };
+  all.forEach((x) => { if (x.status === 'Ready') counts.ready++; else if (x.status === 'Invoiced') counts.invoiced++; else counts.draft++; });
   const list = all.filter((x) => {
     if (status !== 'All' && x.status !== status) return false;
     return !q || (x.reference + ' ' + x.title + ' ' + x.customer).toLowerCase().indexOf(q) >= 0;
@@ -338,6 +338,8 @@ async function erpQuoteSave(ctx, payload) {
                     ') after you opened it. Your copy is kept here - reopen it to see theirs.');
   }
   const old = at ? docOf(at) : null;
+  // final-sales: a quotation that became an invoice stays "Invoiced" (and keeps the invoice number) whatever is edited
+  if (old && old.invoiceNo) { q.invoiceNo = String(old.invoiceNo); q.status = 'Invoiced'; }
 
   // identity: taken once, kept, and only refreshed when asked
   if (!old || payload.refreshIdentity || !old.company) q.company = await companySnapshot(ctx, q.bankIds);

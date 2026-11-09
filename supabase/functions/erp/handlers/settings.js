@@ -36,6 +36,10 @@ const CONFIG_ROWS = ['business_name', 'currency', 'default_reorder', 'default_le
 // Kept in business_config by other screens but were never SETTINGS rows
 // (COST_PRICES N2:O4) - not listed under "System values".
 const NOT_SETTINGS_ROWS = { cost_rate: true, cost_handling: true, cost_min_margin: true };
+// final-shell (10 Nov 2026): keys the ERP writes for itself (the AI watch, inbox profile, social, tools, ads, connection
+// state...). Each has its own screen; they used to appear as raw "arena_room" / "watch_now" rows under System values,
+// where a stray edit could break the feature that reads them.
+const INTERNAL_CONFIG = /^(watch_|seo_|arena_|engine_|sf_|social_|skills_|tool_|taste_|inbox_profile|google_|meta_|woo_|ad_|ads_|fighters$|money_rules$|website_|store_url$|supplier_totals_from$|youtube_key$|market_phone$|passport_show_seller$|brand_|factory_|push_|creator_|n8n_|gemini_|openai_|chatgpt_|wa_|courier_|steadfast_|pathao_)|(_cache|_state|_error|_draft|_prev|_at|_last|_init|_now|_on|_key)$/;
 
 async function configDefaults(ctx) {
   const b = await ctx.tx`select name from businesses where id = ${ctx.biz}`;
@@ -66,6 +70,7 @@ async function configRows(ctx) {
   if (await getSecret(ctx, 'CZ_SYNC_KEY')) out.push({ key: 'website_sync_key', value: '' });
   for (const r of stored) {
     if (CONFIG_ROWS.includes(r.key) || NOT_SETTINGS_ROWS[r.key] || r.key === 'website_sync_key') continue;
+    if (INTERNAL_CONFIG.test(r.key)) continue;   // final-shell: state written by the ERP itself (watch_now, inbox_profile…) is not a setting
     out.push({ key: r.key, value: have[r.key] });
   }
   return out;
@@ -149,6 +154,14 @@ export async function erpConfigSet(ctx, key, value) {
   await lock(ctx, 'settings');
   const rows = await configRows(ctx);
   if (!rows.find((r) => r.key === k)) throw new Error('Setting not found: ' + k);
+  // final-shell (10 Nov 2026): every system value is checked before it is kept - a word where a number belongs used to
+  // be saved and then read by the forms (reorder level "abc" = every new product low on stock; lead time "" = NaN days)
+  const v = String(value ?? '').trim();
+  if (k === 'business_name') { if (!v) throw new Error('Type the business name.'); if (v.length > 80) throw new Error('The business name is too long (80 letters at most).'); value = v; }
+  if (k === 'currency') { if (!/^[A-Za-z]{3}$/.test(v)) throw new Error('The currency is a 3-letter code, e.g. BDT.'); value = v.toUpperCase(); }
+  if (k === 'default_reorder') { const n = /^\d+$/.test(v) ? Number(v) : NaN; if (!Number.isInteger(n) || n < 0 || n > 100000) throw new Error('The reorder level is a whole number of units, e.g. 5.'); value = String(n); }
+  if (k === 'default_lead_time') { const n = /^\d+$/.test(v) ? Number(v) : NaN; if (!Number.isInteger(n) || n < 0 || n > 365) throw new Error('Supplier delivery days is a whole number of days (0 to 365), e.g. 7.'); value = String(n); }
+  if (k === 'n8n_webhook_url' && v && !/^https:\/\/[^\s/]+\.[^\s/]+/.test(v)) throw new Error('The webhook address must start with https:// (or leave it empty).');
   if (k === 'next_invoice_num') {
     // the counter the invoice screen numbers from (invoice_counters)
     const n = Number(String(value ?? '').trim());
@@ -663,7 +676,8 @@ export async function erpTool(ctx, action) {
     return 'Reorder levels recalculated from sales: ' + ap.changed + ' changed (' +
       ap.raised + ' raised, ' + ap.lowered + ' lowered).';
   }
-  throw new Error('Unknown action: ' + a);
+  // final-shell: a plain sentence - "Unknown action" is the page's signal for "this page is older than the server" and raised that banner wrongly
+  throw new Error('There is no maintenance job called "' + a + '".');
 }
 
 /** Timing and error report for every section (ERP.js:2004). */

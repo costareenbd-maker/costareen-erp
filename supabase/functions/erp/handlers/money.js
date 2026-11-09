@@ -7,6 +7,15 @@ import { formatDate, num, round2, money2 } from '../lib/time.js';
 import { roleAtLeast, powerOn, callAllowed } from '../allow.js';
 import { custKey } from '../lib/phone.js';
 import { accountForMethod } from './cash.js';
+import { assertOpen } from '../lib/period.js';
+
+/** final-money (10 Nov 2026): the same payment written twice within a minute (a double tap, a retried request) is
+ *  refused plainly instead of being booked twice. */
+async function refuseDoubleTap(ctx, invoiceNo, amount, method, by) {
+  const dup = await ctx.tx`select 1 from payments where business_id = ${ctx.biz} and coalesce(invoice_no, '') = ${invoiceNo || ''} and amount = ${round2(amount)}
+                           and coalesce(method, '') = ${method || ''} and coalesce(recorded_by, '') = ${by || ''} and paid_at > now() - interval '60 seconds' limit 1`;
+  if (dup.length) throw new Error('This same payment was recorded a moment ago (a double tap?). It is already in the books; if it really is a second payment, wait a minute and record it again.');
+}
 
 export const ERP_PAY_REASONS = {
   payment:  { label: 'Payment received', minRole: 'manager', money: true },
@@ -316,13 +325,33 @@ export async function erpSettleDue(ctx, payload) {
   if (!roleAtLeast(ctx.s.role, rule.minRole)) {
     throw new Error(rule.label + ' is not something your account can do. Ask the owner.');
   }
-  const amount = money2(payload.amount);   // fix-5 L3/L5: whole paisa, never 0.004
+  let amount = money2(payload.amount);   // fix-5 L3/L5: whole paisa, never 0.004
+  if (!(amount >= 0.01) && Array.isArray(payload.parts) && payload.parts.length) amount = round2(payload.parts.reduce((t, p) => t + money2(p && p.amount), 0));   // final-money: the parts say how much
   if (!(amount >= 0.01)) throw new Error('How much? (at least 0.01)');
   const note = str(payload.note);
   if (!rule.money && !note) {
     throw new Error(rule.label + ' needs a note saying why, so the books can be explained later.');
   }
   if (rule.increases) return undoPayment(ctx, payload, amount, note);
+  await assertOpen(ctx, ctx.now, 'a payment cannot be recorded today');   // final-money: every money write checks the lock
+
+  // final-money: ONE payment can come in several ways (500 cash + 1,500 bKash). `parts: [{ amount, method }]` - each
+  // part is its own line in the ledger (its own account), all against the same invoices, oldest first; the total must
+  // equal `amount` when both are given. Without `parts` it is the one-method payment it always was.
+  let parts = [];
+  if (rule.money && Array.isArray(payload.parts) && payload.parts.length) {
+    for (const p of payload.parts.slice(0, 8)) {
+      const a = money2(p && p.amount);
+      if (!(a >= 0.01)) throw new Error('Every part of the payment needs an amount (at least 0.01).');
+      parts.push({ amount: a, method: str(p && p.method) || 'Cash' });
+    }
+    const sum = round2(parts.reduce((t, p) => t + p.amount, 0));
+    if (payload.amount !== undefined && payload.amount !== null && String(payload.amount) !== '' && Math.abs(sum - amount) > 0.005) {
+      throw new Error('The parts add up to ' + sum.toFixed(2) + ', not ' + amount.toFixed(2) + '. Make them agree.');
+    }
+    if (parts.length === 1) parts = [];   // one part is just a method
+  }
+  const total = parts.length ? round2(parts.reduce((t, p) => t + p.amount, 0)) : amount;
 
   let targets = [];
   if (payload.orderId) {
@@ -338,27 +367,36 @@ export async function erpSettleDue(ctx, payload) {
   let owed = 0;
   for (const t of targets) owed += t.due;
   owed = round2(owed);
-  if (amount > owed + 0.005) {   // fix-5 L3: not even 0.40 more than is owed
+  if (total > owed + 0.005) {   // fix-5 L3: not even 0.40 more than is owed
     throw new Error('That is more than is owed. The balance is ' + owed.toFixed(0) + '.');
   }
 
   await lock(ctx, 'payments');
-  let left = amount;
-  const touched = [], now = new Date();
-  for (let k = 0; k < targets.length && left > 0.004; k++) {
-    const bite = Math.min(left, targets[k].due);
-    await addPayment(ctx, {
-      id: 'P' + stamp(now) + '-' + k, order: targets[k].id, customer: targets[k].customer, at: now,
-      amount: round2(bite), method: rule.money ? String(payload.method || 'Cash') : 'Adjusted',
-      note: (note ? note + ' ' : '') + '[' + reason + ']',
-    });
-    touched.push({ id: targets[k].id, applied: round2(bite) });
-    left = round2(left - bite);
+  const ways = parts.length ? parts : [{ amount: total, method: rule.money ? String(payload.method || 'Cash') : 'Adjusted' }];
+  await refuseDoubleTap(ctx, targets[0].id, Math.min(ways[0].amount, targets[0].due), ways[0].method, who(ctx));
+  const now = new Date(), touched = [];
+  const dues = targets.map((t) => ({ ...t }));   // what each invoice still owes as the parts are laid on
+  let k = 0;
+  for (const w of ways) {
+    let left = w.amount;
+    for (let i = 0; i < dues.length && left > 0.004; i++) {
+      if (!(dues[i].due > 0.004)) continue;
+      const bite = Math.min(left, dues[i].due);
+      await addPayment(ctx, {
+        id: 'P' + stamp(now) + '-' + (k++), order: dues[i].id, customer: dues[i].customer, at: now,
+        amount: round2(bite), method: w.method,
+        note: (note ? note + ' ' : '') + '[' + reason + ']' + (ways.length > 1 ? ' [split ' + ways.length + ']' : ''),
+      });
+      const hit = touched.find((t) => t.id === dues[i].id);
+      if (hit) hit.applied = round2(hit.applied + bite); else touched.push({ id: dues[i].id, applied: round2(bite) });
+      dues[i].due = round2(dues[i].due - bite);
+      left = round2(left - bite);
+    }
   }
   for (const t of touched) await syncInvoiceStatus(ctx, t.id);
 
   const after = payload.orderId ? null : await erpCustomerAccount(ctx, payload);
-  return { ok: true, reason, label: rule.label, amount, applied: touched,
+  return { ok: true, reason, label: rule.label, amount: total, parts: ways.length > 1 ? ways : undefined, applied: touched,
            balance: after ? after.balance : null, dues: await erpDues(ctx) };
 }
 
@@ -399,7 +437,9 @@ async function undoPayment(ctx, payload, amount, note) {
       (want ? ' on ' + want : '') + ', so no more than that can be taken back.');
   }
 
+  await assertOpen(ctx, ctx.now, 'a payment cannot be taken back today');   // final-money
   await lock(ctx, 'payments');
+  await refuseDoubleTap(ctx, mine[0].id, -Math.min(amount, mine[0].paid), 'Undone', who(ctx));
   let left = amount;
   const touched = [], now = new Date();
   for (let k = 0; k < mine.length && left > 0.004; k++) {
@@ -426,7 +466,9 @@ export async function erpTakeAdvance(ctx, payload) {
   const phone = str(payload.phone), name = str(payload.name);
   const key = custKey(phone, name);
   if (!key || key === 'n:') throw new Error('Whose advance is this?');
+  await assertOpen(ctx, ctx.now, 'an advance cannot be recorded today');   // final-money
   await lock(ctx, 'payments');
+  await refuseDoubleTap(ctx, '', amount, String(payload.method || 'Cash'), who(ctx));
   await addPayment(ctx, {
     id: 'A' + stamp(), order: '', customer: name || phone, key, amount,
     method: String(payload.method || 'Cash'),

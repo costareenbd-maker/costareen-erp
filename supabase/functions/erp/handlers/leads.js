@@ -79,6 +79,25 @@ async function needOn(ctx) {
   if (await appIsOff(ctx.deps, ctx.sql, 'leads', ctx)) throw new Error('Leads is not open on this ERP yet.');
 }
 const key10 = (p) => { const d = normalizePhone(str(p)).replace(/[^0-9]/g, ''); return d.length >= 8 ? d.slice(-10) : ''; };
+/**
+ * A lead's phone as it is kept (final-contacts, 10 Nov 2026). A Bangladeshi mobile is written 01XXXXXXXXX; a number
+ * abroad (a Shenzhen supplier, a buyer in Dubai) keeps its + and country code - before, phone11 refused every foreign
+ * number, so a supplier import from China lost all its phones. Anything that is not a phone is refused plainly.
+ */
+export function leadPhone(p) {
+  const raw = str(p);
+  if (!raw) return '';
+  const d = raw.replace(/\D/g, '');
+  if (raw.charAt(0) === '+' && d.indexOf('880') !== 0) {
+    if (!/^[1-9]\d{7,14}$/.test(d)) throw new Error('"' + raw + '" is not a phone number. A number abroad is + then the country code and the number.');
+    return '+' + d;
+  }
+  const d2 = d.replace(/^00/, '');
+  const bd = /^880/.test(d2) || /^0?1[3-9]\d{8}$/.test(d2);
+  // "8613900000000" / "0086139..." typed without the +: a number abroad all the same
+  if (!bd && /^[1-9]\d{10,14}$/.test(d2)) return '+' + d2;
+  return phone11(raw).slice(0, 40);
+}
 const cleanUrl = (u) => { const s = str(u); if (!s) return ''; return (/^https?:\/\//i.test(s) ? s : 'https://' + s).replace(/[)\].,;]+$/, '').slice(0, 400); };
 
 /** Add one lead unless it is already there. -> { id, added } */
@@ -94,9 +113,14 @@ export async function addLead(ctx, l, by) {
                                and ((${!!em} and lower(email) = ${em}) or (${!!link} and link = ${link}) or (${!!k} and right(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), 10) = ${k}))
                                limit 1`)[0];
     if (same) return { id: same.id, added: false };
+  } else if (name || company) {
+    // nothing to reach them by: the same name and company of the same kind is the same lead (an import run twice)
+    const same = (await ctx.tx`select id from inbox_leads where business_id = ${ctx.biz} and kind = ${kind}
+                               and lower(coalesce(name, '')) = ${name.toLowerCase()} and lower(coalesce(company, '')) = ${company.toLowerCase()} limit 1`)[0];
+    if (same) return { id: same.id, added: false };
   }
   const src = SRC[str(l.source)] ? str(l.source) : 'team';
-  const ph = str(l.phone) ? (phone11(l.phone) || str(l.phone)).slice(0, 40) : null;
+  const ph = leadPhone(l.phone) || null;
   const r = (await ctx.tx`insert into inbox_leads (business_id, kind, name, company, phone, email, website, link, city, country, want, stage, source, channel,
                             source_ref, follow_up_on, note, added_by, tags)
              values (${ctx.biz}, ${kind}, ${name || null}, ${company || null}, ${ph}, ${em || null}, ${web || null}, ${link || null}, ${str(l.city).slice(0, 80) || null},
@@ -247,7 +271,7 @@ export async function erpLeadUpsert(ctx, payload) {
   if (!old) throw new Error('No such lead.');
   const pick = (k, max) => (l[k] !== undefined ? str(l[k]).slice(0, max) || null : old[k]);
   await ctx.tx`update inbox_leads set kind = ${l.kind === 'supplier' || l.kind === 'customer' ? l.kind : old.kind}, name = ${pick('name', 120)}, company = ${pick('company', 160)},
-      phone = ${l.phone !== undefined ? (str(l.phone) ? (phone11(l.phone) || str(l.phone)).slice(0, 40) : null) : old.phone}, email = ${l.email !== undefined ? str(l.email).toLowerCase() || null : old.email},
+      phone = ${l.phone !== undefined ? (leadPhone(l.phone) || null) : old.phone}, email = ${l.email !== undefined ? str(l.email).toLowerCase() || null : old.email},
       website = ${l.website !== undefined ? cleanUrl(l.website) || null : old.website}, link = ${l.link !== undefined ? cleanUrl(l.link) || null : old.link},
       city = ${pick('city', 80)}, country = ${pick('country', 60)}, want = ${pick('want', 500)}, note = ${pick('note', 2000)},
       source = ${l.source !== undefined && SRC[str(l.source)] ? str(l.source) : old.source},
@@ -290,7 +314,10 @@ export async function erpLeadAct(ctx, payload) {
       const nm = str(l.name) || str(l.company);
       await erpSaveCustomer(ctx, { name: nm, phone: str(l.phone), email: str(l.email), address: [str(l.city), str(l.country)].filter(Boolean).join(', '),
                                    note: ['From a lead (' + (SRC[sourceOf(l)] || {}).name + ')', str(l.company) && str(l.company) !== nm ? str(l.company) : '', str(l.want)].filter(Boolean).join(' - ') });
-      const c = (await ctx.tx`select id from customers where business_id = ${ctx.biz} and lower(name) = ${nm.toLowerCase()} order by created_at desc limit 1`)[0];
+      // the customer is found by the phone first (one phone = one customer), by the name only when there is none
+      const k10 = key10(l.phone);
+      const c = (k10 ? await ctx.tx`select id from customers where business_id = ${ctx.biz} and right(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), 10) = ${k10} order by created_at limit 1`
+                     : await ctx.tx`select id from customers where business_id = ${ctx.biz} and lower(name) = ${nm.toLowerCase()} order by created_at desc limit 1`)[0];
       await ctx.tx`update inbox_leads set customer_id = ${c ? c.id : null}, stage = 5, updated_at = now() where id = ${l.id}`;
       await ev('Made a customer');
     } else if (p.convert === 'supplier') {
@@ -556,14 +583,32 @@ export async function erpLeadImport(ctx, payload) {
   const head = rows[0].map((h) => { for (const k of Object.keys(COLS)) if (COLS[k].test(h.replace(/[_.]/g, ' ').trim())) return k; return ''; });
   if (!head.some((k) => ['name', 'company', 'phone', 'email'].includes(k))) throw new Error('No column called Name, Company, Phone or Email in the first row.');
   const kind = p.kind === 'supplier' ? 'supplier' : 'customer', src = SRC[str(p.source)] ? str(p.source) : 'import';
-  let added = 0, same = 0, bad = 0;
-  for (const r of rows.slice(1)) {
-    const l = { kind, source: src };
-    head.forEach((k, i) => { if (k && r[i]) l[k] = l[k] ? l[k] + ' ' + r[i] : r[i]; });
-    if (!l.name && !l.company && !l.phone && !l.email) { bad++; continue; }
-    try { const x = await addLead(ctx, l, ctx.s.name + ' (import)'); if (x.added) added++; else same++; } catch (_) { bad++; }
+  // final-contacts (10 Nov 2026): every row is tried on its own savepoint, so one bad row never poisons the rest of
+  // the transaction; each skipped row comes back with its number and the plain reason, so the sheet can be fixed.
+  // `check: true` only reports (nothing saved) - the page shows the problems before the real import.
+  let added = 0, same = 0;
+  const errors = [], MAX_ERR = 50;
+  const by = ctx.s.name + ' (import)';
+  const run = async () => {
+    for (let n = 1; n < rows.length; n++) {
+      const r = rows[n];
+      if (!r.some((v) => v)) continue;                                  // an empty line in the sheet
+      const l = { kind, source: src };
+      head.forEach((k, i) => { if (k && r[i]) l[k] = l[k] ? l[k] + ' ' + r[i] : r[i]; });
+      if (!l.name && !l.company && !l.phone && !l.email) { if (errors.length < MAX_ERR) errors.push({ row: n + 1, why: 'no name, company, phone or e-mail' }); continue; }
+      try {
+        const x = await ctx.tx.savepoint(() => addLead(ctx, l, by));
+        if (x.added) added++; else same++;
+      } catch (e) { if (errors.length < MAX_ERR) errors.push({ row: n + 1, why: str(e && e.message || e).slice(0, 160) }); }
+    }
+  };
+  if (p.check) {
+    // a dry run: everything is written, then thrown away
+    try { await ctx.tx.savepoint(async () => { await run(); throw new Error('__check__'); }); } catch (e) { if (str(e && e.message) !== '__check__') throw e; }
+    return { ok: true, check: true, added, same, skipped: errors.length, errors };
   }
-  return { ok: true, added, same, skipped: bad };
+  await run();
+  return { ok: true, added, same, skipped: errors.length, errors };
 }
 
 // ------------------------------------------------------------------ the public forms (leadform-1, 22 Oct 2026)

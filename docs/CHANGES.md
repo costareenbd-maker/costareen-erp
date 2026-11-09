@@ -3906,3 +3906,30 @@ Owner: "the ERP already knows the bank account, the Bangla QR, everything - pull
   web = site-fx + new index.html/sw.js on both Pages projects, previous page in private/live-web-backup-20261109-before-distill.
 - Not done / owner's call: Brand desk tabs, Search Console, Maintenance toast results, Platform tab wording; see the
   area reports.
+
+## final-1 (10 Nov 2026): the last pass - every function checked for "one where many", boot flash gone, audit fixes
+Owner: "after this I will not work on the ERP again; every tool and function must do all it should (example: a joint
+request held only one product); find such things yourself, decide, fix, ship live." Impeccable audit + polish + harden over
+every screen by seven area agents (shell, sales, contacts, goods, money, ai, server); blocks `<!-- final:<area> -->` after
+`<!-- FINAL-MERGE 2026-11-10 -->` in web/app.html; reports in the session scratchpad frag2/*-REPORT.md.
+- Boot (boot-1..3): the old shell no longer flashes on slow phones - the page stays behind the spinner until every block
+  has run AND the sign-in answered (the answer is applied only after parsing; safety 30 s after parsing, max 120 s).
+  Theme > Look switch removed (Clean is the only look). First paint 616 -> 220 ms at 6x CPU; erpDesk cached; tables
+  measured once; fonts non-blocking. The page is 993 KB gzipped; the size is the 230 features, not dead code.
+- One -> many: split payment on New invoice (payload.payments[]) and on Receive due (erpSettleDue.parts); transfers into
+  several accounts (erpCashTransfer.splits); several phones per customer (customers.other_phones, 163); several files per
+  note; up to 8 receipts per expense (a second photo used to delete the first); close every month up to X; pay every seller;
+  "Got all (N)" for a whole joint parcel (erpJointGot requests[]); a second box on a courier parcel; Approve all in the AI hub.
+- Bugs: Save pressed twice booked two invoices (clientKey, 164); Market Wanted board dead (MKW declared twice); striking a
+  shipment cost re-costed sales in closed months; month lock missing on settle/undo/advance/adjust/cash-up/pool lines;
+  receive line with negative qty dropped silently; leads import lost foreign phones; Campaign thumbnails blank; brain/AI
+  stuck loaders; bnApplyOwn dropping later I18N patterns; settings saved raw internal keys; timer jobs could overlap
+  (advisory lock); log tables grew for ever (pruneLogs); bodies > 30 MB refused.
+- Also: money moves keep a trail (165), struck-out transfers stay crossed through, negative balances flagged, quotation
+  "Invoiced" mark, repair job slip, statement paging, customer page paging, Business Brain fact edit/restore, business-level
+  AI keys, chat history on the server, phone card rows for every sideways table, ~400 Bangla strings (System check,
+  Navigator, Watchdog, Joint stock, shell).
+- 166_final_indexes_rls.sql: 26 indexes (erp_errors had none) + RLS sweep where policies exist.
+- Tests: shellfinal 29, salesfinal 31, contactsfinal 31, goodsfinal 62, moneyfinal 115, aifinal 54, serverfinal 32; every
+  suite green except ads 4 (unchanged) and golive (needs IMPORT_DIR). Crawl 44 views x phone/desktop x EN/BN: 0 errors.
+- Not done: lazy-loading screens (a build change); the classic viewDash body (~15 KB, unreachable) left in.

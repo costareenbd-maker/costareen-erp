@@ -130,6 +130,7 @@ export async function erpCustomerPage(ctx, payload) {
     if (custKey(d.phone, d.customer) !== key) continue;
     dueOf[d.id] = d.due; balance += d.due;
   }
+  const lim = Math.min(5000, Math.max(200, Math.round(num(payload && payload.limit)) || 200));
   const nos = invs.map((i) => i.invoice_no);
   const rets = nos.length ? await ctx.tx`select invoice_no, sum(value) as value from returns
                                          where business_id = ${ctx.biz} and invoice_no = any(${nos}) group by invoice_no` : [];
@@ -157,12 +158,13 @@ export async function erpCustomerPage(ctx, payload) {
     name: shownName, phone: shownPhone, email: cust ? str(cust.email) : '', address: cust ? str(cust.address) : '',
     type: cust ? str(cust.type) : '', status: cust ? str(cust.status) : '', source: cust ? str(cust.source) : '',
     note: cust ? str(cust.note) : '', since: day(cust ? cust.created_at : first),
+    otherPhones: cust ? str(cust.other_phones) : '',
     onList: !!cust,
     orders: invoices.length, units, spent: Math.round(spent),
     average: invoices.length ? Math.round(spent / invoices.length) : 0,
     lastOrder: day(last), daysSince: last ? Math.max(0, Math.floor((ctx.now.getTime() - new Date(last).getTime()) / 86400000)) : null,
     balance: Math.round(balance), credit: await creditOf(ctx, key),
-    invoices: invoices.slice(0, 200), moreInvoices: Math.max(0, invoices.length - 200),
+    invoices: invoices.slice(0, lim), moreInvoices: Math.max(0, invoices.length - lim),
     payments: pays.map((p) => ({ when: day(p.paid_at), invoice: str(p.invoice_no), amount: round2(num(p.amount)),
                                  label: paymentLabel(p), note: plainNote(p.note), by: str(p.recorded_by) })),
   };

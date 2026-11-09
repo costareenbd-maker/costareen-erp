@@ -9,14 +9,60 @@ import { formatDate, num, round2, DAY_MS } from '../lib/time.js';
 import { normalizePhone, formatBdPhone, phone11, custKey } from '../lib/phone.js';
 import { saveFile, deleteFile, renderPdf } from '../lib/ext.js';
 import { sameOrder, paidByOrder, addPayment, syncInvoiceStatus, erpDues, lock, stamp, who, outstanding } from './money.js';
+import { assertOpen } from '../lib/period.js';
 
 /** CUSTOMERS rows with their write-order number (the sheet row the page edits by). */
 async function customerRows(ctx) {
   return ctx.tx`
     select id, seq, customer_no, name, phone, email, address, type, total_orders, total_spent,
-           created_at, note, last_order_at, last_product, source, status, customer_key
+           created_at, note, last_order_at, last_product, source, status, customer_key,
+           coalesce(other_phones, '') as other_phones
     from customers where business_id = ${ctx.biz}
     order by seq`;
+}
+
+// final-contacts (10 Nov 2026): a shop has more than one phone number. The main phone stays the identity
+// (customer_key); the others are kept in customers.other_phones ("01811111111, +8613900000000") so the list finds
+// the customer by any of them and the same shop is never added twice under its second number.
+const OTHER_MAX = 5;
+/** One stored phone -> its identity key: last 10 digits of a BD mobile, 'i' + digits for a number abroad. */
+export function phoneKey(p) {
+  const raw = String(p == null ? '' : p).trim(), d = raw.replace(/\D/g, '');
+  if (!d) return '';
+  if (raw.charAt(0) === '+' && d.indexOf('880') !== 0) return 'i' + d;
+  return normalizePhone(d);
+}
+/** The other numbers, cleaned: a string ("a, b / c" or lines) or an array -> "a, b". Refuses a number that is not one. */
+export function cleanOtherPhones(v, mainPhone) {
+  const parts = (Array.isArray(v) ? v : String(v == null ? '' : v).split(/[,;\n\/|]+/)).map((x) => String(x == null ? '' : x).trim()).filter(Boolean);
+  const mainKey = phoneKey(mainPhone), seen = {}, out = [];
+  for (const raw of parts) {
+    const d = raw.replace(/\D/g, ''), d2 = d.replace(/^00/, '');
+    const bd = /^880/.test(d2) || /^0?1[3-9]\d{8}$/.test(d2);
+    let shown;
+    if (raw.charAt(0) === '+' && d.indexOf('880') !== 0) {
+      if (!/^[1-9]\d{7,14}$/.test(d)) throw new Error('"' + raw + '" is not a phone number. A number abroad is + then the country code and the number, like +8613900000000.');
+      shown = '+' + d;
+    } else if (!bd && /^[1-9]\d{10,14}$/.test(d2)) shown = '+' + d2;   // "8613900000000" typed without the +
+    else shown = phone11(raw);              // a Bangladeshi mobile, or a plain sentence why not
+    const k = phoneKey(shown);
+    if (!k || k === mainKey || seen[k]) continue;
+    seen[k] = true; out.push(shown);
+  }
+  if (out.length > OTHER_MAX) throw new Error('At most ' + OTHER_MAX + ' other phone numbers for one customer.');
+  return out.join(', ');
+}
+const splitOthers = (s) => String(s == null ? '' : s).split(/,\s*/).map((x) => x.trim()).filter(Boolean);
+/** Which other customer already uses any of these numbers (main or other). */
+function phoneOwner(rows, keys, skipId) {
+  const want = {}; keys.forEach((k) => { if (k) want[k] = true; });
+  if (!Object.keys(want).length) return null;
+  for (const c of rows) {
+    if (skipId && c.id === skipId) continue;
+    if (want[phoneKey(c.phone)]) return c;
+    for (const o of splitOthers(c.other_phones)) if (want[phoneKey(o)]) return c;
+  }
+  return null;
 }
 
 // ------------------------------------------------------------ erpCustomers
@@ -71,6 +117,7 @@ export async function erpCustomers(ctx) {
       daysSince: days,
       source: str(c.source),
       status: str(c.status),
+      otherPhones: str(c.other_phones),
     });
   }
   out.sort((a, b) => b.spent - a.spent);
@@ -100,7 +147,9 @@ export async function erpCustomerList(ctx, payload) {
     if (lapse === 'never') { if (c.daysSince !== null) return false; }
     else if (lapse) { if (c.daysSince === null || c.daysSince < Number(lapse)) return false; }
     if (!q) return true;
-    return (c.name + ' ' + c.phone + ' ' + c.address).toLowerCase().indexOf(q) !== -1;
+    const qd = q.replace(/\D/g, '');
+    if (qd.length >= 4 && (c.phone + ' ' + c.otherPhones).replace(/\D/g, ' ').indexOf(qd) !== -1) return true;
+    return (c.name + ' ' + c.phone + ' ' + c.otherPhones + ' ' + c.address).toLowerCase().indexOf(q) !== -1;
   });
   const sort = str(payload.sort) || 'spent';
   rows.sort((a, b) => {
@@ -135,18 +184,17 @@ export async function erpSaveCustomer(ctx, data) {
     const hit = await ctx.tx`select id from customers
                              where business_id = ${ctx.biz} and seq = ${isFinite(r) ? r : -1}`;
     if (!hit.length) throw new Error('That customer is no longer on the list. Reload and try again.');
-    // the phone may not be another customer's: one phone = one customer
-    const want = normalizePhone(phone);
-    if (want) {
-      const other = (await ctx.tx`select id, name, phone from customers where business_id = ${ctx.biz} and id <> ${hit[0].id} and coalesce(phone, '') <> ''`)
-        .find((c) => normalizePhone(String(c.phone || '')) === want);
-      if (other) throw new Error('That phone number already belongs to ' + other.name + '. One phone number is one customer.');
-    }
-    const before = (await ctx.tx`select name, phone from customers where id = ${hit[0].id}`)[0];
+    const before = (await ctx.tx`select name, phone, coalesce(other_phones, '') as other_phones from customers where id = ${hit[0].id}`)[0];
+    // the other numbers: sent -> cleaned; not sent -> kept as they were
+    const others = data.otherPhones === undefined ? cleanOtherPhones(before ? before.other_phones : '', phone) : cleanOtherPhones(data.otherPhones, phone);
+    // no phone (main or other) may be another customer's: one phone = one customer
+    const owner = phoneOwner(await customerRows(ctx), [phoneKey(phone)].concat(splitOthers(others).map(phoneKey)), hit[0].id);
+    if (owner) throw new Error('That phone number already belongs to ' + str(owner.name) + ' (' + formatBdPhone(str(owner.phone)) + '). One phone number is one customer - open them instead, or merge the two under Tools.');
     await ctx.tx`
       update customers set name = ${name}, phone = ${phone}, email = ${String(data.email || '')},
         address = ${String(data.address || '')}, type = ${String(data.type || 'Retail')},
         source = ${String(data.source || 'Walk-in')}, status = ${String(data.status || '')},
+        other_phones = ${others},
         customer_key = ${custKey(phone, name)}, updated_at = now()
       where id = ${hit[0].id}`;
     // a new name or phone goes onto everything of this customer: their invoices (by id, or by the old phone), their
@@ -154,8 +202,11 @@ export async function erpSaveCustomer(ctx, data) {
     const oldKey = custKey(before ? before.phone : '', before ? before.name : ''), newKey = custKey(phone, name);
     if (before && (str(before.name) !== name || normalizePhone(before.phone || '') !== normalizePhone(phone))) {
       const oldPh = normalizePhone(before.phone || '');
-      const invs = (await ctx.tx`select id, invoice_no, customer_id, customer_phone, customer_key from invoices where business_id = ${ctx.biz}`)
-        .filter((i) => i.customer_id === hit[0].id || (oldPh && normalizePhone(String(i.customer_phone || '')) === oldPh) || (!oldPh && i.customer_key && i.customer_key === oldKey));
+      // final-server (10 Nov 2026): matched by the database, not by reading every invoice (same three matches as before)
+      const invs = await ctx.tx`select id, invoice_no from invoices where business_id = ${ctx.biz}
+                                 and (customer_id = ${hit[0].id}
+                                      or (${oldPh} <> '' and right(regexp_replace(coalesce(customer_phone, ''), '[^0-9]', '', 'g'), 10) = ${oldPh})
+                                      or (${oldPh} = '' and customer_key = ${oldKey}))`;
       if (invs.length) {
         await ctx.tx`update invoices set customer_name = ${name}, customer_id = ${hit[0].id}, customer_key = ${newKey},
                        customer_phone = case when ${phone} <> '' then ${phone} else customer_phone end
@@ -178,15 +229,20 @@ export async function erpSaveCustomer(ctx, data) {
   const cleanContact = phone ? formatBdPhone(phone) : '';
   const wantKey = normalizePhone(cleanContact);
   const rows = await customerRows(ctx);
+  const others = cleanOtherPhones(data.otherPhones, cleanContact);
   const hit = rows.find((c) => {
     const k = normalizePhone(str(c.phone));
     return (wantKey && k && k === wantKey) ||
            (!wantKey && name && str(c.name).toLowerCase() === name.toLowerCase());
   });
+  // the typed number (or one of the other numbers) is already a customer's second number: that is the same shop
+  const twin = hit ? null : phoneOwner(rows, [wantKey ? phoneKey(cleanContact) : ''].concat(splitOthers(others).map(phoneKey)), null);
+  if (twin) throw new Error((cleanContact ? formatBdPhone(cleanContact) : 'One of the other numbers') + ' is already a number of ' + str(twin.name) + ' (' + formatBdPhone(str(twin.phone)) + '). Open them instead of adding a second card.');
   const address = str(data.address);
   const email = str(data.email);
   if (hit) {
     // already a customer: fill in what was typed, leave their history alone
+    const merged = cleanOtherPhones(splitOthers(hit.other_phones).concat(splitOthers(others)), cleanContact || str(hit.phone));
     await ctx.tx`
       update customers set name = ${name},
         phone = ${cleanContact || str(hit.phone)},
@@ -195,6 +251,7 @@ export async function erpSaveCustomer(ctx, data) {
         type = ${str(data.type) || str(hit.type) || 'Retail'},
         status = ${str(data.status) || str(hit.status)},
         source = ${str(data.source) || str(hit.source) || 'Walk-in'},
+        other_phones = ${merged},
         customer_key = ${custKey(cleanContact || str(hit.phone), name)}, updated_at = now()
       where id = ${hit.id}`;
     forget(ctx, 'CUSTOMERS');
@@ -202,10 +259,10 @@ export async function erpSaveCustomer(ctx, data) {
   }
   await ctx.tx`
     insert into customers (business_id, customer_no, name, phone, email, address, type,
-      total_orders, total_spent, note, last_order_at, last_product, source, status, customer_key)
+      total_orders, total_spent, note, last_order_at, last_product, source, status, customer_key, other_phones)
     values (${ctx.biz}, ${'CUS-' + Date.now()}, ${name}, ${cleanContact}, ${email}, ${address},
       ${str(data.type) || 'Retail'}, 0, 0, '', null, '', ${str(data.source) || 'Walk-in'},
-      ${str(data.status) || 'New'}, ${custKey(cleanContact, name)})`;
+      ${str(data.status) || 'New'}, ${custKey(cleanContact, name)}, ${others})`;
   forget(ctx, 'CUSTOMERS');
   return { ok: true, updated: false, name };
 }
@@ -369,6 +426,8 @@ export async function erpRecordPayment(ctx, payload) {
     throw new Error('That is more than is owed. ' + oid + ' has ' + owed.toFixed(0) + ' outstanding.');
   }
 
+  // money writes land in an open month only (closed months are locked under Capital)
+  await assertOpen(ctx, ctx.now, 'a payment cannot be recorded there');
   await lock(ctx, 'payments');
   await addPayment(ctx, {
     id: 'P' + stamp(ctx.now), order: oid, customer, at: new Date(), amount,
@@ -418,9 +477,11 @@ export async function mergeCustomers(ctx, apply) {
     const rows = groups[k];
     const keep = rows[0];
     const kv = { name: keep.name, address: keep.address, email: keep.email,
-                 orders: num(keep.total_orders), spent: num(keep.total_spent) };
+                 orders: num(keep.total_orders), spent: num(keep.total_spent), others: splitOthers(keep.other_phones) };
     for (let r = 1; r < rows.length; r++) {
       const row = rows[r];
+      // every other number of every copy is kept on the one that stays
+      kv.others = kv.others.concat(splitOthers(row.other_phones));
       // best name / address / email: keep the longest non-empty one
       if (str(row.name).length > str(kv.name).length) kv.name = row.name;
       if (str(row.address).length > str(kv.address).length) kv.address = row.address;
@@ -445,6 +506,7 @@ export async function mergeCustomers(ctx, apply) {
     await ctx.tx`
       update customers set name = ${kv.name}, address = ${kv.address}, email = ${kv.email},
         total_orders = ${kv.orders}, total_spent = ${kv.spent},
+        other_phones = ${(() => { try { return cleanOtherPhones(kv.others, str(keep.phone)); } catch (_) { return kv.others.slice(0, OTHER_MAX).join(', '); } })()},
         phone = ${formatBdPhone(str(keep.phone))}, updated_at = now()
       where id = ${keep.id}`;
     merged++;

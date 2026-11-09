@@ -34,7 +34,7 @@ check('only the owner chooses the AI', !r.ok, r);
 
 // ---- keys (the platform admin)
 r = await owner('erpAiBrainKey', [{ provider: 'openai', key: 'not-a-key' }]);
-const admin = !(r.ok === false && /platform admin/.test(r.error));
+const admin = !!((await owner('erpAiBrain', [])).result || {}).platformKeys;   // final-ai: an owner who is not the platform admin now saves a business key instead of being refused
 check('a key that is not an OpenAI key is refused', !r.ok, r);
 if (!admin) await sql`insert into platform_admins (user_id, note) values (${FIX.U.owner}, 'test') on conflict do nothing`;
 r = await owner('erpAiBrainKey', [{ provider: 'openai', key: 'sk-test-fake-key-0000-ijkl' }]);

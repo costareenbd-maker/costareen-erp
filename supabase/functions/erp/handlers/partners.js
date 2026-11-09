@@ -198,6 +198,9 @@ export async function erpPoolEntryAdd(ctx, payload) {
   const today = formatDate(ctx.now, 'yyyy-MM-dd');
   const date = isDate(payload.date) ? payload.date : today;
   if (date > today) throw new Error('That date has not come yet.');
+  // final-server (10 Nov 2026): a settled month of the pool is closed for new lines too
+  const lk = (await ctx.tx`select to_char(pool_locked_until(${ctx.biz}), 'YYYY-MM-DD') as d`)[0];
+  if (lk && lk.d && date < lk.d) throw new Error('That month of the pool is closed and settled, so nothing can be added to it. Date it ' + lk.d + ' or later.');
   await ctx.tx`
     insert into pool_ledger (pool_id, kind, partner_business_id, to_business_id, amount, entry_date, category, note)
     values (${ctx.biz}, ${kind}::pool_entry_kind, ${who}, ${to || null}, ${amount}, ${date}::date,
@@ -214,9 +217,11 @@ export async function erpPoolEntryRemove(ctx, payload) {
   const id = str(payload && payload.id), why = str(payload && payload.reason).slice(0, 300);
   if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error('Which entry?');
   if (!why) throw new Error('Say why the line is being struck out. Your partner will see it.');
-  const was = (await ctx.tx`select voided_at from pool_ledger where pool_id = ${ctx.biz} and id = ${id}`)[0];
+  const was = (await ctx.tx`select voided_at, to_char(entry_date, 'YYYY-MM-DD') as d from pool_ledger where pool_id = ${ctx.biz} and id = ${id}`)[0];
   if (!was) throw new Error('That entry was not found.');
   if (was.voided_at) throw new Error('That line is already struck out.');
+  const lk = (await ctx.tx`select to_char(pool_locked_until(${ctx.biz}), 'YYYY-MM-DD') as d`)[0];   // final-server
+  if (lk && lk.d && was.d && was.d < lk.d) throw new Error('That line is in a month the partners have settled, so it stays as it is. Add a correcting line in an open month instead.');
   const gone = await ctx.tx`update pool_ledger set voided_at = now(), voided_by = ${(ctx.s && ctx.s.name) || 'owner'}, void_reason = ${why}
                             where pool_id = ${ctx.biz} and id = ${id} returning id`;
   if (!gone.length) throw new Error('That entry was not found.');

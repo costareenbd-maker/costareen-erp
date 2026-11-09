@@ -1,6 +1,6 @@
 // The sheet ERP's time-driven triggers and its doPost webhook, re-homed.
 //
-//   nightly   (03:00 Dhaka)   Steadfast payout sync + backup, every business
+//   nightly   (03:00 Dhaka)   Steadfast payout sync + backup, every business; old log rows pruned (pruneLogs)
 //   campaigns (every 10 min)  spread WhatsApp campaigns that have work waiting
 //   websync   (every 15 min)  pull website orders, push stock (czSyncCycle)
 //   deliveries (every hour)   delivered parcels: record the payment, clear the due (erpDeliveryTick)
@@ -72,11 +72,49 @@ async function crmJob(deps, sql, out) {
   try { cids = (await sql`select distinct business_id from crm_hooks where on_`).map((r) => r.business_id); } catch (_) { cids = []; }
   if (crmT && cids.length) for (const row of await owners(sql, cids)) { try { out['crm:' + row.name] = await asBusiness(deps, row, 'crm:tick', (ctx) => crmT(ctx)); } catch (e) { out['crm:' + row.name] = String((e && e.message) || e); } }
 }
+/** final-server (10 Nov 2026): the server's own logs do not grow for ever. Each table keeps what its screens read
+ *  (errors 180 days - the provider's error list; AI log 180 days; speed samples 30 days; activity 90 days as in core.js;
+ *  public-page hit counters 1 day; skill previews 7 days). Each delete is its own statement: one missing table never
+ *  stops the others. Returns {table: rows removed}. */
+export async function pruneLogs(sql) {
+  const out = {};
+  for (const [t, keep] of [['erp_errors', '180 days'], ['erp_ai_log', '180 days'], ['erp_speed', '30 days'], ['erp_activity', '90 days'],
+                           ['erp_pub_hits', '1 day'], ['engine_skill_previews', '7 days'], ['erp_op_keys', '3 days']]) {
+    try { out[t] = (await sql`delete from ${sql(t)} where at < now() - ${keep}::interval`).count; } catch (e) { out[t] = 'skipped: ' + String((e && e.message) || e).slice(0, 80); }
+  }
+  return out;
+}
+
+/**
+ * final-server (10 Nov 2026): one run of a job at a time. pg_cron fires the inbox tick every minute and the hourly jobs
+ * on the hour; a slow run (a courier that answers late, a big backup) used to overlap with the next, and two ticks
+ * could then send one reply twice or back up the same business twice. The lock is held on one reserved connection
+ * for the whole run; a second caller gets {skipped} and the timer simply tries again next time.
+ */
 export async function runJob(deps, job) {
+  const key = 'erp-job:' + String(job);
+  // the lock lives on its own one-connection pool (deps.jobLock, made in index.ts) so the job's own work keeps the
+  // whole main pool; without one (the tests) a connection of the main pool is reserved for it
+  let r = null;
+  const lockPool = deps.jobLock || deps.sql;
+  try { r = typeof lockPool.reserve === 'function' ? await lockPool.reserve() : null; } catch (_) { r = null; }
+  if (r) {
+    let got = false;
+    try { got = !!(((await r`select pg_try_advisory_lock(hashtext(${key})) as ok`)[0] || {}).ok); }
+    catch (_) { try { r.release(); } catch (_) { /* gone */ } r = null; got = true; }   // no lock service: run anyway, as before
+    if (!got) { try { r.release(); } catch (_) { /* gone */ } return { skipped: 'the previous run of this job is still going' }; }
+  }
+  try { return await runJobNow(deps, job); }
+  finally {
+    if (r) { try { await r`select pg_advisory_unlock(hashtext(${key}))`; } catch (_) { /* the connection may be gone */ } try { r.release(); } catch (_) { /* gone */ } }
+  }
+}
+
+async function runJobNow(deps, job) {
   const sql = deps.sql;
   const out = {};
   if (job === 'nightly') {
-    try { await sql`delete from erp_op_keys where at < now() - interval '3 days'`; } catch (_) { /* the table may not exist yet */ }
+    out.pruned = await pruneLogs(sql);
     const sfNightly = await maybe('./handlers/courier.js', 'sfNightly');
     const backupNow = await maybe('./handlers/settings.js', 'backupNow');
     for (const row of await owners(sql)) {

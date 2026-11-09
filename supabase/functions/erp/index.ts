@@ -55,11 +55,13 @@ const DB_URL = poolUrl(Deno.env.get('SUPABASE_DB_URL') ?? '');
 const sql = connect(postgres, DB_URL);
 // a second, small pool for side-queries made from inside a transaction (see core.js)
 const sqlAux = connect(postgres, DB_URL, { max: 1 });
+const jobLock = connect(postgres, DB_URL, { max: 1 });   // final-server: holds the one-run-at-a-time lock of a timer job (jobs.js runJob)
 // the provider's control tables (the market): their own pool, so a call that holds a business transaction on
 // `sql` never waits for a second `sql` connection (two calls at once would each wait for the other)
 const ctlSql = connect(postgres, DB_URL, { max: 2 });
 
 const BUSY_DB = /EMAXCONN|max client connections|too many clients|remaining connection slots/i;
+const MAX_BODY_BYTES = 30 * 1048576;   // final-server: the biggest body a call may carry (uploads are base64 inside the JSON)
 
 const ALLOWED_ORIGINS = [
   'https://erp.costareen.com',
@@ -350,7 +352,7 @@ const TCP = (hostname: string, port: number) => Deno.connectTls({ hostname, port
 const BRIDGES = { zernio: Deno.env.get('BRIDGE_ZERNIO_KEY') ?? '', publora: Deno.env.get('BRIDGE_PUBLORA_KEY') ?? '', uploadpost: Deno.env.get('BRIDGE_UPLOADPOST_KEY') ?? '' };
 const META = { appId: Deno.env.get('META_APP_ID') ?? '', appSecret: Deno.env.get('META_APP_SECRET') ?? '', configId: Deno.env.get('META_CONFIG_ID') ?? '', redirect: SUPABASE_URL + '/functions/v1/erp?meta=back' };
 const own = projectParts({ url: SUPABASE_URL, anon: ANON, service: SERVICE, appUrl: Deno.env.get('ERP_APP_URL') ?? 'https://erp.costareen.com/' });
-const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, social: { ...SOCIAL, redirect: FN_URL + '?social=back' }, bridges: BRIDGES, tcp: TCP, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, render: { url: RENDER_URL, key: RENDER_KEY }, geminiKey: GEMINI_KEY, svgPng, meta: META,
+const deps: any = { install: INSTALL, installEnv: INSTALL_ENV, google: GOOGLE, social: { ...SOCIAL, redirect: FN_URL + '?social=back' }, bridges: BRIDGES, tcp: TCP, smtpNote: SMTP_NOTE, linkOnly: false, sql, sqlAux, jobLock, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, render: { url: RENDER_URL, key: RENDER_KEY }, geminiKey: GEMINI_KEY, svgPng, meta: META,
                ...own, hookBase: FN_URL };
 
 // A company on the bridge: its own database, sign-in, files and e-mails; the provider's logic and PDF service.
@@ -359,6 +361,7 @@ const PUBLIC_URL = (Deno.env.get('ERP_PUBLIC_URL') ?? '').replace(/\/?$/, '/');
 async function buildTenant(t: any) {
   const tsql = connect(postgres, t.dbUrl, { max: 2 });
   const tAux = connect(postgres, t.dbUrl, { max: 1 });
+  const tLock = connect(postgres, t.dbUrl, { max: 1 });   // final-server: the job lock of this company's database
   const appUrl = t.domain ? 'https://' + t.domain + '/' : (PUBLIC_URL || 'https://erp.costareen.com/') + '#/use/' + t.id;
   const parts = projectParts({ url: t.url, anon: t.anon, service: t.service, appUrl });
   const fpHex = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t.service + '|' + t.dbUrl)))].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -368,7 +371,7 @@ async function buildTenant(t: any) {
     installEnv: INSTALL_ENV,
     google: { ...GOOGLE, redirect: FN_URL + '?google=back&t=' + t.id, appUrl }, social: { ...SOCIAL, redirect: FN_URL + '?social=back&t=' + t.id }, bridges: BRIDGES, tcp: TCP,
     // control: the provider's own tables (the market list, joint pools)
-    smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, render: { url: RENDER_URL, key: RENDER_KEY }, geminiKey: GEMINI_KEY, svgPng, meta: { ...META, redirect: FN_URL + '?meta=back&t=' + t.id },
+    smtpNote: '', linkOnly: false, sql: tsql, sqlAux: tAux, jobLock: tLock, control: ctlSql, fetch: globalThis.fetch.bind(globalThis), renderPdf, render: { url: RENDER_URL, key: RENDER_KEY }, geminiKey: GEMINI_KEY, svgPng, meta: { ...META, redirect: FN_URL + '?meta=back&t=' + t.id },
     ...parts, hookBase: FN_URL + '?t=' + t.id,
     close() { try { tsql.end({ timeout: 2 }); tAux.end({ timeout: 2 }); } catch (_) { /* gone */ } },
   };
@@ -405,6 +408,13 @@ Deno.serve(async (req) => {
   // public routes, a company on the bridge, and every company copy (calls carry their own sign-in, never a cookie) answer any page
   const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || q0.get('pub') || q0.get('chat') || /^(order|bill|item|avatar|media|land|join|hold|holdbill|holdpdf)$/.test(q0.get('inbox') || '') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
+  // final-server (10 Nov 2026): a request body has a ceiling. Every upload the page makes (a receive file, a photo for
+  // the AI reader, a backup to restore) is well under it; anything bigger is refused in plain words before it is read
+  // into memory, instead of the function dying mid-way and the page showing "Failed to fetch".
+  const clen = Number(req.headers.get('content-length') || 0);
+  if (clen > MAX_BODY_BYTES) {
+    return new Response(JSON.stringify({ ok: false, error: 'That is too much to send at once (over ' + Math.round(MAX_BODY_BYTES / 1048576) + ' MB). Send a smaller file, or fewer rows at a time.' }), { status: 413, headers });
+  }
   if (tid && !(q0.get('install') || q0.get('control'))) {
     if (!tenantDeps) return new Response(JSON.stringify({ ok: false, error: 'This server does not run company ERPs.' }), { status: 200, headers });
     try {
