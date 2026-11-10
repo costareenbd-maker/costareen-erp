@@ -46,6 +46,10 @@ r = await mgr('erpInvoiceEdit', [{ invoiceNo: no, items: [{ sku: PLA, qty: shelf
 check('more than shelf + its own units is refused, nothing changed', !r.ok && /Not enough stock/.test(r.error) && (await stockOf(PLA)) === shelf, r);
 r = await mgr('erpInvoiceEdit', [{ invoiceNo: no, items: [{ sku: PLA, qty: 3, discEach: 50 }, { sku: PRT, qty: 1 }] }]);
 check('a product added', r.ok && (await stockOf(PRT)) === 2 && r.result.grandTotal === 4020 + 52000, r);
+// jointedit-1: a joint-stock product added in an edit is refused in plain words, nothing changed
+{ const before = await stockOf(PLA), tot = Number((await invOf(no)).grand_total);
+  r = await mgr('erpInvoiceEdit', [{ invoiceNo: no, items: [{ sku: PLA, qty: 3, discEach: 50 }, { sku: PRT, qty: 1 }, { sku: 'JR-W~Jabcd', qty: 2 }] }]);
+  check('a joint-stock product added by editing is refused plainly, nothing changed', !r.ok && /Joint-stock products cannot be added/.test(r.error) && !/reading/.test(r.error) && (await stockOf(PLA)) === before && Number((await invOf(no)).grand_total) === tot, r); }
 r = await mgr('erpInvoiceEdit', [{ invoiceNo: no, items: [{ sku: PLA, qty: 3, discEach: 50 }] }]);
 check('and taken off again: its unit is back on the shelf', r.ok && (await stockOf(PRT)) === 3 && r.result.grandTotal === 4020, r);
 

@@ -50,6 +50,11 @@ export async function erpInvoiceEdit(ctx, payload) {
   // 2. the lines and the money
   const want = (p.items || []).filter((it) => it && str(it.sku) && num(it.qty) > 0).map((it) => ({ sku: str(it.sku), qty: num(it.qty), discEach: Math.max(0, num(it.discEach)) }));
   if (!want.length) throw new Error('An invoice needs at least one product. To undo the whole sale, cancel it.');
+  // jointedit-1 (owner 11 Nov 2026): a joint-stock product added in an edit crashed ("reading 'id'") - its goods are the
+  // pool's and its copy in the pool is made only by a new sale. Said plainly; the extra goods go on a new invoice.
+  const J = await import('./joint.js');
+  const jointNew = want.filter((w) => J.JOINT_MARK.test(w.sku));
+  if (jointNew.length) throw new Error('Joint-stock products cannot be added to a saved invoice by editing. Make a new invoice for them, dated today, so today’s sales, cash and the joint stock stay right.');
   const sameLines = want.length === oldLines.length && want.every((w, i) => {
     const o = oldLines[i]; return o && str(o.sku).toLowerCase() === w.sku.toLowerCase() && num(o.qty) === w.qty && Math.abs(num(o.discount) - round2(w.discEach * w.qty)) < 0.5;
   });
@@ -87,6 +92,7 @@ export async function erpInvoiceEdit(ctx, payload) {
     for (let i = 0; i < pv.lines.length; i++) {
       const l = pv.lines[i];
       const pr = (await ctx.tx`select id from products where business_id = ${ctx.biz} and lower(btrim(sku)) = ${str(l.sku).toLowerCase()} limit 1`)[0];
+      if (!pr) throw new Error(str(l.name || l.sku) + ' is not one of this company’s own products, so it cannot be added by editing. Make a new invoice for it.');
       const row = (await ctx.tx`insert into invoice_lines (business_id, invoice_id, product_id, sku, name, qty, unit_price, discount, line_total, line_no, unit_cost)
                                values (${ctx.biz}, ${inv.id}, ${pr.id}, ${l.sku}, ${l.name}, ${l.qty}, ${l.unit}, ${l.disc}, ${l.total}, ${i + 1}, ${costNow(l.sku)}) returning id`)[0];
       const m = (await ctx.tx`insert into stock_movements (business_id, product_id, kind, direction, qty, unit_price, total, reference, invoice_id, created_by, created_at, txn_no, operator, product_name)
