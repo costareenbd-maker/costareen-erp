@@ -6364,8 +6364,21 @@ function courierPanel() {
       'Asking the courier about recent parcels&hellip;</div></div>';
   }
 
+  // wocollapse-1 (owner 11 Nov 2026): the courier card pushed the orders far down - it starts small
+  // (one line of totals); a button opens it, the same button closes it; the choice is remembered per device
+  var coOpen = false; try { coOpen = localStorage.getItem('erp.wo.courierOpen') === '1'; } catch (e) {}
+  var coBtn = '<button class="btn small" type="button" id="wo_cotoggle" style="margin-left:auto">' + (coOpen ? 'Make small ▲' : 'Show parcels ▼') + '</button>';
+  if (!coOpen) {
+    return '<div class="card wo-co-small" style="margin-bottom:12px;padding:10px 16px"><div class="row" style="align-items:center;gap:14px;flex-wrap:wrap">' +
+      '<strong>Courier</strong>' +
+      '<span class="sku">Collected <strong>' + fmt(COURIER.collected) + '</strong></span>' +
+      '<span class="sku">Still moving <strong>' + fmt(COURIER.waiting) + '</strong></span>' +
+      '<span class="sku">Came back <strong>' + fmt(COURIER.lost) + '</strong></span>' +
+      '<span class="sku">' + fmt(COURIER.orders.length) + ' parcels · last ' + fmt(COURIER.days) + ' days</span>' +
+      coBtn + '</div></div>';
+  }
   var h = '<div class="card" style="margin-bottom:14px">' +
-    '<h2>Courier</h2><div class="sub">Website orders of the last ' + fmt(COURIER.days) +
+    '<div class="row" style="align-items:center"><h2 style="margin:0">Courier</h2>' + coBtn + '</div><div class="sub">Website orders of the last ' + fmt(COURIER.days) +
     ' days, as Steadfast reports them. Nothing here is marked paid yet.</div>' +
     '<div class="grid g-kpi" style="margin:12px 0">' +
     kpi('Collected for you', cur, fmt(COURIER.collected),
@@ -6455,6 +6468,12 @@ function wireCourierLinks() {
 
 function wireCourier() {
   wireCourierLinks();
+  var ct = el('wo_cotoggle');
+  if (ct) ct.addEventListener('click', function () {
+    var open = false; try { open = localStorage.getItem('erp.wo.courierOpen') === '1'; } catch (e) {}
+    try { localStorage.setItem('erp.wo.courierOpen', open ? '0' : '1'); } catch (e) {}
+    repaint();
+  });
 }
 
 function loadCourier() {
@@ -8032,7 +8051,7 @@ function viewWebOrders() {
   if (!WEB) return '<div class="loading">Loading website orders&hellip;</div>';
   var pending = WEB.filter(function (o) { return !o.entered; });
   // what the courier did comes first: it is the part that changes by itself
-  var h = '<section>' + courierPanel() + '<div class="card"><h2>Website orders</h2>'+
+  var h = '<section class="wo-wide">' + courierPanel() + '<div class="card"><h2>Website orders</h2>'+
           '<div class="sub">'+fmt(pending.length)+' of '+fmt(WEB.length)+
           ' not yet entered. Entering one creates a real invoice and deducts stock.</div>'+
           '<div class="row" style="margin-bottom:12px">'+
@@ -57668,6 +57687,8 @@ function woCommonWords(lines) {
 .wo-pre{display:block;font-size:11.5px;color:var(--muted,#64748b);margin:0 0 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wo-it b{font-variant-numeric:tabular-nums}
 td.wo-items{white-space:nowrap}
+/* wocollapse-1 (owner 11 Nov 2026): a wide screen gets the whole width on Web orders - no sideways scroll for the buttons */
+#view:has(.wo-wide),:root[data-skin] #view:has(.wo-wide){max-width:none !important}
 .wo-more{margin-top:0}
 .wo-more{margin-top:2px}
 .wo-list{list-style:none;margin:6px 0 0;padding:0;max-height:min(60vh,520px);overflow:auto}
