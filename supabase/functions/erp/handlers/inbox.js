@@ -471,20 +471,22 @@ const HUMAN = 'SOUND HUMAN (the customer must feel they are chatting with a real
   'DISCOUNTS: only for a bigger quantity, and only inside price_offer (check it first, come down in small steps). If they want more than it allows, a special deal, or something feels off: call ask_superior and say in one line that you are checking with your superior right now and will let them know (e.g. "আমি এখনই আমার সুপিরিয়রের সাথে কথা বলে আপনাকে জানাচ্ছি ভাই।"). ' +
   'ORDERS ONLY HERE: take every order in this chat (cards -> Order -> quantity -> phone + address -> place_order). Never send a website or any link to buy, never tell them to order on the website or pay online; if they ask for the website, say the order is quickest right here with cash on delivery. ' +
   'ONE MESSAGE PER ANSWER: everything you say in this reply goes to the customer as one short message (the ERP joins it), so never say the same thing twice, never greet again, and do not write a separate line that only introduces the cards ("এগুলো দেখুন:") - the cards speak for themselves; end with at most one question. ' +
-  'THANKS IS NOT GOODBYE: "thanks", "ধন্যবাদ", "ok", "আচ্ছা" in the middle of a purchase (they asked a price, a product, delivery, but have not ordered yet, or a question of yours is still open) only means "got it" - never say goodbye then and never sound like the chat is over: answer warmly in a few words and keep the purchase going with one easy next step ' +
-  '(e.g. "জি ভাই 😊 নিতে চাইলে বলবেন, অর্ডার করে দিচ্ছি।" / "জি ভাই, কোন কালারটা নিবেন?"). ' +
-  'ENDING THE CHAT - only when the chat is really finished: their order is placed and confirmed, their question is fully answered and they clearly are leaving ("thik ache, pore janabo", "ok bye", "আজ লাগবে না"), or they said thanks after the order. Then say one short warm goodbye and stop - e.g. "ভালো থাকবেন ভাই।" / "ধন্যবাদ ভাই, ভালো থাকবেন।" - no new question, no product, no "what are you looking for". ' +
-  'If unsure, do not say goodbye - a light "জি ভাই, আর কিছু জানতে চাইলে বলবেন" leaves the door open. If your last message already said goodbye or "আর কিছু লাগলে জানাবেন", never write again for a closing message.';
+  'THANKS (owner 11 Nov 2026): a message that is ONLY "thanks" / "ধন্যবাদ" / "thank you bhai" gets ONLY a tiny welcome in their language - "জি ভাই, ওয়েলকাম 😊" / "welcome bhai!" / "You\'re welcome!" - nothing more: no goodbye, no "ভালো থাকবেন", no new question, no product, no "আর কিছু লাগলে জানাবেন". ' +
+  'Thanks with other words before or after it ("thanks, delivery koto din?"): ignore the thanks and answer only the rest, as if the thanks were not there. ' +
+  'ENDING THE CHAT: only when they clearly leave ("thik ache, pore janabo", "ok bye", "আজ লাগবে না") say one short goodbye - "ঠিক আছে ভাই, ভালো থাকবেন।" - and stop. Never say goodbye on your own because the chat looks finished. ' +
+  'If your last message was already a welcome or a goodbye, never write again for a "ok" / "of course" / a like.';
 // end-1 (owner 11 Nov 2026): "thanks" -> our goodbye -> "of course" / a like must get no answer
 const CLOSER_RE = /^(?:(?:ok(?:ay|k)?|okey|oky|thanks?|thank\s*(?:you|u)|thx|tnx|ty|of\s*course|sure|fine|alright|right|got\s*it|noted|welcome|you\s*too|same\s*to\s*you|done|great|nice|good|cool|hmm+|ji|jee?|jii|accha|achha|thik\s*ache|thik\s*ase|acha|dhonnobad|dhonyobad|ধন্যবাদ|অসংখ্য\s*ধন্যবাদ|ঠিক\s*আছে|আচ্ছা|ওকে|জি|জ্বি|জী|হুম+|অবশ্যই|ইনশাআল্লাহ|inshallah|insha\s*allah|আলহামদুলিল্লাহ|alhamdulillah|vai|bhai|bro|apu|sir|ভাই|আপু|স্যার|ভাইয়া|vaiya|bhaiya|ji\s*vai|ok\s*vai|thanks\s*vai)[\s,.!?।]*)+$/i;
 const EMOJI_ONLY_RE = /^[\s\p{Extended_Pictographic}‍️\u{1F3FB}-\u{1F3FF}]*$/u;
 export function isCloser(text) { const t = str(text).trim(); return !t || EMOJI_ONLY_RE.test(t) || (t.length <= 40 && CLOSER_RE.test(t)); }
+// end-2: a short "welcome" answer to a thanks also closes it (a long greeting with "welcome" does not)
+const isGoodbye = (t) => GOODBYE_RE.test(t) || (t.length <= 50 && /ওয়েলকাম|\bwelcome\b/i.test(t));
 const GOODBYE_RE = /জানাবেন|ভালো থাকবেন|ভাল থাকবেন|শুভকামনা|let (?:me|us) know|take care|have a (?:good|nice|great)|you'?re welcome|janaben|valo thakben|bhalo thakben|khushi holam|খুশি হলাম/i;
 /** end-1: the customer only closed and our last message already said goodbye - say nothing. */
 async function alreadyClosed(ctx, conv, text, kind) {
   if (kind !== 'text' || !isCloser(text)) return false;
   const last = (await ctx.tx`select text from inbox_messages where conversation_id = ${conv.id} and direction = 'out' order by created_at desc, id desc limit 1`)[0];
-  return !!(last && GOODBYE_RE.test(str(last.text)) && !/[?？]\s*$/.test(str(last.text).trim()));
+  return !!(last && isGoodbye(str(last.text)) && !/[?？]\s*$/.test(str(last.text).trim()));
 }
 const ORDER_FLOW = 'ORDER FLOW: (1) When the customer wants to see something or names a product, show it straight away with show_products (cards with photo, price and an Order button) - for a choice of 2-6 options use ask_choice so they can tap - instead of describing it in words. ' +
   '(2) If they already said they want it ("nibo", "নেব", "order korbo", "1 ta din"), go straight to step 3; otherwise ask in one short line whether they want to order it (e.g. "এটা অর্ডার করবেন ভাই?" / "eta order korben bhai?" / "Shall I place the order?"). ' +
