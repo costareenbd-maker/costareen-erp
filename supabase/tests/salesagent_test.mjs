@@ -289,6 +289,7 @@ await sql`insert into shop_offers (business_id, label, detail, ends_on) values (
 bodies.length = 0; script = [[{ text: 'ok' }]];
 await reply([{ direction: 'in', kind: 'text', text: 'panchroma refill er dam?' }]);
 const sysO = sysOf(bodies[0]);
+check('dlv-1b: the prompt has the exact filament charges, never the bare first kg as the charge', /1 spool ৳90 inside \/ ৳150 outside Dhaka; 2 spools ৳110 inside/.test(sysO) && /NEVER say ৳70 or ৳130 alone/.test(sysO), sysO.slice(0, 200));
 check('offer-1: the running offer is known without calling a tool; an ended one is not', /RUNNING OFFERS/.test(sysO) && /Test 11\.11 Deal: only in the app/.test(sysO) && !/Old Deal/.test(sysO));
 
 await done();

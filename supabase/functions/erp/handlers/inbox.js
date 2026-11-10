@@ -543,7 +543,14 @@ function systemPrompt(p, rules, ch, contact, extra, shop) {
     '',
     'THE BUSINESS (written by the owner):',
     'Name: ' + p.name + (p.sells ? '\nWhat we sell: ' + p.sells : '') + (shop ? '\nOUR CATALOGUE NOW (from the ERP):\n' + shop : '') + (p.hours ? '\nOpening hours: ' + p.hours : '') + (p.phone ? '\nPhone: ' + p.phone : '') + (p.address ? '\nAddress: ' + p.address : '') + (p.email ? '\nEmail: ' + p.email : ''),
-    'Delivery: inside Dhaka ৳' + num(p.delivery_in) + ' (' + p.days_in + '), outside Dhaka ৳' + num(p.delivery_out) + ' (' + p.days_out + '). Savar, Keraniganj and Tongi count as outside Dhaka.' + (p.delivery_rule ? ' ' + p.delivery_rule : ''),
+    // dlv-1b (owner 11 Nov 2026): the bare first-kg price here was said as "the" charge (৳70 for a spool that costs ৳90)
+    (num(p.per_kg_in) > 0 || num(p.per_kg_out) > 0
+      ? (() => { const sp = (n) => Math.max(1, Math.ceil(n * (num(p.filament_g) || 1300) / 1000 - 1e-9));
+          const row = (n) => n + ' spool' + (n > 1 ? 's' : '') + ' ৳' + chargeFor(p.delivery_in, p.per_kg_in, sp(n)) + ' inside / ৳' + chargeFor(p.delivery_out, p.per_kg_out, sp(n)) + ' outside Dhaka';
+          return 'DELIVERY CHARGE (by weight - these are the exact charges for filament): ' + [1, 2, 3, 4].map(row).join('; ') + '. Anything else (a printer, resin, parts, a mix): call delivery with the items. ' +
+            'NEVER say ৳' + num(p.delivery_in) + ' or ৳' + num(p.delivery_out) + ' alone as the charge - that is only the first kg. Times: inside Dhaka ' + p.days_in + ', outside Dhaka ' + p.days_out + '.'; })()
+      : 'Delivery: inside Dhaka ৳' + num(p.delivery_in) + ' (' + p.days_in + '), outside Dhaka ৳' + num(p.delivery_out) + ' (' + p.days_out + ').') +
+      ' Savar, Keraniganj and Tongi count as outside Dhaka.' + (p.delivery_rule ? ' ' + p.delivery_rule : ''),
     'Payment: ' + (p.payment || 'Cash on delivery.'),
     p.returns ? 'Return and exchange rule: ' + p.returns : 'No return rule is written: pass return questions to the team (ask_team).',
     p.disc_mode === 'limit'
