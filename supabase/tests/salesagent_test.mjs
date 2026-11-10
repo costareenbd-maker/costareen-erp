@@ -262,4 +262,18 @@ script = [[{ text: 'জি ভাই, Sage green এর কাছাকাছি
 const rd = await asB(async (ctx) => ib.replyDue(ctx, vv.id, true));
 check('cards-2: a message that came while a slow reply was written is still answered', bodies.length === 1 && !(rd && rd.skipped) && /Sage green/.test(JSON.stringify(bodies[0].contents[bodies[0].contents.length - 1])), rd);
 
+// ---- name-1 (owner 10 Nov): the salesperson has a name, said when asked; the honest answer about AI stays
+await owner('erpInboxProfile', [{ save: { agent_name: 'Faujia Alvi (ফাউজিয়া আলভি)' } }]);
+bodies.length = 0;
+script = [[{ text: 'আমি ফাউজিয়া।' }]];
+await reply([{ direction: 'in', kind: 'text', text: 'apnar nam ki?' }]);
+const sysN = sysOf(bodies[0]);
+check('name-1: the prompt carries the salesperson\'s name and says it only when asked', /YOUR NAME is Faujia Alvi/.test(sysN) && /আমি Faujia Alvi,/.test(sysN) && /Do not announce it in every message/.test(sysN), sysN.slice(0, 500));
+check('name-1: ...and the honesty rule about being an AI still holds', /never deny it/.test(sysN) && /the shop's AI assistant/.test(sysN));
+await owner('erpInboxProfile', [{ save: { agent_name: '' } }]);
+bodies.length = 0;
+script = [[{ text: 'জি।' }]];
+await reply([{ direction: 'in', kind: 'text', text: 'hi' }]);
+check('name-1: no name set: no name line', !/YOUR NAME/.test(sysOf(bodies[0])));
+
 await done();

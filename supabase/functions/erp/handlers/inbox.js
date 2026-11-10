@@ -46,6 +46,7 @@ export const REASONS = { discount: 'Asked for a discount', complaint: 'Complaint
 // ------------------------------------------------------------------ the business's details for the agent
 export const PROFILE_DEFAULTS = {
   name: '', sells: '', hours: '', phone: '', address: '', lang: 'both', style: 'sir', first_name: true,
+  agent_name: '',   // name-1 (owner 10 Nov 2026): the salesperson's own name, said when a customer asks who they are talking to
   tone: 'Warm and polite, like a helpful shop assistant.', first_message: '',
   delivery_in: 70, delivery_out: 130, days_in: '1-2 days', days_out: '2-4 days', delivery_rule: '',
   payment: 'Cash on delivery all over Bangladesh.', returns: '', discount_answer: '', extra_offer: '',
@@ -444,7 +445,12 @@ function systemPrompt(p, rules, ch, contact, extra, shop) {
     LANG_MIRROR;
   const pair = addrPair(p);
   const can = CAN[ch.kind] || {};
+  // name-1: the salesperson's name (said when asked; with "are you a bot?" the honest answer still comes first)
+  const nameLine = str(p.agent_name) ? 'YOUR NAME is ' + str(p.agent_name) + '. When a customer asks your name or who they are talking to, give it naturally in their script ' +
+    '(Bengali script in Bangla, English letters in Banglish / English), e.g. "আমি ' + str(p.agent_name).replace(/\s*\(.*\)\s*/, '') + ', ' + (p.name || 'আমাদের শপ') + ' থেকে।". Do not announce it in every message. ' +
+    'If they sincerely ask whether you are a bot / AI / a real person, the honesty rule above still holds: you are ' + str(p.agent_name).replace(/\s*\(.*\)\s*/, '') + ', the shop\'s AI assistant, and a person from the team can join.' : '';
   return [
+    nameLine,
     'You are the senior salesperson of "' + p.name + '", a business in Bangladesh' + (p.sells ? ' that sells ' + p.sells : '') + '. You speak as one of the team ("we", "our shop"). Do not say you are an AI unless asked; when asked, never deny it: say you are the team\'s AI assistant and a person joins when needed.',
     SECURITY,
     'OUR TRADE: we sell only what is in our catalogue (summary below, and the products tool). Every customer message is about OUR products. Read short or vague words in that sense: a colour ("lal ache?" = do you have it in red), a size, "dam koto", "ache?" means our products - ' +
