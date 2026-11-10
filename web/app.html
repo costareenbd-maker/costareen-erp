@@ -45842,7 +45842,7 @@ details.nt-fold.nt-pnlfold > .nt-fold-in { padding:0 4px 6px; }
     var log = (r.log || []).slice(0, CRM.aiMore ? 40 : 6);
     return '<section><div class="card crm-ai"><h2>The AI keeps this up to date</h2>' +
       '<div class="sub" style="display:block">' + (r.on ? '<span class="pill ok">On</span> ' : '<span class="pill out">Off</span> ') +
-      'Every ' + r.every + ' minutes the AI reads the chats that went quiet (WhatsApp and the Facebook pages) and writes the leads, follow-ups, the customer’s printer, type and area, and their company. Once a day it checks the duplicates. ' +
+      'Every ' + r.every + ' minutes the AI reads ' + (r.perRun || 3) + ' chats that went quiet (WhatsApp and the Facebook pages) with Gemini’s free models - not the ChatGPT plan - and writes the leads, follow-ups, the customer’s printer, type and area, and their company. Once a day it checks the duplicates. ' +
       (r.lastRun ? 'Last run ' + esc(r.lastRun) + '. ' : 'Not run yet. ') + (r.left ? fmt(r.left) + ' chat(s) still to read.' : 'All chats read.') + '</div>' +
       (bits ? '<div style="margin-top:8px;font-size:14px">' + bits + '</div>' : '') +
       (log.length ? '<ul class="crm-ailog" style="list-style:none;padding:0;margin:10px 0 0">' + log.map(function (l) {

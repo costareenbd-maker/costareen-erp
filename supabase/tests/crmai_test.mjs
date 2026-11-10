@@ -73,7 +73,7 @@ check('crmai: the duplicate pair the AI calls different leaves the list', (await
 // the next tick waits 10 minutes; a forced run has nothing new to read
 const before = calls;
 r = await asB((ctx) => ai.crmAiTick(ctx));
-check('crmai: the timer waits 10 minutes between runs', r.wait === true, r);
+check('crmai: the timer waits 30 minutes between runs', r.wait === true, r);
 r = await asB((ctx) => ai.crmAiTick(ctx, true));
 check('crmai: a chat already read is not read again', r.chats === 0 && calls === before, { r, calls, before });
 
@@ -98,5 +98,13 @@ check('crmai: the owner switches it off', g.on === false);
 r = await asB((ctx) => ai.crmAiTick(ctx));
 check('crmai: off = the timer does nothing', r.off === true, r);
 await owner('erpCrmAi', [{ action: 'on' }]);
+// crmai-2: the free Gemini limit is used up - nothing is marked read, it waits
+check('crmai: only the free Gemini models are asked (not the ChatGPT plan)', (await sql`select count(*)::int n from ai_work where purpose = 'crm' and model not like 'gemini:%'`)[0].n === 0);
+web.on(/generativelanguage\.googleapis\.com/, () => ({ status: 429, body: { error: { code: 429, message: 'Resource has been exhausted (e.g. check quota).' } } }));
+const late = await chat('P9', 'Late', null, null, [['customer', 'Karim chat: PETG ache?']]);
+r = await asB((ctx) => ai.crmAiTick(ctx, true));
+const lateRow = (await sql`select crm_ai_msg from inbox_conversations where id = ${late.id}`)[0];
+check('crmai: free limit used up - the run stops and waits', r.waiting === true && r.failed === 1, r);
+check('crmai: free limit used up - the chat stays unread for later', lateRow.crm_ai_msg === null, lateRow);
 check('crmai: mergeExtra refuses a choice that is not one of the choices', ai.mergeExtra({}, { ctype: 'Alien' }, { f_ctype: { type: 'choice', choices: ['Hobby'] } }).put.length === 0);
 done();

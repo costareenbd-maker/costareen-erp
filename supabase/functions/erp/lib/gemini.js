@@ -21,10 +21,10 @@ export function b64(bytes) {
  * ai-1: it goes through lib/ai.js - the provider and model chosen for this kind of work (ChatGPT, Claude, Gemini or
  * the owner's own server), the strongest first, the others as fallback. Throws a plain sentence when no AI answers.
  */
-export async function gemini(ctx, body, purpose, conversationId) {
+export async function gemini(ctx, body, purpose, conversationId, opts) {
   await budgetGate(ctx);
   const n = fromGeminiBody(body);
-  const r = await ai(ctx, { ...n, purpose, conversationId });
+  const r = await ai(ctx, { ...n, purpose, conversationId, ...(opts || {}) });   // opts.tier 'cheap' = Gemini's free models only
   return { parts: [{ text: r.text }], model: r.provider + ':' + r.model };
 }
 

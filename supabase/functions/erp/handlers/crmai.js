@@ -26,7 +26,11 @@ import { appIsOff } from './apps.js';
 import { gemini, jsonOf } from '../lib/gemini.js';
 
 const KEY = 'crm_ai';
-const EVERY_MIN = 10, PER_RUN = 6, QUIET_MIN = 20, BACK_DAYS = 30, LOG_MAX = 60;
+// crmai-2 (owner 11 Nov 2026): the ChatGPT plan's limit is for the customers - this work runs only on Gemini's free models,
+// slowly: 3 chats every 30 minutes, 4 duplicate pairs a day; when the free quota is used up it waits and reads them later.
+const EVERY_MIN = 30, PER_RUN = 3, QUIET_MIN = 20, BACK_DAYS = 30, LOG_MAX = 60, DUPES_A_DAY = 4;
+const FREE = { tier: 'cheap' };
+const WAIT_RE = /busy|429|quota|exhaust|rate|limit|No AI key|could not answer|timeout|overloaded|503/i;
 const STAGES = ['', 'New', 'Contacted', 'Interested', 'Quoted', 'Won', 'Lost'];
 export const AI_FIELDS = [
   { key: 'f_printer', label: 'Printer model', type: 'text', choices: [] },
@@ -140,7 +144,7 @@ export async function readChat(ctx, c, live, comps, C) {
     systemInstruction: { parts: [{ text: SYSTEM(formatDate(ctx.now, 'yyyy-MM-dd (EEEE)'), comps) }] },
     contents: [{ role: 'user', parts: [{ text: known + '\n\nTHE CHAT (oldest first):\n' + msgs.map(lineOf).join('\n') }] }],
     generationConfig: { temperature: 0.1, responseMimeType: 'application/json' },
-  }, 'crm', c.id);
+  }, 'crm', c.id, FREE);
   const j = jsonOf(parts);
   if (!j || typeof j !== 'object') throw new Error('The AI gave no answer for a chat.');
   const who = str(j.name) || str(c.cname) || (cust && str(cust.name)) || 'A customer';
@@ -208,7 +212,7 @@ async function checkDupes(ctx, C) {
   for (const g of groups) {
     const sig = g.people.map((p) => p.key).sort().join('|');
     if (C.dupSeen.includes(sig)) continue;
-    if (asked >= 8) break;
+    if (asked >= DUPES_A_DAY) break;
     asked++;
     const people = [];
     for (const p of g.people.slice(0, 6)) {
@@ -224,7 +228,7 @@ async function checkDupes(ctx, C) {
         'Reply JSON only: {"verdict": "different" | "same" | "unsure", "why": one short English line}' }] },
       contents: [{ role: 'user', parts: [{ text: JSON.stringify(people) }] }],
       generationConfig: { temperature: 0, responseMimeType: 'application/json' },
-    }, 'crm', null);
+    }, 'crm', null, FREE);
     const j = jsonOf(parts) || {};
     const names = g.people.map((p) => p.name + ' ' + p.phone).join(' / ');
     if (j.verdict === 'different') { await crm.erpCrmDupeOk(own, { keys: g.people.map((p) => p.key) }); note(C, ctx, 'Not the same person: ' + names + ' - ' + str(j.why), 'dupes'); }
@@ -260,15 +264,17 @@ export async function crmAiTick(ctx, force) {
       out.failed++;
       const msg = String((e && e.message) || e);
       if (/budget/i.test(msg)) { note(C, ctx, 'Stopped: ' + msg); break; }
+      // the free Gemini quota is used up (or no Gemini key): stop, the chat stays unread and is read on a later run
+      if (WAIT_RE.test(msg)) { out.waiting = true; if (!C.waitNoted || ctx.now.getTime() - new Date(C.waitNoted).getTime() > 6 * 3600e3) { C.waitNoted = ctx.now.toISOString(); note(C, ctx, 'Waiting: the free Gemini limit is used up for now - the rest is read later.'); } break; }
       // a chat that fails is not read again until it has a new message (the error is in the log)
       try { await ctx.tx`update inbox_conversations set crm_ai_msg = ${Number(c.lastid || 0)} where id = ${c.id}`; } catch (_) { /* fine */ }
       note(C, ctx, 'Could not read a chat (' + str(c.cname || c.chname) + '): ' + msg.slice(0, 120));
     }
   }
   const today = ymd(ctx.now);
-  if (C.dupDay !== today) {
+  if (C.dupDay !== today && !out.waiting) {
     try { out.dupes = await ctx.tx.savepoint(async (sp) => checkDupes({ ...ctx, tx: sp }, C)); C.dupDay = today; }
-    catch (e) { note(C, ctx, 'Duplicate check failed: ' + String((e && e.message) || e).slice(0, 120)); C.dupDay = today; }
+    catch (e) { const m = String((e && e.message) || e); if (!WAIT_RE.test(m)) { note(C, ctx, 'Duplicate check failed: ' + m.slice(0, 120)); C.dupDay = today; } }
   }
   C.lastOut = out;
   await save(ctx, C);
