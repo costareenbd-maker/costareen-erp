@@ -8046,13 +8046,11 @@ function viewWebOrders() {
       // woitems-1 (owner, 10 Nov 2026): a long order made the row / phone card very tall - two lines, then a button
       // woitems-2 (owner, 10 Nov 2026): every line began 'Polymaker Panchro...' and the colour and quantity were cut off -
       // the words all lines share are shown once, each line shows only what differs, quantity first
-      var wPre = woCommonWords(o.lines);
-      var items = (wPre ? '<span class="wo-pre">' + esc(wPre) + '</span>' : '') + o.lines.slice(0, o.lines.length > 3 ? 2 : 3).map(function (l) {
-        var nm = wPre ? String(l.product || '').trim().split(/\s+/).slice(wPre.split(' ').length).join(' ').replace(/^[\-–—,|/\s]+/, '') : l.product;
-        return '<span class="wo-it" title="' + esc(l.product) + '"><b>' + fmt(l.qty) + '×</b> ' + esc(nm || l.product) + '</span>';
-      }).join('') + (o.lines.length > 3
-        ? '<button class="btn small wo-more" type="button" data-woitems="' + esc(o.no) + '">+' + fmt(o.lines.length - 2) + ' more · ' + fmt(o.lines.reduce(function (n, l) { return n + (Number(l.qty) || 0); }, 0)) + ' pcs</button>'
-        : '');
+      // woitems-3 (owner, 10 Nov 2026): no product names in the row at all - every row the same height;
+      // one button 'N products · M pcs', the popup lists what is in the order
+      var wPcs = o.lines.reduce(function (n, l) { return n + (Number(l.qty) || 0); }, 0);
+      var items = '<button class="btn small wo-more" type="button" data-woitems="' + esc(o.no) + '" title="See the products in this order">' +
+        fmt(o.lines.length) + (o.lines.length === 1 ? ' product' : ' products') + ' · ' + fmt(wPcs) + ' pcs</button>';
       // owner 17 Oct 2026: the courier's consignment right under the order number - booked by the website or from the ERP
       var parcel = o.consignment
         ? '<br><span class="pill '+(o.inAccount === false ? 'out' : 'ok')+'" style="font-size:11.5px" title="'+(o.bookedBy === 'website' ? 'Booked by the website' : 'Booked from the ERP')+
@@ -8062,7 +8060,7 @@ function viewWebOrders() {
         : '<br><span class="sku">No parcel yet</span>';
       h += '<tr><td class="nm" style="white-space:nowrap">#'+esc(o.no)+parcel+'</td><td>'+esc(o.date)+'</td>'+
            '<td class="nm">'+esc(o.customer||'—')+'<br><span class="sku">'+esc(o.phone||'')+'</span></td>'+
-           '<td class="wo-items" style="font-size:12.5px">'+items+'</td>'+
+           '<td class="wo-items">'+items+'</td>'+
            '<td class="num">'+fmt(o.orderTotal)+'</td>'+
            '<td style="font-size:12.5px">'+esc(o.payment||'—')+'</td>'+
            '<td>'+(o.entered ? '<span class="pill ok">✓ Entered</span>'+(o.invoiceNo ? '<br><span class="sku">'+esc(o.invoiceNo)+'</span>' : '')
@@ -57669,8 +57667,8 @@ function woCommonWords(lines) {
 .wo-it{display:block;line-height:1.35;margin:0 0 4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .wo-pre{display:block;font-size:11.5px;color:var(--muted,#64748b);margin:0 0 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wo-it b{font-variant-numeric:tabular-nums}
-td.wo-items{min-width:210px}
-@media (max-width:760px){td.wo-items{min-width:0}}
+td.wo-items{white-space:nowrap}
+.wo-more{margin-top:0}
 .wo-more{margin-top:2px}
 .wo-list{list-style:none;margin:6px 0 0;padding:0;max-height:min(60vh,520px);overflow:auto}
 .wo-list li{display:grid;grid-template-columns:1fr auto auto;gap:4px 12px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line,#e5e7eb);font-size:14px}
