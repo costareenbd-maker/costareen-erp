@@ -95,9 +95,9 @@ await asB(async (ctx) => ib.hookPost(ctx, await chRow(M.id), raw, { 'x-hub-signa
 await sql`update inbox_conversations set reply_due_at = now() - interval '1 second' where id = ${conv1}`;
 await asB((ctx) => ib.replyDue(ctx, conv1));
 const cards = graph.find((g) => g.body && g.body.message && g.body.message.attachment && g.body.message.attachment.payload.template_type === 'generic');
-// cards-2 (owner 10 Nov): one Order button; tapping the card opens the product page
-check('products go as cards with price, code, one Order button, and the product page on tap', cards && cards.body.message.attachment.payload.elements[0].subtitle.includes(PLA) && cards.body.message.attachment.payload.elements[0].buttons.length === 1 &&
-  /item\.html\?c=[0-9a-f]{32}&sku=/.test((cards.body.message.attachment.payload.elements[0].default_action || {}).url || ''), cards);
+// inbox-only-1 (owner 10 Nov): cards carry no link at all - Order and More photos come back to the AI in the chat
+check('products go as cards with price, code and two in-chat buttons (no link, no product page)', cards && cards.body.message.attachment.payload.elements[0].subtitle.includes(PLA) &&
+  cards.body.message.attachment.payload.elements[0].buttons.length === 2 && cards.body.message.attachment.payload.elements[0].buttons.every((b) => b.type === 'postback') && !cards.body.message.attachment.payload.elements[0].default_action, cards);
 check('the agent is told never to invent prices, and the delivery charges', /Never invent a price/.test(sysSeen) && /৳70/.test(sysSeen) && /Savar/.test(sysSeen), sysSeen.slice(0, 200));
 const stockBefore = (await sql`select stock from product_stock ps join products p on p.id = ps.product_id where p.business_id = ${FIX.B} and p.sku = ${PLA}`)[0].stock;
 graph.length = 0;

@@ -142,7 +142,7 @@ check('the bank account from the ERP\'s invoice settings goes to the customer', 
 check('the Bangla QR from the ERP goes as a picture', out.replies.some((q) => q.kind === 'image' && /test-qr\.png/.test(q.url || '')), out.replies);
 check('the bank details go only once even when the model asks twice', out.replies.filter((q) => q.kind === 'image').length === 1 && out.replies.filter((q) => /Test Bank Ltd/.test(q.text || '')).length === 1, out.replies);
 check('a bank account is not mistaken for a leak', out.guarded === 0, out.guarded);
-check('the business phone, address and website come from the ERP when the Agent Desk leaves them empty', /Phone: \+880 1700-000000/.test(sysOf(bodies[0])) && /Website: www\.example\.test/.test(sysOf(bodies[0])), sysOf(bodies[0]).slice(0, 900));
+check('the business phone and address come from the ERP when the Agent Desk leaves them empty; the website is not offered (inbox-only-1)', /Phone: \+880 1700-000000/.test(sysOf(bodies[0])) && !/Website: www\.example\.test/.test(sysOf(bodies[0])), sysOf(bodies[0]).slice(0, 900));
 
 // ---- sales-3 (owner 10 Nov 2026): sounds like a person, ভাই / আপু not স্যার, the customer's own script, order flow,
 // and every chat order told on WhatsApp
@@ -268,12 +268,15 @@ bodies.length = 0;
 script = [[{ text: 'আমি ফাউজিয়া।' }]];
 await reply([{ direction: 'in', kind: 'text', text: 'apnar nam ki?' }]);
 const sysN = sysOf(bodies[0]);
-check('name-1: the prompt carries the salesperson\'s name and says it only when asked', /YOUR NAME is Faujia Alvi/.test(sysN) && /আমি Faujia Alvi,/.test(sysN) && /Do not announce it in every message/.test(sysN), sysN.slice(0, 500));
+check('name-1: the prompt carries the salesperson\'s name and says it only when asked', /YOUR NAME is Faujia Alvi/.test(sysN) && /আমি ফাউজিয়া আলভি,/.test(sysN) && /ami Faujia Alvi,/.test(sysN) && /Do not announce it in every message/.test(sysN), sysN.slice(0, 500));
 check('name-1: ...and the honesty rule about being an AI still holds', /never deny it/.test(sysN) && /the shop's AI assistant/.test(sysN));
 await owner('erpInboxProfile', [{ save: { agent_name: '' } }]);
 bodies.length = 0;
 script = [[{ text: 'জি।' }]];
 await reply([{ direction: 'in', kind: 'text', text: 'hi' }]);
 check('name-1: no name set: no name line', !/YOUR NAME/.test(sysOf(bodies[0])));
+
+// ---- inbox-only-1 (owner 10 Nov): every order in the chat; no website link to buy
+check('inbox-only-1: the prompt keeps every order in the chat and never sends a buying link', /ORDERS ONLY HERE/.test(sysN) && !/\nWebsite: /.test(sysN));
 
 await done();

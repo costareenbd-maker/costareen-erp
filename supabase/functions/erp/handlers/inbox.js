@@ -33,7 +33,7 @@ import { sendOut, mediaBytes, readHook, metaSignatureOk, metaProfile, chSecret, 
          commentReply, commentPrivate, commentModerate, fetchBytes, metaPicUrl, metaMsgFileUrl, evoAvatar } from './inboxch.js';
 import { products } from './dashboard.js';
 import { feat, needFeat, budget, KIND_FEATURE } from '../lib/inboxplan.js';
-import { orderLink, billLink, itemLink } from './inboxpub.js';
+import { orderLink, billLink } from './inboxpub.js';
 import { orderAlert, orderAlertText } from './orderalert.js';
 import { productAiMap, productFields } from './productai.js';
 
@@ -429,6 +429,7 @@ const HUMAN = 'SOUND HUMAN (the customer must feel they are chatting with a real
   'Not every line needs its own answer: answer what matters for the purchase and move the chat one step nearer the order (product -> colour / quantity -> delivery charge -> phone + address -> order). ' +
   'MATCH THEM: a short message gets a short answer (one or two lines) unless they asked for detail; mirror how formal they are (default আপনি); at most one emoji and only if they use emoji, none in a complaint or a price argument; never start two replies the same way. ' +
   'Urgency only from real facts (real stock, a real offer end date) - never invent "only 2 left". An angry customer, a damaged item, a refund or a repeated complaint: drop the chit-chat, apologise plainly once and hand the chat to the team (handover). ' +
+  'ORDERS ONLY HERE: take every order in this chat (cards -> Order -> quantity -> phone + address -> place_order). Never send a website or any link to buy, never tell them to order on the website or pay online; if they ask for the website, say the order is quickest right here with cash on delivery. ' +
   'ONE MESSAGE PER ANSWER: everything you say in this reply goes to the customer as one short message (the ERP joins it), so never say the same thing twice, never greet again, and do not write a separate line that only introduces the cards ("এগুলো দেখুন:") - the cards speak for themselves; end with at most one question.';
 const ORDER_FLOW = 'ORDER FLOW: (1) When the customer wants to see something or names a product, show it straight away with show_products (cards with photo, price and an Order button) - for a choice of 2-6 options use ask_choice so they can tap - instead of describing it in words. ' +
   '(2) Then ask in one short line whether they want to order it (e.g. "এটা অর্ডার করবেন ভাই?" / "eta order korben bhai?" / "Shall I place the order?"). ' +
@@ -448,9 +449,10 @@ function systemPrompt(p, rules, ch, contact, extra, shop) {
   const pair = addrPair(p);
   const can = CAN[ch.kind] || {};
   // name-1: the salesperson's name (said when asked; with "are you a bot?" the honest answer still comes first)
-  const nameLine = str(p.agent_name) ? 'YOUR NAME is ' + str(p.agent_name) + '. When a customer asks your name or who they are talking to, give it naturally in their script ' +
-    '(Bengali script in Bangla, English letters in Banglish / English), e.g. "আমি ' + str(p.agent_name).replace(/\s*\(.*\)\s*/, '') + ', ' + (p.name || 'আমাদের শপ') + ' থেকে।". Do not announce it in every message. ' +
-    'If they sincerely ask whether you are a bot / AI / a real person, the honesty rule above still holds: you are ' + str(p.agent_name).replace(/\s*\(.*\)\s*/, '') + ', the shop\'s AI assistant, and a person from the team can join.' : '';
+  const nmAll = str(p.agent_name), nmBn = (nmAll.match(/\(([^)]*)\)/) || [])[1] || nmAll, nmEn = nmAll.replace(/\s*\(.*\)\s*/, '') || nmAll;
+  const nameLine = nmAll ? 'YOUR NAME is ' + nmEn + (nmBn !== nmEn ? ' (in Bengali script: ' + nmBn + ')' : '') + '. When a customer asks your name or who they are talking to, give it naturally in their script: ' +
+    'Bengali script e.g. "আমি ' + nmBn + ', ' + (p.name || 'আমাদের শপ') + ' থেকে।", Banglish / English e.g. "ami ' + nmEn + ', ' + (p.name || 'our shop') + ' theke". Do not announce it in every message. ' +
+    'If they sincerely ask whether you are a bot / AI / a real person, the honesty rule above still holds: you are ' + nmEn + ', the shop\'s AI assistant, and a person from the team can join.' : '';
   return [
     nameLine,
     'You are the senior salesperson of "' + p.name + '", a business in Bangladesh' + (p.sells ? ' that sells ' + p.sells : '') + '. You speak as one of the team ("we", "our shop"). Do not say you are an AI unless asked; when asked, never deny it: say you are the team\'s AI assistant and a person joins when needed.',
@@ -479,7 +481,7 @@ function systemPrompt(p, rules, ch, contact, extra, shop) {
     'Channel: ' + (KIND_NAME[ch.kind] || ch.kind) + '. ' + (can.cards ? 'Product cards and buttons are shown as cards.' : 'This channel shows no cards: show_products sends each product as a photo with its name, price and code; choices appear as a numbered list.'),
     '',
     'THE BUSINESS (written by the owner):',
-    'Name: ' + p.name + (p.sells ? '\nWhat we sell: ' + p.sells : '') + (shop ? '\nOUR CATALOGUE NOW (from the ERP):\n' + shop : '') + (p.hours ? '\nOpening hours: ' + p.hours : '') + (p.phone ? '\nPhone: ' + p.phone : '') + (p.address ? '\nAddress: ' + p.address : '') + (p.website ? '\nWebsite: ' + p.website : '') + (p.email ? '\nEmail: ' + p.email : ''),
+    'Name: ' + p.name + (p.sells ? '\nWhat we sell: ' + p.sells : '') + (shop ? '\nOUR CATALOGUE NOW (from the ERP):\n' + shop : '') + (p.hours ? '\nOpening hours: ' + p.hours : '') + (p.phone ? '\nPhone: ' + p.phone : '') + (p.address ? '\nAddress: ' + p.address : '') + (p.email ? '\nEmail: ' + p.email : ''),
     'Delivery: inside Dhaka ৳' + num(p.delivery_in) + ' (' + p.days_in + '), outside Dhaka ৳' + num(p.delivery_out) + ' (' + p.days_out + '). Savar, Keraniganj and Tongi count as outside Dhaka.' + (p.delivery_rule ? ' ' + p.delivery_rule : ''),
     'Payment: ' + (p.payment || 'Cash on delivery.'),
     p.returns ? 'Return and exchange rule: ' + p.returns : 'No return rule is written: pass return questions to the team (ask_team).',
@@ -859,8 +861,9 @@ export async function agentReply(ctx, conv, opts) {
       const cards = [];
       for (const x of ps) {
         cards.push({ code: x.sku, title: x.name, subtitle: (x.sell ? '৳' + Math.round(x.sell).toLocaleString('en-IN') : 'Price on request') + ' · ' + x.sku + (x.stock > 0 ? '' : ' · not available now'),
-                     image: await imageUrl(ctx, x), buttons: [{ title: 'Order', payload: 'ORDER:' + x.sku }, { title: 'More photos', payload: 'PHOTO:' + x.sku }]
-                       .concat(F.product_page && !test && conv.shop_token ? [{ title: 'Details', url: itemLink(ctx, conv, x.sku) }] : []) });
+                     // inbox-only-1 (owner 10 Nov): no link to any page - the website's online payment costs a fee, every
+                     // order is taken here in the chat; both buttons come back to the AI (ORDER: / PHOTO:)
+                     image: await imageUrl(ctx, x), buttons: [{ title: 'Order', payload: 'ORDER:' + x.sku }, { title: 'More photos', payload: 'PHOTO:' + x.sku }] });
       }
       if (can.cards) queue.push({ kind: 'cards', cards, text: '' });
       else if (ch.kind === 'webchat') queue.push({ kind: 'cards', cards, text: '', store: 'cards' });
