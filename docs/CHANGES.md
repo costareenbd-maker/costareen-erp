@@ -4225,3 +4225,10 @@ Web orders screen could only enter such an order as a courier sale. Now:
 NOT done: the website still books its own Steadfast parcels for orders placed before the pickup choice went live - the
 eleven 11.11 orders of 9-10 Nov all have a parcel "in review"; any that were walk-ins must be cancelled in Steadfast's
 panel by hand (the ERP has no cancel call).
+
+## woitems-1 (10 Nov 2026): long website orders stay short on Web orders
+
+Owner (screenshot of an 8-product order): the Items cell made the row and the phone card very tall. Now an order with
+more than three products shows two of them and a "+N more · P pcs" button; the button opens a popup with every product,
+its quantity and line total, the items sum, delivery and charges, and the order total (closes by ✕, Close, Esc or the
+backdrop). Page only.

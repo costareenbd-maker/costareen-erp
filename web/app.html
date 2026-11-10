@@ -8043,9 +8043,12 @@ function viewWebOrders() {
     h += '<div class="scroll tall"><table><thead><tr><th>Order</th><th>Date</th><th>Customer</th>'+
          '<th>Items</th><th class="num">Order total</th><th>Payment</th><th>State</th><th></th></tr></thead><tbody>';
     WEB.forEach(function (o) {
-      var items = o.lines.map(function (l) {
-        return esc(l.product) + ' ×' + fmt(l.qty);
-      }).join('<br>');
+      // woitems-1 (owner, 10 Nov 2026): a long order made the row / phone card very tall - two lines, then a button
+      var items = o.lines.slice(0, o.lines.length > 3 ? 2 : 3).map(function (l) {
+        return '<span class="wo-it">' + esc(l.product) + ' <b>×' + fmt(l.qty) + '</b></span>';
+      }).join('') + (o.lines.length > 3
+        ? '<button class="btn small wo-more" type="button" data-woitems="' + esc(o.no) + '">+' + fmt(o.lines.length - 2) + ' more · ' + fmt(o.lines.reduce(function (n, l) { return n + (Number(l.qty) || 0); }, 0)) + ' pcs</button>'
+        : '');
       // owner 17 Oct 2026: the courier's consignment right under the order number - booked by the website or from the ERP
       var parcel = o.consignment
         ? '<br><span class="pill '+(o.inAccount === false ? 'out' : 'ok')+'" style="font-size:11.5px" title="'+(o.bookedBy === 'website' ? 'Booked by the website' : 'Booked from the ERP')+
@@ -57639,6 +57642,51 @@ document.addEventListener('click', async function (e) {
       toast('Could not enter the order: ' + esc(err && err.message ? err.message : err), true, 15000);
     });
 });
+</script>
+
+<!-- woitems-1: a website order's items in a popup (owner, 10 Nov 2026) -->
+<style>
+.wo-it{display:block;line-height:1.35;margin:0 0 4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wo-more{margin-top:2px}
+.wo-list{list-style:none;margin:6px 0 0;padding:0;max-height:min(60vh,520px);overflow:auto}
+.wo-list li{display:grid;grid-template-columns:1fr auto auto;gap:4px 12px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line,#e5e7eb);font-size:14px}
+.wo-list li:last-child{border-bottom:0}
+.wo-list .q{font-weight:700;white-space:nowrap}
+.wo-list .t{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted,#64748b)}
+.wo-sum{display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:2px solid var(--line,#e5e7eb);font-weight:700}
+.wo-x{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:999px;border:0;background:transparent;font-size:20px;cursor:pointer}
+</style>
+<script>
+document.addEventListener('click', function (e) {
+  var n = e.target && e.target.closest ? e.target.closest('[data-woitems]') : null;
+  if (!n) return;
+  e.preventDefault(); e.stopPropagation();
+  var no = n.getAttribute('data-woitems');
+  var o = (WEB || []).find(function (x) { return String(x.no) === String(no); });
+  if (!o) return;
+  var pcs = 0, sum = 0;
+  var rows = o.lines.map(function (l) {
+    pcs += Number(l.qty) || 0; sum += Number(l.lineTotal) || 0;
+    return '<li><span>' + esc(l.product) + '</span><span class="q">×' + fmt(l.qty) + '</span><span class="t">' + fmt(l.lineTotal) + '</span></li>';
+  }).join('');
+  var back = document.createElement('div');
+  back.className = 'dlg-back';
+  back.innerHTML = '<div class="dlg" role="dialog" aria-modal="true" aria-labelledby="wo_t" style="position:relative;max-width:560px">' +
+    '<button class="wo-x" type="button" aria-label="Close" data-woclose>✕</button>' +
+    '<div class="dlg-t" id="wo_t">Order #' + esc(o.no) + ' · ' + esc(o.customer || '') + '</div>' +
+    '<div class="dlg-b" style="white-space:normal"><span class="sku">' + fmt(o.lines.length) + ' products · ' + fmt(pcs) + ' pcs</span>' +
+    '<ul class="wo-list">' + rows + '</ul>' +
+    '<div class="wo-sum"><span>Items</span><span>' + fmt(sum) + '</span></div>' +
+    (Number(o.orderTotal) > sum ? '<div class="wo-sum" style="border-top:0;margin-top:2px;padding-top:0;font-weight:500"><span>Delivery and charges</span><span>' + fmt(Number(o.orderTotal) - sum) + '</span></div>' : '') +
+    '<div class="wo-sum" style="border-top:0;margin-top:2px;padding-top:0"><span>Order total</span><span>' + fmt(o.orderTotal) + '</span></div></div>' +
+    '<div class="dlg-f"><button class="btn primary" type="button" data-woclose>Close</button></div></div>';
+  function close() { document.removeEventListener('keydown', onKey, true); back.remove(); }
+  function onKey(ev) { if (ev.key === 'Escape') { ev.stopPropagation(); close(); } }
+  back.addEventListener('click', function (ev) { if (ev.target === back || (ev.target.closest && ev.target.closest('[data-woclose]'))) close(); });
+  document.addEventListener('keydown', onKey, true);
+  document.body.appendChild(back);
+  var b = back.querySelector('.dlg-f [data-woclose]'); if (b) b.focus();
+}, true);
 </script>
 </body>
 </html>
