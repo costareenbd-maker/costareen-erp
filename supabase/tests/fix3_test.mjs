@@ -89,7 +89,7 @@ check('(M16) paying Rahman more profit than he has is refused', !r.ok && /not ye
 
 // ---- Q2: an investor with money in cannot be ended
 r = await owner('erpCapitalHolderEnd', [{ id: KAM }]);
-check('(Q2) Kamal still has 100000 in: he cannot be ended', !r.ok && /still has 100000/.test(r.error), r);
+check('(Q2) Kamal still has 100000 in: he cannot be ended', !r.ok && /still has ৳1,00,000/.test(r.error), r);
 r = await owner('erpCapitalEntryAdd', [{ holder: KAM, type: 'withdraw', amount: 100000 }]);
 r = await owner('erpCapitalHolderEnd', [{ id: KAM }]);
 check('(Q2) money taken back: now he can leave', r.ok, r);

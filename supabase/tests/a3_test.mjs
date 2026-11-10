@@ -87,7 +87,7 @@ r = await owner('erpCashAdjust', [{ account: A.Cash, counted: 16000, note: '' }]
 check('a correction needs a reason', !r.ok && /why the book was wrong/.test(r.error), r);
 r = await owner('erpCashAdjust', [{ account: A.Cash, counted: 16000, note: 'drawer counted, 350 short' }]);
 check('counted 16,000: the book follows, and says why', r.ok && (await bal('Cash')) === 16000 && r.result.entries[0].what === 'Correction after counting' &&
-  /counted 16000, book said 16350/.test(r.result.entries[0].ref) && r.result.entries[0].after === 16000, r.result && r.result.entries[0]);
+  /counted ৳16,000, book said ৳16,350/.test(r.result.entries[0].ref) && r.result.entries[0].after === 16000, r.result && r.result.entries[0]);
 const mv = r.result.entries[0];
 r = await owner('erpCashMoveVoid', [{ id: mv.id, reason: 'found the 350' }]);
 check('a correction can be struck out', r.ok && (await bal('Cash')) === 16350 && (await book()).result.total === total, r);

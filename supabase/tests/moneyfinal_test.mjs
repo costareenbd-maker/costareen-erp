@@ -60,7 +60,7 @@ r = await owner('erpCashTransfer', [{ from: A.Cash, splits: [{ to: A['Bank A'], 
 check('cash deposited into two banks in one go', r.ok && r.result.moved && r.result.moved.legs === 2 && r.result.moved.total === 500, r);
 check('...Cash 1,050 · Bank A 300 · Bank B 200', (await bal('Cash')) === 1050 && (await bal('Bank A')) === 300 && (await bal('Bank B')) === 200, (await book()).accounts);
 r = await owner('erpCashTransfer', [{ from: A.Cash, splits: [{ to: A['Bank A'], amount: 1000 }, { to: A['Bank B'], amount: 100 }] }]);
-check('a split larger than the source holds is refused as a whole', !r.ok && /holds 1050/.test(r.error) && (await bal('Bank A')) === 300, r);
+check('a split larger than the source holds is refused as a whole', !r.ok && /holds ৳1,050/.test(r.error) && (await bal('Bank A')) === 300, r);
 r = await owner('erpCashTransfer', [{ from: A.Cash, splits: [{ to: A['Bank A'], amount: 10 }, { to: A['Bank A'], amount: 10 }] }]);
 check('the same destination twice is refused', !r.ok && /on two lines/.test(r.error), r);
 r = await owner('erpCashTransfer', [{ from: A.Cash, to: A['Bank A'], amount: 50 }]);

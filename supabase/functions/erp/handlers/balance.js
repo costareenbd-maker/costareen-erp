@@ -25,6 +25,8 @@ import { investorReturns } from './returns.js';
 import { roleAtLeast } from '../allow.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
+// crit6-desk (10 Nov 2026): money said to people is ৳ with South-Asian grouping, never a raw 1163265
+const tkS = (n) => (num(n) < 0 ? '−' : '') + '৳' + Math.abs(Math.round(num(n))).toLocaleString('en-IN');
 const soft = async (ctx, fn, dflt) => { try { return await ctx.tx.savepoint(fn); } catch (_) { return dflt; } };
 function monthsFrom(a, b) { const out = []; let y = +a.slice(0, 4), m = +a.slice(5, 7); while (true) { const k = y + '-' + String(m).padStart(2, '0'); out.push(k); if (k >= b || out.length > 120) break; m++; if (m > 12) { m = 1; y++; } } return out; }
 
@@ -38,7 +40,7 @@ async function figures(ctx, frozen) {
   const credit = await soft(ctx, async () => { const m = await creditMap(ctx); let c = 0; for (const k of Object.keys(m)) if (m[k] > 0) c += m[k]; return c; }, 0);
   const owns = [
     ...cash.map((c) => ({ key: 'cash', what: c.name, sub: c.kind, amount: c.amount })),
-    { key: 'stock', what: 'Stock on the shelf, at cost', sub: stock.units + ' units' + (stock.uncosted ? ', ' + stock.uncosted + ' products with no cost' : ''), amount: stock.cost },
+    { key: 'stock', what: 'Stock on the shelf, at cost', sub: num(stock.units).toLocaleString('en-IN') + ' units' + (stock.uncosted ? ', ' + stock.uncosted + ' products with no cost' : ''), amount: stock.cost },
     { key: 'ahead', what: 'Paid to suppliers, goods not received yet', sub: '', amount: Math.round(num(sup.aheadTotal)) },
     { key: 'dues', what: 'Customers owe', sub: '', amount: Math.round(dues) },
   ];
@@ -49,9 +51,11 @@ async function figures(ctx, frozen) {
   // owner 18 Oct 2026: this company's part of each joint stock (a minus = owed to the joint stock)
   const joint = await soft(ctx, async () => (await import('./joint.js')).jointPosition(ctx), []);
   for (const j of joint) {
-    const sub = 'paid in ' + Math.round(j.paidIn) + ' + profit share ' + Math.round(j.profitShare) + ' - joint goods we sold ' + Math.round(j.sold);
-    if (j.amount >= 0) owns.push({ key: 'joint', what: 'Our part of the joint stock (' + j.pool + ')', sub, amount: Math.round(j.amount) });
-    else owes.push({ key: 'joint', what: 'Owed to the joint stock (' + j.pool + ') - money from its goods we sold', sub, amount: Math.round(-j.amount) });
+    // crit6-desk: the sub line in words with money formatting; the parts go along as numbers so the page can say them in Bangla
+    const parts = { paidIn: Math.round(num(j.paidIn)), profitShare: Math.round(num(j.profitShare)), sold: Math.round(num(j.sold)) };
+    const sub = 'Paid in ' + tkS(parts.paidIn) + ' · profit share ' + tkS(parts.profitShare) + ' · our joint goods sold ' + tkS(parts.sold);
+    if (j.amount >= 0) owns.push({ key: 'joint', what: 'Our part of the joint stock (' + j.pool + ')', sub, parts, amount: Math.round(j.amount) });
+    else owes.push({ key: 'joint', what: 'Owed to the joint stock (' + j.pool + ') - money from its goods we sold', sub, parts, amount: Math.round(-j.amount) });
   }
   return { owns, owes, cb, stock };
 }

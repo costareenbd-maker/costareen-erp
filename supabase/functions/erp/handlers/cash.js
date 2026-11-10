@@ -23,6 +23,8 @@ import { roleAtLeast } from '../allow.js';
 import { assertOpen, lockedThrough } from '../lib/period.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
+// crit6-desk (10 Nov 2026): money said to people is ৳ with South-Asian grouping, never a raw 1163265
+const tkS = (n) => (num(n) < 0 ? '−' : '') + '৳' + Math.abs(Math.round(num(n))).toLocaleString('en-IN');
 const KINDS = { cash: 'Cash', bank: 'Bank', wallet: 'Mobile wallet', courier: 'Courier (holds collected cash)', agent: 'Agent advance (money held by a shipping agent)' };
 const isId = (v) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v || ''));
 const when = (d) => (d ? formatDate(new Date(d), 'd MMM yyyy, h:mm a') : '');
@@ -129,7 +131,7 @@ async function ledger(ctx, accs) {
     const kept = round2(num(p.cod_collected) - num(p.paid_to_bank));
     if (courier && num(p.cod_collected)) {
       out.push({ at: d, account: courier.id, amount: -num(p.cod_collected), src: 'payout-out', id: p.id, by: '',
-                 what: 'Paid out by the courier', ref: 'Payout ' + str(p.payout_id) + (kept > 0 ? ' · they kept ' + Math.round(kept) : '') });
+                 what: 'Paid out by the courier', ref: 'Payout ' + str(p.payout_id) + (kept > 0 ? ' · they kept ' + tkS(kept) : '') });
     }
     if (p.account_id && num(p.paid_to_bank)) {
       out.push({ at: d, account: p.account_id, amount: num(p.paid_to_bank), src: 'payout', id: p.id, by: '',
@@ -374,7 +376,7 @@ export async function erpCashTransfer(ctx, payload) {
   // fix-5 L4: no more than the account holds (a courier account may run ahead of its payout)
   if (from.kind !== 'courier') {
     const bal = num(((await erpCashBook(ctx, {})).accounts || []).find((a) => a.id === from.id)?.balance);
-    if (total > bal + 0.005) throw new Error(from.name + ' holds ' + Math.round(bal) + '. More than that cannot be moved out (correct its balance first if the book is wrong).');
+    if (total > bal + 0.005) throw new Error(from.name + ' holds ' + tkS(bal) + '. More than that cannot be moved out (correct its balance first if the book is wrong).');
   }
   // a double tap: the very same transfer written a moment ago
   const dup = await ctx.tx`select 1 from money_moves where business_id = ${ctx.biz} and account_id = ${from.id} and kind = 'transfer' and amount = ${-legs[0].amount}
@@ -402,9 +404,9 @@ export async function erpCashAdjust(ctx, payload) {
   await assertOpen(ctx, ctx.now, 'a correction cannot be written today');   // final-money: every money write checks the lock
   const book = (await erpCashBook(ctx, {})).accounts.find((x) => x.id === a.id).balance;
   const diff = round2(num(payload.counted) - book);
-  if (Math.abs(diff) < 0.5) throw new Error('The book already says ' + book + '. Nothing to correct.');
+  if (Math.abs(diff) < 0.5) throw new Error('The book already says ' + tkS(book) + '. Nothing to correct.');
   await ctx.tx`insert into money_moves (business_id, account_id, at, amount, kind, note, by)
-               values (${ctx.biz}, ${a.id}, ${ctx.now}, ${diff}, 'adjust', ${'counted ' + num(payload.counted) + ', book said ' + book + ' · ' + note}, ${whoIs(ctx)})`;
+               values (${ctx.biz}, ${a.id}, ${ctx.now}, ${diff}, 'adjust', ${'counted ' + tkS(payload.counted) + ', book said ' + tkS(book) + ' · ' + note}, ${whoIs(ctx)})`;
   return erpCashBook(ctx, { account: a.id });
 }
 

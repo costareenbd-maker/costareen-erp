@@ -60,7 +60,7 @@ check('profit to an investor refused', !r.ok && r.error === 'Profit is paid to a
 r = await owner('erpCapitalEntryAdd', [{ holder: RAH, type: 'ret', amount: 100 }]);
 check('return to a shareholder refused', !r.ok && r.error === 'A return is paid to an investor. A shareholder is paid profit.', r);
 r = await owner('erpCapitalEntryAdd', [{ holder: RAH, type: 'withdraw', amount: 100001 }]);
-check('cannot take back more than is in', !r.ok && r.error === 'Rahman has 100000 in the business. More than that cannot be taken back.', r);
+check('cannot take back more than is in', !r.ok && r.error === 'Rahman has ৳1,00,000 in the business. More than that cannot be taken back.', r);
 r = await owner('erpCapitalEntryAdd', [{ holder: RAH, type: 'invest', amount: 5, date: '2999-01-01' }]);
 check('future date refused', !r.ok && r.error === 'That date has not come yet.', r);
 r = await owner('erpCapitalEntryAdd', [{ holder: '', type: 'invest', amount: 5 }]);

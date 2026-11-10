@@ -131,7 +131,7 @@ r = await owner('erpCashReassign', [{ src: 'payment', id: old, account: bank.id 
 const stays = (await sql`select account_id from payments where id = ${old}`)[0].account_id;
 check('(M11) moving a closed month\'s payment to another account is refused (and nothing moves)', !r.ok && /closed/.test(r.error) && stays === cash.id, [r.error, stays]);
 r = await owner('erpCapitalReopen', [{ month: prev, reason: 'a bill came late' }]);
-check('(M12) reopening a month whose profit was handed over is asked first', !r.ok && /^CONFIRM: 1000 /.test(r.error), r);
+check('(M12) reopening a month whose profit was handed over is asked first', !r.ok && /^CONFIRM: ৳1,000 /.test(r.error), r);
 r = await owner('erpCapitalReopen', [{ month: prev, reason: 'a bill came late', again: true }]);
 const rec = await sql`select month, reason, paid_out::float as p, closed_by from capital_reopens where business_id = ${B}`;
 check('(M12) reopened, and the closing is kept on record with the reason', r.ok && rec.length === 1 && rec[0].month === prev && rec[0].reason === 'a bill came late' && rec[0].p === 1000, rec);

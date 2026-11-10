@@ -4146,3 +4146,23 @@ Owner's standing brief: raise the score, decide yourself. Blocks `<!-- crit5:boo
   40px; net-profit line "After this month's fixed costs:"; phone menu groups toggle one at a time; token drift fixed.
 - Checks: real-click invoice + receive flows desktop/phone, field battery 25/25, click reach 0 stolen on 44 x 2, crawl EN+BN 0
   errors, full suite: only ads 4, factory (date, fails on older code too), golive (IMPORT_DIR).
+
+## crit-6 (10 Nov 2026): fixes from the sixth critique (27/40, real clicks)
+Blocks `<!-- crit6:till -->`, `<!-- crit6:desk -->` after `<!-- CRIT6-MERGE 2026-11-10 -->`. Snapshot .impeccable/critique/2026-11-09T22-29-29Z.
+- LIVE BUG fixed: on a phone, tapping Save while the name box was focused did nothing (crit-4's light refresh replaced the
+  whole Save bar between pointerdown and click). The bar is now updated around its buttons.
+- New invoice totals follow typing (Received now, discounts, delivery, line price/qty, split parts; in-place, 120 ms debounce,
+  field battery still 13/13 + 12/12); WhatsApp line follows the phone; method marks load at sign-in; a half-made invoice
+  survives a reload (saved at once + per tab; "Restored the invoice you were making · Clear"; edits never restored as a new
+  sale); stock review shows the price-book cost; Bangla: ক্যাশে, no Enter hint on touch, 13.5px drawer labels, no repeated
+  crumb; success window: WhatsApp warning once a day, "Money: ৳500 in Cash", buttons fit; known-phone name swap explained.
+- Balance sheet joint line in words with ৳ (balance.js sends parts; page formats; old text understood); raw numbers in
+  cash.js / capital.js messages -> ৳ (tkS). ONE net profit: second line "Unpaid fixed costs this month: −৳15,000".
+- Staff: one screen map extended (Market, Commission (sellers: My commission), Apps, AI hub, Navigator, Brand desk, Mac tools);
+  cost/profit columns and tiles hidden on the page without the 'costs' power; Joint stock stays open to every staff member
+  (owner's 18 Oct rule), its cost tiles hidden by the costs rule.
+- Money: one calm "N payments wait for an account" line under the balance, "Statement ›" on each card, opens on Accounts.
+  Settings: Defaults first, "Invoice numbers" card, access grid folded. Customers header: Follow-ups, New invoice, More,
+  New customer. Sales list Total / Paid / Due. Charts: straight lines between months. deskfinal_test 9.
+- Checks: real-click invoice + receive desktop/phone, battery 25/25, click reach 0 stolen 44 x 2, crawl EN + BN 0 errors,
+  full suite: only ads 4 (old) and golive (IMPORT_DIR).

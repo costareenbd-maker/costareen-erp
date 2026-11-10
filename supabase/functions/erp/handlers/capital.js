@@ -35,6 +35,8 @@ function monthShift(m, by) {
   return y + '-' + (mo < 10 ? '0' + mo : '' + mo);
 }
 const r2 = (n) => Math.round(n * 100) / 100;
+// crit6-desk (10 Nov 2026): money said to people is ৳ with South-Asian grouping, never a raw 1163265
+const tkS = (n) => (num(n) < 0 ? '−' : '') + '৳' + Math.abs(Math.round(num(n))).toLocaleString('en-IN');
 
 async function holders(ctx) {
   const rows = await ctx.tx`select * from capital_holders where business_id = ${ctx.biz} order by seq`;
@@ -279,7 +281,7 @@ export async function erpCapitalHolderEnd(ctx, payload) {
   if (!undo && hit.kind === 'investor') {
     let has = 0;
     for (const b of await book(ctx)) if (b.holder === hit.id && !b.voided) has += b.type === 'invest' ? b.amount : b.type === 'withdraw' ? -b.amount : 0;
-    if (has > 0.5) throw new Error(hit.name + ' still has ' + Math.round(has) + ' in the business. Record the money taken back first (Capital taken back), then end them.');
+    if (has > 0.5) throw new Error(hit.name + ' still has ' + tkS(has) + ' in the business. Record the money taken back first (Capital taken back), then end them.');
     const open = (await ctx.tx`select 1 from lot_funding f where f.business_id = ${ctx.biz} and f.holder_no = ${hit.id} and f.voided_at is null
                                and exists (select 1 from stock_lots l where l.business_id = f.business_id and l.reference = f.reference and l.source = 'receive' and l.qty_left > 0) limit 1`).length > 0;
     if (open) throw new Error(hit.name + ' funds a shipment that is not sold out yet. They can leave once it is sold.');
@@ -325,7 +327,7 @@ export async function erpCapitalEntryAdd(ctx, payload) {
       has += v;
       if (b.ts <= on.getTime() || b.type === 'withdraw') hadThen += v;   // fix-5 L6: what was in on that day
     }
-    if (amount > has + 0.5) throw new Error(h.name + ' has ' + Math.round(has) + ' in the business. More than that cannot be taken back.');
+    if (amount > has + 0.5) throw new Error(h.name + ' has ' + tkS(has) + ' in the business. More than that cannot be taken back.');
     if (amount > hadThen + 0.5) throw new Error('On ' + formatDate(on, 'd MMM yyyy') + ' ' + h.name + ' had ' + Math.max(0, Math.round(hadThen)) + ' in the business - money cannot be taken back before it came in.');
   }
   // fix-3 M16: profit and returns are paid up to what was earned, as capital is taken back up to what is in
@@ -442,7 +444,7 @@ export async function erpCapitalReopen(ctx, payload) {
   const paidOut = num((await ctx.tx`select coalesce(sum(amount), 0) as s from capital_book where business_id = ${ctx.biz} and month = ${month}
                                     and type in ('profit', 'ret') and coalesce(btrim(voided), '') = ''`)[0].s);
   if (paidOut > 0.5 && !(payload && (payload.again || payload.confirmed))) {
-    throw new Error('CONFIRM: ' + Math.round(paidOut) + ' of profit / returns was already paid out for ' + monthLabel(month) + '. Reopening lets its profit change after it was shared. Reopen anyway?');
+    throw new Error('CONFIRM: ' + tkS(paidOut) + ' of profit / returns was already paid out for ' + monthLabel(month) + '. Reopening lets its profit change after it was shared. Reopen anyway?');
   }
   const was = (await ctx.tx`select net_profit, shares, closed_at, by from capital_closed where business_id = ${ctx.biz} and month = ${month}`)[0] || {};
   await ctx.tx`insert into capital_reopens (business_id, month, net_profit, shares, closed_at, closed_by, reopened_by, reason, paid_out)
