@@ -392,6 +392,29 @@ export function addressFix(text, p, contact) {
   return t.replace(/[ \t]+([,।!?.])/g, '$1').replace(/,\s*,/g, ',').replace(/ {2,}/g, ' ').replace(/^\s*,\s*/, '').trim();
 }
 /** A long answer goes as two or three short messages, like a person typing (split at blank lines). */
+/** one-1 (owner 10 Nov): the customer gets ONE message per answer - the AI's lines joined into one text (after the
+ *  product cards / photos, or inside the tappable question when there is one, or on top of the order receipt). An intro
+ *  line before cards is dropped when there is other text; the same line twice goes once; one tappable question at most. */
+export function oneMessage(queue) {
+  const ai = (q) => q.kind === 'text' && !q.store && !q.payload && !q.keep;
+  const texts = [], rest = [];
+  const hasCards = queue.some((q) => q.kind === 'cards' || (q.kind === 'image' && !q.store));
+  for (const q of queue) (ai(q) ? texts : rest).push(q);
+  let lines = texts.map((q) => ({ t: str(q.text), intro: !!q.intro })).filter((x) => x.t);
+  if (hasCards && lines.some((x) => !x.intro)) lines = lines.filter((x) => !x.intro);
+  const seen = new Set(), keep = [];
+  for (const x of lines) { const k = x.t.replace(/\s+/g, ' ').toLowerCase(); if (!seen.has(k)) { seen.add(k); keep.push(x.t); } }
+  const joined = keep.join('\n');
+  const btns = rest.filter((q) => q.kind === 'buttons' && !q.system);
+  let out = rest.filter((q) => !(q.kind === 'buttons' && !q.system) || q === btns[btns.length - 1]);
+  if (!joined) return out;
+  const choice = btns[btns.length - 1], receipt = out.find((q) => q.store === 'order');
+  if (choice) { choice.text = joined + (str(choice.text) && !joined.includes(str(choice.text)) ? '\n' + str(choice.text) : ''); return out; }
+  if (receipt) { receipt.text = joined + '\n\n' + receipt.text; return out; }
+  // no cards: the text first; with cards / photos: the cards, then the one line under them (a question to answer)
+  if (!hasCards) return [{ kind: 'text', text: joined }].concat(out);
+  return out.concat([{ kind: 'text', text: joined }]);
+}
 export function splitHuman(t) {
   const parts = str(t).split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean);
   if (parts.length <= 3) return parts;
@@ -403,7 +426,7 @@ const HUMAN = 'SOUND HUMAN (the customer must feel they are chatting with a real
   'Do: answer what they really need in one or two short lines; use their own words; natural little words ("জি", "আচ্ছা", "ঠিক আছে", "ji", "accha"); vary your wording from message to message; at most one emoji, often none. ' +
   'Never: start with "অবশ্যই!", "ধন্যবাদ আপনার প্রশ্নের জন্য", "আমি আপনাকে কীভাবে সাহায্য করতে পারি", "Great question", "I understand your concern"; write bullet lists, headings, bold or long paragraphs; apologise again and again; repeat their name in every message; talk about yourself or how you work. ' +
   'Not every line needs its own answer: answer what matters for the purchase and move the chat one step nearer the order (product -> colour / quantity -> delivery charge -> phone + address -> order). ' +
-  'When you have two separate things to say, put a blank line between them: they go as two short messages, the way a person types.';
+  'ONE MESSAGE PER ANSWER: everything you say in this reply goes to the customer as one short message (the ERP joins it), so never say the same thing twice, never greet again, and do not write a separate line that only introduces the cards ("এগুলো দেখুন:") - the cards speak for themselves; end with at most one question.';
 const ORDER_FLOW = 'ORDER FLOW: (1) When the customer wants to see something or names a product, show it straight away with show_products (cards with photo, price and an Order button) - for a choice of 2-6 options use ask_choice so they can tap - instead of describing it in words. ' +
   '(2) Then ask in one short line whether they want to order it (e.g. "এটা অর্ডার করবেন ভাই?" / "eta order korben bhai?" / "Shall I place the order?"). ' +
   '(3) When they say yes or tap Order: ask for their phone number and full delivery address in ONE message (and their name only if you do not know it - the name on their chat is fine). ' +
@@ -775,7 +798,7 @@ export async function agentReply(ctx, conv, opts) {
   }
   if (!contents.length || contents[contents.length - 1].role !== 'user') return { sent: 0, skipped: 'nothing to answer' };
 
-  const queue = [];   // what goes to the customer, in order
+  let queue = [];   // what goes to the customer, in order
   const effects = { handover: null, order: null };
   const cat = await catalogue(ctx);
   const can = CAN[ch.kind] || {};
@@ -821,7 +844,7 @@ export async function agentReply(ctx, conv, opts) {
       if (!fresh.length) return { shown: 0, note: 'these products are already shown in this reply - do not show them again; just ask your one question in text' };
       ps.length = 0; ps.push(...fresh);
       for (const x of ps) effects.shown[x.sku] = true;
-      if (a.intro) queue.push({ kind: 'text', text: str(a.intro) });
+      if (a.intro) queue.push({ kind: 'text', text: str(a.intro), intro: true });
       const cards = [];
       for (const x of ps) {
         cards.push({ code: x.sku, title: x.name, subtitle: (x.sell ? '৳' + Math.round(x.sell).toLocaleString('en-IN') : 'Price on request') + ' · ' + x.sku + (x.stock > 0 ? '' : ' · not available now'),
@@ -852,7 +875,7 @@ export async function agentReply(ctx, conv, opts) {
       const pay = await payInfo(ctx);
       if (!pay.banks.length && !pay.qr) return { error: 'no bank account or QR is kept in the ERP - say the team will send the payment details (ask_team)' };
       const lines = pay.banks.map((b) => b.bank + '\nA/C name: ' + b.name + '\nA/C no: ' + b.number + (b.branch ? '\nBranch: ' + b.branch : ''));
-      queue.push({ kind: 'text', text: (num(a.amount) > 0 ? '৳' + Math.round(num(a.amount)).toLocaleString('en-IN') + '\n' : '') + lines.join('\n\n') + (pay.qr ? (lines.length ? '\n\n' : '') + 'Bangla QR: any bank app, bKash, Nagad or Rocket' : '') });
+      queue.push({ kind: 'text', keep: true, text: (num(a.amount) > 0 ? '৳' + Math.round(num(a.amount)).toLocaleString('en-IN') + '\n' : '') + lines.join('\n\n') + (pay.qr ? (lines.length ? '\n\n' : '') + 'Bangla QR: any bank app, bKash, Nagad or Rocket' : '') });
       if (pay.qr) queue.push({ kind: 'image', url: pay.qr, caption: 'Bangla QR' });
       effects.paySent = true;
       return { sent: true, banks: pay.banks.length, qr: !!pay.qr, note: 'ask for the transaction id or a screenshot; never say the money was received' };
@@ -994,13 +1017,13 @@ export async function agentReply(ctx, conv, opts) {
   const tools = TOOLS.filter((t) => !OFF[t.name] || F[OFF[t.name]]);
   const res = await geminiTools(ctx, { system: systemPrompt(p, rules, ch, contact, extra, shopSummary(cat)), contents, tools, run, purpose: test ? 'test' : 'reply', conversationId: test ? null : conv.id });
   const finalText = str(res.text);
-  if (finalText) for (const part of splitHuman(finalText)) queue.push({ kind: 'text', text: part });
+  if (finalText) queue.push({ kind: 'text', text: finalText.replace(/\n\s*\n+/g, '\n') });
   // after an order: the receipt and a rating request (Messenger)
   if (effects.order && effects.order.items) {
     queue.push({ kind: 'text', text: receiptText(p, effects.order) + (!test && effects.order.page_token && await feat(ctx, 'order_page') ? (p.lang !== 'en' ? '\nঅর্ডারের অবস্থা: ' : '\nYour order: ') + orderLink(ctx, effects.order) : ''),
                  store: 'order', payload: { order: effects.order.no } });
     if (!test && effects.order.page_token && ctx.deps.svgPng && await feat(ctx, 'bill_picture') && billLink(ctx, effects.order)) queue.push({ kind: 'image', url: billLink(ctx, effects.order) });
-    if (p.rating_on && ch.kind === 'messenger') queue.push({ kind: 'buttons', text: 'How was your experience ordering from us?', buttons: [1, 2, 3, 4, 5].map((n) => ({ title: '⭐'.repeat(n), payload: 'RATE:' + n })) });
+    if (p.rating_on && !p.review_on && ch.kind === 'messenger') queue.push({ kind: 'buttons', system: true, text: 'How was your experience ordering from us?', buttons: [1, 2, 3, 4, 5].map((n) => ({ title: '⭐'.repeat(n), payload: 'RATE:' + n })) });
   }
   // sales-1: the last line of defence - a reply that shows the instructions, a tool name or a cost / supplier figure is replaced
   let guarded = 0;
@@ -1011,6 +1034,7 @@ export async function agentReply(ctx, conv, opts) {
     if (q.caption) q.caption = addressFix(q.caption, p, contact);
   }
   if (guarded && !test) await writeMsgNote(ctx, conv, 'The AI\'s reply was held back: it touched something confidential. A safe line was sent instead.');
+  queue = oneMessage(queue);
   if (test) return { replies: queue, handover: effects.handover, order: effects.order, calls: res.calls.map((c) => c.name), guarded,
                      ...(effects.order ? { alert: orderAlertText(p, effects.order, ch) } : {}) };
 

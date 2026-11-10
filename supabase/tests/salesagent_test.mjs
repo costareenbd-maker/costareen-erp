@@ -157,7 +157,18 @@ check('sales-3: the prompt mirrors the customer\'s script (Bengali / Banglish in
 check('sales-3: the prompt asks for a human seller\'s voice and bans bot phrases', /SOUND HUMAN/.test(sys3) && /অবশ্যই!/.test(sys3) && /bullet lists/.test(sys3));
 check('sales-3: the order flow - show cards, ask to order, phone + address, place, say confirmed', /ORDER FLOW/.test(sys3) && /show_products/.test(sys3) && /phone number and full delivery address in ONE message/.test(sys3) && /কনফার্ম করা হয়েছে/.test(sys3));
 check('sales-3: a man is ভাই, a woman আপু, decided from the name; never স্যার', /call a man "ভাই" and a woman "আপু"/.test(sys3) && /Never call anyone স্যার/.test(sys3) && /remember_customer/.test(sys3));
-check('sales-3: a reply with a blank line goes as two short messages', out.replies.length === 2 && out.replies[1].text === 'কোন কালার লাগবে?', out.replies);
+check('one-1: a reply with a blank line still goes as ONE message', out.replies.length === 1 && /কোন কালার লাগবে\?/.test(out.replies[0].text), out.replies);
+check('one-1: the prompt asks for one message per answer, no intro line for the cards', /ONE MESSAGE PER ANSWER/.test(sys3));
+{
+  const q1 = ib.oneMessage([{ kind: 'text', text: 'এগুলো দেখতে পারেন:', intro: true }, { kind: 'cards', cards: [{}] }, { kind: 'text', text: 'কোনটা লাগবে ভাই?' }]);
+  check('one-1: cards + an intro + a question -> the cards, then one line (the intro dropped)', q1.length === 2 && q1[0].kind === 'cards' && q1[1].text === 'কোনটা লাগবে ভাই?', q1);
+  const q2 = ib.oneMessage([{ kind: 'text', text: 'জি ভাই, আছে।' }, { kind: 'buttons', text: 'কোন কালার?', buttons: [{ title: 'লাল' }] }, { kind: 'text', text: 'জি ভাই, আছে।' }]);
+  check('one-1: text + a tappable question -> one message with the options, the same line once', q2.length === 1 && q2[0].kind === 'buttons' && q2[0].text === 'জি ভাই, আছে।\nকোন কালার?', q2);
+  const q3 = ib.oneMessage([{ kind: 'text', text: 'অর্ডার কনফার্ম ✅' }, { kind: 'text', text: 'Order CO-1 ...', store: 'order' }, { kind: 'image', url: 'bill' }]);
+  check('one-1: after an order the AI line goes on top of the receipt (receipt + bill only)', q3.length === 2 && /^অর্ডার কনফার্ম ✅\n\nOrder CO-1/.test(q3[0].text) && q3[1].kind === 'image', q3);
+  const q4 = ib.oneMessage([{ kind: 'text', text: 'Bank: X', keep: true }, { kind: 'image', url: 'qr' }, { kind: 'text', text: 'ট্রানজেকশন আইডি দিন' }]);
+  check('one-1: payment details stay as they are, the AI line follows', q4.length === 3 && q4[0].text === 'Bank: X' && q4[2].text === 'ট্রানজেকশন আইডি দিন', q4);
+}
 script = [[{ text: 'জি স্যার, লাল আছে।' }]];
 out = await reply([{ direction: 'in', kind: 'text', text: 'lal ache?' }]);
 check('sales-3: a স্যার that slips through is taken out when the gender is not known', out.replies[0].text === 'জি, লাল আছে।', out.replies);
