@@ -215,4 +215,40 @@ check('sales-3c: the owner can send a test alert (made-up order, to the first nu
 check('sales-3c: a manager cannot send a test alert', !!(await mgr('erpOrderAlertTest', [{}])).error);
 check('sales-3: phone forms are read right', al.alertPhones('01712-345678; +880 1812 000111, 12').join() === '8801712345678,8801812000111');
 
+// ---- cards-2 (live 10 Nov): small Messenger cards, no product shown twice, a message that came during a slow reply is answered
+const fbBodies = [];
+web.on(/graph\.facebook\.com/, (url, opts) => { fbBodies.push(JSON.parse(opts.body)); return { status: 200, body: { message_id: 'm_out', recipient_id: 'x', success: true } }; });
+await asB(async (ctx) => chm.sendOut(ctx, await chRow(), { external_id: 'PSIDX' }, { kind: 'cards', cards: [{ code: 'A1', title: 'Testa PLA Red 1kg', subtitle: '৳1,290 · A1', image: 'https://img.test/a.png',
+  buttons: [{ title: 'Order', payload: 'ORDER:A1' }, { title: 'More photos', payload: 'PHOTO:A1' }, { title: 'Details', url: 'https://erp.test/item.html?c=x&sku=A1' }] }] }));
+const el = fbBodies[0].message.attachment.payload.elements[0];
+check('cards-2: a Messenger card keeps one button (Order) and opens the product page when tapped',
+  el.buttons.length === 1 && el.buttons[0].title === 'Order' && el.default_action && el.default_action.url === 'https://erp.test/item.html?c=x&sku=A1', el);
+fbBodies.length = 0;
+await asB(async (ctx) => chm.sendOut(ctx, await chRow(), { external_id: 'PSIDX' }, { kind: 'cards', cards: [{ code: 'A1', title: 'X', subtitle: 'y', buttons: [{ title: 'Order', payload: 'ORDER:A1' }, { title: 'More photos', payload: 'PHOTO:A1' }] }] }));
+check('cards-2: without a product page the card keeps More photos', fbBodies[0].message.attachment.payload.elements[0].buttons.length === 2 && !fbBodies[0].message.attachment.payload.elements[0].default_action);
+
+bodies.length = 0;
+script = [[{ functionCall: { name: 'show_products', args: { codes: ['FIL-TST-PLA-RED-001'], intro: 'এগুলো দেখতে পারেন:' } } }],
+  [{ functionCall: { name: 'show_products', args: { codes: ['FIL-TST-PLA-RED-001'], intro: 'এই লালটা দেখুন:' } } }],
+  [{ text: 'কোনটা লাগবে ভাই?' }]];
+out = await reply([{ direction: 'in', kind: 'text', text: 'লাল PLA আছে?' }]);
+const kinds = (out.replies || []).map((q) => q.kind + ':' + (q.text || ''));
+check('cards-2: the same products are never shown twice in one reply (and the second intro is dropped)',
+  (out.replies || []).filter((q) => q.kind === 'cards').length === 1 && !kinds.some((k) => /এই লালটা/.test(k)), kinds);
+
+// a reply that took long: the customer's next message was saved before our reply's rows (smaller id, later time)
+const cv = (await sql`insert into inbox_contacts (business_id, channel_id, external_id, name) values (${FIX.B}, ${M.id}, 'PSID-SLOW', 'Slow Test') returning *`)[0];
+const vv = (await sql`insert into inbox_conversations (business_id, channel_id, contact_id) values (${FIX.B}, ${M.id}, ${cv.id}) returning *`)[0];
+const t0 = new Date(Date.now() - 60e3);
+await sql`insert into inbox_messages (business_id, conversation_id, direction, author, kind, text, created_at) values
+  (${FIX.B}, ${vv.id}, 'in', 'customer', 'text', 'মাঝখানের কালারটা কি হবে', ${new Date(t0.getTime() - 5000)}),
+  (${FIX.B}, ${vv.id}, 'in', 'customer', 'text', 'Sage green', ${new Date(t0.getTime() + 20000)}),
+  (${FIX.B}, ${vv.id}, 'out', 'ai', 'text', 'এগুলো দেখতে পারেন:', ${t0})`;
+await sql`update inbox_channels set status = 'live' where id = ${M.id}`;
+await sql`update inbox_conversations set reply_due_at = now() - interval '1 second' where id = ${vv.id}`;
+bodies.length = 0;
+script = [[{ text: 'জি ভাই, Sage green এর কাছাকাছি এগুলো আছে।' }]];
+const rd = await asB(async (ctx) => ib.replyDue(ctx, vv.id, true));
+check('cards-2: a message that came while a slow reply was written is still answered', bodies.length === 1 && !(rd && rd.skipped) && /Sage green/.test(JSON.stringify(bodies[0].contents[bodies[0].contents.length - 1])), rd);
+
 await done();

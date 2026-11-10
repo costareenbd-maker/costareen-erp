@@ -717,10 +717,12 @@ export async function agentReply(ctx, conv, opts) {
   const now = ctx.now;
   // the recent history (sales-1: the last 60 entries, was 30), with photos looked at and voice notes written out;
   // anything older comes as a short "earlier in this chat" line, so the agent keeps the whole conversation in mind
-  const hist = test ? (opts.history || []) : (await ctx.tx`select * from inbox_messages where conversation_id = ${conv.id} and direction <> 'note' order by id desc limit 60`).reverse();
+  // order by time, not id (live 10 Nov): a message that came in while a slow reply was being written has a smaller id than
+  // that reply's rows but a later time - by id the chat seemed to end with our answer and the customer was never answered
+  const hist = test ? (opts.history || []) : (await ctx.tx`select * from inbox_messages where conversation_id = ${conv.id} and direction <> 'note' order by created_at desc, id desc limit 60`).reverse();
   let earlier = '';
   if (!test && hist.length >= 60) {
-    const old = (await ctx.tx`select direction, text from inbox_messages where conversation_id = ${conv.id} and direction <> 'note' and id < ${hist[0].id}
+    const old = (await ctx.tx`select direction, text from inbox_messages where conversation_id = ${conv.id} and direction <> 'note' and (created_at, id) < (${hist[0].created_at}, ${hist[0].id})
                               and coalesce(text, '') <> '' order by id desc limit 40`).reverse();
     if (old.length) earlier = 'EARLIER IN THIS CHAT (older messages, oldest first): ' + old.map((m) => (m.direction === 'in' ? 'customer: ' : 'we: ') + str(m.text).replace(/\s+/g, ' ').slice(0, 140)).join(' | ');
   }
@@ -814,6 +816,11 @@ export async function agentReply(ctx, conv, opts) {
       const codes = (a.codes || []).map(str).slice(0, 10);
       const ps = codes.map((c) => cat.find((x) => x.sku.toLowerCase() === c.toLowerCase())).filter(Boolean);
       if (!ps.length) return { error: 'none of those codes is a product' };
+      effects.shown = effects.shown || {};
+      const fresh = ps.filter((x) => !effects.shown[x.sku]);
+      if (!fresh.length) return { shown: 0, note: 'these products are already shown in this reply - do not show them again; just ask your one question in text' };
+      ps.length = 0; ps.push(...fresh);
+      for (const x of ps) effects.shown[x.sku] = true;
       if (a.intro) queue.push({ kind: 'text', text: str(a.intro) });
       const cards = [];
       for (const x of ps) {

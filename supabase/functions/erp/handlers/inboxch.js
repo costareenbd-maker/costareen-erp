@@ -87,10 +87,15 @@ export async function sendOut(ctx, ch, contact, msg) {
     let message;
     if (msg.kind === 'image') message = { attachment: { type: 'image', payload: { url: msg.url, is_reusable: true } } };
     else if (msg.kind === 'cards') {
-      message = { attachment: { type: 'template', payload: { template_type: 'generic', elements: (msg.cards || []).slice(0, 10).map((c) => ({
-        title: str(c.title).slice(0, 80), subtitle: str(c.subtitle).slice(0, 80), image_url: c.image || undefined,
-        buttons: (c.buttons || []).slice(0, 3).map((b) => (b.url ? { type: 'web_url', title: str(b.title).slice(0, 20), url: b.url } : { type: 'postback', title: str(b.title).slice(0, 20), payload: str(b.payload).slice(0, 1000) })),
-      })) } } };
+      // owner 10 Nov: three full-width buttons made each card tall and noisy - Messenger only stacks buttons, so a card keeps
+      // one (Order); tapping the card opens the product page (its photos and details); More photos only without that page
+      message = { attachment: { type: 'template', payload: { template_type: 'generic', elements: (msg.cards || []).slice(0, 10).map((c) => {
+        const all = c.buttons || [], page = all.some((b) => !b.url) ? all.find((b) => b.url) : null;   // a link-only card (the review card) keeps its button
+        const keep = page ? all.filter((b) => !b.url && !/^PHOTO:/.test(str(b.payload))) : all;
+        return { title: str(c.title).slice(0, 80), subtitle: str(c.subtitle).slice(0, 80), image_url: c.image || undefined,
+          default_action: page ? { type: 'web_url', url: page.url } : undefined,
+          buttons: keep.slice(0, 3).map((b) => (b.url ? { type: 'web_url', title: str(b.title).slice(0, 20), url: b.url } : { type: 'postback', title: str(b.title).slice(0, 20), payload: str(b.payload).slice(0, 1000) })) };
+      }) } } };
     } else if (msg.kind === 'buttons') {
       message = { text: str(msg.text).slice(0, 2000) || '…', quick_replies: (msg.buttons || []).slice(0, 13).map((b) => ({ content_type: 'text', title: str(b.title).slice(0, 20), payload: str(b.payload || b.title).slice(0, 1000) })) };
     } else message = { text: str(msg.text).slice(0, 2000) };
