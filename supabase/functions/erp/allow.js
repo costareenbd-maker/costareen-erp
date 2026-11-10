@@ -152,6 +152,37 @@ export const ERP_ALLOW = {
 // have changed the books, and throws the kept dashboard away.
 export const ERP_READS = /^(erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpResellerProgramme|erpResellerSlip|erpInvoiceSamplePdf|erpJointStatementPdf|erpCheckBusinessSheet|erpCourierTest|erpCrm|erpCrmTimeline|erpCrmViews|erpCrmFields|erpCrmCompanies|erpCrmCompany|erpCrmDupes|erpCrmDupCheck|erpCrmEvents|erpCrmHooks|erpCrmRules|erpCrmBin|erpCrmCalendar|erpTools|erpToolsStatus|erpToolTest|erpShortLinks|erpShortsJobs|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpPixel|erpLandingPages|erpLandingDrafts|erpOrderShield|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAiModels|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInboxExport|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpLineMargins|erpFdCards|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpChatHistory|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpBundle|erpHello|erpMe|erpCatalog|erpSales|erpDues|erpCustomers|erpPnl|erpMoney|erpToday|erpDaySales|erpProduct|erpLookupCustomer|erpCustomerAccount|erpCustomerStatement|erpCustomerCredit|erpStatementPdf|erpWebOrders|erpWebOrderInvoices|erpCampaignAudience|erpCampaignList|erpCampaignGet|erpEvoStatus|erpEvoQr|erpBrandLogo|erpQuoteBoot|erpQuoteList|erpQuoteGet|erpQuoteAsset|erpExpenses|erpExpenseExport|erpCapital|erpBackupStatus|erpAiKeys|erpGetTheme|erpSetTheme|erpBusinesses|erpStockHistory|erpReorderPlan|erpPoList|erpSfPayouts|erpSfPayoutLines|erpBookedParcels|erpParcelPreview|erpReturnPreview|erpInvoicePdf|erpSettingsFull|erpSettingsLists|erpFormOptions|erpCostBook|erpAdmin|erpPeople|erpDevices|erpCourierKeyStatus|erpPayReasons|erpSelfTest|erpDiscontinued|erpAccessWarning|erpBusinessLinks|erpLookupUsage|erpRecentInvoices|erpCourier|erpWaProductPdf|erpProductListShare|erpShareFile|erpDashboardData|erpInvoice|erpCustomerPage|erpSearch|erpProductPage|erpPnlMonth|erpExpenseReceiptUrl|erpPartnership|erpPartnerStock|erpSecurity|erpCustomerList|erpAlerts|erpAccessKeys|erpListView|erpCurrencies|erpSharedStock|erpPoolCatalog|erpProductThumbs|erpProductPhotoUrl|erpFamilies|erpNotes|erpNoteFileUrl|erpSerialsFor|erpSerialLookup|erpJobs|erpJob|erpUsers|erpSessions|erpPlatform|erpPlatformErrors|erpJoint|erpJointCatalog|erpJointCard|erpRisks|erpAlertRules|erpConnections|erpWebsiteTest|erpGoogle|erpSheet|erpRestorePreview|erpWebMatches|erpDeliveryOptions|erpParcelLabels|erpConnStatus|erpRecovery|erpOwnerChange|erpOwnerChanges|erpBusinessesDeleted|erpBnWords|erpProfile|erpBg|erpGame|erpArena|erpFighters|erpInstalls|erpBrand|erpNews|erpComplianceLog|erpProviderKey|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpInvoiceDesign|erpInvoicePreview|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpBoard|erpPlatformDesign|erpResell|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpCashBook|erpPayMethods|erpSuppliers|erpSupplierPage|erpCurrencies)$/;
 
+// crit8-nav (10 Nov 2026): calls that only read when sent without a change (their list form:
+// the Inbox tabs, Saved replies, Features, Plans, the document language) and write with one. The list form is a read (no activity-log row such as 'Switched Inbox features' for merely looking, the kept dashboard stays, no
+// one-time key stored); the form with a change stays a write. The page has the same rule (app.html SRV_READ_WHEN).
+// erpTool and erpBrainFact are not here: every branch of them changes data.
+const onlyKeys = (ok) => (a) => a === undefined || a === null ||
+  (typeof a === 'object' && !Array.isArray(a) && Object.keys(a).every((k) => k === 'opKey' || ok.includes(k)));
+export const ERP_READ_WHEN = {
+  erpSavedReplies: onlyKeys(['suggest', 'adapt', 'conv']),
+  erpInboxFeatures: onlyKeys([]),
+  erpPlatformInboxPlan: onlyKeys([]),
+  erpInboxComments: onlyKeys([]),
+  erpInboxFollowups: onlyKeys([]),
+  erpInboxGroups: onlyKeys([]),
+  erpInboxKb: onlyKeys(['test']),
+  erpInboxLeads: onlyKeys(['open']),
+  erpInboxTasks: onlyKeys([]),
+  erpShopOffers: onlyKeys([]),
+  erpInboxBroadcasts: onlyKeys(['gap']),
+  erpSocialInspo: onlyKeys([]),
+  erpSocialRules: onlyKeys([]),
+  erpAgentDesk: (a) => onlyKeys([])(a) || (onlyKeys(['action'])(a) && a.action === 'list'),
+  erpDocLang: (a) => a === undefined || a === null || a === '',
+};
+/** Does this call (with these arguments) only read? */
+export function isReadCall(name, args) {
+  if (ERP_READS.test(name)) return true;
+  const f = ERP_READ_WHEN[name];
+  if (!f) return false;
+  try { return !!f(Array.isArray(args) ? args[0] : undefined); } catch (_) { return false; }
+}
+
 // 27 Oct 2026 (owner's rule, twice): a shareholder is the owner's equal - every screen, every action, users, keys and
 // connections included. Still 'owner' above: deleting the business, changing the owner, the owner's own recovery,
 // going back to a backup, the provider's calls (platform, businesses, app switches, self-update) and the machines'.

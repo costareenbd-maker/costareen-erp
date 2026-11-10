@@ -60,6 +60,12 @@ r = await mgr('erpJoint', [{}]);
 check('manager page: stock only, no book', r.ok && r.result.money === false && r.result.book === undefined, r.result);
 r = await sales('erpJoint', [{}]);
 check('sales staff see the page (18 Oct) but never the money or the cost', r.ok && !r.result.money && !r.result.book && (r.result.stock || []).every((x) => !('cost' in x)), r.ok ? r.result.money : r);
+// crit8-ret: a sales person gets the stock part only - no joint sales figures, no pending money, no settlement
+check('sales staff: no joint sales figures, no pending money', r.ok && !('sales' in r.result) && !('pending' in r.result) && !('book' in r.result) &&
+  JSON.stringify(r.result).search(/"(paid|due|capital|ratio|profit_share|balance)":/) < 0, r.ok ? Object.keys(r.result) : r);
+r = await mgr('erpJoint', [{}]);
+check('a manager still sees the joint sales list', r.ok && Array.isArray(r.result.sales), r.ok ? Object.keys(r.result) : r);
+r = await sales('erpJoint', [{}]);
 
 // ---- products
 r = await mgr('erpJointProduct', [{ pool: POOL, isNew: false, sku: 'PM-PLA-BLK', name: 'X', retail: 10 }]);

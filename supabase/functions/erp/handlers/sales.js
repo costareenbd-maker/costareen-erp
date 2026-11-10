@@ -309,6 +309,9 @@ export async function erpSales(ctx, payload) {
     rows.push({ id: r.id, ts: r.ts, date: r.date, customer: r.customer, phone: r.phone,
                 units: r.units, total: Math.round(grand),
                 returned: retVal, returnedQty: rb ? rb.qty : 0,
+                // crit8-ret: money actually received on this sale - the goods that came back are not money paid
+                // (the return books a 'Returned' payment row that takes the due down; it is shown as Returned, apart)
+                paid: Math.max(0, Math.round(grand - due - retVal)),
                 net: (rb && rb.cancelled) ? 0 : Math.round(grand - retVal),
                 due: Math.round(due), delivery: r.delivery, method: r.method,
                 allBack: !!(rb && rb.qty >= r.units && r.units > 0),

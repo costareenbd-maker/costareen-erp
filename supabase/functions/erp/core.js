@@ -7,7 +7,7 @@
 // privileged connection, and never with data from another business.
 
 import { controlState } from './lib/control.js';
-import { ERP_ALLOW, ERP_READS, ERP_ROLES, ERP_DISCOUNT_CAP, normRole, roleAtLeast, callAllowed, powersMap, discountCapOf, noPermission } from './allow.js';
+import { ERP_ALLOW, ERP_READS, ERP_ROLES, ERP_DISCOUNT_CAP, normRole, roleAtLeast, callAllowed, powersMap, discountCapOf, noPermission, isReadCall } from './allow.js';
 import { dashForget, dashKeep } from './handlers/bundle.js';
 import { scrub } from './scrub.js';
 import { HANDLERS } from './handlers/index.js';
@@ -310,7 +310,7 @@ export async function erpCall(deps, { name, args, token, authHeader, ip }) {
       let list = Array.isArray(args) ? args.slice() : [], opKey = null;
       if (list[0] && typeof list[0] === 'object' && !Array.isArray(list[0]) && 'opKey' in list[0]) {
         const { opKey: k, ...rest } = list[0]; list[0] = rest;
-        if (!ERP_READS.test(name) && typeof k === 'string' && /^[A-Za-z0-9_-]{8,80}$/.test(k)) opKey = k;
+        if (!isReadCall(name, list) && typeof k === 'string' && /^[A-Za-z0-9_-]{8,80}$/.test(k)) opKey = k;
       }
       if (opKey) {
         const got = await tx`insert into erp_op_keys (business_id, op_key, name) values (${s.businessId}, ${opKey}, ${name})
@@ -331,7 +331,7 @@ export async function erpCall(deps, { name, args, token, authHeader, ip }) {
     for (const f of hooks.after) { try { await f(); } catch (a) { console.error('after-save step', name, a); await logError(sql, s, name + ' (after save)', a); } }
     if (result && result.__replay === true) return { ok: true, result: scrub(name, result.value, s), replayed: true };
     // the books may have changed: the kept dashboard is no longer to be trusted
-    if (!ERP_READS.test(name)) { if (!NO_DASH.test(name)) await dashForget(sql, s.businessId); await logActivity(sql, s, name, args, token, ip, result); }
+    if (!isReadCall(name, args)) { if (!NO_DASH.test(name)) await dashForget(sql, s.businessId); await logActivity(sql, s, name, args, token, ip, result); }
     else if (name === 'erpDashboardData') await dashKeep({ sql, biz: s.businessId, s, now: new Date() }, result);
     return { ok: true, result: scrub(name, result, s) };
   } catch (err) {

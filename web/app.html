@@ -8521,9 +8521,40 @@ function srv(name, args, ok, bad) {
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
 var SRV_READS = /^(erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+// crit8-nav (10 Nov 2026): these calls only read when they are sent without a change (the list form) and write with one.
+// The same rule as the server's ERP_READ_WHEN (allow.js): the list form runs beside other reads, sends no one-time key
+// and drops no caches; the changing form stays a write. erpTool and erpBrainFact always write (every branch changes data).
+var SRV_READ_WHEN = {
+  erpSavedReplies: function (a) { return srvNoKeys(a, ['suggest', 'adapt', 'conv']); },
+  erpInboxFeatures: function (a) { return srvNoKeys(a, []); },
+  erpPlatformInboxPlan: function (a) { return srvNoKeys(a, []); },
+  erpInboxComments: function (a) { return srvNoKeys(a, []); },
+  erpInboxFollowups: function (a) { return srvNoKeys(a, []); },
+  erpInboxGroups: function (a) { return srvNoKeys(a, []); },
+  erpInboxKb: function (a) { return srvNoKeys(a, ['test']); },
+  erpInboxLeads: function (a) { return srvNoKeys(a, ['open']); },
+  erpInboxTasks: function (a) { return srvNoKeys(a, []); },
+  erpShopOffers: function (a) { return srvNoKeys(a, []); },
+  erpInboxBroadcasts: function (a) { return srvNoKeys(a, ['gap']); },
+  erpSocialInspo: function (a) { return srvNoKeys(a, []); },
+  erpSocialRules: function (a) { return srvNoKeys(a, []); },
+  erpAgentDesk: function (a) { return srvNoKeys(a, []) || (srvNoKeys(a, ['action']) && a.action === 'list'); },
+  erpDocLang: function (a) { return a === undefined || a === null || a === ''; }
+};
+function srvNoKeys(a, ok) {
+  if (a === undefined || a === null) return true;
+  if (typeof a !== 'object' || Array.isArray(a)) return false;
+  return Object.keys(a).every(function (k) { return k === 'opKey' || ok.indexOf(k) >= 0; });
+}
+function srvIsRead(job) {
+  if (!job) return false;
+  if (SRV_READS.test(job.name)) return true;
+  var f = SRV_READ_WHEN[job.name];
+  try { return !!(f && f(job.args && job.args[0])); } catch (e) { return false; }
+}
 function srvPump() {
   if (!SRV_Q.length) return;
-  var isRead = SRV_READS.test(SRV_Q[0].name);
+  var isRead = srvIsRead(SRV_Q[0]);
   // a read waits only for a write; a write waits for everything before it
   if (isRead ? (SRV_WRITING || SRV_ACTIVE >= 4) : SRV_ACTIVE > 0) return;
   SRV_ACTIVE++; if (!isRead) SRV_WRITING = true;
@@ -13369,6 +13400,7 @@ function wireCash() {
   });
   var as = v.querySelectorAll('select[data-cassign]');
   for (var i = 0; i < as.length; i++) as[i].addEventListener('change', function () {
+    if (typeof window.cashMark8 === 'function') { window.cashMark8(this); return; }   // crit8-ret: a pick marks the row; Place moves it
     if (!this.value) return;
     cashDo('erpCashReassign', [{ src: this.getAttribute('data-cassign'), id: this.getAttribute('data-id'), account: this.value, show: CASH_ACC }], 'Placed.');
   });
@@ -30834,7 +30866,7 @@ function fd19Table(m) {
     var first = true;
     h += '<tfoot><tr><td class="cb"></td>' + cols.map(function (c) {
       var t = '';
-      if (c.fd === 'profit') { var tot = 0, any = false; pageRows.forEach(function (r) { var p = FD19.prof[r.key]; if (p && p.known && !/^(Returned|Cancelled)$/.test(String(r.status))) { tot += p.profit; any = true; } }); t = any ? '<span class="fd19-num" title="Profit of the costed rows on this page">' + fd19Tk(tot) + '</span>' : ''; }
+      if (c.fd === 'profit') { var tot = 0, any = false; pageRows.forEach(function (r) { var p = FD19.prof[r.key]; if (p && p.known && !/^(Returned|Cancelled)$/.test(String(r.status)) && !((Number(r.returned) || 0) > 0.5)) { tot += p.profit; any = true; } }); t = any ? '<span class="fd19-num" title="Profit of the costed rows on this page">' + fd19Tk(tot) + '</span>' : ''; }
       else if (c.sum && d.sums[c.key] !== undefined) t = c.type === 'money' ? fd19Tk(d.sums[c.key]) : fmt(d.sums[c.key]);
       else if (first && !hid[c.key]) { first = false; return '<td class="lbl' + hc(c) + '">Total · ' + fmt(d.total) + ' ' + FD19_LV[m].what + '</td>'; }
       if (!hid[c.key]) first = false;
@@ -30851,8 +30883,9 @@ function fd19Cards(m) {
     if (m === 'invoices') {
       var stt = fd19InvState(r);
       t = esc(r.id); s = esc([r.customer || 'Walk-in', r.date, r.delivery].filter(Boolean).join(' · '));
-      var pd6 = Math.max(0, (Number(r.total) || 0) - (Number(r.due) || 0));   // crit6-desk: paid beside due
-      val = esc(fd19Tk(r.total)) + ((Number(r.due) || 0) > 0.5 ? '<small>' + (pd6 > 0.5 && r.status !== 'Cancelled' ? 'paid ' + esc(fd19Tk(pd6)) + ' · ' : '') + 'due ' + esc(fd19Tk(r.due)) + '</small>' : '');
+      var pd6 = r.paid !== undefined && r.paid !== null ? (Number(r.paid) || 0) : Math.max(0, (Number(r.total) || 0) - (Number(r.due) || 0) - (Number(r.returned) || 0));   // crit6-desk: paid beside due; crit8-ret: money received, returns apart
+      val = esc(fd19Tk(r.total)) + ((Number(r.due) || 0) > 0.5 ? '<small>' + (pd6 > 0.5 && r.status !== 'Cancelled' ? 'paid ' + esc(fd19Tk(pd6)) + ' · ' : '') + 'due ' + esc(fd19Tk(r.due)) + '</small>' : '') +
+        ((Number(r.returned) || 0) > 0.5 && r.status !== 'Cancelled' ? '<small class="ret8-cr">returned ' + esc(fd19Tk(r.returned)) + '</small>' : '');
       badge = fd19Badge(stt[0], stt[1], { strike: !!stt[2] });
     } else {
       t = esc(r.name || r.phone || '—'); s = esc([r.phone || 'no phone', fmt(r.orders) + ' orders', r.lastOrder ? 'last ' + r.lastOrder : ''].filter(Boolean).join(' · '));
@@ -56414,6 +56447,1159 @@ html[lang="bn"] .fd19-dr .fd19-badge { min-height:28px; height:auto !important; 
     };
     for (var k in BN) if (!I18N_BN[k]) I18N_BN[k] = BN[k];
   } catch (e) {}
+})();
+</script>
+<!-- CRIT8-MERGE 2026-11-10 -->
+<!-- crit8:ret -->
+<!-- crit8-ret (10 Nov 2026): eighth (real-click) critique, returns and the figures around them - the Return dialog is
+     drawn once and updated in place (typing a quantity never eats the next tap, the reason is never lost, Space in a
+     text box never presses a button), Record the return shows a short recap first and the done window names the return
+     and what happened to the money (৳ everywhere); the Sales list says Paid = money received with Returned apart (desktop
+     column when a row has a return, phone card line), the profit of a row with returns is "—" as in the drawer; Money >
+     See each payment: picking an account marks the row, nothing moves until Place / Place all marked; Quotations: an
+     invoiced quotation offers no Make invoice (a link to its invoice instead), the top cards count Draft / Ready /
+     Invoiced like the list, times in the shop's time, the item picker shows stock and price and warns at 0 stock, one
+     New quotation button; a sales person sees only the Stock part of Joint stock; the saved invoice's menu says that a
+     product or price is changed by a return or a cancel. -->
+<style>
+/* ---- the Return dialog */
+#retbox .ret8 { max-width:740px; width:94%; max-height:92vh; overflow:auto; }
+#retbox .ret8 h2 { margin:0 0 4px; }
+#retbox .ret8-head { font-size:14px; color:var(--fd-text-2, #475467); line-height:1.5; margin:0 0 2px; }
+#retbox .ret8-head strong { color:var(--fd-text, #17181C); }
+#retbox .ret8-keep { font-size:13px; color:var(--fd-text-3, #667085); margin:0 0 10px; }
+#retbox .ret8 td.num input.qty { width:72px; }
+#retbox .ret8 .ret8-of { font-size:13px; color:var(--fd-text-3, #667085); white-space:nowrap; }
+#retbox .ret8 th.ret8-each { white-space:normal; min-width:96px; max-width:130px; line-height:1.3; }
+#retbox .ret8 select[data-rc] { min-width:196px; }
+@media (max-width:640px) { #retbox .ret8 select[data-rc] { min-width:0; } }
+#retbox .ret8 .ret8-tot { margin-top:12px; border-top:1px solid var(--fd-border, #E4E7EC); padding-top:8px; }
+#retbox .ret8 .ret8-tot > div { display:flex; justify-content:space-between; gap:12px; padding:4px 0; font-variant-numeric:tabular-nums; }
+#retbox .ret8 .ret8-tot > div > span:last-child { font-weight:600; white-space:nowrap; }
+#retbox .ret8 .ret8-tot > div.big > span { font-weight:700; font-size:15px; }
+#retbox .ret8 [hidden] { display:none !important; }
+#retbox .ret8 .ret8-money { margin-top:10px; }
+#retbox .ret8 .ret8-why { font-size:13px; color:var(--fd-text-3, #667085); margin-top:4px; }
+#retbox .ret8 .ret8-btns { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; margin-top:14px; }
+#retbox .ret8 .ret8-btns .btn { min-height:40px; }
+#retbox .ret8 .ret8-rc-h { font-weight:700; font-size:16px; margin:4px 0 8px; }
+#retbox .ret8 .ret8-rc-list { margin:0 0 8px; padding:0 0 0 18px; line-height:1.7; }
+#retbox .ret8 .ret8-rc-reason { margin-top:8px; font-size:14px; color:var(--fd-text-2, #475467); overflow-wrap:anywhere; }
+/* ---- the done window */
+#retdone .ret8-done { max-width:480px; width:92%; text-align:left; }
+#retdone .ret8-done .ret8-ok { display:flex; align-items:center; gap:10px; margin:0 0 4px; }
+#retdone .ret8-done .ret8-ok svg { width:26px; height:26px; flex:0 0 26px; color:var(--fd-positive-text, #067647); }
+#retdone .ret8-done h2 { margin:0; font-size:18px; overflow-wrap:anywhere; }
+#retdone .ret8-done .ret8-no { font-size:13px; color:var(--fd-text-3, #667085); margin:0 0 10px 36px; }
+#retdone .ret8-done ul { margin:0 0 14px; padding:0 0 0 18px; line-height:1.75; font-size:14px; }
+#retdone .ret8-done .ret8-btns { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
+#retdone .ret8-done .ret8-btns .btn { min-height:40px; }
+/* ---- Sales list: the returned figure */
+.fd19-crow .vl small.ret8-cr { color:var(--fd-text-3, #667085); font-weight:600; }
+.fd19-t .ret8-ret { color:var(--fd-text-2, #475467); }
+/* ---- Money: marked rows wait for Place */
+#view tr.ret8-marked > td, #view .ret8-marked { background:color-mix(in srgb, var(--fd-accent, #5B4FE9) 8%, var(--fd-card, #fff)); }
+#view .ret8-place { margin-left:6px; min-height:36px; white-space:nowrap; }
+#view .ret8-placeall { display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; margin:0 0 10px; }
+#view .ret8-placeall .sku { color:var(--fd-text-2, #475467); }
+#view td.ret8-cell { white-space:nowrap; }
+#view td.ret8-cell > select { display:inline-block; width:calc(100% - 76px); min-width:120px; vertical-align:middle; }
+#view td.ret8-cell > .ret8-place { vertical-align:middle; }
+#view span.ret8-cell { display:flex; align-items:center; gap:6px; justify-content:flex-end; }
+#view span.ret8-cell > select { flex:1 1 auto; min-width:0; }
+#view span.ret8-cell > .ret8-place { margin-left:0; flex:0 0 auto; }
+/* ---- Quotations: the product picker */
+.ret8-qwrap { position:relative; }
+.ret8-qres { position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:50; max-height:340px; overflow:auto; background:var(--fd-card, #fff);
+  border:1px solid var(--fd-border, #E4E7EC); border-radius:12px; box-shadow:var(--fd-shadow-popover, 0 8px 24px rgba(16,24,40,.14)); }
+.ret8-qres[hidden] { display:none; }
+.ret8-qres .r { display:flex; justify-content:space-between; gap:12px; padding:10px 12px; cursor:pointer; border-bottom:1px solid var(--fd-border, #E4E7EC); min-height:44px; }
+.ret8-qres .r:last-child { border-bottom:0; }
+.ret8-qres .r:hover, .ret8-qres .r.on { background:var(--fd-surface-2, #F3F4F6); }
+.ret8-qres .r .nm { font-weight:600; color:var(--fd-text, #17181C); overflow-wrap:anywhere; }
+.ret8-qres .r .sku { font-size:12.5px; color:var(--fd-text-3, #667085); }
+.ret8-qres .r .rt { text-align:right; white-space:nowrap; }
+.ret8-qres .empty { padding:12px; color:var(--fd-text-3, #667085); }
+.ret8-qout { font-size:12.5px; color:var(--fd-negative-text, #B42318); margin-top:3px; }
+.ret8-qinv { display:inline-flex; align-items:center; min-height:32px; }
+/* ---- the saved invoice's menu: how a product or price is changed */
+.fdpop .ret8-pnote { padding:8px 12px 4px; font-size:12.5px; line-height:1.45; color:var(--fd-text-2, #475467); max-width:300px; }
+</style>
+<script>
+(function () {
+  var isBn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var LL = function (en, bn) { return isBn() ? bn : en; };
+  var E = function (s) { return typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var N = function (v) { var n = Number(v); return isFinite(n) ? n : 0; };
+  var F = function (v) { return typeof fmt === 'function' ? fmt(v) : String(Math.round(N(v))); };
+  var M = function (v) { var n = N(v), dp = Math.abs(n - Math.round(n)) > 0.004 ? 2 : 0; return typeof tk === 'function' ? tk(n, dp ? { dp: 2 } : undefined) : '৳' + F(n); };
+  var BD = function (s) { return isBn() ? String(s).replace(/[0-9]/g, function (d) { return '০১২৩৪৫৬৭৮৯'[d]; }) : String(s); };
+  var pcs = function (n) { return isBn() ? BD(F(n)) + 'টি' : F(n) + (N(n) === 1 ? ' piece' : ' pieces'); };
+  var $ = function (id) { return document.getElementById(id); };
+  var rank = function () { return typeof ME !== 'undefined' && ME ? ({ sales: 1, manager: 2, shareholder: 3, owner: 4 }[ME.role] || 0) : 4; };
+  var can = function (id) { try { return typeof pageCan === 'function' ? pageCan(id) : true; } catch (e) { return false; } };
+  var CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m7.5 12.5 3 3 6-6.5"/></svg>';
+
+  /* ===================================================================== 1. the Return dialog */
+  if (typeof retRender === 'function' && typeof saveReturn === 'function') {
+    var saveReturnBase = saveReturn;
+    var LAST = null;   // what the done window needs after the box has closed
+    var sums = function () {
+      var d = RET.data, value = 0, units = 0;
+      d.lines.forEach(function (Ln) { var q = Math.min(Ln.left, Math.max(0, Math.round(N(RET.qty[Ln.sku])))); value += q * Ln.unit; units += q; });
+      value = Math.round(value * 100) / 100;
+      var owed = N(d.owed), offDue = Math.min(value, owed);
+      return { value: value, units: units, offDue: offDue, excess: Math.round((value - offDue) * 100) / 100, owedAfter: Math.max(0, Math.round((owed - offDue) * 100) / 100) };
+    };
+    var received = function (d) { return Math.max(0, N(d.paid) - N(d.returnedValue)); };
+    var methods = function () { return (typeof OPT !== 'undefined' && OPT && OPT.paymentMethods && OPT.paymentMethods.length) ? OPT.paymentMethods : ['Cash']; };
+
+    var build = function (w) {
+      var d = RET.data, h = '<div class="card ret8" role="dialog" aria-modal="true" aria-labelledby="rt8_t"><h2 id="rt8_t">' + E(LL('Return against ', 'ফেরত: ') + RET.invoiceNo) + '</h2>';
+      if (!d) { w.innerHTML = h + '<div class="loading">' + E(LL('Reading the invoice…', 'ইনভয়েস পড়া হচ্ছে…')) + '</div></div>'; return; }
+      var rec = received(d);
+      h += '<div class="ret8-head" data-noi18n="1">' + E(d.customer || LL('Walk-in', 'ওয়াক-ইন')) + (d.phone ? ' · ' + E(d.phone) : '') + ' · ' +
+        E(LL('invoice ', 'ইনভয়েস ')) + M(d.grand) + ' · ' + E(LL('paid ', 'পেমেন্ট ')) + M(rec) +
+        (N(d.returnedValue) > 0.5 ? ' · ' + E(LL('returned before ', 'আগে ফেরত ')) + M(d.returnedValue) : '') +
+        ' · <strong>' + E(LL('owes ', 'বাকি ')) + M(d.owed) + '</strong></div>' +
+        '<div class="ret8-keep">' + E(LL('The invoice itself is not changed; the return is recorded beside it.', 'ইনভয়েস বদলায় না; ফেরত তার পাশে আলাদা লেখা থাকে।')) + '</div>';
+      // ---- stage 1: what comes back
+      h += '<div id="rt8_form">';
+      h += '<div class="scroll"><table><thead><tr><th>' + E(LL('Product', 'প্রোডাক্ট')) + '</th><th class="num">' + E(LL('Sold', 'বিক্রি')) + '</th><th class="num">' + E(LL('Already back', 'আগে ফেরত')) +
+        '</th><th class="num">' + E(LL('Coming back now', 'এখন ফেরত')) + '</th><th>' + E(LL('Condition', 'অবস্থা')) + '</th><th class="num ret8-each">' +
+        E(LL('Each, after its discount share', 'প্রতিটি, ডিসকাউন্টের ভাগ বাদে')) + '</th></tr></thead><tbody>';
+      d.lines.forEach(function (Ln) {
+        var ser = typeof serCat === 'function' ? serCat(Ln.sku) : null;
+        h += '<tr><td class="nm"><span data-noi18n="1">' + E(Ln.product) + '</span><br><span class="sku">' + E(String(Ln.sku).replace(/~J[0-9a-f]{4}$/i, '')) + '</span></td>' +
+          '<td class="num">' + F(Ln.sold) + '</td><td class="num">' + (Ln.returned ? F(Ln.returned) : '—') + '</td><td class="num">' +
+          (Ln.left > 0 ? '<input class="i qty" type="number" inputmode="numeric" min="0" max="' + Ln.left + '" step="1" data-rq="' + E(Ln.sku) + '" value="' + E(RET.qty[Ln.sku] || '') +
+              '" placeholder="0" aria-label="' + E(LL('How many of ', 'কতটি ফেরত: ') + Ln.product) + '"> <span class="ret8-of">' + E(LL('of ', 'মোট ')) + F(Ln.left) + '</span>' +
+              (ser && ser.serialised ? '<input class="i" data-rsn="' + E(Ln.sku) + '" style="margin-top:6px" placeholder="' + E(LL('serial number(s) coming back', 'ফেরত আসা সিরিয়াল নম্বর')) + '" value="' + E((RET.sn && RET.sn[Ln.sku]) || '') + '">' : '')
+            : '<span class="sku">' + E(LL('all returned', 'সব ফেরত এসেছে')) + '</span>') + '</td><td>' +
+          (Ln.left > 0 ? '<select class="i" data-rc="' + E(Ln.sku) + '" aria-label="' + E(LL('Condition', 'অবস্থা')) + '">' +
+              '<option value="good"' + (RET.cond[Ln.sku] !== 'damaged' ? ' selected' : '') + '>' + E(LL('Good — back to stock', 'ভালো — স্টকে ফেরত')) + '</option>' +
+              '<option value="damaged"' + (RET.cond[Ln.sku] === 'damaged' ? ' selected' : '') + '>' + E(LL('Damaged — not restocked', 'নষ্ট — স্টকে যাবে না')) + '</option></select>' : '') +
+          '</td><td class="num">' + M(Ln.unit) + '</td></tr>';
+      });
+      h += '</tbody></table></div>';
+      h += '<div class="ret8-tot"><div class="big"><span>' + E(LL('Value of what is coming back', 'ফেরত আসা মালের দাম')) + '</span><span id="rt8_val"></span></div>' +
+        '<div id="rt8_offr"><span>' + E(LL('Comes off what is owed', 'বাকি থেকে কমবে')) + '</span><span id="rt8_off"></span></div>' +
+        '<div id="rt8_excr"><span>' + E(LL('Already paid by the customer', 'কাস্টমার আগেই দিয়েছেন')) + '</span><span id="rt8_exc"></span></div></div>';
+      h += '<div class="ret8-money" id="rt8_money"><label class="f" id="rt8_mlab"></label><div class="chips" style="margin:4px 0 0">' +
+        '<button class="chip" type="button" data-rm="advance"' + (d.hasAccount ? '' : ' disabled') + '>' + E(LL('Keep as advance for the next order', 'পরের অর্ডারের অগ্রিম হিসেবে রাখুন')) + '</button>' +
+        '<button class="chip" type="button" data-rm="refund"' + (d.canRefund ? '' : ' disabled') + '>' + E(LL('Refund it now', 'এখনই ফেরত দিন')) + '</button></div>' +
+        (!d.canRefund ? '<div class="ret8-why">' + E(LL('Only the owner or a shareholder can hand money back.', 'শুধু মালিক বা শেয়ারহোল্ডার টাকা ফেরত দিতে পারেন।')) + '</div>' : '') +
+        (!d.hasAccount ? '<div class="ret8-why">' + E(LL('This sale has no customer name or phone, so an advance cannot be kept.', 'এই বিক্রিতে কাস্টমারের নাম বা ফোন নেই, তাই অগ্রিম রাখা যাবে না।')) + '</div>' : '') +
+        '<div id="rt8_mwrap" style="margin-top:8px;max-width:260px"><label class="f" for="rt_method">' + E(LL('Refunded by', 'যেভাবে ফেরত')) + '</label><select class="i" id="rt_method">' +
+          methods().map(function (m) { return '<option value="' + E(m) + '"' + (RET.method === m ? ' selected' : '') + '>' + E(m) + '</option>'; }).join('') + '</select></div></div>';
+      h += '<div style="margin-top:10px"><label class="f" for="rt_reason">' + E(LL('Why did it come back?', 'কেন ফেরত এলো?')) + '</label>' +
+        '<input class="i" id="rt_reason" autocomplete="off" placeholder="' + E(LL('Wrong colour, faulty, customer refused the parcel…', 'ভুল রং, নষ্ট, কাস্টমার পার্সেল নেননি…')) + '" value="' + E(RET.reason) + '"></div>';
+      h += '</div>';
+      // ---- stage 2: the recap
+      h += '<div id="rt8_recap" hidden></div>';
+      h += '<div class="ret8-btns"><button class="btn" type="button" id="rt_cancel">' + E(LL('Close', 'বন্ধ করুন')) + '</button>' +
+        '<button class="btn" type="button" id="rt8_back" hidden>' + E(LL('Back', 'পিছনে')) + '</button>' +
+        '<button class="btn primary" type="button" id="rt_save">' + E(LL('Record the return', 'ফেরত লিখুন')) + '</button></div></div>';
+      w.innerHTML = h;
+      wire(w);
+    };
+
+    var live = function () {
+      var w = $('retbox'); if (!w || !RET || !RET.data) return;
+      var s = sums(), d = RET.data;
+      // only what really changed is written: a text node replaced while a box loses its focus makes the page's focus keeper
+      // (crit7-trust) move the focus to the top close, and the next key would press it
+      var put = function (id, v) { var n = $(id); if (n && n.textContent !== v) n.textContent = v; };
+      var hide = function (n, v) { if (n && n.hidden !== !!v) n.hidden = !!v; };
+      put('rt8_val', M(s.value));
+      put('rt8_off', '− ' + M(s.offDue));
+      put('rt8_exc', M(s.excess));
+      hide($('rt8_offr'), !(s.offDue > 0));
+      hide($('rt8_excr'), !(s.excess > 0.5));
+      hide($('rt8_money'), !(s.excess > 0.5));
+      put('rt8_mlab', LL('The customer already paid ' + M(s.excess) + ' for these. What happens to it?', 'কাস্টমার এগুলোর জন্য আগেই ' + M(s.excess) + ' দিয়েছেন। এই টাকা কী হবে?'));
+      [].forEach.call(w.querySelectorAll('button[data-rm]'), function (b) { var on = RET.money === b.getAttribute('data-rm'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+      hide($('rt8_mwrap'), RET.money !== 'refund');
+      var recap = RET.stage8 === 'recap';
+      var f = $('rt8_form'), rc = $('rt8_recap'), bk = $('rt8_back'), sv = $('rt_save');
+      hide(f, recap); hide(rc, !recap); hide(bk, !recap);
+      if (sv) {
+        sv.disabled = !!RET.busy || !s.units;
+        var lab = RET.busy ? LL('Recording…', 'লেখা হচ্ছে…') : recap ? LL('Yes, record the return', 'হ্যাঁ, ফেরত লিখুন') : LL('Record the return', 'ফেরত লিখুন');
+        if (sv.textContent !== lab) sv.textContent = lab;
+      }
+      if (bk) bk.disabled = !!RET.busy;
+    };
+
+    var recapHtml = function () {
+      var d = RET.data, s = sums(), cond = function (k) { return RET.cond[k] === 'damaged' ? LL('damaged, not restocked', 'নষ্ট, স্টকে যাবে না') : LL('good, back to stock', 'ভালো, স্টকে ফেরত'); };
+      var items = d.lines.filter(function (Ln) { return N(RET.qty[Ln.sku]) > 0; }).map(function (Ln) {
+        var q = Math.min(Ln.left, Math.round(N(RET.qty[Ln.sku])));
+        return '<li><span data-noi18n="1">' + E(Ln.product) + '</span> × ' + F(q) + ' · ' + M(q * Ln.unit) + ' · ' + E(cond(Ln.sku)) + '</li>';
+      }).join('');
+      var mt = $('rt_method'), money = '';
+      if (s.excess > 0.5) money = RET.money === 'refund'
+        ? '<div class="big"><span>' + E(LL('Hand back to the customer', 'কাস্টমারকে ফেরত দিন')) + ' (' + E(mt ? mt.value : (RET.method || 'Cash')) + ')</span><span>' + M(s.excess) + '</span></div>'
+        : '<div><span>' + E(LL('Kept as advance for the next order', 'পরের অর্ডারের অগ্রিম')) + '</span><span>' + M(s.excess) + '</span></div>';
+      return '<div class="ret8-rc-h">' + E(LL('Check before it is recorded', 'লেখার আগে মিলিয়ে নিন')) + '</div>' +
+        '<ul class="ret8-rc-list">' + items + '</ul>' +
+        '<div class="ret8-tot"><div class="big"><span>' + E(LL('Coming back', 'ফেরত আসছে')) + '</span><span>' + M(s.value) + '</span></div>' +
+        (s.offDue > 0 ? '<div><span>' + E(LL('Comes off what is owed', 'বাকি থেকে কমবে')) + '</span><span>− ' + M(s.offDue) + '</span></div>' : '') + money +
+        '<div><span>' + E(LL('Still owed after this', 'এর পরে বাকি')) + '</span><span>' + M(s.owedAfter) + '</span></div></div>' +
+        '<div class="ret8-rc-reason">' + E(LL('Why: ', 'কারণ: ')) + '<span data-noi18n="1">' + E(String(RET.reason || '').trim()) + '</span></div>';
+    };
+
+    var readQty = function () {
+      var w = $('retbox'); if (!w) return;
+      [].forEach.call(w.querySelectorAll('input[data-rq]'), function (n) {
+        var v = Math.max(0, Math.round(N(n.value))), mx = N(n.getAttribute('max'));
+        if (mx && v > mx) v = mx;
+        RET.qty[n.getAttribute('data-rq')] = v;
+      });
+      var rr = $('rt_reason'); if (rr) RET.reason = rr.value;
+      var mt = $('rt_method'); if (mt) RET.method = mt.value;
+    };
+
+    var primary = function () {
+      if (!RET || !RET.data || RET.busy) return;
+      readQty();
+      var s = sums();
+      if (RET.stage8 !== 'recap') {
+        if (!s.units) { toast(E(LL('Enter how many came back.', 'কতটি ফেরত এলো লিখুন।')), true); return; }
+        if (!String(RET.reason || '').trim()) { toast(E(LL('Say why it came back.', 'কেন ফেরত এলো লিখুন।')), true); var r0 = $('rt_reason'); if (r0) r0.focus(); return; }
+        if (s.excess > 0.5 && !RET.money) { toast(E(LL('Choose what happens to the ' + M(s.excess) + ' already paid.', 'আগেই দেওয়া ' + M(s.excess) + ' কী হবে, বেছে নিন।')), true, 9000); return; }
+        RET.stage8 = 'recap';
+        var rc = $('rt8_recap'); if (rc) rc.innerHTML = recapHtml();
+        live();
+        return;
+      }
+      LAST = { owedBefore: N(RET.data.owed), customer: RET.data.customer || '' };
+      saveReturnBase();
+    };
+
+    var wire = function (w) {
+      w.addEventListener('input', function (e) {
+        var t = e.target; if (!RET) return;
+        if (t.hasAttribute('data-rq')) { RET.qty[t.getAttribute('data-rq')] = Math.max(0, Math.round(N(t.value))); live(); }
+        else if (t.id === 'rt_reason') RET.reason = t.value;
+      });
+      w.addEventListener('change', function (e) {
+        var t = e.target; if (!RET) return;
+        if (t.hasAttribute('data-rq')) {
+          var v = Math.max(0, Math.round(N(t.value))), mx = N(t.getAttribute('max'));
+          if (mx && v > mx) { v = mx; t.value = String(mx); }
+          RET.qty[t.getAttribute('data-rq')] = v; setTimeout(live, 0);   // after the focus has landed in the next box
+        } else if (t.hasAttribute('data-rc')) RET.cond[t.getAttribute('data-rc')] = t.value;
+        else if (t.id === 'rt_method') RET.method = t.value;
+      });
+      w.addEventListener('click', function (e) {
+        var b = e.target.closest && e.target.closest('button'); if (!b || !RET) return;
+        if (b.hasAttribute('data-rm')) { RET.money = b.getAttribute('data-rm'); live(); return; }
+        if (b.id === 'rt_save') { primary(); return; }
+        if (b.id === 'rt8_back') { RET.stage8 = ''; live(); var q = w.querySelector('input[data-rq]'); if (q) try { q.focus({ preventScroll: true }); } catch (x) {} return; }
+        if (b.id === 'rt_cancel') { closeReturn(); }
+      });
+    };
+
+    retRender = function () {
+      var w = $('retbox');
+      if (!w) {
+        w = document.createElement('div'); w.id = 'retbox';
+        w.style.cssText = 'position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);overflow:auto';
+        document.body.appendChild(w);
+      }
+      if (!RET) return;
+      // drawn once per state of the data (loading -> the form); everything after that is updated in place, so a field
+      // being typed in keeps its focus and the next tap lands where it was aimed
+      var key = RET.data ? 'data' : 'loading';
+      if (w.__ret8 !== key || !w.querySelector('.ret8')) { w.__ret8 = key; build(w); }
+      live();
+    };
+    saveReturn = function () { primary(); };
+
+    // Space / Enter on a button the keyboard did not travel to (the focus was moved there by the page) does nothing
+    var NAV = 0;
+    document.addEventListener('keydown', function (e) { if (e.key === 'Tab' || /^Arrow/.test(e.key)) NAV = Date.now(); }, true);
+    document.addEventListener('pointerdown', function () { NAV = Date.now(); }, true);
+    document.addEventListener('focusin', function (e) {
+      var t = e.target; if (!t || !t.closest) return;
+      var box = t.closest('#retbox, #retdone'); if (!box) return;
+      if (t.tagName === 'BUTTON') t.__ret8prog = Date.now() - NAV > 400; else t.__ret8prog = false;
+    }, true);
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== ' ' && e.key !== 'Enter') return;
+      var t = e.target; if (!t || !t.closest || !t.closest('#retbox') || t.tagName !== 'BUTTON' || !t.__ret8prog) return;
+      e.preventDefault(); e.stopPropagation();
+      var f = $('rt_reason'); if (f && !f.closest('[hidden]')) try { f.focus({ preventScroll: true }); } catch (x) {}
+    }, true);
+    // Enter in the quantity box goes on to the next box, never to a button
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      var t = e.target; if (!t || !t.closest || !t.closest('#retbox') || !/^(INPUT|SELECT)$/.test(t.tagName)) return;
+      e.preventDefault();
+      if (t.id === 'rt_reason') return;
+      var all = [].filter.call($('retbox').querySelectorAll('input, select'), function (n) { return !n.disabled && n.offsetParent; });
+      var i = all.indexOf(t); if (i >= 0 && all[i + 1]) try { all[i + 1].focus(); } catch (x) {}
+    }, true);
+
+    // ---- the done window: what was recorded, by its return number
+    if (typeof returnDone === 'function') {
+      returnDone = function (res) {
+        res = res || {};
+        var old = $('retdone'); if (old && old.parentNode) old.parentNode.removeChild(old);
+        var wrap = document.createElement('div'); wrap.id = 'retdone';
+        wrap.style.cssText = 'position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55)';
+        var units = N(res.units), back = N(res.restocked), dmg = units - back, owedAfter = LAST ? Math.max(0, LAST.owedBefore - N(res.dueReduced)) : null;
+        var li = [];
+        li.push(LL(pcs(units) + ' came back, worth ' + M(res.value), pcs(units) + ' ফেরত এসেছে, দাম ' + M(res.value)));
+        if (back) li.push(LL(pcs(back) + ' put back into stock', pcs(back) + ' স্টকে ফেরত গেছে'));
+        if (dmg > 0) li.push(LL(pcs(dmg) + ' damaged, not restocked', pcs(dmg) + ' নষ্ট, স্টকে যায়নি'));
+        if (N(res.dueReduced)) li.push(LL(M(res.dueReduced) + ' taken off what was owed', 'বাকি থেকে ' + M(res.dueReduced) + ' কমেছে'));
+        if (N(res.refund)) li.push('<strong>' + E(LL('Hand back ' + M(res.refund) + ' to the customer', 'কাস্টমারকে ' + M(res.refund) + ' ফেরত দিন')) + '</strong>');
+        if (N(res.advance)) li.push(LL(M(res.advance) + ' kept as advance for the next order', M(res.advance) + ' পরের অর্ডারের অগ্রিম হিসেবে রাখা হয়েছে'));
+        if (owedAfter !== null) li.push(LL('Still owed on ' + res.invoiceNo + ': ' + M(owedAfter), res.invoiceNo + '-এ এখনো বাকি: ' + M(owedAfter)));
+        wrap.innerHTML = '<div class="card ret8-done" role="dialog" aria-modal="true" aria-labelledby="rt8_dt">' +
+          '<div class="ret8-ok">' + CHECK + '<h2 id="rt8_dt">' + E(LL('Return ' + (res.returnId || '') + ' recorded', 'ফেরত ' + (res.returnId || '') + ' লেখা হয়েছে')) + '</h2></div>' +
+          '<div class="ret8-no">' + E(LL('against ', 'ইনভয়েস ')) + E(res.invoiceNo || '') + '</div>' +
+          '<ul>' + li.map(function (x) { return '<li>' + (/^<strong>/.test(x) ? x : E(x)) + '</li>'; }).join('') + '</ul>' +
+          '<div class="ret8-btns">' + (res.pdfUrl ? '<a class="btn" href="' + E(res.pdfUrl) + '" target="_blank" rel="noopener">' + E(LL('Open the return note', 'ফেরতের নোট খুলুন')) + '</a>' : '') +
+          '<button class="btn primary" type="button" id="retdoneclose">' + E(LL('Done', 'ঠিক আছে')) + '</button></div></div>';
+        document.body.appendChild(wrap);
+        $('retdoneclose').addEventListener('click', function () { if (wrap.parentNode) wrap.parentNode.removeChild(wrap); });
+        setTimeout(function () { var b = $('retdoneclose'); if (b) try { b.focus({ preventScroll: true }); } catch (e) {} }, 60);
+        // the list row and its profit are read again
+        try { if (typeof FD19 !== 'undefined' && FD19 && FD19.prof && res.invoiceNo) delete FD19.prof[res.invoiceNo]; } catch (e) {}
+        LAST = null;
+      };
+    }
+  }
+
+  /* ===================================================================== 2. the Sales list: Paid = money received, Returned apart */
+  var anyReturned = function () {
+    try { var st = lvSt('invoices'), rows = (st && st.data && st.data.rows) || []; return rows.some(function (r) { return N(r.returned) > 0.5; }); } catch (e) { return false; }
+  };
+  if (typeof fd19ColsOf === 'function') {
+    var fd19ColsOfR = fd19ColsOf;
+    fd19ColsOf = function (m) {
+      var out = fd19ColsOfR.apply(this, arguments);
+      if (m !== 'invoices' || !out || !out.some(function (c) { return c.key === 'paid'; })) return out;
+      var showRet = anyReturned();
+      // the server sends Paid itself now (money received): the page's own Total − Due column steps aside
+      return out.filter(function (c) { return c.key !== '_paid' && (c.key !== 'returned' || showRet); });
+    };
+  }
+  if (typeof fd19Cell === 'function') {
+    var fd19CellR = fd19Cell;
+    fd19Cell = function (m, c, r) {
+      if (m === 'invoices' && c && c.key === 'paid') {
+        if (r.paid === null || r.paid === undefined || r.status === 'Cancelled') return '<span class="fd19-num fd19-faint">—</span>';
+        return '<span class="fd19-num' + (N(r.paid) > 0.5 ? '' : ' fd19-faint') + '">' + fd19Tk(r.paid) + '</span>';
+      }
+      if (m === 'invoices' && c && c.key === 'returned') {
+        return N(r.returned) > 0.5 ? '<span class="fd19-num ret8-ret" title="' + E(LL('Goods that came back - not money paid', 'ফেরত আসা মাল - পেমেন্ট নয়')) + '">' + fd19Tk(r.returned) + '</span>' : '<span class="fd19-num fd19-faint">—</span>';
+      }
+      return fd19CellR.apply(this, arguments);
+    };
+  }
+  if (typeof fd19ProfitCell === 'function') {
+    var fd19ProfitCellR = fd19ProfitCell;
+    fd19ProfitCell = function (r) {
+      if (r && N(r.returned) > 0.5) return '<span class="fd19-faint" title="' + E(LL('Has returns: see the month’s P&L', 'ফেরত আছে: মাসের লাভ-ক্ষতি দেখুন')) + '">—</span>';
+      return fd19ProfitCellR.apply(this, arguments);
+    };
+  }
+
+  /* ===================================================================== 3. Money > See each payment: mark, then Place */
+  var MARK = {};   // 'src|id' -> account id
+  var KEEP = 0;     // See each payment was open when Place was pressed: when the answer came
+  var keyOf = function (s) { return s.getAttribute('data-cassign') + '|' + s.getAttribute('data-id'); };
+  var accName = function (id) { var a = ((typeof CASH !== 'undefined' && CASH && CASH.accounts) || []).filter(function (x) { return x.id === id; })[0]; return a ? a.name : ''; };
+  var markedCount = function () { var n = 0; for (var k in MARK) if (MARK[k]) n++; return n; };
+  window.cashMark8 = function (sel) {
+    var k = keyOf(sel);
+    if (sel.value) MARK[k] = sel.value; else delete MARK[k];
+    paintMarks();
+  };
+  function paintMarks() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'cash') return;
+    var v = $('view'); if (!v) return;
+    var sels = v.querySelectorAll('select[data-cassign]'), seen = {};
+    [].forEach.call(sels, function (s) {
+      var k = keyOf(s); seen[k] = 1;
+      if (MARK[k] && s.value !== MARK[k]) s.value = MARK[k];
+      var row = s.closest('tr, .dm-crow') || s.parentNode, cell = s.parentNode;
+      if (!cell.classList.contains('ret8-cell')) cell.classList.add('ret8-cell');
+      var b = cell.querySelector('[data-cplace8]');
+      if (MARK[k]) {
+        if (!b) { b = document.createElement('button'); b.type = 'button'; b.className = 'btn small primary ret8-place'; b.setAttribute('data-cplace8', k); cell.appendChild(b); }
+        b.textContent = LL('Place', 'রাখুন');
+        b.setAttribute('aria-label', LL('Place in ', 'এতে রাখুন: ') + accName(MARK[k]));
+        b.disabled = typeof CASH_BUSY !== 'undefined' && !!CASH_BUSY;
+        if (row) row.classList.add('ret8-marked');
+      } else {
+        if (b) b.remove();
+        if (row) row.classList.remove('ret8-marked');
+      }
+    });
+    for (var k in MARK) if (!seen[k]) delete MARK[k];   // placed (or gone from the list): forget the mark
+    var n = markedCount(), first = sels[0], bar = v.querySelector('.ret8-placeall');
+    if (n > 1 && first) {
+      var tbl = first.closest('table') || first.closest('.fd19-scroll') || first.parentNode;
+      var host = tbl.closest('.fdt-wrap, .scroll, .fd19-scroll') || tbl;
+      if (!bar) { bar = document.createElement('div'); bar.className = 'ret8-placeall'; host.parentNode.insertBefore(bar, host); }
+      bar.innerHTML = '<span class="sku">' + E(LL(n + ' marked - nothing moves until you place them', BD(n) + 'টি বাছাই করা - রাখার আগে কিছু নড়বে না')) + '</span>' +
+        '<button type="button" class="btn small" data-cplace8clear="1">' + E(LL('Clear marks', 'বাছাই মুছুন')) + '</button>' +
+        '<button type="button" class="btn primary small" data-cplace8all="1">' + E(LL('Place all marked (' + n + ')', 'বাছাই করা সব রাখুন (' + BD(n) + ')')) + '</button>';
+    } else if (bar) bar.remove();
+  }
+  function placeItems(list) {
+    if (!list.length || (typeof CASH_BUSY !== 'undefined' && CASH_BUSY)) return;
+    var groups = {};
+    list.forEach(function (x) { (groups[x.account] = groups[x.account] || []).push({ src: x.src, id: x.id }); });
+    var accs = Object.keys(groups), placed = 0, total = list.length;
+    // the list stays open where it was (the answer repaints the page)
+    var det = null; [].some.call(document.querySelectorAll('#view details'), function (d) { if (d.querySelector('select[data-cassign]')) { det = d; return true; } return false; });
+    KEEP = det && det.open ? Date.now() + 60000 : 0;   // counted from the answer (set again there)
+    CASH_BUSY = true; paintMarks();
+    (function next() {
+      if (!accs.length) return;
+      var acc = accs.shift();
+      srv('erpCashPlaceMany', [{ account: acc, items: groups[acc], show: CASH_ACC }], function (r) {
+        placed += groups[acc].length;
+        groups[acc].forEach(function (x) { delete MARK[x.src + '|' + x.id]; });
+        if (accs.length) { next(); return; }
+        CASH_BUSY = false; CASH = r; if (r && r.account) CASH_ACC = r.account;
+        if (KEEP) KEEP = Date.now();
+        try { EXP = null; CAPD = null; } catch (e) {}
+        toast(E(total === 1 ? LL('Placed in ' + accName(acc) + '.', accName(acc) + '-এ রাখা হয়েছে।') : LL('Placed ' + placed + ' payments.', BD(placed) + 'টি পেমেন্ট রাখা হয়েছে।')), false, 8000);
+        if (VIEW === 'cash') repaint();
+      }, function (e) {
+        CASH_BUSY = false; if (KEEP) KEEP = Date.now();
+        toast(E((e && e.message) || e) + (placed ? ' ' + E(LL('(' + placed + ' were placed before this.)', '(এর আগে ' + BD(placed) + 'টি রাখা হয়েছে।)')) : ''), true, 14000);
+        if (typeof loadCash === 'function' && placed) loadCash(); else if (VIEW === 'cash') repaint();
+      });
+    })();
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-cplace8], [data-cplace8all], [data-cplace8clear]'); if (!b) return;
+    e.preventDefault();
+    if (b.hasAttribute('data-cplace8clear')) { MARK = {}; [].forEach.call(document.querySelectorAll('#view select[data-cassign]'), function (s) { s.value = ''; }); paintMarks(); return; }
+    var list = [];
+    var push = function (k) { var p = k.split('|'); if (MARK[k]) list.push({ src: p[0], id: p.slice(1).join('|'), account: MARK[k] }); };
+    if (b.hasAttribute('data-cplace8all')) { for (var k in MARK) push(k); } else push(b.getAttribute('data-cplace8'));
+    placeItems(list);
+  });
+  if (typeof AFTER_PAINT !== 'undefined') AFTER_PAINT.push(function ret8Marks() {
+    if (VIEW !== 'cash') { MARK = {}; KEEP = 0; return; }
+    if (KEEP && !CASH_BUSY && Date.now() - KEEP < 4000) {
+      // the waiting list is folded into its details a moment after each paint, and the account's book is read again
+      // (a second paint): open it again on each of those paints for a few seconds
+      var reopen = function () {
+        [].some.call(document.querySelectorAll('#view details'), function (d) {
+          if (!d.classList.contains('dm-waitin') && !d.querySelector('select[data-cassign]')) return false;
+          if (!d.open) { d.open = true; if (!d.__ret8s) { d.__ret8s = 1; try { d.scrollIntoView({ block: 'start' }); } catch (e) {} } }
+          paintMarks();
+          return true;
+        });
+      };
+      reopen(); setTimeout(reopen, 150); setTimeout(reopen, 450);
+    }
+    paintMarks();
+  });
+
+  /* ===================================================================== 4. Quotations */
+  var dhaka = function (iso) {
+    if (!iso) return '';
+    var d = new Date(iso); if (isNaN(d)) return String(iso);
+    var p = {};
+    try { new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Dhaka', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: false }).formatToParts(d).forEach(function (x) { p[x.type] = x.value; }); } catch (e) { p = null; }
+    var local = p && p.year ? new Date(Number(p.year), Number(p.month) - 1, Number(p.day), Number(p.hour) % 24, Number(p.minute)) : d;
+    if (typeof window.bnDate === 'function') return window.bnDate(local, true);
+    var hh = local.getHours();
+    return local.getDate() + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][local.getMonth()] + ' ' + local.getFullYear() + ', ' + (hh % 12 || 12) + ':' + String(local.getMinutes()).padStart(2, '0') + ' ' + (hh < 12 ? 'AM' : 'PM');
+  };
+  window.ret8Dhaka = dhaka;
+  if (typeof qzDashHtml === 'function') {
+    var qzDashHtmlR = qzDashHtml;
+    qzDashHtml = function () {
+      var h = qzDashHtmlR.apply(this, arguments);
+      if (typeof h !== 'string' || typeof QZ === 'undefined' || !QZ || !QZ.list) return h;
+      var rows = QZ.list.rows || [];
+      var tpl = document.createElement('template'); tpl.innerHTML = h;
+      [].forEach.call(tpl.content.querySelectorAll('[data-qzopen]'), function (b) {
+        var id = b.getAttribute('data-qzopen'), r = rows.filter(function (x) { return x.id === id; })[0], tr = b.closest('tr'); if (!r || !tr) return;
+        // an invoiced quotation is not made into an invoice again from the list (its invoice is linked beside the status)
+        if (r.status === 'Invoiced') { var ib = tr.querySelector('[data-qzinv]'); if (ib) ib.remove(); }
+        // the shop's own clock (the server keeps UTC)
+        var tds = tr.querySelectorAll('td.sku');
+        if (tds.length >= 2) { tds[tds.length - 2].textContent = dhaka(r.createdAt); tds[tds.length - 1].textContent = dhaka(r.updatedAt); tds[tds.length - 2].setAttribute('data-noi18n', '1'); tds[tds.length - 1].setAttribute('data-noi18n', '1'); }
+      });
+      return tpl.innerHTML;
+    };
+  }
+  if (typeof viewQuotes === 'function') {
+    var viewQuotesR = viewQuotes;
+    viewQuotes = function () {
+      var h = viewQuotesR.apply(this, arguments);
+      if (typeof h !== 'string' || typeof QZ === 'undefined' || !QZ) return h;
+      // the editor tab is the quotation being written; "New quotation" is the one button at the top
+      h = h.replace(/(<button class="chip(?: on)?" type="button" data-qzsub="new">)New quotation(<\/button>)/, '$1' + E(LL('Editor', 'এডিটর')) + '$2');
+      if (QZ.quote && QZ.quote.invoiceNo && QZ.sub === 'new') {
+        var link = '<a class="nt-qinv ret8-qinv" href="#" data-ntqinv="' + E(QZ.quote.invoiceNo) + '" data-noi18n="1">' + E(LL('Invoiced as ' + QZ.quote.invoiceNo + ' - open it', 'ইনভয়েস হয়েছে: ' + QZ.quote.invoiceNo + ' - খুলুন')) + '</a>';
+        var had = /<button[^>]*id="qz_toinv"[^>]*>[\s\S]*?<\/button>/;
+        if (had.test(h)) h = h.replace(had, link);
+        else if (h.indexOf('ret8-qinv') < 0) h = h.replace('<span class="sku" id="qz_state">', link + '<span class="sku" id="qz_state">');
+      }
+      return h;
+    };
+  }
+  // the item picker: the invoice's own way of finding a product (stock and price on each row), saved items too
+  var QP = { q: '', hl: -1, list: [] };
+  var qpRows = function (q) {
+    q = String(q || '').trim().toLowerCase();
+    var out = [];
+    if (!q) return out;
+    (typeof CAT !== 'undefined' && CAT || []).forEach(function (p) {
+      if (out.length >= 40 || String(p.status || '').toLowerCase() === 'discontinued') return;
+      if ((p.name + ' ' + p.sku + ' ' + (p.brand || '') + ' ' + (p.color || '')).toLowerCase().indexOf(q) < 0) return;
+      out.push({ kind: 'p', p: p, value: p.name + ' · ' + p.sku });
+    });
+    ((QZ && QZ.boot && QZ.boot.savedItems) || []).forEach(function (s) {
+      if (out.length >= 50 || String(s.name || '').toLowerCase().indexOf(q) < 0) return;
+      out.push({ kind: 's', s: s, value: s.name + ' · saved item' });
+    });
+    return out;
+  };
+  var qpPaint = function () {
+    var box = $('ret8_qres'), inp = $('qz_pick'); if (!box || !inp) return;
+    QP.list = qpRows(inp.value);
+    if (!String(inp.value || '').trim()) { box.hidden = true; inp.setAttribute('aria-expanded', 'false'); return; }
+    box.hidden = false; inp.setAttribute('aria-expanded', 'true');
+    if (!QP.list.length) { box.innerHTML = '<div class="empty">' + E(LL('No product or saved item matches. "+ Blank item" adds anything.', 'কোনো প্রোডাক্ট বা সেভ করা আইটেম মেলেনি। "+ ফাঁকা আইটেম" দিয়ে যেকোনো কিছু যোগ করুন।')) + '</div>'; return; }
+    box.innerHTML = QP.list.map(function (x, i) {
+      if (x.kind === 's') return '<div class="r' + (i === QP.hl ? ' on' : '') + '" role="option" data-qp8="' + i + '"><div><div class="nm" data-noi18n="1">' + E(x.s.name) + '</div><div class="sku">' + E(LL('saved item', 'সেভ করা আইটেম')) + (x.s.historicalRate ? ' · ' + E(LL('last quoted ', 'শেষ কোটেশন ')) + M(x.s.historicalRate) : '') + '</div></div><div class="rt"></div></div>';
+      var p = x.p, st = N(p.stock);
+      return '<div class="r' + (i === QP.hl ? ' on' : '') + '" role="option" data-qp8="' + i + '"><div><div class="nm" data-noi18n="1">' + E(p.name) + '</div><div class="sku">' + E(p.sku) + (p.brand ? ' · ' + E(p.brand) : '') + ' · ' +
+        E(st > 0 ? LL(F(st) + ' in stock', BD(F(st)) + 'টি স্টকে') : LL('out of stock now', 'এখন স্টকে নেই')) + '</div></div>' +
+        '<div class="rt">' + (N(p.sell) ? '<strong>' + M(p.sell) + '</strong>' : '<span class="sku">' + E(LL('no price', 'দাম নেই')) + '</span>') + '<div>' + (typeof stateBadge === 'function' ? stateBadge(p.state) : '') + '</div></div></div>';
+    }).join('');
+  };
+  var qpPick = function (i) {
+    var x = QP.list[i], inp = $('qz_pick'); if (!x || !inp) return;
+    inp.value = x.value;
+    var box = $('ret8_qres'); if (box) box.hidden = true;
+    var q = QZ && QZ.quote, before = q && q.items ? q.items.length : -1;
+    inp.dispatchEvent(new Event('change', { bubbles: true }));   // the editor's own pick: it adds the line
+    // the editor wires its box again on each paint, so one pick could add the line twice: one pick = one line
+    if (q && before >= 0 && q.items.length > before + 1) { q.items.splice(before + 1); try { qzEdited(true); } catch (e) {} }
+    if (x.kind === 'p' && !(N(x.p.stock) > 0)) toast(E(LL(x.p.name + ' is out of stock now - the invoice will need stock.', x.p.name + ' এখন স্টকে নেই - ইনভয়েসের সময় স্টক লাগবে।')), true, 9000);
+  };
+  var qpWire = function () {
+    var inp = $('qz_pick'); if (!inp || inp.__ret8) return;
+    inp.__ret8 = 1;
+    inp.removeAttribute('list');
+    var dl = $('qz_products'); if (dl) dl.remove();
+    inp.setAttribute('role', 'combobox'); inp.setAttribute('aria-autocomplete', 'list'); inp.setAttribute('aria-controls', 'ret8_qres'); inp.setAttribute('aria-expanded', 'false'); inp.setAttribute('autocomplete', 'off');
+    var wrap = inp.parentNode; wrap.classList.add('ret8-qwrap');
+    var box = document.createElement('div'); box.id = 'ret8_qres'; box.className = 'ret8-qres'; box.setAttribute('role', 'listbox'); box.hidden = true; wrap.appendChild(box);
+    inp.addEventListener('input', function () { QP.hl = -1; qpPaint(); });
+    inp.addEventListener('keydown', function (e) {
+      var b = $('ret8_qres'); if (!b) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { if (b.hidden) qpPaint(); e.preventDefault(); var n = QP.list.length; if (!n) return; QP.hl = e.key === 'ArrowDown' ? (QP.hl + 1) % n : (QP.hl - 1 + n) % n; qpPaint(); var on = b.querySelector('.r.on'); if (on) on.scrollIntoView({ block: 'nearest' }); }
+      else if (e.key === 'Enter') { if (!b.hidden && QP.list.length) { e.preventDefault(); qpPick(QP.hl >= 0 ? QP.hl : 0); } }
+      else if (e.key === 'Escape') { if (!b.hidden) { e.preventDefault(); e.stopPropagation(); b.hidden = true; inp.setAttribute('aria-expanded', 'false'); } }
+    });
+    box.addEventListener('mousedown', function (e) { e.preventDefault(); });   // the box keeps the focus while a row is picked
+    box.addEventListener('click', function (e) { var r = e.target.closest('[data-qp8]'); if (r) qpPick(Number(r.getAttribute('data-qp8'))); });
+    inp.addEventListener('blur', function () { setTimeout(function () { var b = $('ret8_qres'); if (b) b.hidden = true; inp.setAttribute('aria-expanded', 'false'); }, 150); });
+  };
+  var qzOut = function () {
+    // a quoted product with no stock says so on its row (the invoice made from it will need stock)
+    var q = QZ && QZ.quote; if (!q || !q.items) return;
+    [].forEach.call(document.querySelectorAll('#view .qz-row:not(.head)'), function (row) {
+      var nm = row.querySelector('input[data-qk="name"]'); if (!nm) return;
+      var it = q.items[Number(nm.getAttribute('data-qi'))], old = row.querySelector('.ret8-qout');
+      var p = it && it.sku ? (CAT || []).filter(function (x) { return x.sku === it.sku; })[0] : null;
+      var out = p && !(N(p.stock) > 0) && (it.kind || 'Product') !== 'Service';
+      if (out && !old) { var d = document.createElement('div'); d.className = 'ret8-qout'; d.textContent = LL('Out of stock now - the invoice will need stock', 'এখন স্টকে নেই - ইনভয়েসের সময় স্টক লাগবে'); nm.parentNode.insertBefore(d, nm.nextSibling); }
+      else if (!out && old) old.remove();
+    });
+  };
+  var qzOne = function () {
+    // one "New quotation": the screen's header button (it starts a new one); the list's own copy stays only where no header is drawn
+    var head = document.querySelector('#view [data-fd19tool="newquote"]');
+    var nb = $('qz_newbtn'); if (nb) nb.style.display = head && head.offsetParent ? 'none' : '';
+  };
+  if (typeof AFTER_PAINT !== 'undefined') AFTER_PAINT.push(function ret8Quotes() {
+    if (VIEW !== 'quotes' || typeof QZ === 'undefined' || !QZ) return;
+    try { qpWire(); } catch (e) {}
+    try { qzOut(); } catch (e) {}
+    try { qzOne(); } catch (e) {}
+  });
+
+  /* ===================================================================== 5. Joint stock: a sales person sees the Stock part only */
+  if (typeof jtTabs === 'function') {
+    var jtTabsR = jtTabs;
+    jtTabs = function () {
+      var t = jtTabsR.apply(this, arguments);
+      if (!t || !t.length || rank() >= 2 || can('costs')) return t;
+      var s = t.filter(function (x) { return x[0] === 'stock'; });
+      return s.length ? s : t.slice(0, 1);
+    };
+  }
+
+  /* ===================================================================== 6. the saved invoice: what can be changed, and how */
+  var FIX_EN = 'Fix name, phone, address';
+  if (typeof fd19InvPaint === 'function') {
+    var fd19InvPaintR = fd19InvPaint;
+    fd19InvPaint = function (d) {
+      var r = fd19InvPaintR.apply(this, arguments);
+      try {
+        var dr = FD19.dr, acts = dr && dr.acts; if (!acts || typeof acts.more !== 'function' || acts.more.__ret8) return r;
+        var moreR = acts.more;
+        acts.more = function (btn) {
+          var popR = fdPop;
+          fdPop = function (anchor, items, opts) {
+            fdPop = popR;
+            try {
+              var fix = -1;
+              items.forEach(function (it, i) { if (it && it.label === 'Fix name and address') { it.label = FIX_EN; it.help = LL('Who it is for, the phone, where it goes', 'কার জন্য, ফোন, কোথায় যাবে'); fix = i; } });
+              var hasEdit = items.some(function (it) { return it && it.label === 'Edit invoice'; });
+              if (fix >= 0 && !hasEdit && d && !d.cancelled) {
+                var mgr = typeof fd19Can === 'function' && (fd19Can('returns') || fd19Can('dues'));
+                var canCancel = mgr && !d.returnedQty && !(d.parcel && d.parcel.consignment);
+                var add = [{ html: '<div class="ret8-pnote">' + E(canCancel ? LL('To change a product or a price, make a return or cancel the sale.', 'প্রোডাক্ট বা দাম বদলাতে ফেরত নিন বা বিক্রি বাতিল করুন।')
+                  : LL('To change a product or a price, make a return (a sale with a return or a booked parcel cannot be cancelled).', 'প্রোডাক্ট বা দাম বদলাতে ফেরত নিন (ফেরত বা বুক করা পার্সেল থাকলে বিক্রি বাতিল করা যায় না)।')) + '</div>' }];
+                var hasRet = items.some(function (it) { return it && /^Return/.test(it.label || ''); });
+                if (!hasRet && mgr && typeof openReturn === 'function') add.push({ label: 'Return…', help: LL('Goods coming back, money off the due or back', 'মাল ফেরত, বাকি কমবে বা টাকা ফেরত'), icon: 'reset', onClick: function () { openReturn(d.id); } });
+                Array.prototype.splice.apply(items, [fix + 1, 0].concat(add));
+                var hasCancel = items.some(function (it) { return it && /^Cancel sale/.test(it.label || ''); });
+                if (canCancel && !hasCancel && typeof openCancel === 'function') {
+                  items.push({ sep: true });
+                  items.push({ label: 'Cancel sale…', help: LL('Everything comes back; nothing is deleted', 'সব ফেরত আসে; কিছু মোছা হয় না'), icon: 'x', onClick: function () { try { fd19Close(); } catch (e) {} openCancel(d.id, d.customer, Number(d.paid) || 0); } });
+                }
+              }
+            } catch (e) {}
+            return popR.apply(this, arguments);
+          };
+          try { return moreR.apply(this, arguments); } finally { fdPop = popR; }
+        };
+        acts.more.__ret8 = 1;
+      } catch (e) {}
+      return r;
+    };
+  }
+  if (typeof invoicePageHtml === 'function') {
+    var invoicePageHtmlR = invoicePageHtml;
+    invoicePageHtml = function () { var h = invoicePageHtmlR.apply(this, arguments); return typeof h === 'string' ? h.split('Fix name and address').join(FIX_EN) : h; };
+  }
+
+  /* ===================================================================== words */
+  try {
+    var W = {
+      'Fix name, phone, address': 'নাম, ফোন, ঠিকানা ঠিক করুন', 'Return…': 'ফেরত…', 'Cancel sale…': 'বিক্রি বাতিল…',
+      'Returned': 'ফেরত', 'Paid': 'পেমেন্ট', 'Editor': 'এডিটর', 'Ready, not invoiced': 'তৈরি, ইনভয়েস হয়নি',
+      'Place': 'রাখুন', 'Clear marks': 'বাছাই মুছুন', 'Record the return': 'ফেরত লিখুন', 'Yes, record the return': 'হ্যাঁ, ফেরত লিখুন', 'Back': 'পিছনে',
+      'Check before it is recorded': 'লেখার আগে মিলিয়ে নিন', 'Still owed after this': 'এর পরে বাকি', 'Coming back': 'ফেরত আসছে',
+      'Out of stock now - the invoice will need stock': 'এখন স্টকে নেই - ইনভয়েসের সময় স্টক লাগবে', 'Duplicate': 'কপি করুন'
+    };
+    for (var k in W) if (!I18N_BN[k]) I18N_BN[k] = W[k];
+    I18N_BN['Fix name, phone, address'] = W['Fix name, phone, address'];
+    if (typeof I18N_PAT !== 'undefined' && I18N_PAT.push) {
+      I18N_PAT.push(['^returned (৳[0-9,.]+)$', 'ফেরত $1']);
+      I18N_PAT.push(['^(\\d+) turned into invoices$', '$1টি ইনভয়েস হয়েছে']);
+    }
+  } catch (e) {}
+})();
+</script>
+<!-- crit8:nav -->
+<!-- crit8-nav (10 Nov 2026): menus that fit the screen, Tab kept inside every drawer, the drawer kept under Statement/Return, one payment-method order, plain labels (crit-8 run) -->
+<style>
+/* ---- 1. menus: placed by navFit (above when there is no room below), scroll inside when neither side fits */
+.fdpop.nav-fit, .nt-ab-menu.nav-fit, .desk-menu.nav-fit, .nvg-menu.nav-fit, #o_apps_dd.nav-fit { overscroll-behavior:contain; }
+.fdpop.nav-up { animation-name:nav-pop-up; }
+@keyframes nav-pop-up { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+@media (prefers-reduced-motion:reduce) { .fdpop.nav-fit, .fdpop.nav-up { animation:none; } }
+/* the row ⋯ stays in reach when a wide list scrolls sideways (1280 px: the Sales list is 117 px wider than its card) */
+@media (min-width:761px) {
+  :root[data-skin="fd"] #view .fd19-scroll > table.fd19-t { overflow:visible; }   /* the scroll box is .fd19-scroll; a clipping table would hold the sticky cell */
+  :root[data-skin="fd"] #view table.fd19-t td.o_acts, :root[data-skin="fd"] #view table.fd19-t td:has(> .acts [data-fd19kebab], > [data-fd19kebab]) { position:sticky; right:0; z-index:1; background:var(--fd-card); }
+  :root[data-skin="fd"] #view table.fd19-t tbody tr:hover > td.o_acts { background:var(--fd-surface-2); }
+  :root[data-skin="fd"] #view table.fd19-t tbody tr.sel > td.o_acts { background:var(--fd-card); box-shadow:inset 0 0 0 999px var(--fd-accent-soft); }
+  :root[data-skin="fd"] #view table.fd19-t thead th:last-child { right:0; z-index:2; }
+}
+/* the account menu on a short desktop window: scrolls inside instead of running off the bottom */
+@media (min-width:761px) { :root[data-skin="fd"] #o_usermenu.open { max-height:calc(100vh - 88px); overflow-y:auto; overscroll-behavior:contain; } }
+
+/* ---- 5. phone: the invoice number never breaks; the Statement period buttons are a full tap */
+#invdone h2 .nav-no { white-space:nowrap; }
+@media (max-width:420px) { #invdone h2 { font-size:19px; line-height:1.3; } }
+html body #stmtbox button.chip[data-stdays], html body #stmtbox .trust-head > button.chip[data-stdays] { min-height:40px; }
+@media (max-width:640px) { html body #stmtbox .trust-head > button.chip[data-stdays], html body #stmtbox button.chip[data-stdays] { min-height:44px; padding-left:14px; padding-right:14px; } }
+
+/* ---- 6. one Clear on New invoice: the restored-invoice line keeps its words, Clear lives in the invoice */
+#tillRestored [data-tillclear] { display:none !important; }
+/* the stock entry search: a product with none in stock is plain information there, not a warning */
+#rv_results .pill.nav-zero { background:var(--fd-surface-2, #f1f2f5); color:var(--fd-text-2, #4b5068); border:1px solid var(--fd-border, #e4e7ec); }
+/* the review: one table (the preview's line totals moved into the lines table) */
+.pe-prev.nav-one > h3, .pe-prev.nav-one > .scroll { display:none !important; }
+.pe-prev.nav-one > .sub { margin-top:8px !important; }
+#view tr.nav-rvtot td { font-weight:700; border-top:1px solid var(--fd-border, #e4e7ec); }
+@media (max-width:640px) { #view table.m-cards tr.nav-rvtot td:empty { display:none; } }
+/* Bangla in the drawers: a reading line height (the pills were 1.0, the sale line 1.15) */
+html[lang="bn"] :is(.fd19-dr, .fd20-dr, .fd21-drw, .fd22-drw) :is(p, li, td, th, small, label, .fd19-cs, .fd19-note, .fd19-badge, .fd20-b, .sell-sl, .sb2, .tt, .t2, .s) { line-height:1.5; }
+html[lang="bn"] :is(.fd19-dr, .fd20-dr, .fd21-drw, .fd22-drw) :is(.fd19-badge, .fd20-b) { padding-top:2px; padding-bottom:2px; }
+html[lang="bn"] body .fd19-dr .fd19-df .fd19-btn.sell-lbtn > .sell-sl { line-height:1.5; }
+</style>
+<script>
+(function () {
+  var bn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var LL = function (en, b) { return bn() ? b : en; };
+  var phoneW = function () { return !!(window.matchMedia && window.matchMedia('(max-width:760px)').matches); };
+  var shown = function (e) {
+    if (!e || !e.isConnected) return false;
+    var cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    var r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0;
+  };
+  var I18 = function (k, v) { try { if (typeof I18N_BN !== 'undefined' && !I18N_BN[k]) I18N_BN[k] = v; } catch (e) {} };
+
+  /* ================================================================ 1. every popup menu fits the window */
+  // below the anchor when it fits, else above, else on the roomier side with a scroll inside; never past an edge
+  function containerOf(m) {
+    // a transformed / filtered ancestor is the containing block of a fixed element: measure from it
+    for (var p = m.parentElement; p && p !== document.body && p !== document.documentElement; p = p.parentElement) {
+      var cs = getComputedStyle(p);
+      if (cs.transform !== 'none' || cs.filter !== 'none' || cs.perspective !== 'none' || /paint|layout|strict|content/.test(cs.contain || '') || /transform|filter/.test(cs.willChange || '')) return p;
+    }
+    return null;
+  }
+  function anchorOf(m) {
+    if (m.__navA && m.__navA.isConnected) return m.__navA;
+    if (m.classList.contains('nt-ab-menu')) return document.querySelector('[data-ab-more="' + m.id + '"]');
+    if (m.classList.contains('desk-menu')) return m.parentNode && m.parentNode.querySelector('[data-deskmore]');
+    if (m.id === 'o_apps_dd') return document.getElementById('o_home');
+    return null;
+  }
+  function navFit(m, a, end) {
+    if (!m || !m.isConnected || !a || !a.isConnected || !shown(m)) return;
+    if (phoneW() && m.classList.contains('fdpop')) return;           // a bottom sheet on a phone (its own CSS)
+    var M = 8, G = 6, vv = window.visualViewport;
+    var W = document.documentElement.clientWidth || innerWidth, H = vv ? Math.min(vv.height, innerHeight) : innerHeight;
+    var st = m.style;
+    m.classList.add('nav-fit');
+    st.position = 'fixed'; st.right = 'auto'; st.bottom = 'auto'; st.margin = '0';
+    st.maxHeight = 'none'; st.maxWidth = '';
+    var r = a.getBoundingClientRect();
+    var w = m.offsetWidth, h = m.offsetHeight;
+    if (w > W - 2 * M) { st.maxWidth = (W - 2 * M) + 'px'; w = m.offsetWidth; h = m.offsetHeight; }
+    var below = H - r.bottom - G - M, above = r.top - G - M, top, maxH = 0, up = false;
+    if (h <= below) top = r.bottom + G;
+    else if (h <= above) { top = r.top - G - h; up = true; }
+    else if (below >= above) { top = r.bottom + G; maxH = below; }
+    else { maxH = above; top = r.top - G - above; up = true; }
+    if (maxH && maxH < 140) { top = M; maxH = H - 2 * M; up = false; }   // the anchor sits in a tiny window: use it all
+    var left = end ? r.right - w : r.left;
+    left = Math.max(M, Math.min(left, W - w - M));
+    var c = containerOf(m), dx = 0, dy = 0;
+    if (c) { var cr = c.getBoundingClientRect(); dx = cr.left + c.clientLeft; dy = cr.top + c.clientTop; }
+    st.left = Math.round(left - dx) + 'px'; st.top = Math.round(top - dy) + 'px';
+    st.maxHeight = (maxH ? maxH : H - 2 * M) + 'px'; st.overflowY = 'auto';
+    m.classList.toggle('nav-up', up);
+    m.__navFit = { w: m.offsetWidth, h: m.offsetHeight };
+  }
+  window.navFit = navFit;
+  var RO = typeof ResizeObserver === 'function' ? new ResizeObserver(function (list) {
+    list.forEach(function (en) { var m = en.target; if (!m.isConnected || !shown(m)) return; var f = m.__navFit; if (f && Math.abs(f.w - m.offsetWidth) < 1 && Math.abs(f.h - m.offsetHeight) < 1) return; navFit(m, anchorOf(m), m.__navEnd); });
+  }) : null;
+  function watch(m, a, end) {
+    if (!m) return;
+    m.__navA = a; m.__navEnd = !!end;
+    navFit(m, a, end);
+    if (RO && !m.__navRO) { m.__navRO = 1; try { RO.observe(m); } catch (e) {} }
+    // fdQuickAdd and others change the items right after opening: once more on the next frame
+    requestAnimationFrame(function () { navFit(m, a, end); });
+  }
+  if (typeof fdPop === 'function') {
+    var fdPopNav = fdPop;
+    fdPop = function (anchor, items, opts) {
+      var p = fdPopNav.apply(this, arguments);
+      try { watch(p, anchor, !!(opts && opts.end)); } catch (e) {}
+      return p;
+    };
+  }
+  if (typeof nvMenu === 'function') {
+    var nvMenuNav = nvMenu;
+    nvMenu = function (anchor) {
+      var r = nvMenuNav.apply(this, arguments);
+      try { if (typeof NV_MENU !== 'undefined' && NV_MENU) watch(NV_MENU, anchor, false); } catch (e) {}
+      return r;
+    };
+  }
+  function openMenus() {
+    return [].slice.call(document.querySelectorAll('.fdpop, .nvg-menu, .nt-ab-menu:not([hidden]), .desk-menu:not([hidden]), #o_apps_dd.open')).filter(shown);
+  }
+  // the menus that open by a click on their button (actionBar More, Customers More, Apps): fitted right after
+  function fitClicked() {
+    [].forEach.call(document.querySelectorAll('.nt-ab-menu:not([hidden]), .desk-menu:not([hidden]), #o_apps_dd.open'), function (m) {
+      if (!shown(m)) return;
+      var a = anchorOf(m); if (!a) return;
+      var end = m.classList.contains('desk-menu') ? !phoneW() : m.classList.contains('nt-ab-menu');
+      watch(m, a, end);
+    });
+  }
+  document.addEventListener('click', function () { setTimeout(fitClicked, 0); }, true);
+  document.addEventListener('keyup', function (e) { if (e.key === 'Enter' || e.key === ' ') setTimeout(fitClicked, 0); }, true);
+  var SCROLL_T = 0;
+  function refitAll() {
+    SCROLL_T = 0;
+    openMenus().forEach(function (m) {
+      var a = anchorOf(m); if (!a) return;
+      var r = a.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > innerHeight || !shown(a)) { closeMenu(m, false); return; }   // its button scrolled away
+      navFit(m, a, m.__navEnd);
+    });
+  }
+  window.addEventListener('scroll', function (e) {
+    var t = e.target; if (t && t.nodeType === 1 && t.closest && t.closest('.fdpop, .nvg-menu, .nt-ab-menu, .desk-menu, #o_apps_dd')) return;
+    if (!SCROLL_T) SCROLL_T = requestAnimationFrame(refitAll);
+  }, true);
+  window.addEventListener('resize', function () { if (!SCROLL_T) SCROLL_T = requestAnimationFrame(refitAll); });
+
+  function closeMenu(m, focusBack) {
+    var a = anchorOf(m);
+    if (m.classList.contains('fdpop')) { if (typeof fdPopClose === 'function') fdPopClose(); }
+    else if (m.classList.contains('nvg-menu')) { if (typeof nvMenuClose === 'function') nvMenuClose(); }
+    else if (m.classList.contains('nt-ab-menu')) { if (typeof abCloseAll === 'function') abCloseAll(); else m.hidden = true; }
+    else if (m.classList.contains('desk-menu')) { m.hidden = true; if (a) a.setAttribute('aria-expanded', 'false'); }
+    else if (m.id === 'o_apps_dd') { if (typeof appsMenuToggle === 'function') appsMenuToggle(false); }
+    if (focusBack && a && a.isConnected && shown(a)) { try { a.focus({ preventScroll: true }); } catch (e) {} }
+  }
+  function menuItems(m) { return [].filter.call(m.querySelectorAll('button:not([disabled]), a[href], [role=menuitem]:not([disabled]), [role=menuitemradio]:not([disabled])'), shown); }
+  // one Esc closes only the open menu and gives the focus back to its button; arrows walk the items; Tab leaves the menu
+  window.addEventListener('keydown', function (e) {
+    var ms = openMenus(); if (!ms.length) return;
+    var a = document.activeElement, m = ms.filter(function (x) { return x.contains(a); })[0] || null;
+    if (e.key === 'Escape') {
+      var top = m || ms[ms.length - 1];
+      if (top.classList.contains('desk-menu')) return;              // its own Esc gives the focus back already
+      e.preventDefault(); e.stopImmediatePropagation(); closeMenu(top, true); return;
+    }
+    if (!m) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Home' || e.key === 'End') {
+      if (m.classList.contains('desk-menu')) return;
+      var it = menuItems(m); if (!it.length) return;
+      var i = it.indexOf(a);
+      i = e.key === 'Home' ? 0 : e.key === 'End' ? it.length - 1 : e.key === 'ArrowDown' ? (i + 1) % it.length : (i - 1 + it.length) % it.length;
+      e.preventDefault(); it[i].focus(); return;
+    }
+    if (e.key === 'Tab') closeMenu(m, true);   // the Tab goes on from the menu's button (the drawer trap below keeps it inside)
+  }, true);
+
+  /* ================================================================ 3. every drawer keeps the keyboard inside */
+  var DRAWER = '.fd19-dr, .fd20-dr, .fd21-drw, .fd22-drw, aside[role="dialog"][aria-modal="true"]';
+  var BOX = '#stmtbox, #cancelbox, #fixbox, #retbox, #retdone, #pcdone, #invdone, #fcon-imp, #nbz, #parcelbox > div, body > .gate, body > .dlg-back';
+  var CLOSER = '[data-fd19close]:not(.fd19-ov), [data-fd20x], [data-f21close]:not(.fd21-ov), [data-f21ivclose]:not(.fd21-ov), [data-fd22x], .trust-x, button[aria-label="Close"]';
+  function zOf(e) { var z = parseInt(getComputedStyle(e).zIndex, 10); return isNaN(z) ? 0 : z; }
+  function drawers() { return [].filter.call(document.querySelectorAll(DRAWER), function (d) { return shown(d) && getComputedStyle(d).position === 'fixed' && !d.closest('.fdpop'); }); }
+  function topDrawer() {
+    var a = drawers(); if (!a.length) return null;
+    a.sort(function (x, y) { var d = zOf(x) - zOf(y); if (d) return d; return (x.compareDocumentPosition(y) & 4) ? -1 : 1; });
+    return a[a.length - 1];
+  }
+  function boxOpen() { return [].some.call(document.querySelectorAll(BOX), function (b) { return shown(b) && getComputedStyle(b).position === 'fixed'; }); }
+  function focusables(d) {
+    return [].filter.call(d.querySelectorAll('button, a[href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])'), function (f) {
+      return !f.disabled && f.type !== 'hidden' && shown(f) && !f.closest('[hidden], [inert]');
+    });
+  }
+  function dirty(d) {
+    return [].some.call(d.querySelectorAll('input, textarea, select'), function (f) {
+      if (f.disabled || f.type === 'hidden' || f.type === 'search' || f.readOnly) return false;
+      if (f.tagName === 'SELECT') { var o = [].filter.call(f.options, function (x) { return x.defaultSelected; }); return f.selectedIndex !== (o.length ? o[0].index : 0); }
+      if (f.type === 'checkbox' || f.type === 'radio') return f.checked !== f.defaultChecked;
+      if (f.type === 'file') return !!f.value;
+      return String(f.value) !== String(f.defaultValue);
+    });
+  }
+  var ASK = false;
+  async function closeDrawer(d) {
+    if (!d || ASK) return;
+    var x = [].filter.call(d.querySelectorAll(CLOSER), shown)[0]; if (!x) return false;
+    if (dirty(d)) {
+      ASK = true; var yes = false;
+      try { yes = typeof uiConfirm === 'function' ? await uiConfirm(LL('Close without saving?\nWhat you typed here is not kept.', 'সেভ না করে বন্ধ করবেন?\nএখানে যা লিখেছেন তা থাকবে না।')) : true; } catch (e) { yes = false; }
+      ASK = false; if (!yes) return true;
+    }
+    x.click(); return true;
+  }
+  window.addEventListener('keydown', function (e) {
+    if (e.defaultPrevented || (e.key !== 'Tab' && e.key !== 'Escape')) return;
+    if (boxOpen()) return;                                   // a box over the drawer owns the keys (its own layer)
+    var d = topDrawer(); if (!d) return;
+    var cur = document.activeElement;
+    if (e.key === 'Escape') {
+      if (cur && d.contains(cur) && cur.getAttribute && cur.getAttribute('aria-expanded') === 'true') return;   // an open list inside closes first
+      if (ASK) return;
+      var has = [].some.call(d.querySelectorAll(CLOSER), shown); if (!has) return;
+      e.preventDefault(); e.stopImmediatePropagation(); closeDrawer(d); return;
+    }
+    var f = focusables(d);
+    if (!f.length) { e.preventDefault(); try { d.focus(); } catch (x) {} return; }
+    var first = f[0], last = f[f.length - 1];
+    if (!d.contains(cur) || cur === d) { e.preventDefault(); (e.shiftKey ? last : first).focus(); return; }
+    if (e.shiftKey && cur === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && cur === last) { e.preventDefault(); first.focus(); }
+  }, true);
+  // a stray click on the dark background never throws away what was typed in a drawer's form
+  ['pointerdown', 'mousedown', 'click'].forEach(function (ev) {
+    window.addEventListener(ev, function (e) {
+      var t = e.target; if (!t || !t.classList || !/(^| )(fd20-ov|fd21-ov|fd22-dback|fd19-ov)( |$)/.test(t.className)) return;
+      var d = topDrawer(); if (!d || !dirty(d)) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (ev === 'click') { d.classList.remove('trust-nudge'); void d.offsetWidth; d.classList.add('trust-nudge'); }
+    }, true);
+  });
+  // the focus comes back to what opened the drawer (fd19 / fd20 do it themselves; fd21 and fd22 did not)
+  var LAST_OUT = null, OPEN = [];
+  document.addEventListener('focusin', function (e) {
+    var t = e.target; if (!t || t === document.body || !t.closest) return;
+    if (!t.closest(DRAWER) && !t.closest('.fdpop, .nt-ab-menu, .dlg-back, #stmtbox, #retbox, #retdone')) LAST_OUT = t;
+  }, true);
+  function sweepDrawers() {
+    var now = drawers();
+    now.forEach(function (d) {
+      if (OPEN.some(function (o) { return o.el === d; })) return;
+      OPEN.push({ el: d, from: LAST_OUT, cls: (d.className.split(' ')[0] || '') });
+      // nothing inside had the focus yet: the first control gets it, so the keyboard starts in the drawer
+      setTimeout(function () { var a = document.activeElement; if (shown(d) && (!a || a === document.body || !d.contains(a)) && !boxOpen() && topDrawer() === d) { var f = focusables(d)[0]; try { (f || d).focus({ preventScroll: true }); } catch (x) {} } }, 60);
+    });
+    OPEN = OPEN.filter(function (o) {
+      if (now.indexOf(o.el) >= 0) return true;
+      setTimeout(function () {
+        if (drawers().some(function (d) { return (d.className.split(' ')[0] || '') === o.cls; })) return;   // the same drawer drawn again
+        var a = document.activeElement;
+        if (a && a !== document.body && a.isConnected && shown(a)) return;    // it went somewhere already
+        if (o.from && o.from.isConnected && shown(o.from)) { try { o.from.focus({ preventScroll: true }); } catch (x) {} }
+      }, 40);
+      return false;
+    });
+  }
+  var SWT = 0;
+  function sweepSoon() { if (!SWT) SWT = setTimeout(function () { SWT = 0; sweepDrawers(); }, 30); }
+  try { new MutationObserver(sweepSoon).observe(document.body, { childList: true }); } catch (e) {}
+  try { new MutationObserver(function (list) { if (list.some(function (x) { return x.target && x.target.classList && x.target.classList.contains('fd21-ivd'); })) sweepSoon(); }).observe(document.body, { attributes: true, attributeFilter: ['hidden'], subtree: true }); } catch (e) {}
+
+  /* ================================================================ 4. Statement and Return open over the drawer (desktop) */
+  var KEEP = false, KEPT = null, WROTE = false;
+  if (typeof fd19Close === 'function') {
+    var fd19CloseNav = fd19Close;
+    fd19Close = function () { if (KEEP) return; KEPT = null; return fd19CloseNav.apply(this, arguments); };
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-fd19a]');
+    if (!b || phoneW() || typeof FD19 === 'undefined' || !FD19.dr || !FD19.dr.el.contains(b)) return;
+    var a = b.getAttribute('data-fd19a'); if (a !== 'ret' && a !== 'stmt') return;
+    KEEP = true; WROTE = false;
+    KEPT = { el: FD19.dr.el, no: a === 'ret' ? (FD19.dr.el.getAttribute('aria-label') || '') : '', btn: b };
+    setTimeout(function () { KEEP = false; }, 0);
+  }, true);
+  if (typeof pagesAfterWrite === 'function') {
+    var afterNav = pagesAfterWrite;
+    pagesAfterWrite = function () { if (KEPT) WROTE = true; return afterNav.apply(this, arguments); };
+  }
+  function boxGone() {
+    if (!KEPT) return;
+    if (document.querySelector('#stmtbox, #retbox, #retdone, body > .dlg-back')) return;
+    var k = KEPT; KEPT = null;
+    if (typeof FD19 === 'undefined' || !FD19.dr || FD19.dr.el !== k.el) return;
+    // a return changed the invoice: the drawer shows it again (same place, same focus chain)
+    if (WROTE && k.no && /^[A-Z]{2,6}-[\w-]+$/.test(k.no) && typeof fd19Inv === 'function') { WROTE = false; try { fd19Inv(k.no); } catch (x) {} return; }
+    setTimeout(function () { var a = document.activeElement; if ((!a || a === document.body || !a.isConnected) && k.btn && k.btn.isConnected) { try { k.btn.focus({ preventScroll: true }); } catch (x) {} } }, 50);
+  }
+  try { new MutationObserver(function () { if (KEPT) setTimeout(boxGone, 0); }).observe(document.body, { childList: true }); } catch (e) {}
+
+  /* ================================================================ 5. New invoice: Phone finds the customer; the number never breaks */
+  // the phone comes first on purpose: one customer per phone, the lookup fills the name and address (sale-1, 2026-10-05)
+  function phoneLabel() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'invoice') return;
+    var lb = document.querySelector('#view label.f[for="cphone"]'); if (!lb) return;
+    var want = LL('Phone (finds the customer)', 'ফোন (কাস্টমার খুঁজে দেয়)');
+    var tn = [].filter.call(lb.childNodes, function (n) { return n.nodeType === 3 && n.nodeValue.trim(); })[0];
+    if (tn && tn.nodeValue.trim() !== want) tn.nodeValue = want + ' ';
+    else if (!tn) lb.insertBefore(document.createTextNode(want + ' '), lb.firstChild);
+  }
+  function invNo() {
+    var h = document.querySelector('#invdone h2'); if (!h || h.querySelector('.nav-no')) return;
+    var w = document.createTreeWalker(h, NodeFilter.SHOW_TEXT), n;
+    while ((n = w.nextNode())) {
+      var m = /[A-Z]{2,6}-\d{6,8}-\d+|[A-Z]{2,6}-\w+-[\w-]+/.exec(n.nodeValue); if (!m) continue;
+      var at = n.splitText(m.index); at.splitText(m[0].length);
+      var sp = document.createElement('span'); sp.className = 'nav-no'; sp.setAttribute('data-noi18n', '1'); sp.textContent = at.nodeValue;
+      at.parentNode.replaceChild(sp, at); break;
+    }
+  }
+
+  /* ================================================================ 6. one payment-method order everywhere */
+  // Cash, bKash, Nagad, then the rest A-Z, cash on delivery / courier last (the business's own list, only reordered)
+  function mRank(m) {
+    var s = String(m || '').trim().toLowerCase();
+    if (s === 'cash') return 0; if (s === 'bkash') return 1; if (s === 'nagad') return 2;
+    if (/^cod\b|cash on delivery|courier|steadfast|pathao|redx|paperfly/.test(s)) return 4;
+    return 3;
+  }
+  function navMethodOrder(list) {
+    return (list || []).slice().sort(function (a, b) { var d = mRank(a) - mRank(b); return d || String(a).toLowerCase().localeCompare(String(b).toLowerCase()); });
+  }
+  window.navMethodOrder = navMethodOrder;
+  function sortOpt() {
+    try {
+      if (typeof OPT === 'undefined' || !OPT || !Array.isArray(OPT.paymentMethods) || OPT.__navM === OPT.paymentMethods) return;
+      var s = navMethodOrder(OPT.paymentMethods);
+      OPT.paymentMethods.length = 0; s.forEach(function (m) { OPT.paymentMethods.push(m); });
+      OPT.__navM = OPT.paymentMethods;
+    } catch (e) {}
+  }
+  if (typeof repaint === 'function') {
+    var repaintNav = repaint;
+    repaint = function () { sortOpt(); return repaintNav.apply(this, arguments); };
+  }
+  document.addEventListener('click', sortOpt, true);
+  document.addEventListener('focusin', sortOpt, true);
+  if (typeof srv === 'function') {
+    var srvNav = srv;
+    srv = function (name, args, ok, bad) {
+      if (name === 'erpFormOptions' || name === 'erpBundle') { var ok2 = ok; ok = function () { var r = ok2 ? ok2.apply(this, arguments) : undefined; sortOpt(); return r; }; }
+      return srvNav.call(this, name, args, ok, bad);
+    };
+  }
+
+  // the part paid at the moment of sale was noted "advance" (it is not the customer's advance): "paid at sale"
+  var ADV = /^(advance|অগ্রিম)(\s*\(part (\d+) of (\d+)\))?$/i;
+  function paidAtSale() {
+    [].forEach.call(document.querySelectorAll('.fd19-dr table, #view table'), function (t) {
+      var ths = [].slice.call(t.querySelectorAll('thead th')), ci = -1;
+      ths.forEach(function (th, i) { if (/^(note|নোট)$/i.test(th.textContent.trim())) ci = i; });
+      if (ci < 0) return;
+      [].forEach.call(t.querySelectorAll('tbody tr'), function (tr) {
+        var td = tr.children[ci]; if (!td || td.getAttribute('data-navpas')) return;
+        var m = ADV.exec(td.textContent.trim()); if (!m) return;
+        td.setAttribute('data-navpas', '1'); td.setAttribute('data-noi18n', '1');
+        td.textContent = LL('paid at sale', 'বিক্রির সময় পেমেন্ট') + (m[3] ? LL(' (part ' + m[3] + ' of ' + m[4] + ')', ' (' + m[4] + '-এর ' + m[3] + ' ভাগ)') : '');
+      });
+    });
+  }
+
+  // a question's yes button names the action ("Clear", "Save"), not "Confirm"
+  var VERB = { Clear: 1, Save: 1, Send: 1, Remove: 1, Delete: 1, Restore: 1, Reset: 1, Approve: 1, Undo: 1, Close: 1, Place: 1, Archive: 1, Discard: 1 };
+  var VERB_BN = { Archive: 'আর্কাইভ করুন', Discard: 'বাদ দিন', Place: 'বসান', Remove: 'সরান' };
+  var QUEUE = [];
+  if (typeof uiDialog === 'function') {
+    var uiDialogNav = uiDialog;
+    uiDialog = function (kind, text) {
+      var title = String(text == null ? '' : text).split('\n')[0].trim(), v = /^([A-Z][a-z]+)\b/.exec(title);
+      QUEUE.push(kind === 'confirm' && v && VERB[v[1]] && /\?$/.test(title) ? v[1] : '');
+      return uiDialogNav.apply(this, arguments);
+    };
+  }
+  function dlgVerb(back) {
+    if (back.__navV || !back.querySelector('#dlg_yes')) return; back.__navV = 1;
+    var v = QUEUE.length ? QUEUE.shift() : ''; if (!v) return;
+    var yes = back.querySelector('#dlg_yes'); if (!/^(confirm|yes, do it|কনফার্ম|কনফার্ম করুন|হ্যাঁ, করুন)$/i.test(yes.textContent.trim())) return;
+    var b = (typeof I18N_BN !== 'undefined' && I18N_BN[v]) || VERB_BN[v] || v;
+    yes.textContent = bn() ? b : v; yes.setAttribute('data-noi18n', '1');
+  }
+
+  // the stock entry: "0 in stock" in plain words; the review shows one table
+  function rvZero() {
+    var box = document.getElementById('rv_results'); if (!box) return;
+    [].forEach.call(box.querySelectorAll('.r[data-rvpick] .pill.out:not(.nav-zero)'), function (p) {
+      p.classList.remove('out'); p.classList.add('nav-zero'); p.setAttribute('data-noi18n', '1'); p.textContent = LL('0 in stock', 'স্টকে ০টি');
+      var sku = p.closest('.r').querySelector('.sku');   // the same words were on the line below the name
+      if (sku) [].forEach.call(sku.childNodes, function (n) { if (n.nodeType === 3) n.nodeValue = n.nodeValue.replace(/\s*·\s*0 in stock\s*$/, '').replace(/\s*·\s*স্টকে ০টি\s*$/, ''); });
+    });
+  }
+  function rvOne() {
+    var pv = document.querySelector('#rv_costsum .pe-prev'); if (!pv) return;
+    var tb = pv.querySelector('table'), q0 = document.querySelector('#view table [data-rvqty]');
+    var lines = q0 && q0.closest('table');
+    if (!tb || !lines || lines === tb) return;
+    var heads = tb.querySelectorAll('thead th');
+    if (heads.length !== 4) { pv.classList.remove('nav-one'); return; }   // shipping or typed prices: the preview says more, keep it
+    var key = tb.textContent;
+    if (lines.__navKey === key && lines.querySelector('[data-navlt]')) { pv.classList.add('nav-one'); return; }
+    var bySku = {}, tot = null;
+    [].forEach.call(tb.querySelectorAll('tbody tr'), function (tr) {
+      var c = tr.children; if (c.length < 4) return;
+      if (tr.classList.contains('pe-total')) { tot = { qty: c[1].textContent.trim(), total: c[3].textContent.trim() }; return; }
+      var s = tr.querySelector('.sku'); bySku[s ? s.textContent.trim() : c[0].textContent.trim()] = c[3].textContent.trim();
+    });
+    var hr = lines.querySelector('thead tr'); if (!hr) return;
+    if (!hr.querySelector('[data-navlt]')) { var th = document.createElement('th'); th.className = 'num'; th.setAttribute('data-navlt', '1'); th.setAttribute('data-noi18n', '1'); th.textContent = LL('Line total', 'লাইনের মোট'); hr.insertBefore(th, hr.lastElementChild); }
+    var miss = 0;
+    [].forEach.call(lines.querySelectorAll('tbody tr:not(.nav-rvtot)'), function (tr) {
+      var s = tr.querySelector('.sku'), v = s ? bySku[s.textContent.trim()] : undefined;
+      var td = tr.querySelector('[data-navlt]');
+      if (!td) { td = document.createElement('td'); td.className = 'num'; td.setAttribute('data-navlt', '1'); td.setAttribute('data-noi18n', '1'); td.setAttribute('data-label', LL('Line total', 'লাইনের মোট')); tr.insertBefore(td, tr.lastElementChild); }
+      if (v === undefined) { miss++; td.textContent = '—'; } else td.textContent = v;
+    });
+    var old = lines.querySelector('tr.nav-rvtot'); if (old) old.remove();
+    if (tot && !miss) {
+      var n = hr.children.length, row = document.createElement('tr'); row.className = 'nav-rvtot'; row.setAttribute('data-noi18n', '1');
+      for (var i = 0; i < n; i++) { var c = document.createElement('td'); if (i > 0) c.className = 'num'; row.appendChild(c); }
+      var lt = [].indexOf.call(hr.children, hr.querySelector('[data-navlt]'));
+      var qtd = q0.closest('td'), qi = qtd ? [].indexOf.call(qtd.parentNode.children, qtd) : -1;
+      row.children[0].textContent = LL('Total', 'মোট');
+      if (qi > 0 && qi < n) { row.children[qi].textContent = tot.qty; row.children[qi].setAttribute('data-label', hr.children[qi].textContent.trim()); }
+      if (lt > 0) { row.children[lt].textContent = tot.total; row.children[lt].setAttribute('data-label', LL('Line total', 'লাইনের মোট')); }
+      lines.querySelector('tbody').appendChild(row);
+    }
+    lines.__navKey = key;
+    pv.classList.toggle('nav-one', !miss);
+  }
+
+  // "?" help: at most one per label, and none that only repeats the label
+  function norm(s) { return String(s || '').toLowerCase().replace(/[^\wঀ-৿]+/g, ' ').trim(); }
+  function helpTidy() {
+    [].forEach.call(document.querySelectorAll('#view label.f, .fd19-dr label.f, .fd20-dr label.f, .fd21-drw label.f'), function (lb) {
+      var hs = [].slice.call(lb.querySelectorAll('.fhelp, .t2q'));
+      if (!hs.length) return;
+      hs.slice(1).forEach(function (h) { h.remove(); });
+      var h = hs[0], hint = norm(h.getAttribute('data-hint') || h.getAttribute('aria-label') || h.title || '');
+      var txt = norm([].filter.call(lb.childNodes, function (n) { return n.nodeType === 3; }).map(function (n) { return n.nodeValue; }).join(' '));
+      if (hint && txt && (hint === txt || txt.indexOf(hint) >= 0)) h.remove();
+    });
+  }
+
+  /* ---- one quiet pass after the page or a box changes */
+  var TIDY_T = 0;
+  function tidy() {
+    TIDY_T = 0;
+    try { phoneLabel(); } catch (e) {}
+    try { invNo(); } catch (e) {}
+    try { paidAtSale(); } catch (e) {}
+    try { rvZero(); } catch (e) {}
+    try { if (typeof VIEW !== 'undefined' && VIEW === 'stock') rvOne(); } catch (e) {}
+    try { helpTidy(); } catch (e) {}
+    try { [].forEach.call(document.querySelectorAll('body > .dlg-back'), dlgVerb); } catch (e) {}
+  }
+  function soon() { if (!TIDY_T) TIDY_T = setTimeout(tidy, 60); }
+  try { new MutationObserver(function (list) {
+    for (var i = 0; i < list.length; i++) {
+      var t = list[i].target;
+      if (t && t.nodeType === 1 && t.closest && t.closest('.fdpop, .nt-ab-menu, .fhelp-pop')) continue;
+      soon(); return;
+    }
+  }).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
+  // a new question is labelled before it paints (no "Confirm" flash)
+  try { new MutationObserver(function (list) { list.forEach(function (x) { [].forEach.call(x.addedNodes || [], function (n) { if (n.nodeType === 1 && n.classList.contains('dlg-back')) dlgVerb(n); }); }); }).observe(document.body, { childList: true }); } catch (e) {}
+  if (typeof AFTER_PAINT !== 'undefined' && AFTER_PAINT.push) AFTER_PAINT.push(function () { sortOpt(); soon(); });
+
+  I18('Phone (finds the customer)', 'ফোন (কাস্টমার খুঁজে দেয়)');
+  I18('paid at sale', 'বিক্রির সময় পেমেন্ট');
+  I18('0 in stock', 'স্টকে ০টি');
+  I18('Line total', 'লাইনের মোট');
+  I18('Close without saving?', 'সেভ না করে বন্ধ করবেন?');
+  I18('What you typed here is not kept.', 'এখানে যা লিখেছেন তা থাকবে না।');
 })();
 </script>
 </body>

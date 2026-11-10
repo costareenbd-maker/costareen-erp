@@ -47,6 +47,8 @@ const MODELS = {
         key: x.id, open: { invoice: x.id },
         id: x.id, ts: x.ts, date: x.date, day: x.ts ? ymd(x.ts) : '', month: x.ts ? ymd(x.ts).slice(0, 7) : '',
         customer: x.customer || 'Walk-in', phone: x.phone, units: x.units, total: x.total, due: x.due, net: x.net,
+        // crit8-ret: Paid = money received (returns apart), so Total = Paid + Returned + Due, as the invoice drawer says
+        paid: x.cancelled ? null : x.paid,
         delivery: x.delivery || '—', method: x.method || '—',
         status: x.cancelled ? 'Cancelled' : x.allBack ? 'Returned' : x.due > 0.5 ? 'Due' : 'Paid',
         parcel: x.consignment || x.handled ? 'Sent' : x.canSend ? 'To send' : '',
@@ -91,6 +93,8 @@ const MODELS = {
       { key: 'customer', label: 'Customer', sub: 'phone', phone: true },
       { key: 'units', label: 'Units', type: 'num', sum: true },
       { key: 'total', label: 'Total', type: 'money', sum: true, phone: true },
+      { key: 'paid', label: 'Paid', type: 'money', sum: true },
+      { key: 'returned', label: 'Returned', type: 'money', sum: true },
       { key: 'due', label: 'Due', type: 'money', sum: true },
       { key: 'delivery', label: 'Delivery', sub: 'parcel' },
       { key: 'status', label: 'Status', type: 'badge' },

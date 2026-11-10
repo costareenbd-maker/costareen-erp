@@ -449,12 +449,14 @@ export async function erpFdHead(ctx, payload) {
     const q = (await ctx.tx`select count(*) filter (where ${inMonth('created_at', now)})::int as this_m,
                               count(*) filter (where ${prevSame('created_at')})::int as last_m,
                               coalesce(sum(total) filter (where ${inMonth('created_at', now)}), 0) as value_m,
-                              count(*) filter (where status = 'Draft')::int as drafts,
-                              count(*) filter (where status = 'Ready' and ${inMonth('created_at', now)})::int as ready_m
+                              count(*) filter (where coalesce(status, '') not in ('Ready', 'Invoiced'))::int as drafts,
+                              count(*) filter (where status = 'Ready')::int as ready,
+                              count(*) filter (where status = 'Invoiced')::int as invoiced
                             from quotations where business_id = ${ctx.biz}`)[0];
+    // crit8-ret: the same three states as the list below (Draft / Ready / Invoiced), counted the same way (all of them)
     cards.push(card('quotes', 'Quotations this month', 'receipt', q.this_m, { prev: q.last_m, hero: true }));
     if (mgr) cards.push(card('value', 'Quoted this month', 'taka', q.value_m, { money: true }));
-    cards.push(card('ready', 'Finished and sent', 'trend', q.ready_m, { note: 'this month' }));
+    cards.push(card('ready', 'Ready, not invoiced', 'trend', q.ready, { note: q.invoiced + ' turned into invoices' }));
     cards.push(card('drafts', 'Drafts', 'clock', q.drafts, { tone: q.drafts ? 'warn' : '', note: 'not finished yet' }));
   } else if (view === 'repairs') {
     const j = (await ctx.tx`select count(*) filter (where status in ('received', 'diagnosed', 'waiting'))::int as open,

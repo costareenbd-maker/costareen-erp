@@ -420,14 +420,14 @@ export async function createInvoice(ctx, payload, opts = {}) {
     let k = 0;
     for (const p of split) {
       await addPayment(ctx, { id: 'P' + stamp() + (k ? '-' + k : ''), order: invoiceNo, customer: name, amount: p.amount, method: p.method,
-        note: (took >= grand - 0.5 ? 'paid in full at the till' : 'advance') + ' (part ' + (k + 1) + ' of ' + split.length + ')' });
+        note: (took >= grand - 0.5 ? 'paid in full at the till' : 'paid at sale') + ' (part ' + (k + 1) + ' of ' + split.length + ')' });
       k++;
     }
     await syncInvoiceStatus(ctx, invoiceNo);
   } else if (took > 0) {
     await addPayment(ctx, { id: 'P' + stamp(), order: invoiceNo, customer: name,
       amount: Math.min(took, grand), method: payMethod,
-      note: took >= grand ? 'paid in full at the till' : 'advance' });
+      note: took >= grand ? 'paid in full at the till' : 'paid at sale' });
     await syncInvoiceStatus(ctx, invoiceNo);
   }
   // final-sales: the quotation this sale came from is marked "Invoiced" and keeps the invoice number

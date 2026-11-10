@@ -32,7 +32,7 @@ import { asSystem } from '../lib/system.js';
 import { lock, who } from './money.js';
 import { forget } from '../lib/tabs.js';
 import { erpSaveProduct, addToLists } from './stock.js';
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, powerOn } from '../allow.js';
 import { erpPartnership, erpPoolCreate, erpPoolJoin, erpPoolEntryAdd, erpPoolEntryRemove, erpPoolTier, erpPoolInvite, erpPoolClose } from './partners.js';
 import { erpPartnerCompany } from './security.js';
 import { platformAdmin } from './platform.js';
@@ -258,7 +258,9 @@ export async function erpJoint(ctx, payload) {
   out.stock = await shelf(ctx, pool, money);
   out.slowDays = Math.round(num(await withPool(ctx, pool, (p) => getConfig(p, 'joint_slow_days', String(SLOW_DAYS))))) || SLOW_DAYS;
   if (money) out.book = await withPool(ctx, pool, (p) => erpPartnership(p, { month: payload.month }));
-  out.sales = await jointSales(ctx, pool, out.slowDays);
+  // crit8-ret: the joint sales (values, money paid, money owed) are figures - a sales person sees the stock part only
+  // (asks, sends, receives, the shelf); manager and up, or someone given the 'costs' ability, see the sales too
+  if (roleAtLeast(ctx.s.role, 'manager') || powerOn(ctx.s, 'costs')) out.sales = await jointSales(ctx, pool, out.slowDays);
   out.me = await sellerId(ctx);
   out.requests = await requestsOf(ctx, pool, out.me);
   out.moves = await movesOf(ctx, pool);

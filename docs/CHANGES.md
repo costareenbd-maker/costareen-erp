@@ -4185,3 +4185,22 @@ Blocks `<!-- crit7:trust -->`, `<!-- crit7:calm -->` after `<!-- CRIT7-MERGE 202
   then an icon; Leads no longer lights two menu pills.
 - Checks: real-click invoice + receive desktop/phone, battery 25/25, click reach 0 stolen 44 x 2, crawl EN + BN 0 errors, full
   suite: ads 4 (old), factory (date, fails on older code too), golive (IMPORT_DIR).
+
+## crit-8 (10 Nov 2026): fixes from the eighth critique (26/40; first run on returns, edits, quotations)
+Blocks `<!-- crit8:ret -->`, `<!-- crit8:nav -->` after `<!-- CRIT8-MERGE 2026-11-10 -->`. Snapshot .impeccable/critique/2026-11-10T02-58-29Z.
+- Return dialog drawn once and updated in place (no lost tap/typing), recap before saving, done window names the return and the
+  money; Space/Enter never press a moved-focus button.
+- Sales list Paid = money received (erpSales paid; listview paid + returned columns, Excel too); Returned column; gross profit "—"
+  on rows with returns as in the drawer. retfinal_test 26.
+- Money > See each payment: picking an account marks the row; Place / Place all marked. Quotations: no Make invoice once invoiced
+  (link instead), Dhaka times, item picker with stock + price and a 0-stock warning, duplicate-line bug fixed, one New quotation;
+  top cards agree with the list (fddash). Joint stock: below manager without 'costs' only the Stock tab; server sends sales
+  figures only to manager+/costs (joint.js, joint1_test +2).
+- Saved invoice menu: "Fix name, phone, address" + "To change a product or a price, make a return or cancel the sale".
+- One popup fitter for every menu (flip/clamp/scroll, Esc, arrows); sticky row ⋯ at 1280. Read-by-arguments rule shared by page
+  and server (allow.js ERP_READ_WHEN / isReadCall in core.js): 15 list-form calls are reads (no opKey, no activity row, dashboard
+  kept); erpTool/erpBrainFact stay writes. navfinal_test 30. Every drawer traps Tab and returns focus; Statement/Return keep
+  the drawer on desktop. One payment-method order; "paid at sale" instead of "advance"; one Clear; dialogs name the action;
+  stock review one table, neutral "0 in stock"; Bangla drawer line-height 1.5; at most one "?" per label.
+- Checks: real-click invoice + receive desktop/phone, battery 25/25, click reach 0 stolen 44 x 2, crawl EN + BN 0 errors, full
+  suite 200: ads 4 (old), factory (date), golive (IMPORT_DIR).
