@@ -357,8 +357,12 @@ const TOOLS = [
     parameters: { type: 'OBJECT', properties: { name: { type: 'STRING' }, phone: { type: 'STRING' }, address: { type: 'STRING' },
       items: { type: 'ARRAY', items: { type: 'OBJECT', properties: { code: { type: 'STRING' }, qty: { type: 'NUMBER' } }, required: ['code', 'qty'] } } }, required: ['phone', 'address', 'items'] } },
   { name: 'ask_superior', description: 'When the customer wants a bigger discount than price_offer allows, a special deal, or something feels off: ask your superior (the manager) on WhatsApp. Then tell the customer in one line that you are checking with your superior right now and will let them know.',
-    parameters: { type: 'OBJECT', properties: { question: { type: 'STRING', description: 'what to decide, in a few words' }, code: { type: 'STRING' }, qty: { type: 'NUMBER' }, wanted_price: { type: 'NUMBER', description: 'the price per unit the customer asks for' } }, required: ['question'] } },
-  { name: 'ask_team', description: 'A detail you do not have (not written anywhere): tell the team the question; then tell the customer you will check and come back.', parameters: { type: 'OBJECT', properties: { question: { type: 'STRING' } }, required: ['question'] } },
+    parameters: { type: 'OBJECT', properties: { question: { type: 'STRING', description: 'what to decide, in a few words' }, code: { type: 'STRING' }, qty: { type: 'NUMBER' }, wanted_price: { type: 'NUMBER', description: 'the price per unit the customer asks for' },
+      level: { type: 'STRING', description: 'basic (a bigger discount on an ordinary order: the manager) | strategic (a dealer / wholesale deal, a very large order, a special arrangement: the MD)' } }, required: ['question'] } },
+  { name: 'ask_team', description: 'A detail or a decision you do not have (not written anywhere, not in what the manager / MD told you before): the ERP messages the right person on WhatsApp at once; then tell the customer in one line that you are checking right now and will let them know. ' +
+    'level "strategic" goes to our MD: bringing in a product we do not have or by a date ("2 soptaher moddhe printer ene dite parben?"), a pre-order or import, a new product or brand to stock, a dealer / reseller / wholesale or big bulk deal, a business proposal or partnership, a special price for many units. ' +
+    'level "basic" goes to the manager: stock or a colour, whether something fits or works with a machine, delivery, an order\'s status, a product detail.',
+    parameters: { type: 'OBJECT', properties: { question: { type: 'STRING' }, level: { type: 'STRING', description: 'basic | strategic' } }, required: ['question', 'level'] } },
   { name: 'handover', description: 'Hand the chat to a person: the customer asks for a person, complains, wants a refund, is angry, keeps abusing, insists on a discount, or the matter needs a person\'s judgement. Then tell the customer a colleague is looking into it - never promise when.',
     parameters: { type: 'OBJECT', properties: { reason: { type: 'STRING', description: 'discount | complaint | refund | person | unknown | angry | ready | abuse | other' }, note: { type: 'STRING' } }, required: ['reason'] } },
   { name: 'remember_customer', description: 'Remember the customer\'s name / phone / whether a man or a woman, when they tell it.', parameters: { type: 'OBJECT', properties: { name: { type: 'STRING' }, phone: { type: 'STRING' }, gender: { type: 'STRING', description: 'm or f' } } } },
@@ -854,6 +858,8 @@ export async function agentReply(ctx, conv, opts) {
   // learn-1: how our own team talks, learned from the Inbox's real chats (Agent Desk > Learn from our team)
   let learnedB = '';
   if (!test || opts.learned !== false) { try { learnedB = await (await import('./teamlearn.js')).learnedBlock(ctx); } catch (_) { learnedB = ''; } }
+  // boss-3: what the manager / MD answered before (kept so the AI need not ask the same thing again)
+  try { const kb = await ctx.tx.savepoint(async () => (await import('./superior.js')).bossKnowledge(ctx)); if (kb) learnedB = [learnedB, kb].filter(Boolean).join('\n'); } catch (_) { /* fine */ }
   let boss = { block: '', ids: [] };
   if (!test) { try { boss = await (await import('./superior.js')).pendingAnswers(ctx, conv.id); } catch (_) { boss = { block: '', ids: [] }; } }
   const inGroup = /@g\.us$/.test(str(contact && contact.external_id));
@@ -1090,7 +1096,14 @@ export async function agentReply(ctx, conv, opts) {
       return { sent: true, total: its.reduce((t, x) => t + x.qty * x.price, 0) + charge, note: 'the summary is sent - add nothing to it; when they confirm, call place_order with the same details' };
     }
     if (name === 'ask_superior') return (await import('./superior.js')).askSuperior(ctx, conv, contact, ch, a, cat, p, test);
-    if (name === 'ask_team') { if (!test) await task(ctx, conv.id, 'enquiry', 'unknown', str(a.question)); return { asked: true }; }
+    if (name === 'ask_team') {
+      if (!test) {
+        await task(ctx, conv.id, 'enquiry', 'unknown', str(a.question));
+        // boss-2: the manager hears it on WhatsApp too; the answer comes back to this chat
+        if (str(p.superior_wa) || str(p.team_wa)) { try { await ctx.tx.savepoint(async () => (await import('./superior.js')).askTeam(ctx, conv, contact, ch, p, str(a.question).slice(0, 500), str(a.level))); } catch (e) { console.error('askTeam', e && e.message); } }
+      }
+      return { asked: true, note: 'tell the customer in one line that you are checking and will let them know shortly' };
+    }
     if (name === 'handover') { effects.handover = { reason: REASONS[str(a.reason)] ? str(a.reason) : 'other', note: str(a.note) }; return { handed: true }; }
     if (name === 'remember_customer') {
       if (test) return { ok: true };
@@ -1138,7 +1151,11 @@ export async function agentReply(ctx, conv, opts) {
   let sent = 0;
   for (const q of queue) { const r = await deliver(ctx, ch, conv, contact, q, { author: 'ai' }); if (r.ok) sent++; }
   if (sent && boss.ids.length) { try { await (await import('./superior.js')).markRelayed(ctx, boss.ids); } catch (_) { /* told again next time */ } }
-  if (effects.handover) await handOver(ctx, conv, effects.handover.reason, effects.handover.note);
+  if (effects.handover) {
+    await handOver(ctx, conv, effects.handover.reason, effects.handover.note);
+    // boss-2: the manager hears every hand-over at once on WhatsApp
+    if (str(p.superior_wa)) { try { await ctx.tx.savepoint(async () => (await import('./superior.js')).tellHandover(ctx, conv, contact, ch, p, REASONS[effects.handover.reason] || effects.handover.reason, effects.handover.note)); } catch (e) { console.error('tellHandover', e && e.message); } }
+  }
   if (effects.order && effects.order.items) {
     try { const r = await orderAlert(ctx, p, effects.order, ch); if (!r.ok && !r.off) await writeMsgNote(ctx, conv, 'WhatsApp order alert not sent: ' + r.error); }
     catch (e) { await writeMsgNote(ctx, conv, 'WhatsApp order alert not sent: ' + String((e && e.message) || e).slice(0, 200)); }

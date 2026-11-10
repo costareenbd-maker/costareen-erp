@@ -78,4 +78,74 @@ out = await asB(async (ctx) => ib.agentReply(ctx, vR2, { test: false }));
 check('boss-1: the AI relays the manager\'s answer at once (with the answer in its prompt)', bodies.length === 1 && /YOUR SUPERIOR HAS ANSWERED/.test(bodies[0].systemInstruction.parts[0].text) && /1450/.test(bodies[0].systemInstruction.parts[0].text), out);
 check('boss-1: ...and the ask is marked told', (await sql`select status from superior_asks where ref = 'R1'`)[0].status === 'relayed');
 check('boss-1: no manager number set: the tool says use handover', (await asB(async (ctx) => sp.askSuperior(ctx, vR, cR, M, { question: 'x' }, [], { superior_wa: '' }, false))).error.includes('handover'));
+
+// ---- boss-2: a question the AI cannot answer goes to the manager too, and the answer comes back
+wa.length = 0;
+script = [[{ functionCall: { name: 'ask_team', args: { question: 'Ender 3 V3 te ei nozzle cholbe?' } } }], [{ text: 'bhai, ekhoni check kore janacchi.' }]];
+await sql`insert into inbox_messages (business_id, conversation_id, direction, author, kind, text) values (${FIX.B}, ${vR.id}, 'in', 'customer', 'text', 'Ender 3 V3 te cholbe?')`;
+out = await asB(async (ctx) => ib.agentReply(ctx, (await sql`select * from inbox_conversations where id = ${vR.id}`)[0], { test: false }));
+const tAsk = (await sql`select * from superior_asks where kind = 'team'`)[0];
+const toMgr = wa.filter((x) => x.number === '8801847800652');
+check('boss-2: ask_team: Faujia\'s WhatsApp asks the manager (#R, the customer, the question); the task is kept',
+  tAsk && toMgr.length === 1 && /inst9/.test(toMgr[0].url) && new RegExp('#' + tAsk.ref).test(toMgr[0].text) && /জানা নেই/.test(toMgr[0].text) && /Rahim Uddin/.test(toMgr[0].text) && /Ender 3 V3/.test(toMgr[0].text) &&
+  (await sql`select 1 from inbox_tasks where conversation_id = ${vR.id} and kind = 'enquiry' and status = 'open'`).length >= 1, [tAsk, wa]);
+h = await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801847800652', text: '#' + tAsk.ref + ' haa cholbe, 0.4 mm standard' }));
+check('boss-2: the manager\'s answer to it is saved for the AI to tell', h && (await sql`select status from superior_asks where id = ${tAsk.id}`)[0].status === 'answered');
+await asB(async (ctx) => sp.markRelayed(ctx, [tAsk.id]));
+
+// ---- boss-2: every hand-over reaches the manager at once; his answer decides who takes it
+wa.length = 0;
+await sql`insert into inbox_messages (business_id, conversation_id, direction, author, kind, text) values (${FIX.B}, ${vR.id}, 'in', 'customer', 'text', 'parcel bhanga ashche, taka ferot chai')`;
+script = [[{ functionCall: { name: 'handover', args: { reason: 'refund', note: 'broken parcel' } } }], [{ text: 'dukkhito bhai, amar colleague ekhoni dekhchen.' }]];
+await asB(async (ctx) => ib.agentReply(ctx, (await sql`select * from inbox_conversations where id = ${vR.id}`)[0], { test: false }));
+const hAsk = (await sql`select * from superior_asks where kind = 'handover' order by asked_at desc limit 1`)[0];
+const hMsg = wa.find((x) => x.number === '8801847800652');
+check('boss-2: a hand-over goes to the manager on WhatsApp: reason, the customer\'s last words, how to answer',
+  hAsk && hMsg && /🚨/.test(hMsg.text) && /Refund/.test(hMsg.text) && /taka ferot chai/.test(hMsg.text) && /আমি দেখছি/.test(hMsg.text) && (await sql`select mode from inbox_conversations where id = ${vR.id}`)[0].mode === 'human', [hAsk, wa]);
+wa.length = 0;
+h = await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801847800652', text: '#' + hAsk.ref + ' ami dekhchi' }));
+let vH = (await sql`select * from inbox_conversations where id = ${vR.id}`)[0];
+check('boss-2: "ami dekhchi": the chat stays with a person, the AI does not answer', h && vH.mode === 'human' && !vH.reply_due_at && (await sql`select status from superior_asks where id = ${hAsk.id}`)[0].status === 'relayed' && /আপনার হাতে/.test(wa[0].text), [vH, wa]);
+await asB((ctx) => ib.handOver(ctx, vH, 'complaint', 'late'));
+const h2 = (await asB(async (ctx) => sp.tellHandover(ctx, vH, cR, M, await ib.profile(ctx, false), 'Complaint', 'late'))).ref;
+h = await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801847800652', text: '#' + h2 + ' bolo kal delivery hobe, sorry' }));
+vH = (await sql`select * from inbox_conversations where id = ${vR.id}`)[0];
+check('boss-2: any other answer gives the chat back to the AI, due now, to tell the customer', h && vH.mode === 'ai' && vH.reply_due_at && (await sql`select status from superior_asks where ref = ${h2}`)[0].status === 'answered', vH);
+
+// ---- boss-2: the manager chatting to Faujia's number with nothing open gets a hint, never the sales AI
+await sql`update superior_asks set status = 'relayed'`;
+await sql`update superior_asks set asked_at = now() - interval '2 days'`;
+wa.length = 0;
+const free = await asB(async (ctx) => ib.ingest(ctx, W, { from: '8801847800652', text: 'kemon cholche?', id: 'free1' }));
+check('boss-2: the manager with nothing open: a one-line hint, no customer chat', free.superior && wa.length === 1 && /#R/.test(wa[0].text) && !(await sql`select 1 from inbox_contacts where channel_id = ${W.id} and external_id = '8801847800652'`).length, [free, wa]);
+
+// ---- boss-3: strategic questions to the MD, basic ones to the manager - one person each
+await owner('erpInboxProfile', [{ save: { team_wa: '01681-443070' } }]);
+await sql`update inbox_conversations set mode = 'ai', human_until = null where id = ${vR.id}`;
+wa.length = 0;
+await sql`insert into inbox_messages (business_id, conversation_id, direction, author, kind, text) values (${FIX.B}, ${vR.id}, 'in', 'customer', 'text', 'H2D 2 week e ene dite parben?')`;
+script = [[{ functionCall: { name: 'ask_team', args: { question: 'Bambu H2D 2 soptaher moddhe ene dewa jabe?', level: 'strategic' } } }], [{ text: 'bhai, ekhoni janacchi.' }]];
+await asB(async (ctx) => ib.agentReply(ctx, (await sql`select * from inbox_conversations where id = ${vR.id}`)[0], { test: false }));
+const sAsk = (await sql`select * from superior_asks where question like 'Bambu H2D%'`)[0];
+check('boss-3: a strategic question goes to the MD only', sAsk && sAsk.sent_to === 'md' && wa.length >= 1 && wa.filter((x) => /#R/.test(x.text)).every((x) => x.number === '8801681443070') && /সিদ্ধান্ত/.test(wa.find((x) => x.number === '8801681443070').text), [sAsk, wa]);
+wa.length = 0;
+await sql`insert into inbox_messages (business_id, conversation_id, direction, author, kind, text) values (${FIX.B}, ${vR.id}, 'in', 'customer', 'text', 'silk gold ache?')`;
+script = [[{ functionCall: { name: 'ask_team', args: { question: 'Silk PLA gold ache?', level: 'basic' } } }], [{ text: 'bhai, dekhe janacchi.' }]];
+await asB(async (ctx) => ib.agentReply(ctx, (await sql`select * from inbox_conversations where id = ${vR.id}`)[0], { test: false }));
+const bAsk = (await sql`select * from superior_asks where question like 'Silk PLA%'`)[0];
+check('boss-3: a basic question goes to the manager only', bAsk && bAsk.sent_to === 'manager' && wa.filter((x) => /#R/.test(x.text)).every((x) => x.number === '8801847800652'), [bAsk, wa]);
+// the MD answers without a #R: it lands on his own ask, not the manager's newer one
+h = await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801681443070', text: 'haa 2 week e ana jabe, 50% advance lagbe' }));
+check('boss-3: the MD\'s answer without #R goes to the ask sent to him', h && (await sql`select status from superior_asks where id = ${sAsk.id}`)[0].status === 'answered' && (await sql`select status from superior_asks where id = ${bAsk.id}`)[0].status === 'open');
+bodies.length = 0;
+script = [[{ text: 'জি ভাই, ২ সপ্তাহের মধ্যে এনে দিতে পারবো।' }]];
+await asB(async (ctx) => ib.agentReply(ctx, (await sql`select * from inbox_conversations where id = ${vR.id}`)[0], { test: false }));
+const sys3 = bodies[0].systemInstruction.parts[0].text;
+check('boss-3: the AI is told never to copy the note, to say it in its own polite words', /NEVER copy, quote or forward them/.test(sys3) && /50% advance lagbe/.test(sys3));
+// learned: later chats get what they answered (facts), not a discount for one customer
+bodies.length = 0;
+await reply([{ direction: 'in', kind: 'text', text: 'H2D pre-order hoy?' }]);
+const sys4 = bodies[0].systemInstruction.parts[0].text;
+check('boss-3: later chats know what the manager / MD answered before', /WHAT OUR MANAGER \/ MD TOLD YOU BEFORE/.test(sys4) && /Bambu H2D 2 soptaher/.test(sys4) && /Ender 3 V3/.test(sys4) && !/20 roll nile 1350/.test(sys4.split('TOLD YOU BEFORE')[1] || ''), sys4.slice(-800));
+check('boss-3: ask_team asks for a level (strategic -> MD)', /goes to our MD/.test(JSON.stringify(bodies[0].tools)));
 done();

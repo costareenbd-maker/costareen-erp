@@ -8,6 +8,24 @@
 //   pendingAnswers  agentReply's prompt block: what the manager decided, to tell the customer now
 //
 // A price the manager writes ("1450") becomes the agreed price for that product in that chat (place_order uses it).
+//
+// boss-2 (owner 11 Nov 2026): "any doubt, anything - tell the manager directly". The same WhatsApp line now also carries
+//   askTeam      a question the AI cannot answer (ask_team) -> the manager's answer goes to the customer
+//   tellHandover the AI handed the chat over (angry, complaint, refund, a person) -> "#R6 ami dekhchi" keeps it with a
+//                person; any other answer gives the chat back to the AI, which tells the customer
+// The manager writing to this number with nothing open gets a one-line hint (never the sales AI).
+// boss-3 (owner 11 Nov 2026): strategic questions (bring a printer in within two weeks, new stock, dealer / bulk deals)
+//   go to the MD (Agent Desk team_wa), basic ones to the manager (superior_wa) - one person each, never both. Their
+//   words are never sent to the customer as they are: the AI tells the decision in its own polite words. What they
+//   answered (facts, not one customer's deal) is kept and put in the AI's prompt for later chats (bossKnowledge).
+const ROLE_BN = { manager: 'ম্যানেজার', md: 'MD' };
+/** Who gets it: 'md' -> the MD's WhatsApp (team_wa), else the manager's (superior_wa); either falls back to the other. */
+export function targetOf(p, want) {
+  const md = bossPhones(p.team_wa), mg = bossPhones(p.superior_wa);
+  if (want === 'md' && md.length) return { to: 'md', phones: md.slice(0, 1) };
+  if (mg.length) return { to: 'manager', phones: mg };
+  return md.length ? { to: 'md', phones: md.slice(0, 1) } : { to: '', phones: [] };
+}
 
 import { formatDate } from '../lib/time.js';
 import { sendOut } from './inboxch.js';
@@ -27,6 +45,48 @@ async function ownWa(ctx) {
   return rows.find((c) => str((c.settings || {}).purpose || 'chat') === 'chat') || null;
 }
 
+const agentOf = (p) => str(p.agent_name).replace(/\s*\(.*\)\s*/, '') || 'AI';
+/** boss-2: one row (#R<n>) + the WhatsApp to each manager phone from the salesperson's own number. */
+export async function tellManager(ctx, conv, contact, ch, p, kind, question, lines, extra) {
+  const x = extra || {};
+  const { to, phones } = targetOf(p, x.to);
+  if (!phones.length) return { sent: 0, error: 'no superior number' };
+  const from = await ownWa(ctx);
+  if (!from) return { sent: 0, error: 'no WhatsApp number to send from' };
+  const n = (await ctx.tx`select count(*)::int n from superior_asks where business_id = ${ctx.biz}`)[0].n + 1;
+  const ref = 'R' + n;
+  await ctx.tx`insert into superior_asks (business_id, conversation_id, ref, question, sku, qty, wanted_price, kind, sent_to)
+    values (${ctx.biz}, ${conv.id}, ${ref}, ${str(question).slice(0, 500)}, ${x.sku || ''}, ${x.qty || null}, ${x.wanted || null}, ${kind}, ${to})`;
+  const text = lines(ref).join('\n');
+  let sent = 0;
+  for (const ph of phones) { try { const r = await sendOut(ctx, from, { external_id: ph }, { kind: 'text', text }); if (r.ok) sent++; } catch (_) { /* counted as not sent */ } }
+  return { sent, ref, to };
+}
+const who = (contact, ch) => 'কাস্টমার: ' + (str(contact && contact.name) || 'নাম নেই') + ' (' + str(ch.name || ch.kind) + (str(contact && contact.phone) ? ', ' + str(contact.phone) : '') + ')';
+async function lastIn(ctx, conv) {
+  const m = (await ctx.tx`select text, kind from inbox_messages where conversation_id = ${conv.id} and direction = 'in' order by created_at desc, id desc limit 1`)[0];
+  return m ? (str(m.text) || (m.kind === 'image' ? '(একটা ছবি)' : m.kind === 'audio' ? '(ভয়েস মেসেজ)' : '')) : '';
+}
+/** ask_team: a detail the AI does not have - the manager on WhatsApp (and the task, as before). */
+export async function askTeam(ctx, conv, contact, ch, p, q, level) {
+  const md = level === 'strategic';
+  const r = await tellManager(ctx, conv, contact, ch, p, 'team', q, (ref) => [(md ? '📌 ' + agentOf(p) + ' → স্যার, একটা সিদ্ধান্ত দরকার (#' + ref + ')' : '❓ ' + agentOf(p) + ' → এটা আমার জানা নেই, আপনার কাছে জানতে চাই (#' + ref + ')'), who(contact, ch), 'প্রশ্ন: ' + q,
+    '', 'উত্তর দিন এভাবে: #' + ref + ' তারপর আপনার কথা - যেভাবে খুশি লিখুন, আমি গুছিয়ে কাস্টমারকে বলব।'], { to: md ? 'md' : 'manager' });
+  const { writeMsgNote } = await import('./inbox.js');
+  if (r.ref) await writeMsgNote(ctx, conv, 'Asked the ' + (r.to === 'md' ? 'MD' : 'manager') + ' on WhatsApp (#' + r.ref + '): ' + q + (r.sent ? '' : ' - NOT sent, the WhatsApp number did not take it'));
+  return r;
+}
+/** After the AI handed a chat over: the manager hears it at once on WhatsApp. */
+export async function tellHandover(ctx, conv, contact, ch, p, label, note) {
+  const said = await lastIn(ctx, conv);
+  const r = await tellManager(ctx, conv, contact, ch, p, 'handover', label + (note ? ' - ' + note : ''), (ref) => ['🚨 ' + agentOf(p) + ' → এই কাস্টমারকে একজন মানুষ দেখা দরকার (#' + ref + ')', who(contact, ch),
+    'কারণ: ' + label + (note ? ' — ' + note : '')].concat(said ? ['কাস্টমারের শেষ কথা: "' + said.slice(0, 300) + '"'] : [],
+    ['', 'নিজে দেখলে লিখুন: #' + ref + ' আমি দেখছি', 'নইলে লিখুন: #' + ref + ' তারপর কাস্টমারকে কী বলব - আমি জানিয়ে দেব।']));
+  const { writeMsgNote } = await import('./inbox.js');
+  if (r.ref) await writeMsgNote(ctx, conv, 'Told the manager on WhatsApp (#' + r.ref + ')' + (r.sent ? '' : ' - NOT sent, the WhatsApp number did not take it'));
+  return r;
+}
+
 export async function askSuperior(ctx, conv, contact, ch, a, cat, p, test) {
   const phones = bossPhones(p.superior_wa);
   if (!phones.length) return { error: 'no superior number is set - use handover instead' };
@@ -34,22 +94,16 @@ export async function askSuperior(ctx, conv, contact, ch, a, cat, p, test) {
   const q = str(a.question).slice(0, 500);
   if (!q) return { error: 'write the question for your superior' };
   if (test) return { asked: true, note: 'tell the customer in one line that you are checking with your superior right now and will let them know shortly; promise nothing' };
-  const from = await ownWa(ctx);
-  if (!from) return { error: 'no WhatsApp number to send from - use handover instead' };
-  const n = (await ctx.tx`select count(*)::int n from superior_asks where business_id = ${ctx.biz}`)[0].n + 1;
-  const ref = 'R' + n;
-  await ctx.tx`insert into superior_asks (business_id, conversation_id, ref, question, sku, qty, wanted_price)
-    values (${ctx.biz}, ${conv.id}, ${ref}, ${q}, ${x ? x.sku : ''}, ${num(a.qty) || null}, ${num(a.wanted_price) || null})`;
-  const lines = ['🙋 ' + (str(p.agent_name).replace(/\s*\(.*\)\s*/, '') || 'AI') + ' → আপনার কাছে জানতে চাই (#' + ref + ')',
-    'কাস্টমার: ' + (str(contact && contact.name) || 'নাম নেই') + ' (' + str(ch.name || ch.kind) + ')',
-    'প্রশ্ন: ' + q];
-  if (x) lines.push('প্রোডাক্ট: ' + x.name + (num(a.qty) ? ' × ' + num(a.qty) : '') + ' — আমাদের দাম ৳' + Math.round(num(x.sell)).toLocaleString('en-IN') +
-    (num(a.wanted_price) ? ', কাস্টমার চাইছেন ৳' + Math.round(num(a.wanted_price)).toLocaleString('en-IN') : ''));
-  lines.push('', 'উত্তর দিন এভাবে: #' + ref + ' তারপর আপনার কথা (যেমন "#' + ref + ' 1450 দেওয়া যাবে" বা "#' + ref + ' না, ৳1550 এর নিচে না")। আমি কাস্টমারকে জানিয়ে দেব।');
-  let sent = 0;
-  for (const ph of phones) { const r = await sendOut(ctx, from, { external_id: ph }, { kind: 'text', text: lines.join('\n') }); if (r.ok) sent++; }
+  if (!(await ownWa(ctx))) return { error: 'no WhatsApp number to send from - use handover instead' };
+  const { ref, sent, to } = await tellManager(ctx, conv, contact, ch, p, 'discount', q, (ref) => {
+    const lines = ['🙋 ' + agentOf(p) + ' → আপনার কাছে জানতে চাই (#' + ref + ')', who(contact, ch), 'প্রশ্ন: ' + q];
+    if (x) lines.push('প্রোডাক্ট: ' + x.name + (num(a.qty) ? ' × ' + num(a.qty) : '') + ' — আমাদের দাম ৳' + Math.round(num(x.sell)).toLocaleString('en-IN') +
+      (num(a.wanted_price) ? ', কাস্টমার চাইছেন ৳' + Math.round(num(a.wanted_price)).toLocaleString('en-IN') : ''));
+    lines.push('', 'উত্তর দিন এভাবে: #' + ref + ' তারপর আপনার কথা (যেমন "#' + ref + ' 1450 দেওয়া যাবে" বা "#' + ref + ' না, ৳1550 এর নিচে না")। আমি গুছিয়ে কাস্টমারকে বলব।');
+    return lines;
+  }, { sku: x ? x.sku : '', qty: num(a.qty) || null, wanted: num(a.wanted_price) || null, to: str(a.level) === 'strategic' ? 'md' : 'manager' });
   const { writeMsgNote, task } = await import('./inbox.js');
-  await writeMsgNote(ctx, conv, 'Asked the manager on WhatsApp (#' + ref + '): ' + q + (sent ? '' : ' - NOT sent, the WhatsApp number did not take it'));
+  await writeMsgNote(ctx, conv, 'Asked the ' + (to === 'md' ? 'MD' : 'manager') + ' on WhatsApp (#' + ref + '): ' + q + (sent ? '' : ' - NOT sent, the WhatsApp number did not take it'));
   if (!sent) { await task(ctx, conv.id, 'enquiry', null, 'The AI needs the manager (#' + ref + '): ' + q); }
   return { asked: true, ref, note: 'tell the customer in one line that you are checking with your superior right now and will let them know shortly; promise nothing' };
 }
@@ -59,15 +113,37 @@ export async function superiorInbound(ctx, ch, ev) {
   if (!/^wa_/.test(ch.kind)) return false;
   const { profile } = await import('./inbox.js');
   const p = await profile(ctx, false);
-  const phones = bossPhones(p.superior_wa);
+  const mg = bossPhones(p.superior_wa), md = bossPhones(p.team_wa);
   const from = str(ev.from).replace(/@.*$/, '').replace(/[^0-9]/g, '');
-  if (!from || !phones.includes(from)) return false;
+  if (!from || !(mg.includes(from) || md.includes(from))) return false;
+  const role = mg.includes(from) ? 'manager' : 'md';
   const text = str(ev.text);
   const m = text.match(/#?\b(R\d+)\b/i);
+  // boss-3: without a #R: the newest open ask sent to this person (the MD's answer never lands on the manager's ask)
   const ask = m ? (await ctx.tx`select * from superior_asks where business_id = ${ctx.biz} and upper(ref) = ${m[1].toUpperCase()}`)[0]
-    : (await ctx.tx`select * from superior_asks where business_id = ${ctx.biz} and status = 'open' and asked_at > ${new Date(ctx.now.getTime() - H24)} order by asked_at desc limit 1`)[0];
-  if (!ask) return false;                         // the manager just chatting with this number: an ordinary message
+    : (await ctx.tx`select * from superior_asks where business_id = ${ctx.biz} and status = 'open' and asked_at > ${new Date(ctx.now.getTime() - H24)}
+                   and (sent_to = ${role} or ${mg.includes(from) && md.includes(from)}) order by asked_at desc limit 1`)[0];
+  if (!ask) {
+    // boss-2: the manager writing to the salesperson's number with nothing open - a hint, never the sales AI
+    if (str((ch.settings || {}).purpose || 'chat') !== 'chat' || !text) return false;
+    try { await sendOut(ctx, ch, { external_id: from }, { kind: 'text', text: (role === 'md' ? 'স্যার, ' : '') + 'এখন আপনার কাছে আমার কোনো প্রশ্ন খোলা নেই। কোনো কাস্টমারের ব্যাপারে বলতে আমার মেসেজের #R নম্বরটা দিয়ে লিখুন (যেমন "#R12 ...")।' }); } catch (_) { /* fine */ }
+    return true;
+  }
   const answer = text.replace(/#?\b(R\d+)\b/i, '').trim();
+  // boss-2: a hand-over - "ami dekhchi" keeps it with a person; any other answer gives the chat back to the AI to tell
+  if (ask.kind === 'handover') {
+    const mine = /আমি\s*দেখ|ami\s*dekh|i'?ll\s*handle|handle\s*kor|দেখতেছি|দেখছি|কল\s*দিচ্ছি|call\s*di/i.test(answer);
+    await ctx.tx`update superior_asks set status = ${mine ? 'relayed' : 'answered'}, answer = ${answer}, answered_at = now() where id = ${ask.id}`;
+    const v = ask.conversation_id ? (await ctx.tx`select * from inbox_conversations where id = ${ask.conversation_id}`)[0] : null;
+    const { writeMsgNote } = await import('./inbox.js');
+    if (v) {
+      await writeMsgNote(ctx, v, (role === 'md' ? 'MD' : 'Manager') + ' answered #' + ask.ref + ': ' + answer + (mine ? ' (a person takes it)' : ' - back to the AI to tell the customer'));
+      if (mine) await ctx.tx`update inbox_conversations set claimed_name = ${(role === 'md' ? 'MD' : 'Manager') + ' (WhatsApp)'} where id = ${v.id}`;
+      else await ctx.tx`update inbox_conversations set mode = 'ai', human_until = null, claimed_by = null, claimed_name = null, reply_due_at = ${ctx.now} where id = ${v.id}`;
+    }
+    try { await sendOut(ctx, ch, { external_id: from }, { kind: 'text', text: mine ? '✅ #' + ask.ref + ' ঠিক আছে, চ্যাটটা আপনার হাতে। আমি আর উত্তর দিচ্ছি না।' : '✅ #' + ask.ref + ' কাস্টমারকে জানিয়ে দিচ্ছি।' }); } catch (_) { /* fine */ }
+    return true;
+  }
   const pm = answer.replace(/[,৳]/g, '').match(/\b(\d{2,7})\b/);
   const price = ask.sku && pm ? Number(pm[1]) : null;
   await ctx.tx`update superior_asks set status = 'answered', answer = ${answer}, answer_price = ${price}, answered_at = now() where id = ${ask.id}`;
@@ -78,7 +154,7 @@ export async function superiorInbound(ctx, ch, ev) {
         await ctx.tx`update inbox_conversations set boss_agreed = coalesce(boss_agreed, '{}'::jsonb) || ${ctx.tx.json({ [ask.sku]: price })} where id = ${v.id}`;
       }
       const { writeMsgNote } = await import('./inbox.js');
-      await writeMsgNote(ctx, v, 'Manager answered #' + ask.ref + ': ' + answer);
+      await writeMsgNote(ctx, v, (role === 'md' ? 'MD' : 'Manager') + ' answered #' + ask.ref + ': ' + answer);
       if (v.mode === 'ai') await ctx.tx`update inbox_conversations set reply_due_at = ${ctx.now} where id = ${v.id}`;
     }
   }
@@ -90,8 +166,22 @@ export async function superiorInbound(ctx, ch, ev) {
 export async function pendingAnswers(ctx, convId) {
   const rows = await ctx.tx`select * from superior_asks where business_id = ${ctx.biz} and conversation_id = ${convId} and status = 'answered' order by answered_at`;
   if (!rows.length) return { block: '', ids: [] };
-  return { ids: rows.map((r) => r.id), block: 'YOUR SUPERIOR HAS ANSWERED (tell the customer NOW, in one short message, as the shop\'s decision - do not mention WhatsApp or a reference): ' +
-    rows.map((r) => '"' + str(r.question) + '" -> "' + str(r.answer) + '"' + (r.answer_price && r.sku ? ' (agreed price for ' + r.sku + ': ৳' + Math.round(num(r.answer_price)) + ' each - place_order uses it)' : '')).join(' | ') };
+  return { ids: rows.map((r) => r.id), block: 'YOUR SUPERIOR HAS ANSWERED (tell the customer NOW, in one short message, as the shop\'s decision - do not mention WhatsApp or a reference). ' +
+    'Their words are an internal note to YOU, written casually: NEVER copy, quote or forward them; understand the decision and say it to the customer in your own polite words, in the customer\'s language ' +
+    '(e.g. the note "haa 1400 e diye dao" -> you: "ভাই, আপনার জন্য স্পেশালি ৳১,৪০০ করে দিতে পারবো।"; "2 week e ana jabe, 50% advance" -> "জি ভাই, ২ সপ্তাহের মধ্যে এনে দিতে পারবো, ৫০% অ্যাডভান্স দিয়ে অর্ডার কনফার্ম করতে হবে।"): ' +
+    rows.map((r) => '"' + str(r.question) + '" -> note: "' + str(r.answer) + '"' + (r.answer_price && r.sku ? ' (agreed price for ' + r.sku + ': ৳' + Math.round(num(r.answer_price)) + ' each - place_order uses it)' : '')).join(' | ') };
+}
+/** boss-3: what the manager / MD answered before - facts and policies for later chats (one customer's price is not). */
+export async function bossKnowledge(ctx) {
+  let rows = [];
+  try {
+    rows = await ctx.tx`select question, answer, sent_to, answered_at from superior_asks where business_id = ${ctx.biz} and kind = 'team' and status in ('answered', 'relayed')
+                        and coalesce(answer, '') <> '' and answered_at > now() - interval '120 days' order by answered_at desc limit 25`;
+  } catch (_) { return ''; }
+  if (!rows.length) return '';
+  return 'WHAT OUR MANAGER / MD TOLD YOU BEFORE (answers to questions you asked them - use them as the shop\'s facts and policy so you need not ask again; never quote them word for word, ' +
+    'never say who told you; if a fact may have changed (stock, a date, a price) or the case is different, ask again): ' +
+    rows.map((r) => '[' + formatDate(new Date(r.answered_at), 'd MMM') + ', ' + (r.sent_to === 'md' ? 'MD' : 'manager') + '] "' + str(r.question).slice(0, 200) + '" -> "' + str(r.answer).slice(0, 300) + '"').join(' | ');
 }
 export async function markRelayed(ctx, ids) {
   if (ids && ids.length) await ctx.tx`update superior_asks set status = 'relayed' where id = any(${ids})`;
