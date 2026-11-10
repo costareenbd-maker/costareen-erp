@@ -57688,7 +57688,6 @@ function woCommonWords(lines) {
 .wo-it b{font-variant-numeric:tabular-nums}
 td.wo-items{white-space:nowrap}
 /* wocollapse-1 (owner 11 Nov 2026): a wide screen gets the whole width on Web orders - no sideways scroll for the buttons */
-#view:has(.wo-wide),:root[data-skin] #view:has(.wo-wide){max-width:none !important}
 .wo-more{margin-top:0}
 .wo-more{margin-top:2px}
 .wo-list{list-style:none;margin:6px 0 0;padding:0;max-height:min(60vh,520px);overflow:auto}
@@ -57908,6 +57907,98 @@ document.addEventListener('click', function (e) {
   document.addEventListener('change', function (e) { var i = e.target && e.target.closest && e.target.closest('[data-cgday]'); if (i) act({ action: 'per_day', n: Number(i.value) }); });
   var v = document.getElementById('view');
   if (v && window.MutationObserver) new MutationObserver(function () { if (isCg() && !document.querySelector('#view .cg-card')) paint(); }).observe(v, { childList: true, subtree: true });
+})();
+</script>
+<!-- cardfold-1 (owner 11 Nov 2026): every page the whole screen width; every card - and the row of totals at the top of a page - can be made small and big again (desktop; the phone already folds its cards) -->
+<style>
+@media (min-width:761px){ #view, :root[data-skin] #view, :root[data-skin="fd"] #view { max-width:none !important; } }
+.cz-fold{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-left:8px;padding:0;border:1px solid var(--ring,#e2e8f0);border-radius:6px;background:transparent;color:var(--muted,#64748b);font-size:11px;line-height:1;cursor:pointer;vertical-align:middle;flex:0 0 auto}
+.cz-fold:hover{color:inherit;background:var(--ring,#eef2f7)}
+.card.cz-shut{padding-top:12px !important;padding-bottom:12px !important}
+.card.cz-shut > :not(.cz-head){display:none !important}
+.card.cz-shut .cz-head{margin:0 !important;border-bottom:0 !important;padding-bottom:0 !important}
+.card.cz-shut .cz-head :is(button, .btn, select, input, .sub, .row, .fd22-acts):not(.cz-fold):not(h2 *):not(:has(h2)){display:none !important}
+.cz-kshut{display:none !important}
+@media (max-width:760px){ .cz-fold{display:none !important} .card.cz-shut > :not(.cz-head), .cz-kshut{display:revert !important} }
+</style>
+<script>
+(function () {
+  function wide() { return window.matchMedia && window.matchMedia('(min-width:761px)').matches; }
+  function page() { return typeof VIEW === 'string' ? VIEW : ''; }
+  function shut(k) { try { return localStorage.getItem(k) === '1'; } catch (e) { return false; } }
+  function set(k, v) { try { if (v) localStorage.setItem(k, '1'); else localStorage.removeItem(k); } catch (e) {} }
+  // the title without its changing numbers ("Customers who owe ৳3,36,941" stays the same card)
+  function name(t) { return String(t || '').replace(/[\d৳,.()·%+\-–]+/g, ' ').replace(/[?▲▼]/g, '').replace(/\s+/g, ' ').trim().slice(0, 50); }
+  function btn(onClick) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'cz-fold'; b.setAttribute('data-noi18n', '1');
+    b.addEventListener('click', function (ev) { ev.preventDefault(); ev.stopPropagation(); onClick(); });
+    return b;
+  }
+  function mark(b, closed) { b.textContent = closed ? '\u25BC' : '\u25B2'; b.title = closed ? 'Make big' : 'Make small'; b.setAttribute('aria-expanded', closed ? 'false' : 'true'); }
+  function head(card) {
+    var hs = card.querySelectorAll('h2');
+    for (var i = 0; i < hs.length; i++) {
+      var h = hs[i]; if (h.closest('.card') !== card) continue;
+      var top = h; while (top.parentElement && top.parentElement !== card) top = top.parentElement;
+      var idx = Array.prototype.indexOf.call(card.children, top);
+      return idx > -1 && idx < 3 ? { h2: h, top: top } : null;
+    }
+    return null;
+  }
+  // a card with its own Show / Open button already folds itself - no second button
+  function ownFold(top) {
+    var bs = top.querySelectorAll('button');
+    for (var i = 0; i < bs.length; i++) if (/^\s*(show|open|hide|close)\b/i.test(bs[i].textContent || '')) return true;
+    return false;
+  }
+  function cards(v) {
+    var cs = v.querySelectorAll('.card');
+    for (var i = 0; i < cs.length; i++) {
+      var card = cs[i];
+      if (card.hasAttribute('data-czk') || card.querySelector('#wo_cotoggle') || card.closest('.gate, details')) continue;
+      var hd = head(card); if (!hd) { card.setAttribute('data-czk', ''); continue; }
+      var cl = hd.h2.cloneNode(true), junk = cl.querySelectorAll('button, .btn, select, input, a.btn'); for (var j = 0; j < junk.length; j++) junk[j].remove();
+      var title = name(cl.textContent);
+      if (!title || ownFold(hd.top)) { card.setAttribute('data-czk', ''); continue; }
+      card.setAttribute('data-czk', title);
+      hd.top.classList.add('cz-head');
+      (function (card, k) {
+        var b = btn(function () { var now = !card.classList.contains('cz-shut'); set(k, now); card.classList.toggle('cz-shut', now); mark(b, now); });
+        hd.h2.appendChild(b);
+        var c = shut(k); card.classList.toggle('cz-shut', c); mark(b, c);
+      })(card, 'erp.fold.' + page() + '.' + title);
+    }
+  }
+  // the row of totals under a page's title (Web orders, Products, Sales ...)
+  function totals(v) {
+    var hd = v.querySelector('.fdd-head'); if (!hd || hd.hasAttribute('data-czk')) return;
+    var box = hd.parentElement, grids = box ? box.querySelectorAll(':scope > .fdd-grid') : [];
+    if (!grids.length) return;
+    var t = hd.querySelector('h1, h2, .fdd-title') || hd.firstElementChild; if (!t) return;
+    hd.setAttribute('data-czk', 'totals');
+    var k = 'erp.fold.' + page() + '.totals';
+    function paint(c) { for (var i = 0; i < grids.length; i++) grids[i].classList.toggle('cz-kshut', c); mark(b, c); b.title = c ? 'Show the totals' : 'Hide the totals'; }
+    var b = btn(function () { var now = !grids[0].classList.contains('cz-kshut'); set(k, now); paint(now); });
+    var h1 = t.querySelector('h1, h2') || t;
+    h1.appendChild(b);
+    paint(shut(k));
+  }
+  function scan() {
+    if (!wide()) return;
+    var v = document.getElementById('view'); if (!v) return;
+    try { cards(v); } catch (e) {}
+    try { totals(v); } catch (e) {}
+  }
+  var t = 0;
+  function later() { if (!t) t = setTimeout(function () { t = 0; scan(); }, 60); }
+  function start() {
+    var v = document.getElementById('view'); if (!v) return setTimeout(start, 300);
+    new MutationObserver(later).observe(v, { childList: true, subtree: true });
+    window.addEventListener('resize', later);
+    later();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 </script>
 </body>
