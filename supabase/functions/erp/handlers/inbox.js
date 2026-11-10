@@ -46,7 +46,8 @@ export const REASONS = { discount: 'Asked for a discount', complaint: 'Complaint
 // ------------------------------------------------------------------ the business's details for the agent
 export const PROFILE_DEFAULTS = {
   name: '', sells: '', hours: '', phone: '', address: '', lang: 'both', style: 'sir', first_name: true,
-  agent_name: '',   // name-1 (owner 10 Nov 2026): the salesperson's own name, said when a customer asks who they are talking to
+  agent_name: '',
+  superior_wa: '',  // boss-1 (owner 10 Nov 2026): the manager's WhatsApp - more discount / a doubt -> "I'll ask my superior"    // name-1 (owner 10 Nov 2026): the salesperson's own name, said when a customer asks who they are talking to
   tone: 'Warm and polite, like a helpful shop assistant.', first_message: '',
   delivery_in: 70, delivery_out: 130, days_in: '1-2 days', days_out: '2-4 days', delivery_rule: '',
   payment: 'Cash on delivery all over Bangladesh.', returns: '', discount_answer: '', extra_offer: '',
@@ -220,6 +221,8 @@ async function keepAd(ctx, conv, ad) {
 export async function ingest(ctx, ch, ev) {
   if (ev.type === 'comment') return handleComment(ctx, ch, ev);
   if (!ev.from) return {};
+  // boss-1: the manager answering "#R12 ..." on WhatsApp -> back to that customer's chat
+  if (!ev.echo && /^wa_/.test(ch.kind)) { try { if (await ctx.tx.savepoint(async () => (await import('./superior.js')).superiorInbound(ctx, ch, ev))) return { superior: true }; } catch (e) { console.error('superiorInbound', e && e.message); } }
   // our own messages come back as echoes: drop them; a person's reply from the page / the phone is the team's
   if (ev.echo) {
     if (ev.id && (await ctx.tx`select 1 from inbox_messages where business_id = ${ctx.biz} and external_id = ${ev.id} limit 1`).length) return {};
@@ -336,6 +339,11 @@ const TOOLS = [
     parameters: { type: 'OBJECT', properties: { name: { type: 'STRING' }, phone: { type: 'STRING' }, service: { type: 'STRING' }, wanted: { type: 'STRING', description: 'the time the customer asked for, in their words' },
       answers: { type: 'OBJECT', description: 'question -> answer' } }, required: ['name', 'service'] } },
   { name: 'booking_payment', description: 'The customer sent the transaction id of an advance for a booking: keep it for the team to check.', parameters: { type: 'OBJECT', properties: { trx_id: { type: 'STRING' }, amount: { type: 'NUMBER' }, booking_no: { type: 'STRING' } }, required: ['trx_id'] } },
+  { name: 'order_summary', description: 'Read the order back to the customer before placing it: sends ONE neat message (name, phone, address, numbered items with price, delivery, total) ending with "confirm". Call it as soon as you have name, phone, address and the items; then wait for their confirm before place_order.',
+    parameters: { type: 'OBJECT', properties: { name: { type: 'STRING' }, phone: { type: 'STRING' }, address: { type: 'STRING' },
+      items: { type: 'ARRAY', items: { type: 'OBJECT', properties: { code: { type: 'STRING' }, qty: { type: 'NUMBER' } }, required: ['code', 'qty'] } } }, required: ['phone', 'address', 'items'] } },
+  { name: 'ask_superior', description: 'When the customer wants a bigger discount than price_offer allows, a special deal, or something feels off: ask your superior (the manager) on WhatsApp. Then tell the customer in one line that you are checking with your superior right now and will let them know.',
+    parameters: { type: 'OBJECT', properties: { question: { type: 'STRING', description: 'what to decide, in a few words' }, code: { type: 'STRING' }, qty: { type: 'NUMBER' }, wanted_price: { type: 'NUMBER', description: 'the price per unit the customer asks for' } }, required: ['question'] } },
   { name: 'ask_team', description: 'A detail you do not have (not written anywhere): tell the team the question; then tell the customer you will check and come back.', parameters: { type: 'OBJECT', properties: { question: { type: 'STRING' } }, required: ['question'] } },
   { name: 'handover', description: 'Hand the chat to a person: the customer asks for a person, complains, wants a refund, is angry, keeps abusing, insists on a discount, or the matter needs a person\'s judgement. Then tell the customer a colleague is looking into it - never promise when.',
     parameters: { type: 'OBJECT', properties: { reason: { type: 'STRING', description: 'discount | complaint | refund | person | unknown | angry | ready | abuse | other' }, note: { type: 'STRING' } }, required: ['reason'] } },
@@ -393,6 +401,17 @@ export function addressFix(text, p, contact) {
   return t.replace(/[ \t]+([,।!?.])/g, '$1').replace(/,\s*,/g, ',').replace(/ {2,}/g, ' ').replace(/^\s*,\s*/, '').trim();
 }
 /** A long answer goes as two or three short messages, like a person typing (split at blank lines). */
+/** flow-3 (owner 10 Nov): the read-back before an order - name, phone, address, then the items numbered, each on its own line. */
+export function summaryText(w, name, phone, address, items, delivery) {
+  const tk = (n) => '৳' + Math.round(num(n)).toLocaleString('en-IN');
+  const L = w === 'en' ? ['Name', 'Phone', 'Address', 'Delivery', 'Total (cash on delivery)', 'If everything is right, write "confirm".']
+    : w === 'banglish' ? ['Nam', 'Phone', 'Address', 'Delivery', 'Mot (cash on delivery)', 'Shob thik thakle "confirm" likhun.']
+    : ['নাম', 'ফোন', 'ঠিকানা', 'ডেলিভারি', 'মোট (ক্যাশ অন ডেলিভারি)', 'সব ঠিক থাকলে "কনফার্ম" লিখুন।'];
+  const goods = items.reduce((t, x) => t + x.qty * x.price, 0);
+  return [L[0] + ': ' + name, L[1] + ': ' + phone, L[2] + ': ' + address, '',
+    ...items.map((x, i) => (i + 1) + '. ' + x.name + ' × ' + x.qty + ' — ' + tk(x.qty * x.price)),
+    '', L[3] + ': ' + tk(delivery), L[4] + ': ' + tk(goods + delivery), '', L[5]].join('\n');
+}
 /** one-1 (owner 10 Nov): the customer gets ONE message per answer - the AI's lines joined into one text (after the
  *  product cards / photos, or inside the tappable question when there is one, or on top of the order receipt). An intro
  *  line before cards is dropped when there is other text; the same line twice goes once; one tappable question at most. */
@@ -412,6 +431,8 @@ export function oneMessage(queue) {
   const choice = btns[btns.length - 1], receipt = out.find((q) => q.store === 'order');
   if (choice) { choice.text = joined + (str(choice.text) && !joined.includes(str(choice.text)) ? '\n' + str(choice.text) : ''); return out; }
   if (receipt) { receipt.text = joined + '\n\n' + receipt.text; return out; }
+  const summ = out.find((q) => q.summary);   // flow-3: the read-back carries the AI's short line on top
+  if (summ) { summ.text = joined + '\n' + summ.text; return out; }
   // no cards: the text first; with cards / photos: the cards, then the one line under them (a question to answer)
   if (!hasCards) return [{ kind: 'text', text: joined }].concat(out);
   return out.concat([{ kind: 'text', text: joined }]);
@@ -429,6 +450,7 @@ const HUMAN = 'SOUND HUMAN (the customer must feel they are chatting with a real
   'Not every line needs its own answer: answer what matters for the purchase and move the chat one step nearer the order (product -> colour / quantity -> delivery charge -> phone + address -> order). ' +
   'MATCH THEM: a short message gets a short answer (one or two lines) unless they asked for detail; mirror how formal they are (default আপনি); at most one emoji and only if they use emoji, none in a complaint or a price argument; never start two replies the same way. ' +
   'Urgency only from real facts (real stock, a real offer end date) - never invent "only 2 left". An angry customer, a damaged item, a refund or a repeated complaint: drop the chit-chat, apologise plainly once and hand the chat to the team (handover). ' +
+  'DISCOUNTS: only for a bigger quantity, and only inside price_offer (check it first, come down in small steps). If they want more than it allows, a special deal, or something feels off: call ask_superior and say in one line that you are checking with your superior right now and will let them know (e.g. "আমি এখনই আমার সুপিরিয়রের সাথে কথা বলে আপনাকে জানাচ্ছি ভাই।"). ' +
   'ORDERS ONLY HERE: take every order in this chat (cards -> Order -> quantity -> phone + address -> place_order). Never send a website or any link to buy, never tell them to order on the website or pay online; if they ask for the website, say the order is quickest right here with cash on delivery. ' +
   'ONE MESSAGE PER ANSWER: everything you say in this reply goes to the customer as one short message (the ERP joins it), so never say the same thing twice, never greet again, and do not write a separate line that only introduces the cards ("এগুলো দেখুন:") - the cards speak for themselves; end with at most one question.';
 const ORDER_FLOW = 'ORDER FLOW: (1) When the customer wants to see something or names a product, show it straight away with show_products (cards with photo, price and an Order button) - for a choice of 2-6 options use ask_choice so they can tap - instead of describing it in words. ' +
@@ -437,7 +459,7 @@ const ORDER_FLOW = 'ORDER FLOW: (1) When the customer wants to see something or 
   '(3) When they say yes or tap Order: ask in ONE message for the name to put the order under, the phone number and the full delivery address ' +
   '(e.g. "ভাই, অর্ডারটা কোন নামে কাটবো? নাম, ফোন নম্বর আর পুরো ঠিকানাটা দিন।" / "bhai, order ta kon name e katbo? nam, phone number ar puro address ta din." / "What name should I put the order under? Please send the name, phone number and full address."). ' +
   'Never ask the customer\'s name at any other time - their chat already shows it. ' +
-  '(4) When they send them: work out the delivery charge (delivery tool), then send ONE message that reads everything back - name, phone, address, each item with quantity and price, delivery charge, total to pay on delivery - and ask them to confirm (e.g. "সব ঠিক থাকলে \'কনফার্ম\' লিখুন ভাই।"). Do not place the order yet. If the phone number is not 11 digits starting 01, ask for it again. ' +
+  '(4) When they send them: call order_summary (it sends the neat read-back: name, phone, address, numbered items, delivery, total, "confirm") - write at most a few words before it, never the details yourself. Do not place the order yet. If the phone number is not 11 digits starting 01, ask for it again. ' +
   '(5) When they confirm (ji / hae / ok / thik ache / confirm / yes), call place_order with exactly those details; if they correct something, read it back again first. ' +
   '(6) Then say plainly that the order is confirmed, in their language (e.g. "আপনার অর্ডারটি কনফার্ম করা হয়েছে ✅ আমাদের টিম একবার ফোন দিয়ে পার্সেল পাঠিয়ে দেবে।" / "apnar order ta confirm kora hoyeche ✅ amader team ekbar phone diye parcel pathiye dibe." / "Your order is confirmed ✅ our team will call once and send the parcel."), with the order number and the day it should arrive (from the delivery time below).';
 
@@ -649,6 +671,13 @@ function similarTo(cat, x, n) {
   return out.sort((a, b) => b.s - a.s).slice(0, n || 5).map((y) => ({ code: y.p.sku, name: y.p.name, price: y.p.sell, available: true }));
 }
 /** The lowest price the AI may agree for one unit (null = no discount allowed for it). */
+/** The price a product gets in this chat: the manager's agreed price (boss-1), else a price_offer agreement inside the limits, else the list price. */
+function itemPrice(conv, p, x) {
+  const boss = num((conv.boss_agreed || {})[x.sku]);
+  if (boss > 0) return boss;
+  const ag = num((conv.agreed || {})[x.sku]), low = lowestFor(p, x);
+  return ag > 0 && low !== null && ag >= low && ag < x.sell ? ag : x.sell;
+}
 function lowestFor(p, x) {
   if (p.disc_mode !== 'limit' || !(x.sell > 0) || !(x.cost > 0)) return null;
   const byPct = x.sell * (1 - Math.max(0, Math.min(50, num(p.disc_max_pct))) / 100);
@@ -799,7 +828,9 @@ export async function agentReply(ctx, conv, opts) {
   // learn-1: how our own team talks, learned from the Inbox's real chats (Agent Desk > Learn from our team)
   let learnedB = '';
   if (!test || opts.learned !== false) { try { learnedB = await (await import('./teamlearn.js')).learnedBlock(ctx); } catch (_) { learnedB = ''; } }
-  const extra = [who, custBlock, earlier, photoBlock, learnedB, 'Now: ' + formatDate(now, 'EEEE d MMMM yyyy, h:mm a') + ' (Dhaka).', scriptLine].filter(Boolean).join('\n');
+  let boss = { block: '', ids: [] };
+  if (!test) { try { boss = await (await import('./superior.js')).pendingAnswers(ctx, conv.id); } catch (_) { boss = { block: '', ids: [] }; } }
+  const extra = [who, custBlock, earlier, photoBlock, learnedB, boss.block, 'Now: ' + formatDate(now, 'EEEE d MMMM yyyy, h:mm a') + ' (Dhaka).', scriptLine].filter(Boolean).join('\n');
   const contents = [];
   for (const m of hist) {
     let t = str(m.text);
@@ -813,6 +844,8 @@ export async function agentReply(ctx, conv, opts) {
     if (contents.length && contents[contents.length - 1].role === role) contents[contents.length - 1].parts[0].text += '\n' + t;
     else contents.push({ role, parts: [{ text: (m.author === 'team' ? '[a person from the team wrote] ' : '') + t }] });
   }
+  // boss-1: the manager answered: tell the customer now (the chat may end with our "I'm checking" line)
+  if (boss.block && contents.length && contents[contents.length - 1].role !== 'user') contents.push({ role: 'user', parts: [{ text: '[no new message - your superior has answered; tell the customer now]' }] });
   if (!contents.length || contents[contents.length - 1].role !== 'user') return { sent: 0, skipped: 'nothing to answer' };
 
   let queue = [];   // what goes to the customer, in order
@@ -923,8 +956,7 @@ export async function agentReply(ctx, conv, opts) {
         if (!x) return { error: 'no product with code ' + it.code };
         if (!(x.sell > 0)) { return { error: x.name + ' has no price in the system - hand the chat to the team (handover)' }; }
         if (!(x.stock > 0)) return { error: x.name + ' is not available now - tell the customer' };
-        const ag = num((conv.agreed || {})[x.sku]), low = lowestFor(p, x);
-        const price = ag > 0 && low !== null && ag >= low && ag < x.sell ? ag : x.sell;
+        const price = itemPrice(conv, p, x);
         items.push({ sku: x.sku, name: x.name, qty: Math.max(1, Math.round(num(it.qty) || 1)), price, ...(price < x.sell ? { list_price: x.sell } : {}) });
       }
       if (!items.length) return { error: 'no items' };
@@ -1012,6 +1044,24 @@ export async function agentReply(ctx, conv, opts) {
       await task(ctx, conv.id, 'payment', 'booking', 'Check the advance for ' + b.no + ': TrxID ' + str(a.trx_id) + (a.amount ? ' ৳' + num(a.amount) : ''));
       return { kept: true, note: 'say the payment is being checked' };
     }
+    if (name === 'order_summary') {
+      const ph = phoneOk(a.phone);
+      if (!ph) return { error: 'the phone number must be 11 digits starting 01 - ask again' };
+      if (str(a.address).length < 6) return { error: 'the full address is needed - ask for it' };
+      const its = [];
+      for (const it of a.items || []) {
+        const x = cat.find((y) => y.sku.toLowerCase() === str(it.code).toLowerCase());
+        if (!x) return { error: 'no product with code ' + it.code };
+        if (!(x.sell > 0)) return { error: x.name + ' has no price in the system - hand the chat to the team (handover)' };
+        its.push({ sku: x.sku, name: x.name, qty: Math.max(1, Math.round(num(it.qty) || 1)), price: itemPrice(conv, p, x) });
+      }
+      if (!its.length) return { error: 'no items' };
+      const d = deliveryFor(p, a.address, kgOf(p, cat, its)), charge = d.charge !== undefined ? d.charge : num(p.delivery_out);
+      const nm = str(a.name) || str(contact && contact.name);
+      queue.push({ kind: 'text', keep: true, summary: true, text: summaryText(scr, nm, ph, str(a.address), its, charge) });
+      return { sent: true, total: its.reduce((t, x) => t + x.qty * x.price, 0) + charge, note: 'the summary is sent - add nothing to it; when they confirm, call place_order with the same details' };
+    }
+    if (name === 'ask_superior') return (await import('./superior.js')).askSuperior(ctx, conv, contact, ch, a, cat, p, test);
     if (name === 'ask_team') { if (!test) await task(ctx, conv.id, 'enquiry', 'unknown', str(a.question)); return { asked: true }; }
     if (name === 'handover') { effects.handover = { reason: REASONS[str(a.reason)] ? str(a.reason) : 'other', note: str(a.note) }; return { handed: true }; }
     if (name === 'remember_customer') {
@@ -1058,6 +1108,7 @@ export async function agentReply(ctx, conv, opts) {
 
   let sent = 0;
   for (const q of queue) { const r = await deliver(ctx, ch, conv, contact, q, { author: 'ai' }); if (r.ok) sent++; }
+  if (sent && boss.ids.length) { try { await (await import('./superior.js')).markRelayed(ctx, boss.ids); } catch (_) { /* told again next time */ } }
   if (effects.handover) await handOver(ctx, conv, effects.handover.reason, effects.handover.note);
   if (effects.order && effects.order.items) {
     try { const r = await orderAlert(ctx, p, effects.order, ch); if (!r.ok && !r.off) await writeMsgNote(ctx, conv, 'WhatsApp order alert not sent: ' + r.error); }
