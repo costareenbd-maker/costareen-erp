@@ -155,7 +155,7 @@ out = await reply([{ direction: 'in', kind: 'text', text: 'PLA ache?' }]);
 const sys3 = sysOf(bodies[0]);
 check('sales-3: the prompt mirrors the customer\'s script (Bengali / Banglish in English letters / English)', /LANGUAGE: reply in the same language AND the same script/.test(sys3) && /Banglish in English letters/.test(sys3));
 check('sales-3: the prompt asks for a human seller\'s voice and bans bot phrases', /SOUND HUMAN/.test(sys3) && /অবশ্যই!/.test(sys3) && /bullet lists/.test(sys3));
-check('sales-3: the order flow - show cards, ask to order, phone + address, place, say confirmed', /ORDER FLOW/.test(sys3) && /show_products/.test(sys3) && /phone number and full delivery address in ONE message/.test(sys3) && /কনফার্ম করা হয়েছে/.test(sys3));
+check('sales-3: the order flow - show cards, ask to order, phone + address, place, say confirmed', /ORDER FLOW/.test(sys3) && /show_products/.test(sys3) && /name to put the order under, the phone number and the full delivery address/.test(sys3) && /কোন নামে কাটবো/.test(sys3) && /reads everything back/.test(sys3) && /Do not place the order yet/.test(sys3) && /Never ask the customer's name at any other time/.test(sys3) && /কনফার্ম করা হয়েছে/.test(sys3));
 check('sales-3: a man is ভাই, a woman আপু, decided from the name; never স্যার', /call a man "ভাই" and a woman "আপু"/.test(sys3) && /Never call anyone স্যার/.test(sys3) && /remember_customer/.test(sys3));
 check('one-1: a reply with a blank line still goes as ONE message', out.replies.length === 1 && /কোন কালার লাগবে\?/.test(out.replies[0].text), out.replies);
 check('one-1: the prompt asks for one message per answer, no intro line for the cards', /ONE MESSAGE PER ANSWER/.test(sys3));
