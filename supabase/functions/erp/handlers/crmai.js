@@ -265,7 +265,7 @@ export async function crmAiTick(ctx, force) {
       const msg = String((e && e.message) || e);
       if (/budget/i.test(msg)) { note(C, ctx, 'Stopped: ' + msg); break; }
       // the free Gemini quota is used up (or no Gemini key): stop, the chat stays unread and is read on a later run
-      if (WAIT_RE.test(msg)) { out.waiting = true; if (!C.waitNoted || ctx.now.getTime() - new Date(C.waitNoted).getTime() > 6 * 3600e3) { C.waitNoted = ctx.now.toISOString(); note(C, ctx, 'Waiting: the free Gemini models did not answer (' + msg.slice(0, 160) + ') - the rest is read later.'); } break; }
+      if (WAIT_RE.test(msg)) { out.waiting = true; C.lastWait = ctx.now.toISOString() + ' ' + msg.slice(0, 300); if (!C.waitNoted || ctx.now.getTime() - new Date(C.waitNoted).getTime() > 6 * 3600e3) { C.waitNoted = ctx.now.toISOString(); note(C, ctx, 'Waiting: the free Gemini models did not answer (' + msg.slice(0, 160) + ') - the rest is read later.'); } break; }
       // a chat that fails is not read again until it has a new message (the error is in the log)
       try { await ctx.tx`update inbox_conversations set crm_ai_msg = ${Number(c.lastid || 0)} where id = ${c.id}`; } catch (_) { /* fine */ }
       note(C, ctx, 'Could not read a chat (' + str(c.cname || c.chname) + '): ' + msg.slice(0, 120));
