@@ -4232,3 +4232,30 @@ Owner (screenshot of an 8-product order): the Items cell made the row and the ph
 more than three products shows two of them and a "+N more · P pcs" button; the button opens a popup with every product,
 its quantity and line total, the items sum, delivery and charges, and the order total (closes by ✕, Close, Esc or the
 backdrop). Page only.
+
+## review-1: review card after delivery, in the same chat (10 Nov 2026)
+
+Owner: "after a purchase, ask for a review in the same chat - Messenger in Messenger, WhatsApp in WhatsApp - a card
+where they give five stars straight away, to our page and to the product they bought, and write if they want. The
+reviews show on the website. As easy as possible, a review for every purchase."
+
+- 169_chat_reviews.sql: `review_asks` (one per delivered chat order, the page token) and `chat_reviews` (one star
+  rating each: the shop, or a product by SKU; hidden; pushed_at for the website).
+- handlers/reviews.js: `askReview` the tick after an approved chat order's invoice reads Delivered (inbox2.js
+  orderUpdates, Agent Desk "review_on"; the Facebook review link is no longer needed). Messenger: a card (product
+  photo, "Star din" button to the page) + five ⭐ quick replies (5 first). WhatsApp: the page link (preview card,
+  web/icons/review-card.png) + "reply 1 to 5". Words in the chat's own script (Bangla / Banglish / English) with
+  ভাই / আপু. Messenger after 24 h: the 'review' template, whose button now opens our review page (base + token;
+  needs "Ask Meta" again on the channel for the new template).
+- `chatStars` (inbound, before the AI): a ⭐ tap, or a typed "5" / "৫" / "⭐⭐⭐⭐" within 4 days, rates the shop;
+  the thanks carries the page link. 3 stars or less: a task "call the customer".
+- web/review.html (?inbox=review&r=<token>): big stars for the shop and each product bought, an optional line each,
+  nothing pre-filled; after a good review the Facebook/Google link (review_link) is offered.
+- `pushReviews` / `reviewTick`: to the website (cz_sync POST /reviews, the sync key) as verified buyers; costareen-site
+  commit ef741a4 adds the endpoint, store_reviews and the home page block "What our buyers say" (phones too).
+- Inbox > Reviews tab: shop average, asked / answered, every review with "On the website" state, Chat, Hide / Show
+  (manager+; hidden goes off the website).
+- Tests: supabase/tests/reviews_test.mjs (33). Every suite green except ads_test (fails the same on the commit
+  before this one - not touched here) and golive (needs the sheet export).
+- NOT done: photos with a review; website (non-chat) orders keep the site's own review ask; Instagram uses the
+  Messenger card path untested; live release not done (dev only).

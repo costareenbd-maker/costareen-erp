@@ -64,6 +64,17 @@ http.createServer(async (req, res) => {
     const r = await pubRoute(deps, new Request('http://localhost:' + PORT + req.url, { method: req.method, headers: req.headers, body: req.method === 'POST' ? raw : undefined }), { asBusiness, owners, tenantDeps: null });
     res.writeHead(r.status, h); return res.end(JSON.stringify(r.body));
   }
+  // review-1: the review page's API (web/review.html), as index.ts does
+  { const rm = /[?&]inbox=review&r=([0-9a-f]{32})/.exec(req.url);
+    if (rm) {
+      const rv = await import(pathToFileURL(path.join(fnDir, 'handlers', 'reviews.js')));
+      const row = (await sql`select business_id from review_asks where token = ${rm[1]}`)[0];
+      if (!row) { res.writeHead(404, h); return res.end('{"ok":false,"error":"This page is not available."}'); }
+      let b = {}; try { b = JSON.parse(raw || '{}'); } catch (_) {}
+      const o = (await owners(sql, [row.business_id]))[0];
+      const r = await asBusiness(deps, o, 'inbox:review', (ctx) => (req.method === 'POST' ? rv.reviewAct(ctx, rm[1], b, '127.0.0.1') : rv.reviewPage(ctx, rm[1])));
+      res.writeHead(r.status, h); return res.end(JSON.stringify(r.body));
+    } }
   if (/[?&]shop=/.test(req.url)) {
     const r = await shopDoor(deps, asBusiness, owners, new Request('http://localhost:' + PORT + req.url, { method: req.method, headers: req.headers, body: req.method === 'POST' ? raw : undefined }));
     res.writeHead(r.status, h); return res.end(JSON.stringify(r.body));

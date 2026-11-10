@@ -35867,7 +35867,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 
   // ---------------------------------------------------------------- the frame
   var MENU_TABS = {
-    inbox: [['inbox', 'Inbox'], ['day', 'Day review'], ['tasks', 'Notifications'], ['orders', 'Orders'], ['land', 'Landing pages'], ['bk', 'Bookings'], ['fu', 'Follow-ups'], ['cm', 'Comments'], ['desk', 'Agent Desk'], ['kb', 'Knowledge'], ['chans', 'Chat settings'], ['stats', 'Analytics'], ['cost', 'AI cost'], ['team', 'Team']],
+    inbox: [['inbox', 'Inbox'], ['day', 'Day review'], ['tasks', 'Notifications'], ['orders', 'Orders'], ['rv', 'Reviews'], ['land', 'Landing pages'], ['bk', 'Bookings'], ['fu', 'Follow-ups'], ['cm', 'Comments'], ['desk', 'Agent Desk'], ['kb', 'Knowledge'], ['chans', 'Chat settings'], ['stats', 'Analytics'], ['cost', 'AI cost'], ['team', 'Team']],
   };
   var TABS = MENU_TABS.inbox;
   var TAB_FEAT = { team: 'groups', orders: 'orders', land: 'landing', bk: 'bookings', leads: 'leads', fu: 'followups', bc: 'broadcasts', cm: 'comments', kb: 'knowledge', stats: 'analytics' };
@@ -36303,7 +36303,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   var PF = [['name', 'Business name'], ['sells', 'What you sell (a few words)'], ['hours', 'Opening hours'], ['phone', 'Phone'], ['address', 'Address'],
             ['delivery_in', 'Delivery inside Dhaka, first kg (৳)'], ['days_in', 'Days inside Dhaka'], ['delivery_out', 'Delivery outside Dhaka, first kg (৳)'], ['days_out', 'Days outside Dhaka'], ['per_kg_in', 'Each more kg inside Dhaka (৳, 0 = flat)'], ['per_kg_out', 'Each more kg outside Dhaka (৳, 0 = flat)'], ['filament_g', 'A filament spool counts as (grams, packed)'], ['order_wa_to', 'WhatsApp alert for each new order: blank = our first WhatsApp number, or phone numbers (comma separated), or off'], ['order_wa_group', 'Or send order alerts + invoice to this WhatsApp group (name; made if missing)'], ['delivery_rule', 'Other delivery rules'],
             ['payment', 'How customers pay'], ['returns', 'Return and exchange rule'], ['discount_answer', 'Answer when asked for a discount'], ['extra_offer', 'Extra offer (mentioned once before the order)'],
-            ['tone', 'Tone of voice'], ['first_message', 'First message (website chat)'], ['review_link', 'Your review link']];
+            ['tone', 'Tone of voice'], ['first_message', 'First message (website chat)'], ['review_link', 'Facebook / Google review link (offered after a good review)']];
   function deskHtml() {
     return errOr(IB.desk, function (d) {
       var p = d.details, dd = d.detailsDraft || {};
@@ -36312,7 +36312,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
         '<label>Reply language<select class="i" data-pf="lang"><option value="both"' + (p.lang === 'both' ? ' selected' : '') + '>Bangla or English — as the customer writes</option><option value="bn"' + (p.lang === 'bn' ? ' selected' : '') + '>Bangla</option><option value="en"' + (p.lang === 'en' ? ' selected' : '') + '>English</option></select></label>' +
         '<label>Calls the customer<select class="i" data-pf="style"><option value="sir"' + (p.style === 'sir' ? ' selected' : '') + '>স্যার / ম্যাম</option><option value="bhai"' + (p.style === 'bhai' ? ' selected' : '') + '>ভাইয়া / আপু</option><option value="vai"' + (p.style === 'vai' ? ' selected' : '') + '>ভাই / আপু</option></select></label>' +
         '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="first_name"' + (p.first_name ? ' checked' : '') + '> With the first name</label>' +
-        '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="review_on"' + (p.review_on ? ' checked' : '') + '> Ask for a review a day after delivery</label>' +
+        '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="review_on"' + (p.review_on ? ' checked' : '') + '> After delivery, send the review card (stars for the shop and each product, in the same chat)</label>' +
         '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="rating_on"' + (p.rating_on ? ' checked' : '') + '> Ask for a 1-5 star rating after an order</label>' +
         '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-pf="saved_ai"' + (p.saved_ai ? ' checked' : '') + '> AI helpers on saved replies</label></div>' +
         '<h3 style="margin-top:16px">Products or services</h3><div class="sub">A service business (a clinic, a salon, a coaching centre, a travel agency) takes bookings: the AI asks your questions one at a time and records a request for your team to confirm.</div><div class="ib-form">' +
@@ -57687,6 +57687,65 @@ document.addEventListener('click', function (e) {
   document.body.appendChild(back);
   var b = back.querySelector('.dlg-f [data-woclose]'); if (b) b.focus();
 }, true);
+</script>
+<!-- review-1: Inbox > Reviews - what customers said after delivery (handlers/reviews.js erpChatReviews) -->
+<style>
+.rv-top{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.rv-kpi{background:var(--fd-card,#fff);border:1px solid var(--fd-line,#e3e5ee);border-radius:14px;padding:12px 16px;min-width:140px}
+.rv-kpi b{display:block;font-size:24px;line-height:1.2}.rv-kpi span{font-size:13px;color:var(--fd-muted,#5f6476)}
+.rv-row{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--fd-line,#e3e5ee)}
+.rv-row:last-child{border-bottom:0}
+.rv-row .st{color:#f5a524;font-size:15px;white-space:nowrap;min-width:84px}
+.rv-row .tx{flex:1;min-width:0}.rv-row .tx p{margin:2px 0 0;white-space:normal}
+.rv-row .tx .sku{font-size:12px}
+.rv-pill{display:inline-block;font-size:11px;padding:1px 8px;border-radius:999px;background:#e5f5ed;color:#1d8a5c;margin-left:6px}
+.rv-pill.off{background:#f1f2f6;color:#5f6476}.rv-pill.err{background:#fdecea;color:#c2332d}
+</style>
+<script>
+(function () {
+  var RV = { d: null, busy: false };
+  function isRv() { return typeof VIEW !== 'undefined' && VIEW === 'inbox' && window.IB && IB.tab === 'rv'; }
+  function st(n) { return '★★★★★'.slice(0, n) + '<span style="opacity:.25">' + '★★★★★'.slice(n) + '</span>'; }
+  var CHN = { messenger: 'Messenger', instagram: 'Instagram', wa_evo: 'WhatsApp', wa_cloud: 'WhatsApp', webchat: 'Website chat' };
+  function load() { if (RV.busy) return; RV.busy = true; srv('erpChatReviews', [{}], function (r) { RV.busy = false; RV.d = r; paint(); }, function (e) { RV.busy = false; RV.d = { error: (e && e.message) || String(e) }; paint(); }); }
+  function html() {
+    var d = RV.d;
+    if (!d) { load(); return '<div class="ib-c rv-card"><div class="loading">Reading…</div></div>'; }
+    if (d.error) return '<div class="ib-c rv-card"><div class="note err"><div class="ico">!</div><div>' + esc(d.error) + '</div></div></div>';
+    var rate = d.asked ? Math.round(d.answered / d.asked * 100) : 0;
+    var h = '<div class="ib-c rv-card"><div class="rv-top">' +
+      '<div class="rv-kpi"><b>' + (d.avg ? d.avg + ' ★' : '—') + '</b><span>Shop rating (' + d.count + ')</span></div>' +
+      '<div class="rv-kpi"><b>' + d.asked + '</b><span>Asked after delivery</span></div>' +
+      '<div class="rv-kpi"><b>' + d.answered + ' <small style="font-size:14px;color:var(--fd-muted,#5f6476)">' + rate + '%</small></b><span>Gave stars</span></div></div>' +
+      '<div class="sub">After a chat order is delivered, the customer gets a review card in the same chat (Messenger or WhatsApp): one tap rates the shop, the page rates each product with a line if they like. Reviews go to the website as "Verified buyer". A rating of 3 or less makes a task to call the customer. Switch it in Agent Desk.</div>';
+    if (!(d.reviews || []).length) return h + '<div class="ib-empty">No reviews yet. The first card goes out the day after a chat order is marked delivered.</div></div>';
+    var mgrUp = typeof ME === 'undefined' || !ME || /^(manager|shareholder|owner)$/.test(ME.role);
+    h += '<div>' + d.reviews.map(function (r) {
+      var site = r.hidden ? '<span class="rv-pill off">Hidden</span>' : r.onSite ? '<span class="rv-pill">On the website</span>' : r.siteError ? '<span class="rv-pill err" title="' + esc(r.siteError) + '">' + esc(r.siteError === 'not on the website' ? 'Product not on the website' : 'Waiting for the website') + '</span>' : '<span class="rv-pill off">Not on the website yet</span>';
+      return '<div class="rv-row"><div class="st">' + st(r.rating) + '</div><div class="tx"><b data-noi18n="1">' + esc(r.name || 'Customer') + '</b> · ' + esc(r.kind === 'shop' ? 'The shop' : r.product) + site +
+        (r.text ? '<p data-noi18n="1">“' + esc(r.text) + '”</p>' : '') + '<div class="sku">' + esc(CHN[r.channel] || r.channel) + ' · ' + esc(r.at) + '</div></div>' +
+        '<div style="display:flex;gap:6px">' + (r.conv ? '<button class="btn small" type="button" data-ibgoconv="' + esc(r.conv) + '">Chat</button>' : '') +
+        (mgrUp ? '<button class="btn small" type="button" data-rvhide="' + esc(r.id) + '" data-to="' + (r.hidden ? 'show' : 'hide') + '">' + (r.hidden ? 'Show' : 'Hide') + '</button>' : '') + '</div></div>';
+    }).join('') + '</div></div>';
+    return h;
+  }
+  function paint() {
+    if (!isRv()) return;
+    var v = document.getElementById('view'); if (!v) return;
+    var card = v.querySelector('.rv-card'), nh = html();
+    if (card) { if (card.getAttribute('data-h') !== nh) { var t = document.createElement('div'); t.innerHTML = nh; var nc = t.firstChild; nc.setAttribute('data-h', nh); card.replaceWith(nc); } return; }
+    var tabs = v.querySelector('.ib-tabs'); if (!tabs || !tabs.parentNode) return;
+    var t2 = document.createElement('div'); t2.innerHTML = nh; var c2 = t2.firstChild; c2.setAttribute('data-h', nh);
+    tabs.parentNode.insertBefore(c2, tabs.nextSibling);
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-rvhide]'); if (!b) return;
+    b.disabled = true;
+    srv('erpChatReviews', [{ action: b.getAttribute('data-to'), id: b.getAttribute('data-rvhide') }], function () { RV.d = null; load(); toast(b.getAttribute('data-to') === 'hide' ? 'Hidden - taken off the website.' : 'Shown on the website again.'); }, function (er) { b.disabled = false; toast(esc((er && er.message) || er), true); });
+  });
+  var v = document.getElementById('view');
+  if (v && window.MutationObserver) new MutationObserver(function () { if (isRv() && !document.querySelector('#view .rv-card')) { var had = !!RV.d; paint(); if (had) load(); } }).observe(v, { childList: true, subtree: true });
+})();
 </script>
 </body>
 </html>

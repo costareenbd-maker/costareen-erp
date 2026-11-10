@@ -682,6 +682,22 @@ async function inboxRoute(deps: any, req: Request, q0: URLSearchParams, headers:
     } else r = await asOwner(row.business_id, 'leads:form', (ctx) => ld.leadFormPage(ctx, tok));
     return new Response(JSON.stringify((r && r.body) || { ok: false }), { status: (r && r.status) || 200, headers });
   }
+  // review-1: the review page a customer opens from the chat after delivery (handlers/reviews.js; web/review.html)
+  if (what === 'review') {
+    const rv: any = await import('./handlers/reviews.js');
+    const tok = String(q0.get('r') || '');
+    const nf = new Response('{"ok":false,"error":"This page is not available."}', { status: 404, headers });
+    if (!/^[0-9a-f]{32}$/.test(tok)) return nf;
+    const row = (await deps.sql`select business_id from review_asks where token = ${tok}`)[0];
+    if (!row) return nf;
+    let r: any;
+    if (req.method === 'POST') {
+      let b: any = {}; try { b = await req.json(); } catch (_) { b = {}; }
+      const ip = (req.headers.get('cf-connecting-ip') || (req.headers.get('x-forwarded-for') || '').split(',')[0] || '').trim();
+      r = await asOwner(row.business_id, 'inbox:review', (ctx) => rv.reviewAct(ctx, tok, b, ip));
+    } else r = await asOwner(row.business_id, 'inbox:review', (ctx) => rv.reviewPage(ctx, tok));
+    return new Response(JSON.stringify((r && r.body) || { ok: false }), { status: (r && r.status) || 200, headers });
+  }
   if (what === 'order' || what === 'bill' || what === 'item') {
     const pub: any = await import('./handlers/inboxpub.js');
     const tok = String(q0.get(what === 'item' ? 'c' : 'o') || '');

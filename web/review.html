@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>⭐⭐⭐⭐⭐ আপনার রিভিউ</title>
+<meta property="og:title" content="⭐⭐⭐⭐⭐ এক ট্যাপে স্টার দিন">
+<meta property="og:description" content="আপনার অর্ডার কেমন লাগলো? ১০ সেকেন্ডে রিভিউ দিন।">
+<meta property="og:image" content="https://erp.costareen.com/icons/review-card.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+/* review-1 (handlers/reviews.js reviewPage / reviewAct): opened from the review card the shop sends in the chat after
+   delivery. The token in the address is the only key. Big stars for the shop and for each product; a line of words is
+   optional; nothing is pre-filled. */
+@font-face{font-family:"Noto Sans Bengali";src:url(fonts/NotoSansBengali-Regular.ttf) format("truetype");font-weight:400;font-display:swap}
+@font-face{font-family:"Noto Sans Bengali";src:url(fonts/NotoSansBengali-Bold.ttf) format("truetype");font-weight:700;font-display:swap}
+:root{--bg:#f5f6fa;--card:#fff;--ink:#14172a;--mute:#5f6476;--line:#e3e5ee;--acc:#5b5bd6;--star:#f5a524;--off:#d5d8e2;--ok:#1d8a5c;--okbg:#e5f5ed}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1117;--card:#171a23;--ink:#eef0f6;--mute:#9aa0b2;--line:#2a2f3c;--acc:#8b8cf2;--off:#3a3f4d;--ok:#4cc38a;--okbg:#14291f}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Bengali",sans-serif}
+body{padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(110px + env(safe-area-inset-bottom,0px))}
+main{max-width:520px;margin:0 auto}
+h1{font-size:22px;line-height:1.3;margin:4px 0 4px}
+.sub{color:var(--mute);margin:0 0 16px;font-size:15px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
+.card h2{font-size:16px;margin:0 0 2px}
+.card .hint{font-size:13px;color:var(--mute);margin:0}
+.prod{display:flex;gap:12px;align-items:center}
+.prod img{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--bg);flex:0 0 56px}
+.stars{display:flex;gap:4px;margin-top:10px}
+.stars button{border:0;background:none;padding:2px;cursor:pointer;line-height:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.stars svg{width:48px;height:48px;fill:var(--off);transition:transform .12s ease,fill .12s ease}
+.stars button.on svg{fill:var(--star)}
+.stars button:active svg{transform:scale(.88)}
+.stars button:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:8px}
+.word{font-size:14px;font-weight:600;color:var(--star);min-height:21px;margin-top:2px}
+textarea{width:100%;margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;font-size:15px;background:var(--bg);color:var(--ink);resize:vertical;min-height:52px;display:none}
+textarea.show{display:block}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,var(--bg) 70%,transparent)}
+.bar button{display:block;width:100%;max-width:520px;margin:0 auto;border:0;border-radius:14px;padding:15px;font:inherit;font-size:17px;font-weight:700;background:var(--acc);color:#fff;cursor:pointer}
+.bar button:disabled{opacity:.45;cursor:default}
+.err{color:#c2332d;text-align:center;font-size:14px;margin:8px 0 0;min-height:20px}
+.done{text-align:center;padding:36px 8px}
+.done .big{font-size:52px;line-height:1}
+.done h1{margin-top:12px}
+a.btn{display:inline-block;margin-top:14px;padding:13px 18px;border-radius:14px;background:#1877f2;color:#fff;font-weight:700;text-decoration:none}
+.msg{text-align:center;color:var(--mute);padding:40px 10px}
+</style>
+</head>
+<body>
+<main id="m"><p class="msg">…</p></main>
+<div class="bar" id="bar" hidden><button id="send" type="button" disabled>…</button><p class="err" id="err"></p></div>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var API = (q.get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+  var tok = q.get('r') || '';
+  var URL_ = API + (API.indexOf('?') >= 0 ? '&' : '?') + 'inbox=review&r=' + encodeURIComponent(tok);
+  var D = null, R = { shop: 0, items: {} }, sending = false;
+  var STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2.6 2.9 6 6.6.8-4.9 4.6 1.3 6.5L12 17.3l-5.9 3.2 1.3-6.5-4.9-4.6 6.6-.8L12 2.6Z"/></svg>';
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var T = {
+    bn: { hi: function (n, w) { return 'কেমন লাগলো' + (w ? ' ' + w : '') + '?'; }, sub: 'স্টারে একটা ট্যাপ দিলেই হবে। চাইলে দুই লাইন লিখুন।',
+          shop: function (s) { return s + ' থেকে কেনাকাটা'; }, shopHint: 'সার্ভিস, ডেলিভারি, কথা বলা', prod: 'প্রোডাক্টটি কেমন?',
+          words: ['', 'খুব খারাপ', 'ভালো না', 'মোটামুটি', 'ভালো', 'দারুণ! 😍'], ph: 'কিছু লিখবেন? (না লিখলেও হবে)', phLow: 'কী সমস্যা হয়েছিল? আমরা ঠিক করে দেবো।',
+          send: 'রিভিউ পাঠান', tap: 'স্টারে ট্যাপ দিন', sending: 'পাঠানো হচ্ছে…', thanks: 'অনেক ধন্যবাদ!', thanksSub: 'আপনার রিভিউ আমাদের ওয়েবসাইটে দেখা যাবে।',
+          lowSub: 'আমাদের টিম আপনার সঙ্গে যোগাযোগ করবে।', fb: 'Facebook পেজেও রিভিউ দিন', none: 'এই পাতাটি আর খোলা নেই।', again: 'আবার চেষ্টা করুন।' },
+    banglish: { hi: function (n, w) { return 'kemon laglo' + (w ? ' ' + w : '') + '?'; }, sub: 'Star e ekta tap dilei hobe. Chaile 2 line likhun.',
+          shop: function (s) { return s + ' theke kenakata'; }, shopHint: 'service, delivery, kotha bola', prod: 'Product ta kemon?',
+          words: ['', 'khub kharap', 'bhalo na', 'motamuti', 'bhalo', 'darun! 😍'], ph: 'kichu likhben? (na likhleo hobe)', phLow: 'ki problem hoyechilo? amra thik kore dibo.',
+          send: 'Review pathan', tap: 'Star e tap din', sending: 'pathano hocche…', thanks: 'Onek dhonnobad!', thanksSub: 'Apnar review amader website e dekha jabe.',
+          lowSub: 'Amader team apnar sathe jogajog korbe.', fb: 'Facebook page eo review din', none: 'Ei page ta ar khola nei.', again: 'Abar try korun.' },
+    en: { hi: function (n, w) { return 'How was it' + (n ? ', ' + n : '') + '?'; }, sub: 'One tap on the stars is enough. Add a line if you like.',
+          shop: function (s) { return 'Buying from ' + s; }, shopHint: 'service, delivery, talking to us', prod: 'How is the product?',
+          words: ['', 'Very bad', 'Not good', 'Okay', 'Good', 'Great! 😍'], ph: 'Anything to add? (optional)', phLow: 'What went wrong? We will fix it.',
+          send: 'Send review', tap: 'Tap the stars', sending: 'Sending…', thanks: 'Thank you so much!', thanksSub: 'Your review will show on our website.',
+          lowSub: 'Our team will get in touch with you.', fb: 'Review us on Facebook too', none: 'This page is not open any more.', again: 'Please try again.' } };
+  var L = T.bn;
+  function stars(id, n) {
+    var h = '<div class="stars" role="radiogroup" data-id="' + esc(id) + '">';
+    for (var i = 1; i <= 5; i++) h += '<button type="button" role="radio" aria-checked="' + (i === n) + '" aria-label="' + i + ' / 5" data-n="' + i + '"' + (i <= n ? ' class="on"' : '') + '>' + STAR + '</button>';
+    return h + '</div><div class="word" data-w="' + esc(id) + '">' + (n ? L.words[n] : '') + '</div>';
+  }
+  function box(id, text, n) { return '<textarea data-t="' + esc(id) + '" maxlength="1000" placeholder="' + esc(n && n <= 3 ? L.phLow : L.ph) + '"' + (n ? ' class="show"' : '') + '>' + esc(text || '') + '</textarea>'; }
+  function paint() {
+    var s = D.shopGiven, h = '<h1>' + esc(L.hi(D.you.name, D.you.word)) + '</h1><p class="sub">' + esc(L.sub) + '</p>';
+    if (s) R.shop = s.rating;
+    h += '<section class="card"><h2>' + esc(L.shop(D.shop.name || '')) + '</h2><p class="hint">' + esc(L.shopHint) + '</p>' + stars('shop', R.shop) + box('shop', s && s.text, R.shop) + '</section>';
+    D.items.forEach(function (it) {
+      if (it.given && !R.items[it.sku]) R.items[it.sku] = it.given.rating;
+      var n = R.items[it.sku] || 0;
+      h += '<section class="card"><div class="prod">' + (it.image ? '<img src="' + esc(it.image) + '" alt="" loading="lazy">' : '') + '<div><h2>' + esc(it.name) + '</h2><p class="hint">' + esc(L.prod) + '</p></div></div>' +
+        stars('p:' + it.sku, n) + box('p:' + it.sku, it.given && it.given.text, n) + '</section>';
+    });
+    document.getElementById('m').innerHTML = h;
+    document.getElementById('bar').hidden = false;
+    btn();
+  }
+  function btn() {
+    var b = document.getElementById('send'), any = R.shop || Object.keys(R.items).some(function (k) { return R.items[k]; });
+    b.disabled = !any || sending; b.textContent = sending ? L.sending : any ? L.send : L.tap;
+  }
+  document.addEventListener('click', function (e) {
+    var s = e.target.closest && e.target.closest('.stars button');
+    if (!s) return;
+    var g = s.parentNode, id = g.getAttribute('data-id'), n = Number(s.getAttribute('data-n'));
+    if (id === 'shop') R.shop = n; else R.items[id.slice(2)] = n;
+    Array.prototype.forEach.call(g.children, function (x, i) { x.classList.toggle('on', i < n); x.setAttribute('aria-checked', String(i + 1 === n)); });
+    var w = document.querySelector('[data-w="' + id + '"]'); if (w) w.textContent = L.words[n];
+    var t = document.querySelector('[data-t="' + id + '"]'); if (t) { t.classList.add('show'); t.placeholder = n <= 3 ? L.phLow : L.ph; }
+    if (navigator.vibrate) try { navigator.vibrate(12); } catch (_) {}
+    btn();
+  });
+  function val(id) { var t = document.querySelector('[data-t="' + id + '"]'); return t ? t.value : ''; }
+  document.getElementById('send').addEventListener('click', function () {
+    if (sending) return;
+    sending = true; btn(); document.getElementById('err').textContent = '';
+    var body = { shop: R.shop ? { rating: R.shop, text: val('shop') } : null, items: D.items.filter(function (it) { return R.items[it.sku]; }).map(function (it) { return { sku: it.sku, rating: R.items[it.sku], text: val('p:' + it.sku) }; }) };
+    fetch(URL_, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json(); }).then(function (r) {
+      sending = false;
+      if (!r || !r.ok) { document.getElementById('err').textContent = (r && r.error) || L.again; btn(); return; }
+      var low = (R.shop && R.shop <= 3) || Object.keys(R.items).some(function (k) { return R.items[k] && R.items[k] <= 3; });
+      document.getElementById('bar').hidden = true;
+      document.getElementById('m').innerHTML = '<div class="done"><div class="big">' + (low ? '🙏' : '💛') + '</div><h1>' + esc(L.thanks) + '</h1><p class="sub">' + esc(low ? L.lowSub : L.thanksSub) + '</p>' +
+        (!low && r.facebook ? '<a class="btn" href="' + esc(r.facebook) + '" target="_blank" rel="noopener">' + esc(L.fb) + '</a>' : '') + '</div>';
+    }).catch(function () { sending = false; document.getElementById('err').textContent = L.again; btn(); });
+  });
+  fetch(URL_).then(function (r) { return r.json(); }).then(function (d) {
+    if (!d || !d.ok) { document.getElementById('m').innerHTML = '<p class="msg">' + esc(L.none) + '</p>'; return; }
+    D = d; L = T[d.lang] || T.bn;
+    document.documentElement.lang = d.lang === 'en' ? 'en' : 'bn';
+    paint();
+  }).catch(function () { document.getElementById('m').innerHTML = '<p class="msg">' + esc(L.none) + '</p>'; });
+})();
+</script>
+</body>
+</html>

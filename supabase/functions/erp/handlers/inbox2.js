@@ -425,6 +425,12 @@ async function notifyOrder(ctx, o, what, extra) {
   const r = await deliver(ctx, ch, v, c, { kind: 'text', text: T[what] + (extra ? ' ' + extra : '') + link, payload: { courier: what } }, { author: 'system' });
   return r.ok;
 }
+/** review-1: the review ask outside Meta's 24 h window - the approved 'review' template, its button opens the review page. */
+export async function reviewTemplate(ctx, ch, v, c, o, suffix, shown) {
+  const st = ((ch.settings || {}).templates || {}), lang = (ch.settings || {}).templates_lang || 'bn';
+  if (!st[templateName('review', lang)]) return false;
+  return viaTemplate(ctx, ch, v, c, 'review', [o.name, o.no], (ch.settings || {}).templates_review_dyn ? suffix : '', shown);
+}
 /** The timer: delivery status changes of approved chat orders go to the customer; a review request a day after delivery. */
 export async function orderUpdates(ctx) {
   let n = 0;
@@ -438,9 +444,10 @@ export async function orderUpdates(ctx) {
       await ctx.tx`update chat_orders set notified_status = ${stage} where id = ${o.id}`;
       if (await notifyOrder(ctx, o, stage)) n++;
     }
-    if (stage === 'delivered' && pr.review_on && pr.review_link && !o.review_asked_at && o.notified_status === 'delivered') {
+    // review-1: the review card (stars for the shop and each product, in the same chat) - the tick after "delivered"
+    if (stage === 'delivered' && pr.review_on && !o.review_asked_at && o.notified_status === 'delivered') {
       await ctx.tx`update chat_orders set review_asked_at = now() where id = ${o.id}`;
-      if (await notifyOrder(ctx, o, 'review')) n++;
+      try { if (await ctx.tx.savepoint(async () => (await import('./reviews.js')).askReview(ctx, o))) n++; } catch (e) { console.error('askReview', e && e.message); }
     }
   }
   return n;
@@ -975,8 +982,11 @@ export async function erpInboxTemplates(ctx, payload) {
   const pr = await profile(ctx, false);
   if (p.action === 'create') {
     const lang = p.lang === 'en' ? 'en' : 'bn';
-    const r = await templatesCreate(ctx, ch, lang, { orderBase: (await feat(ctx, 'order_page')) ? orderBase(ctx) : '', reviewLink: /^https:\/\//.test(str(pr.review_link)) ? str(pr.review_link) : '' });
+    // review-1: the review template's button opens our review page for that order (its end of address per order)
+    const r = await templatesCreate(ctx, ch, lang, { orderBase: (await feat(ctx, 'order_page')) ? orderBase(ctx) : '', reviewBase: (await import('./reviews.js')).reviewBase(ctx),
+      reviewLink: /^https:\/\//.test(str(pr.review_link)) ? str(pr.review_link) : '' });
     s.templates_lang = lang;
+    if (r.review && r.review.status !== 'ERROR' && r.review.status !== 'SKIPPED') s.templates_review_dyn = true;
     s.templates = { ...(s.templates || {}) };
     for (const k of Object.keys(r)) s.templates[r[k].name] = r[k].status;
     await ctx.tx`update inbox_channels set settings = ${ctx.tx.json(s)} where id = ${ch.id}`;

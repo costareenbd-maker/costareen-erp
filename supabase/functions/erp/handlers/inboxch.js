@@ -415,7 +415,8 @@ function templateBody(ch, key, lang, o) {
   const comps = [{ type: 'BODY', text: t[lang === 'en' ? 'en' : 'bn'], example: { body_text: [t.ex] } }];
   const urlEx = (u) => (ch.kind === 'messenger' ? { url_suffix_example: u } : [u]);   // Messenger and WhatsApp spell the example differently
   if (t.track && o.orderBase) comps.push({ type: 'BUTTONS', buttons: [{ type: 'URL', text: lang === 'en' ? 'Track' : 'ট্র্যাক', url: o.orderBase + '{{1}}', example: urlEx(o.orderBase + 'abc123') }] });
-  if (t.review && o.reviewLink) comps.push({ type: 'BUTTONS', buttons: [{ type: 'URL', text: lang === 'en' ? 'Leave a review' : 'রিভিউ দিন', url: o.reviewLink }] });
+  if (t.review && o.reviewBase) comps.push({ type: 'BUTTONS', buttons: [{ type: 'URL', text: lang === 'en' ? 'Give stars' : 'স্টার দিন', url: o.reviewBase + '{{1}}', example: urlEx(o.reviewBase + 'abc123') }] });
+  else if (t.review && o.reviewLink) comps.push({ type: 'BUTTONS', buttons: [{ type: 'URL', text: lang === 'en' ? 'Leave a review' : 'রিভিউ দিন', url: o.reviewLink }] });
   return { name: templateName(key, lang), language: lang === 'en' ? 'en' : 'bn', category: 'UTILITY', components: comps };
 }
 async function templateHome(ctx, ch) {
@@ -433,7 +434,7 @@ async function templateHome(ctx, ch) {
 export async function templatesCreate(ctx, ch, lang, o) {
   const home = await templateHome(ctx, ch), out = {};
   for (const key of TEMPLATE_KEYS) {
-    if (key === 'review' && !o.reviewLink) { out[key] = { name: templateName(key, lang), status: 'SKIPPED', error: 'No review link set.' }; continue; }
+    if (key === 'review' && !o.reviewLink && !o.reviewBase) { out[key] = { name: templateName(key, lang), status: 'SKIPPED', error: 'No review link set.' }; continue; }
     const body = templateBody(ch, key, lang, o);
     const r = await call(ctx, home.url, { headers: home.headers, body });
     out[key] = { name: body.name, status: r.ok ? str(r.json.status || 'PENDING').toUpperCase() : 'ERROR', error: r.ok ? '' : why(r) };

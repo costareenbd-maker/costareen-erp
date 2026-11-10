@@ -271,6 +271,8 @@ export async function ingest(ctx, ch, ev) {
   try { await ctx.tx.savepoint(async () => (await import('./holds.js')).holdReply(ctx, ch, contact, conv, text)); } catch (e) { console.error('holdReply', e && e.message); }
   // multi-wa-1: a number kept for sending or collecting data keeps what comes in, answers nobody, alerts nobody
   if (purposeOf(ch) !== 'chat') return { conversationId: conv.id };
+  // review-1: a star tap / "5" after the review card rates the shop; the thanks goes out, the AI does not answer it
+  try { if (await ctx.tx.savepoint(async () => (await import('./reviews.js')).chatStars(ctx, ch, contact, conv, text, ev.payload))) return { conversationId: conv.id }; } catch (e) { console.error('chatStars', e && e.message); }
   const answerable = (ch.status === 'live' || conv.is_test) && conv.mode === 'ai' && await aiAllowed(ctx, ch);
   if (!answerable) {
     // alerts-1: the team holds this chat - the customer's new message goes to the phones
@@ -1142,6 +1144,8 @@ export async function inboxTick(ctx) {
   // delivery updates for orders taken in a chat (from the invoice's delivery status), and the review request
   try { out.updates = await (await import('./inbox2.js')).orderUpdates(ctx); } catch (_) { /* fine */ }
   try { out.bookings = await (await import('./inbox2.js')).bookingReminders(ctx); } catch (_) { /* fine */ }
+  // review-1: reviews given in chats go to the website
+  try { out.reviews = await ctx.tx.savepoint(async () => (await import('./reviews.js')).reviewTick(ctx)); } catch (_) { /* next tick */ }
   // 136: the Meta pixel hears Lead / Purchase / returns from the server - only for real orders
   try { out.pixel = await (await import('./pixel.js')).pixelTick(ctx); } catch (_) { /* before 136 */ }
   return out;
