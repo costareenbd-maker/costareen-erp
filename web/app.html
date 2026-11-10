@@ -2101,9 +2101,15 @@ function wireInvoice() {
 
   var c = el('clearInv');
   if (c) c.addEventListener('click', async function () {
-    if (CART.length && !(await uiConfirm('Clear this invoice? Every product line on it is removed.'))) return;
-    CART = [];
-    FORM.delivery = 0; FORM.advance = 0; FORM.invDisc = 0; FORM.delTouched = false; FORM.delAuto = false; FORM.zone = ''; FORM.zoneEdit = false;
+    // crit7-trust (10 Nov 2026): Clear empties the whole invoice - products, customer, payment, delivery and note -
+    // the same fresh start as after a save (it kept the customer, so the next sale went to the wrong person)
+    var trustAny = CART.length || String(FORM.name || '').trim() || String(FORM.phone || '').trim() || String(FORM.address || '').trim() ||
+      num(FORM.paidNow) || num(FORM.delivery) || num(FORM.invDisc) || (FORM.splits && FORM.splits.length);
+    if (trustAny && !(await uiConfirm('Clear this invoice?\nProducts, customer and payment are removed.'))) return;
+    CART = []; ACCT = null; iSearch = '';
+    FORM = { payMode:'full', paidNow:0, phone:'', name:'', address:'', source:((OPT && OPT.sources && OPT.sources[0]) || 'Customer pickup'),
+             touched:false, method:'', status:FORM.status, delivery:0, advance:0, date:'' };
+    try { if (typeof trustAfterClear === 'function') trustAfterClear(); } catch (e) {}
     updateCounts(); repaint();
   });
 
@@ -10821,7 +10827,7 @@ function customerPageHtml() {
     c.invoices.map(function (i) {
       return '<tr><td class="nm"><button class="linkbtn" type="button" data-openinv="' + esc(i.id) + '">' + esc(i.id) + '</button></td><td>' + esc(i.date) + '</td><td class="num">' + fmt(i.units) + '</td>' +
         '<td class="num">' + fmt(i.total) + '</td><td class="num">' + (i.returned ? '− ' + fmt(i.returned) : '—') + '</td>' +
-        '<td class="num">' + (i.due ? '<span class="pill out">' + fmt(i.due) + '</span>' : '<span class="pill ok">paid</span>') + '</td><td>' + esc(i.delivery || '—') + '</td></tr>';
+        '<td class="num">' + (typeof trustDueCell === 'function' ? trustDueCell(i.due, i.date) : (i.due ? '<span class="pill out">' + fmt(i.due) + '</span>' : '<span class="pill ok">paid</span>')) + '</td><td>' + esc(i.delivery || '—') + '</td></tr>';
     }).join('') + '</tbody></table></div>' + (c.moreInvoices ? '<div class="sub" style="margin-top:8px">' + fmt(c.moreInvoices) + ' older invoice(s) not shown.</div>' : '');
   h += '</div></section>';
 
@@ -13242,8 +13248,9 @@ function viewCash() {
   }
 
   var live = c.accounts.filter(function (a) { return !a.archived; }), old = c.accounts.filter(function (a) { return a.archived; });
-  h += '<section><div class="cash_tot"><span>In hand and at the bank <b>' + esc(cur) + ' ' + fmt(c.inHand) + '</b></span>' +
-    (c.total !== c.inHand ? '<span class="sub" style="margin:0">with what the courier holds: ' + fmt(c.total) + '</span>' : '') +
+  var trustIn = c.inAccounts !== undefined && c.inAccounts !== null ? c.inAccounts : c.inHand;   // crit7-trust: the accounts only
+  h += '<section><div class="cash_tot"><span>In hand and at the bank <b>' + esc(cur) + ' ' + fmt(trustIn) + '</b></span>' +
+    (c.total !== trustIn ? '<span class="sub" style="margin:0">with what the courier holds: ' + fmt(c.total) + '</span>' : '') +
     '<span style="flex:1"></span><button class="btn" type="button" data-cform="transfer">Move money</button>' +
     (ed ? '<button class="btn" type="button" data-cform="count" title="The account really holds something else: bring the book to it, with a reason">Correct a balance</button><button class="btn primary" type="button" data-cform="setup" title="Add a bank account, wallet or payment gateway; rename or retire one; choose where each payment method lands">+ Add / change accounts</button>' : '') + '</div>' +
     '<div class="cash_grid">' + live.concat(CASH_FORM === 'setup' ? old : []).map(function (a) {
@@ -31434,7 +31441,7 @@ try { fd19After(); } catch (e) {}
   function cpSync() {
     var on = document.documentElement.getAttribute('data-skin') === 'fd', c = el('o_cp');
     if (!on || !c) { document.body.classList.remove('fd-nocp'); return; }
-    var useful = c.querySelector('.crumbs button, .crumbs a');   // fd-37: a back link only (actions live in each screen's head)
+    var useful = /^(settings|tools|syscheck|platform)$/.test(document.body.getAttribute('data-fdview') || '') ? c.querySelector('.o_acts button') : c.querySelector('.crumbs button, .crumbs a');   // crit7-calm: their crumbs are hidden   // fd-37: a back link only (actions live in each screen's head)
     // night-f1 review fix: the "group / screen" crumbs (nightCrumbs turns the group into span.nt-grp) are shown too -
     // except where fd-35's rule hides the crumbs anyway (Settings, Tools, Syscheck, Platform)
     if (!useful && !/^(settings|tools|syscheck|platform)$/.test(document.body.getAttribute('data-fdview') || '')) useful = c.querySelector('.crumbs .nt-grp');
@@ -40557,7 +40564,8 @@ saveProduct = function () {
     b.style.display = on() || leadsOnly ? '' : 'none';
     var w = waiting(), n = w.brief + w.watch + w.engine;
     var c = b.querySelector('.count'); if (!c) { c = document.createElement('span'); c.className = 'count'; b.appendChild(c); } c.textContent = n ? String(n) : ''; c.style.display = n ? '' : 'none';
-    b.setAttribute('aria-selected', IN[VIEW] || VIEW === 'ai' ? 'true' : 'false');
+    var own = VIEW !== 'ai' && document.querySelector('#nav button[data-view="' + VIEW + '"]');   // crit7-calm: Leads has its own menu item
+    b.setAttribute('aria-selected', (IN[VIEW] && !(own && own !== b && own.style.display !== 'none')) || VIEW === 'ai' ? 'true' : 'false');
   }
   setInterval(syncNav, 3000); setTimeout(syncNav, 1500);
   function engineState() {
@@ -42332,15 +42340,23 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
     var pT = function (v) { return typeof tk === 'function' ? tk(Math.round(Number(v) || 0)) : fmt(Math.round(Number(v) || 0)) + ' TK'; };
     var pG = Number(r.goodsBdt) > 0 ? Number(r.goodsBdt) : r.lines.reduce(function (t, l) { return t + (Number(l.goods) || 0) * (Number(l.qty) || 0); }, 0);
     var pS = Number(r.shippingBdt) > 0 ? Number(r.shippingBdt) : Math.max(0, (Number(r.totalBdt) || 0) - pG);
+    // crit7-trust (10 Nov 2026): a "Price each" column only when a line has a typed price, the goods / shipping split only
+    // when there is shipping; otherwise one "Cost each" column, the source said once in its header
+    var hasP = r.lines.some(function (l) { return Number(l.priceBdt) > 0; });
+    var hasS = pS > 0.5 || r.lines.some(function (l) { return Number(l.shipping) > 0; });
+    var srcT = hasP || r.priced ? '' : '<span class="trust-src">' + esc(bnL(' · from the price book', ' · প্রাইস বুক থেকে')) + '</span>';
     var rows = r.lines.map(function (l) {
       return '<tr><td class="nm">' + esc(l.name || l.sku) + (l.sku ? '<br><span class="sku">' + esc(l.sku) + '</span>' : '') + '</td><td class="num">' + fmt(l.qty) + '</td>' +
-        '<td class="num">' + (l.priceBdt > 0 ? fmt(l.priceBdt) : '—') + '</td><td class="num">' + fmt(l.goods) + '</td><td class="num">' + fmt(l.shipping) + '</td>' +
+        (hasP ? '<td class="num">' + (l.priceBdt > 0 ? fmt(l.priceBdt) : '—') + '</td>' : '') +
+        (hasS ? '<td class="num">' + fmt(l.goods) + '</td><td class="num">' + fmt(l.shipping) + '</td>' : '') +
         '<td class="num' + (l.noCost ? ' pe-bad' : '') + '"><b>' + fmt(l.unitCost) + '</b></td><td class="num">' + fmt(l.total) + '</td></tr>';
     }).join('');
-    return '<div class="pe-prev"><h3 style="margin:0 0 6px">What each line will cost</h3><div class="scroll"><table><thead><tr><th>Product</th><th class="num">Qty</th>' +
-      '<th class="num">Price each (৳)</th><th class="num">Goods each</th><th class="num">Shipping each</th><th class="num">Cost each</th><th class="num">Line total</th></tr></thead><tbody>' + rows +
-      '<tr class="pe-total"><td>Total</td><td class="num">' + fmt(r.lines.reduce(function (t, l) { return t + l.qty; }, 0)) + '</td><td></td>' +
-      '<td class="num">' + fmt(Math.round(pG)) + '</td><td class="num">' + fmt(Math.round(pS)) + '</td><td></td><td class="num">' + fmt(r.totalBdt) + '</td></tr></tbody></table></div>' +
+    return '<div class="pe-prev"><h3 style="margin:0 0 6px">What each line will cost</h3><div class="scroll"><table><thead><tr data-noi18n="1"><th>' + esc(bnL('Product', 'প্রোডাক্ট')) + '</th><th class="num">' + esc(bnL('Qty', 'পরিমাণ')) + '</th>' +
+      (hasP ? '<th class="num">' + esc(bnL('Price each (৳)', 'প্রতিটার দাম (৳)')) + '</th>' : '') +
+      (hasS ? '<th class="num">' + esc(bnL('Goods each', 'প্রতিটার মাল')) + srcT + '</th><th class="num">' + esc(bnL('Shipping each', 'প্রতিটার শিপিং')) + '</th>' : '') +
+      '<th class="num">' + esc(bnL('Cost each (৳)', 'প্রতিটার খরচ (৳)')) + (hasS ? '' : srcT) + '</th><th class="num">' + esc(bnL('Line total', 'লাইনের মোট')) + '</th></tr></thead><tbody>' + rows +
+      '<tr class="pe-total"><td>' + esc(bnL('Total', 'মোট')) + '</td><td class="num">' + fmt(r.lines.reduce(function (t, l) { return t + l.qty; }, 0)) + '</td>' + (hasP ? '<td></td>' : '') +
+      (hasS ? '<td class="num">' + fmt(Math.round(pG)) + '</td><td class="num">' + fmt(Math.round(pS)) + '</td>' : '') + '<td></td><td class="num">' + fmt(r.totalBdt) + '</td></tr></tbody></table></div>' +
       '<div class="sub" style="margin-top:6px">' + bnL('Goods ', 'মাল ') + pT(pG) + bnL(' + shipping and costs ', ' + শিপিং ও খরচ ') + pT(pS) + (r.freightNote ? ' (' + esc(r.freightNote) + ')' : '') +
       ' = <b>' + pT(r.totalBdt) + '</b>. ' + (r.priced ? bnL('Shared by each line’s price.', 'প্রতিটা লাইনের দাম অনুযায়ী ভাগ করা।') : bnL('Shared by the price book / the products’ cost.', 'প্রাইস বুক / প্রোডাক্টের খরচ অনুযায়ী ভাগ করা।')) + '</div></div>';
   }
@@ -47557,6 +47573,7 @@ html[data-look="clean"] .dm-lock { border:1px solid var(--fd-border, transparent
     var v = el('view'); if (!v || v.querySelector('.dm-unm')) return;
     var n = (CASH.loose || []).length + (CASH.unassigned || []).length; if (!n) return;
     var sum = 0; (CASH.loose || []).concat(CASH.unassigned || []).forEach(function (p) { sum += Number(p.amount) || 0; });
+    if (typeof trustLoose === 'function') { var tl7 = trustLoose(); n = tl7.n; sum = tl7.sum; }   // crit7-trust: every unplaced payment, not the first 200
     var s = document.createElement('div'); s.className = 'dm-unm';
     s.innerHTML = '<div class="t" data-noi18n="1">' + (bn()
       ? '<b>' + n + 'টা পেমেন্ট</b> কোন অ্যাকাউন্টে গেছে বলা নেই — ' + tk(sum, { cur: CASH.currency }) + ' এখনো কোনো ব্যালেন্সে নেই।'
@@ -50946,6 +50963,7 @@ html[lang="bn"][data-look="clean"][data-skin="fd"] #view :is(label.f, .fdd-lbl, 
     var v = document.getElementById('view'), s = v && v.querySelector('.dm-unm'); if (!s) return;
     var n = (CASH.loose || []).length + (CASH.unassigned || []).length, sum = 0;
     (CASH.loose || []).concat(CASH.unassigned || []).forEach(function (p) { sum += Number(p.amount) || 0; });
+    if (typeof trustLoose === 'function') { var tl7 = trustLoose(); n = tl7.n; sum = tl7.sum; }   // crit7-trust: every unplaced payment, not the first 200
     var t = s.querySelector('.t');
     if (t && n && !t.getAttribute('data-lk')) {
       t.setAttribute('data-lk', '1');
@@ -55097,9 +55115,11 @@ html[lang="bn"] #invdone .till-waq { font-size:14px; }
       var nameHtml = '<b data-noi18n="1">' + E(c.name) + '</b>';
       var cnt = typeof fmt === 'function' ? fmt(c.orders) : String(c.orders);
       var past = (Number(c.orders) || 0) > 0 ? '<br><span class="sub">' + E(LL(cnt + ' previous order(s), ' + money(c.spent || 0) + ' spent.', 'আগের অর্ডার ' + cnt + 'টি, মোট ' + money(c.spent || 0) + '।')) + '</span>' : '';
-      html = '<div class="note ok" style="margin-top:12px"><div class="ico">✓</div><div class="till-owner" data-noi18n="1">' +
-        LL('This phone belongs to ' + nameHtml + ' - name filled in. Change the phone if this is someone else.',
-           'এই ফোন নম্বর ' + nameHtml + '-এর - নামটা বসানো হয়েছে। অন্য কেউ হলে ফোন নম্বর বদলান।') + past + '</div></div>';
+      // crit7-trust (10 Nov 2026): the stored customer is kept (owner decision); the note says so plainly, with the typed name
+      var typedHtml = '<b data-noi18n="1">' + E(typed) + '</b>';
+      html = '<div class="note warn" style="margin-top:12px"><div class="ico">!</div><div class="till-owner" data-noi18n="1">' +
+        LL('You typed ' + typedHtml + ', but this phone is saved as ' + nameHtml + '. The invoice goes to ' + nameHtml + '. If this is someone else, change the phone.',
+           'আপনি লিখেছিলেন ' + typedHtml + ', কিন্তু এই ফোন নম্বর ' + nameHtml + ' নামে সেভ করা। ইনভয়েস ' + nameHtml + '-এর নামে যাবে। অন্য কেউ হলে ফোন নম্বর বদলান।') + past + '</div></div>';
     }
     OWN = html ? { d: digits(c.phone || (typeof FORM !== 'undefined' && FORM.phone)), html: html, flash: same ? 0 : Date.now() + 1300 } : null;
     ownerPaint();
@@ -55282,6 +55302,7 @@ html[lang="bn"] #view .cash_card .desk-stmt { font-size:14px; }
   var can = function (id) { try { return typeof pageCan === 'function' ? pageCan(id) : true; } catch (e) { return false; } };
   var rank = function () { return hasMe() ? ({ sales: 1, manager: 2, shareholder: 3, owner: 4 }[ME.role] || 0) : 4; };
   var staffNoCost = function () { return hasMe() && !top() && !can('costs'); };
+  try { window.staffNoCost = staffNoCost; } catch (e) {}   // crit7-trust: one rule for every cost figure on a staff page
 
   /* =========================================================== 1. balance sheet: the joint line's parts said in words */
   function jointSub(p, cur) {
@@ -55405,6 +55426,7 @@ html[lang="bn"] #view .cash_card .desk-stmt { font-size:14px; }
     if (s && typeof CASH !== 'undefined' && CASH) {
       var n = (CASH.loose || []).length + (CASH.unassigned || []).length, sum = 0;
       (CASH.loose || []).concat(CASH.unassigned || []).forEach(function (p) { sum += Number(p.amount) || 0; });
+      if (typeof trustLoose === 'function') { var tl7 = trustLoose(); n = tl7.n; sum = tl7.sum; }   // crit7-trust: every unplaced payment, not the first 200
       var txt = isBn() ? '<b>' + n + 'টা পেমেন্ট</b> অ্যাকাউন্টের অপেক্ষায় · ' + money(sum, CASH.currency !== 'BDT' ? CASH.currency : '')
                        : '<b>' + n + ' payment' + (n === 1 ? '' : 's') + '</b> wait' + (n === 1 ? 's' : '') + ' for an account · ' + money(sum, CASH.currency !== 'BDT' ? CASH.currency : '');
       var t = s.querySelector('.t');
@@ -55641,6 +55663,756 @@ html[lang="bn"] #view .cash_card .desk-stmt { font-size:14px; }
       I18N_PAT.push(['^(.+) has (৳[0-9,.]+) in the business\\. More than that cannot be taken back\\.$', '$1-এর ব্যবসায় আছে $2। এর বেশি ফেরত নেওয়া যাবে না।']);
       I18N_PAT.push(['^The book already says (৳[0-9,.]+)\\. Nothing to correct\\.$', 'হিসাবে আগেই $1 লেখা আছে। ঠিক করার কিছু নেই।']);
     }
+  } catch (e) {}
+})();
+</script>
+<!-- CRIT7-MERGE 2026-11-10 -->
+<!-- crit7:trust -->
+<!-- crit7-trust (10 Nov 2026): seventh critique, trust and control - every box over the page (Statement, Cancel, Fix,
+     Return, Parcel, the saved-invoice and done windows, the import check, New business, the web-order box, the small
+     dialogs) closes by a top close, Esc and a click on the dim background, keeps the keyboard inside and gives the focus
+     back to the button that opened it (a typed-in form asks first); the Statement's buttons stay at the bottom of its
+     card; money received but not yet in an account counts in Money in hand and has its own balance-sheet row with the
+     place button; Clear invoice empties the customer and payment too; a due amount looks the same everywhere (red figure,
+     one weight; paid in ink); a staff page shows no cost (products list / drawer / page, joint stock); the balance sheet's
+     date in the app's format and the joint line's pool named once. -->
+<style>
+/* ---- the top close of every box */
+.trust-x { display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; width:40px; height:40px; padding:0; margin:0;
+  border:1px solid var(--fd-border, #E4E7EC); border-radius:999px; background:var(--fd-card, #fff); color:var(--fd-text, #17181C); cursor:pointer; }
+.trust-x:hover { background:var(--fd-hover, rgba(16,24,40,.06)); }
+.trust-x:focus-visible { outline:2px solid var(--fd-text, #17181C); outline-offset:2px; }
+.trust-x svg { width:18px; height:18px; }
+.trust-hasx { position:relative; }
+.trust-hasx > .trust-x { position:absolute; top:12px; right:12px; z-index:2; }
+.trust-hasx > h2:first-of-type, .trust-hasx > .dlg-t, .trust-hasx > h2.trust-pad { padding-right:48px; }
+.trust-nudge { animation:trust-nudge .32s cubic-bezier(.2,.8,.2,1); }
+@keyframes trust-nudge { 0%, 100% { transform:translateX(0); } 30% { transform:translateX(-6px); } 65% { transform:translateX(5px); } }
+@media (prefers-reduced-motion:reduce) { .trust-nudge { animation:none; } }
+/* a question asked over a box sits above it (the boxes are at 9000, the dialogs were at 1000) */
+html body > .dlg-back { z-index:9100; }
+
+/* ---- the Statement: the close in the header row, the buttons always at the bottom of the card */
+#stmtbox > .card { position:relative; }
+#stmtbox .trust-head { flex-wrap:wrap; row-gap:8px; }
+#stmtbox .trust-head > h2 { min-width:0; overflow-wrap:anywhere; }
+#stmtbox .trust-head > .chip { min-height:36px; }
+#stmtbox .trust-head > .trust-x { order:9; }
+#stmtbox > .card > .row.trust-foot { position:sticky; bottom:calc(-1 * var(--trust-pb, 20px)); z-index:1; flex-wrap:wrap;
+  margin:14px calc(-1 * var(--trust-px, 20px)) calc(-1 * var(--trust-pb, 20px)) !important; padding:12px var(--trust-px, 20px) var(--trust-pb, 20px);
+  background:var(--fd-card, #fff); border-top:1px solid var(--fd-border, #E4E7EC); }
+@media (max-width:640px) {
+  #stmtbox .trust-head > h2 { flex:1 1 calc(100% - 52px) !important; font-size:18px; }
+  #stmtbox .trust-head > .trust-x { order:1; }
+  #stmtbox .trust-head > .chip { order:2; }
+  #stmtbox > .card > .row.trust-foot { justify-content:stretch !important; }
+  #stmtbox > .card > .row.trust-foot > .btn { flex:1 1 auto; }
+}
+
+/* ---- one due token: a due amount is the negative-text red at one weight; the label stays ink; paid is ink */
+html body .c3bar .c3d, html body .c3bar .c3d.part { color:var(--fd-negative-text, #B91C1C) !important; font-weight:600 !important; }
+html body .c3bar .c3d.trust-cod { color:var(--fd-text, #17181C) !important; }
+html body #view .totals .due span:first-child, html body #stmtbox .totals .due span:first-child { color:var(--fd-text, #17181C) !important; font-weight:600 !important; }
+html body #view .totals .due span:last-child, html body #stmtbox .totals .due span:last-child { color:var(--fd-negative-text, #B91C1C) !important; font-weight:600 !important; }
+html body #view .totals .due.nt-zero span:last-child, html body #stmtbox .totals .due.nt-zero span:last-child { color:var(--fd-text, #17181C) !important; }
+html body .fd19-neg { font-weight:600; }
+.trust-due { color:var(--fd-negative-text, #B91C1C); font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.trust-paid { color:var(--fd-text, #17181C); }
+html body #view .fdd-lbl .trust-kn { display:block; margin-top:2px; font-size:12px; line-height:1.35; font-weight:400; color:var(--fd-text-2, #4B5068); white-space:normal; }
+html[lang="bn"] body #view .fdd-lbl .trust-kn { font-size:13px; }
+html body #view tfoot td.trust-due-tot { color:var(--fd-negative-text, #B91C1C) !important; }
+.trust-late { margin-left:6px; font-size:12px; }
+html[lang="bn"] .trust-late { font-size:13px; }
+
+/* ---- the balance sheet: the place button on the not-yet-placed row; the source said once in the stock-entry review */
+.bs-row .trust-place { margin-left:4px; font-size:12px; font-weight:600; min-height:0; padding:0; }
+html[lang="bn"] .bs-row .trust-place { font-size:13px; }
+.bs-row .w small .trust-place { display:inline; }
+.pe-prev th .trust-src { font-weight:400; color:var(--fd-text-3, #667085); }
+</style>
+<script>
+(function () {
+  var isBn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var LL = function (en, bn) { return isBn() ? bn : en; };
+  var E = function (s) { return typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var F = function (v) { return typeof fmt === 'function' ? fmt(v) : String(v); };
+  var X_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+  var noCost = function () { try { return typeof window.staffNoCost === 'function' ? !!window.staffNoCost() : false; } catch (e) { return false; } };
+  var dateOut = function (iso) { try { if (typeof window.bnDate === 'function') return window.bnDate(iso); } catch (e) {} return iso; };
+
+  /* ===================================================================== 1. every box over the page: close, Esc, backdrop, focus */
+  var GUARD = '#stmtbox, #cancelbox, #fixbox, #retbox, #retdone, #pcdone, #invdone, #fcon-imp, #nbz, #parcelbox > div, body > .gate, body > .dlg-back';
+  var CLOSE_SEL = '#st_close, #cx_close, #fx_close, #rt_cancel, #retdoneclose, #pc_close, #pcclose, #invnext, #nbz_x, [data-x], [data-dm-close], [data-figclose], [data-fcon="impno"]';
+  var CLOSE_RE = /^(close|cancel|done|not now|keep the sale|বন্ধ|বাতিল|ঠিক আছে)/i;
+  function shown(e) {
+    if (!e || !e.isConnected) return false;
+    var cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    var r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0;
+  }
+  function zOf(e) { var z = parseInt(getComputedStyle(e).zIndex, 10); return isNaN(z) ? 0 : z; }
+  // uiConfirm / uiPrompt / uiAlert answer their own Esc, background and focus (a prompt never closes on the background)
+  function own(ov) { return ov.classList.contains('dlg-back') && !!ov.querySelector('#dlg_t'); }
+  function boxes() { return [].filter.call(document.querySelectorAll(GUARD), function (e) { return shown(e) && getComputedStyle(e).position === 'fixed'; }); }
+  function topBox() {
+    var a = boxes(); if (!a.length) return null;
+    a.sort(function (x, y) { var d = zOf(x) - zOf(y); if (d) return d; return (x.compareDocumentPosition(y) & 4) ? -1 : 1; });
+    return a[a.length - 1];
+  }
+  function cardOf(ov) { return ov.querySelector(':scope > .card, :scope > .dlg, :scope > .gatecard') || ov.querySelector('.card, .dlg'); }
+  function closer(ov) {
+    var b = [].filter.call(ov.querySelectorAll(CLOSE_SEL), shown)[0]; if (b) return b;
+    return [].filter.call(ov.querySelectorAll('button, a.btn'), function (x) { return shown(x) && !x.hasAttribute('data-trust-x') && CLOSE_RE.test((x.textContent || '').trim()); })[0] || null;
+  }
+  function dirty(ov) {
+    return [].some.call(ov.querySelectorAll('input, textarea, select'), function (f) {
+      if (f.disabled || f.type === 'hidden' || f.type === 'search') return false;
+      if (f.tagName === 'SELECT') { var d = [].filter.call(f.options, function (o) { return o.defaultSelected; }); return f.selectedIndex !== (d.length ? d[0].index : 0); }
+      if (f.type === 'checkbox' || f.type === 'radio') return f.checked !== f.defaultChecked;
+      if (f.type === 'file') return !!f.value;
+      return String(f.value) !== String(f.defaultValue);
+    });
+  }
+  function focusables(ov) {
+    return [].filter.call(ov.querySelectorAll('button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])'), function (f) { return !f.disabled && shown(f); });
+  }
+  var ASKING = false;
+  async function closeBox(ov, how) {
+    if (!ov || !ov.isConnected || ASKING) return;
+    if (dirty(ov)) {
+      if (how === 'backdrop') { var c = cardOf(ov); if (c) { c.classList.remove('trust-nudge'); void c.offsetWidth; c.classList.add('trust-nudge'); } return; }   // typed-in work is never thrown away by a stray click
+      ASKING = true;
+      var yes = false;
+      try { yes = typeof uiConfirm === 'function' ? await uiConfirm(LL('Close without saving?\nWhat you typed here is not kept.', 'সেভ না করে বন্ধ করবেন?\nএখানে যা লিখেছেন তা থাকবে না।')) : true; } catch (e) { yes = false; }
+      ASKING = false;
+      if (!yes) return;
+    }
+    var b = closer(ov);
+    if (b) { b.click(); return; }
+    // no close of its own: take it away (the parcel box is redrawn from its state, so that is cleared too)
+    if (ov.parentNode && ov.parentNode.id === 'parcelbox') { try { PARCEL = null; } catch (e) {} ov.parentNode.parentNode && ov.parentNode.parentNode.removeChild(ov.parentNode); return; }
+    if (ov.parentNode) ov.parentNode.removeChild(ov);
+  }
+  window.trustCloseBox = closeBox;
+  function keyOf(ov) { return ov.id || (ov.parentNode && ov.parentNode.id) || ov.className.split(' ')[0]; }
+
+  // the top close; the Statement keeps it in its header row and its buttons at the bottom of the card
+  function ensureX(ov) {
+    if (own(ov)) return;
+    var card = cardOf(ov); if (!card) return;
+    if (ov.id === 'stmtbox') {
+      var cs = getComputedStyle(card);
+      card.style.setProperty('--trust-pb', cs.paddingBottom); card.style.setProperty('--trust-px', cs.paddingLeft);
+      var rows = card.querySelectorAll(':scope > .row');
+      if (rows.length > 1) rows[rows.length - 1].classList.add('trust-foot');
+      if (rows.length && rows[0].querySelector('h2')) {
+        rows[0].classList.add('trust-head');
+        if (!rows[0].querySelector('[data-trust-x]')) rows[0].appendChild(makeX());
+        var stray = card.querySelector(':scope > [data-trust-x]'); if (stray) stray.remove();
+        card.classList.remove('trust-hasx');
+        zeroDue(ov);
+        return;
+      }
+    }
+    if (card.querySelector('[data-trust-x]')) return;
+    card.classList.add('trust-hasx');
+    card.insertBefore(makeX(), card.firstChild);
+  }
+  function makeX() {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'trust-x'; b.setAttribute('data-trust-x', '1');
+    b.setAttribute('aria-label', LL('Close', 'বন্ধ করুন')); b.title = LL('Close (Esc)', 'বন্ধ করুন (Esc)'); b.setAttribute('data-noi18n', '1'); b.innerHTML = X_SVG;
+    return b;
+  }
+  var OPENER = {}, KNOWN = [], LAST_OUT = null;
+  document.addEventListener('focusin', function (e) {
+    var t = e.target; if (!t || t === document.body) return;
+    if (!boxes().some(function (b) { return b.contains(t); })) LAST_OUT = t;
+  }, true);
+  function adopt(ov) {
+    if (ov.__trust) return; ov.__trust = 1;
+    var k = keyOf(ov), a = document.activeElement;
+    if (a && ov.contains(a)) a = LAST_OUT;   // the box moved the focus in itself already: the opener is the last place outside
+    var inBox = a && boxes().some(function (b) { return b !== ov && b.contains(a); });
+    if (!OPENER[k] && a && a !== document.body && !ov.contains(a)) OPENER[k] = { el: a, box: inBox };
+    KNOWN.push(ov);
+    ensureX(ov);
+    try { new MutationObserver(function () { if (!ov.isConnected) return; ensureX(ov); fixFocus(ov); }).observe(ov, { childList: true, subtree: true }); } catch (e) {}
+    setTimeout(function () { fixFocus(ov, true); }, 40);
+  }
+  function fixFocus(ov, first) {
+    if (own(ov) || ov !== topBox()) return;
+    var a = document.activeElement;
+    if (a && ov.contains(a) && a !== ov) return;
+    var card = cardOf(ov) || ov;
+    var f = first ? [].filter.call(card.querySelectorAll('input:not([type=hidden]):not([disabled]), textarea, select'), shown)[0] : null;
+    var t = f || card.querySelector('[data-trust-x]') || focusables(ov)[0];
+    if (t) try { t.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function sweep() {
+    boxes().forEach(adopt);
+    KNOWN = KNOWN.filter(function (ov) {
+      if (ov.isConnected) return true;
+      var k = keyOf(ov);
+      setTimeout(function () {
+        // the same box drawn again (the parcel box is redrawn on every paint): keep the opener for it
+        if (boxes().some(function (b) { return keyOf(b) === k; })) return;
+        var o = OPENER[k]; delete OPENER[k];
+        if (o && o.el && o.el.isConnected && shown(o.el)) { try { o.el.focus({ preventScroll: true }); } catch (e) {} }
+      }, 30);
+      return false;
+    });
+  }
+  try { new MutationObserver(sweep).observe(document.body, { childList: true }); } catch (e) {}
+  try { var pbo = new MutationObserver(sweep); setInterval(function () { var p = document.getElementById('parcelbox'); if (p && !p.__trustObs) { p.__trustObs = 1; pbo.observe(p, { childList: true }); } }, 1000); } catch (e) {}
+
+  window.addEventListener('keydown', function (e) {
+    if (e.defaultPrevented) return;
+    if (e.key !== 'Escape' && e.key !== 'Tab') return;
+    var ov = topBox(); if (!ov || own(ov)) return;
+    if (e.key === 'Escape') {
+      // an open list inside the box (a search's results) closes first by its own Esc
+      var a = document.activeElement;
+      if (a && ov.contains(a) && a.getAttribute && a.getAttribute('aria-expanded') === 'true') return;
+      e.preventDefault(); e.stopImmediatePropagation(); closeBox(ov, 'esc'); return;
+    }
+    var f = focusables(ov); if (!f.length) return;
+    var first = f[0], last = f[f.length - 1], cur = document.activeElement;
+    if (!ov.contains(cur)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); return; }
+    if (e.shiftKey && cur === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && cur === last) { e.preventDefault(); first.focus(); }
+  }, true);
+  var DOWN = null;
+  window.addEventListener('pointerdown', function (e) { DOWN = e.target; }, true);
+  window.addEventListener('click', function (e) {
+    var x = e.target && e.target.closest && e.target.closest('[data-trust-x]');
+    if (x) { e.preventDefault(); e.stopImmediatePropagation(); closeBox(boxes().filter(function (b) { return b.contains(x); }).pop(), 'x'); return; }
+    var ov = topBox(); if (!ov || own(ov)) return;
+    if (e.target !== ov || (DOWN && DOWN !== ov)) return;   // a press that started inside the card and ended outside is not a background click
+    e.preventDefault(); e.stopImmediatePropagation(); closeBox(ov, 'backdrop');
+  }, true);
+
+  /* ===================================================================== 2. Clear invoice: a fresh start, the draft too */
+  window.trustAfterClear = function () {
+    try { window.INV_RESTORED = 0; } catch (e) {}
+    try { var o = document.getElementById('tillRestored'); if (o) o.remove(); } catch (e) {}
+    setTimeout(function () { try { if (typeof window.erpDraftSave === 'function') window.erpDraftSave(); } catch (e) {} }, 0);
+  };
+
+  /* ===================================================================== 3. one due token */
+  window.trustDueCell = function (due, date) {
+    due = Number(due) || 0;
+    if (due <= 0.5) return '<span class="trust-paid">' + E(LL('paid', 'পরিশোধিত')) + '</span>';
+    var d = null; try { d = typeof fd19Days === 'function' ? fd19Days(date) : null; } catch (e) { d = null; }
+    return '<span class="trust-due">' + F(due) + '</span>' + (d !== null && d > 60 ? '<span class="pill out trust-late" data-noi18n="1">' + E(LL('over 60 days', '৬০ দিনের বেশি')) + '</span>' : '');
+  };
+  if (typeof fd19Badge === 'function') {
+    var fd19BadgeT = fd19Badge;
+    // "Paid" is a plain state in a list, not a confirmation: ink, not green
+    fd19Badge = function (text, tone) { var a = [].slice.call(arguments); if (tone === 'positive' && /^paid$/i.test(String(text || ''))) a[1] = 'neutral'; return fd19BadgeT.apply(this, a); };
+  }
+  function zeroDue(root) {
+    [].forEach.call((root || document).querySelectorAll('.totals .due'), function (r) {
+      var s = r.querySelector('span:last-child'); if (!s) return;
+      var digits = (s.textContent || '').replace(/[^0-9১-৯]/g, '');
+      r.classList.toggle('nt-zero', !digits || /^[0০]+$/.test(digits));
+    });
+  }
+  function duePaint() {
+    var v = document.getElementById('view'); if (!v) return;
+    [].forEach.call(document.querySelectorAll('.c3bar .c3d'), function (d) { d.classList.toggle('trust-cod', /^(cash on delivery|ক্যাশ অন ডেলিভারি)/i.test((d.textContent || '').trim())); });
+    zeroDue(v);
+    // a list's total row: the Due column's total is a due amount too
+    [].forEach.call(v.querySelectorAll('table'), function (t) {
+      var ths = t.querySelectorAll('thead th'), idx = -1;
+      [].forEach.call(ths, function (th, i) { if (/^(Due|বাকি)/.test((th.textContent || '').trim())) idx = i; });
+      if (idx < 0) return;
+      [].forEach.call(t.querySelectorAll('tfoot tr'), function (tr) {
+        var td = tr.children[idx]; if (!td) return;
+        var dg = (td.textContent || '').replace(/[^0-9১-৯]/g, '');
+        td.classList.toggle('trust-due-tot', !!dg && !/^[0০]+$/.test(dg));
+      });
+    });
+  }
+  document.addEventListener('input', function () { setTimeout(function () { try { duePaint(); } catch (e) {} }, 350); }, true);
+
+  /* ===================================================================== 4. staff pages: no cost figure (the crit6-desk rule, shared) */
+  if (typeof fd20ProdTable === 'function') {
+    var fd20ProdTableT = fd20ProdTable;
+    fd20ProdTable = function () {
+      var inv = typeof FD20 !== 'undefined' && FD20 ? FD20.inv : null;
+      if (!noCost() || !inv || !inv.canCost) return fd20ProdTableT.apply(this, arguments);
+      inv.canCost = false;
+      try { return fd20ProdTableT.apply(this, arguments); } finally { inv.canCost = true; }
+    };
+  }
+  if (typeof fd20ItemBody === 'function') {
+    var fd20ItemBodyT = fd20ItemBody;
+    fd20ItemBody = function () {
+      if (!noCost() || typeof FD20 === 'undefined' || !FD20) return fd20ItemBodyT.apply(this, arguments);
+      var inv = FD20.inv, q = FD20.dq, pg = FD20.dpage, was = [inv && inv.canCost, q && q.canCost, pg && pg.canSeeMoney];
+      if (inv) inv.canCost = false; if (q) q.canCost = false; if (pg) pg.canSeeMoney = false;
+      try { return fd20ItemBodyT.apply(this, arguments); } finally { if (inv) inv.canCost = was[0]; if (q) q.canCost = was[1]; if (pg) pg.canSeeMoney = was[2]; }
+    };
+  }
+  if (typeof productPageHtml === 'function') {
+    var productPageHtmlT = productPageHtml;
+    productPageHtml = function () {
+      var d = typeof PRODP !== 'undefined' && PRODP ? PRODP.data : null;
+      if (!noCost() || !d || !d.canSeeMoney) return productPageHtmlT.apply(this, arguments);
+      // a copy without the cost: no cost or margin, no cost change, no receipt price (a receipt's unit price is the cost)
+      var c = {}; for (var k in d) if (Object.prototype.hasOwnProperty.call(d, k)) c[k] = d[k];
+      c.canSeeMoney = false; delete c.cost; delete c.margin; delete c.stockValueCost;
+      c.changes = (d.changes || []).filter(function (x) { return !/cost/i.test(String(x.field || '')); });
+      c.ledger = (d.ledger || []).map(function (m) { if (m.dir !== 'IN') return m; var n = {}; for (var j in m) n[j] = m[j]; n.price = null; return n; });
+      PRODP.data = c;
+      try { return productPageHtmlT.apply(this, arguments); } finally { if (PRODP.data === c) PRODP.data = d; }
+    };
+    try { window.productPageHtml = productPageHtml; } catch (e) {}
+  }
+  var STOCK_PAID = /<span class="v">(?:(?!<\/span>)[\s\S])*?<small>(?:paid for stock[^<]*|স্টক কেনার টাকা[^<]*)<\/small><\/span>/g;
+  if (typeof fdJtOverview === 'function') {
+    var fdJtOverviewT = fdJtOverview;
+    fdJtOverview = function () { var h = fdJtOverviewT.apply(this, arguments); return noCost() && typeof h === 'string' ? h.replace(STOCK_PAID, '') : h; };
+  }
+  if (typeof jtMonthHtml === 'function') {
+    var jtMonthHtmlT = jtMonthHtml;
+    jtMonthHtml = function () {
+      var h = jtMonthHtmlT.apply(this, arguments);
+      return noCost() && typeof h === 'string' ? h.replace(/Stock at cost [0-9,]+ · customers still owe/g, 'Customers still owe').replace(/Stock at cost [0-9,]+ · /g, '') : h;
+    };
+  }
+
+  /* ===================================================================== 5. Money: the whole unplaced sum; the balance sheet */
+  window.trustLoose = function () {
+    var C = typeof CASH !== 'undefined' && CASH ? CASH : {};
+    var n = C.looseN !== undefined && C.looseN !== null ? Number(C.looseN) : (C.loose || []).length, sum = 0;
+    if (C.looseTotal !== undefined && C.looseTotal !== null) sum = Number(C.looseTotal) || 0;
+    else (C.loose || []).forEach(function (p) { sum += Number(p.amount) || 0; });
+    (C.unassigned || []).forEach(function (p) { n++; sum += Number(p.amount) || 0; });
+    return { n: n, sum: sum };
+  };
+  // anything that moves money: the balance sheet is added up again the next time it is shown
+  if (typeof srv === 'function') {
+    var srvT = srv;
+    srv = function (name, args, ok) {
+      if (typeof ok === 'function' && /^(erpCash(PlaceMany|Reassign|Transfer|Adjust|MoveVoid|AccountSave|Setup|MapSave)|erpRecordPayment|erpCreateInvoice|erpCancelInvoice|erpReturn\w*|erpSupplierPay|erpCapitalEntryAdd)$/.test(String(name))) {
+        var okT = ok;
+        arguments[2] = function () { try { if (typeof BS !== 'undefined' && BS) BS.data = null; } catch (e) {} return okT.apply(this, arguments); };
+      }
+      return srvT.apply(this, arguments);
+    };
+  }
+  // the Money in hand tile says how much of it is not yet in an account (the one note these small tiles keep)
+  if (typeof fdhCard === 'function') {
+    var fdhCardT = fdhCard;
+    fdhCard = function (c, cur) {
+      var lt = c && c.key === 'inHand' ? Number(c.looseTotal) || 0 : 0;
+      if (!lt) return fdhCardT.apply(this, arguments);
+      var m = typeof tk === 'function' ? tk(lt) : '৳' + F(lt);
+      var h = fdhCardT.apply(this, arguments);
+      if (typeof h !== 'string') return h;
+      var note = '<small class="trust-kn" data-noi18n="1">' + E(LL('incl. ' + m + ' not yet in an account', 'এর মধ্যে ' + m + ' এখনো কোনো অ্যাকাউন্টে নেই')) + '</small>';
+      // under the title, inside it, so it follows the tile's own layout (phone and desktop differ); the server's note is not shown twice
+      return h.replace(/<div class="fdd-kn">[\s\S]*?<\/div>/, '').replace(/(<div class="fdd-lbl">)([\s\S]*?)(<\/div>)/, '$1$2' + note.replace(/\$/g, '$$$$') + '$3');
+    };
+    for (var fk in fdhCardT) if (Object.prototype.hasOwnProperty.call(fdhCardT, fk)) fdhCard[fk] = fdhCardT[fk];
+  }
+  if (typeof bsHtml === 'function') {
+    var bsHtmlT = bsHtml;
+    bsHtml = function (cur) {
+      var d = typeof BS !== 'undefined' && BS ? BS.data : null;
+      // an older server: the pool's name came in a second pair of brackets ("(Filament JV (demo))")
+      try { if (d) (d.owns || []).concat(d.owes || []).forEach(function (r) {
+        if (!r || r.key !== 'joint' || typeof r.what !== 'string') return;
+        var m = /^Our part of the joint stock \((.*)\)$/.exec(r.what); if (m) r.what = 'Our part of the joint stock: ' + m[1];
+        m = /^Owed to the joint stock \((.*)\) - money from its goods we sold$/.exec(r.what); if (m) r.what = 'Owed to the joint stock: ' + m[1] + ' - money from its goods we sold';
+      }); } catch (e) {}
+      var h = bsHtmlT.apply(this, arguments);
+      if (!d || typeof h !== 'string') return h;
+      try {
+        // the date as the app says it (and in Bangla)
+        h = h.replace(/<h2>Balance sheet · (\d{4}-\d{2}-\d{2})<\/h2>/, function (all, iso) { return '<h2 data-noi18n="1">' + E(LL('Balance sheet', 'ব্যালেন্স শিট')) + ' · ' + E(dateOut(iso)) + '</h2>'; });
+        if (d.opening && d.opening.date) h = h.replace('<small>' + E(d.opening.date + (d.opening.by ? ' by ' + d.opening.by : '')) + '</small>',
+          '<small data-noi18n="1">' + E(dateOut(d.opening.date)) + (d.opening.by ? E(LL(' by ', ' · ')) + E(d.opening.by) : '') + '</small>');
+        // the not-yet-placed row: in words, with the button that places them
+        var lr = (d.owns || []).filter(function (r) { return r && r.key === 'loose'; })[0];
+        if (lr) {
+          var n = Number(lr.n) || 0;
+          var can = typeof CASH !== 'undefined' && CASH && CASH.canEdit;
+          h = h.replace('<div class="w">' + E(lr.what) + (lr.sub ? '<small>' + E(lr.sub) + '</small>' : ''),
+            '<div class="w" data-noi18n="1">' + E(LL('Received, not yet in an account', 'পাওয়া গেছে, এখনো কোনো অ্যাকাউন্টে নেই')) + '<small>' +
+            E(isBn() ? n + 'টা পেমেন্ট' : n + ' payment' + (n === 1 ? '' : 's')) +
+            (can ? ' · <button class="linkbtn trust-place" type="button" data-dm-place="1">' + E(LL('Put them in an account', 'অ্যাকাউন্টে বসান')) + '</button>' : '') + '</small>');
+        }
+        // an opening written before this row existed: the money that was then in no account is added to the start
+        if (d.explain && Number(d.explain.looseAtOpening) > 0.5) {
+          var add = '<div class="bs-row"><div class="w" data-noi18n="1">' + E(LL('Money in no account at the opening', 'খোলার দিনে কোনো অ্যাকাউন্টে না থাকা টাকা')) +
+            '<small>' + E(LL('counted from 10 Nov 2026; the opening did not count it', '১০ নভেম্বর ২০২৬ থেকে গোনা হয়; খোলার সময় গোনা হয়নি')) + '</small></div><div class="a">' +
+            (typeof f21M === 'function' ? f21M(d.explain.looseAtOpening, cur || 'BDT') : F(d.explain.looseAtOpening)) + '</div></div>';
+          h = h.replace('<div class="bs-tot"><span>Net worth should be</span>', add + '<div class="bs-tot"><span>Net worth should be</span>');
+        }
+      } catch (e) { if (window.console) console.error('crit7-trust balance', e); }
+      return h;
+    };
+  }
+
+  /* ===================================================================== after every paint */
+  if (typeof AFTER_PAINT !== 'undefined' && AFTER_PAINT.push) AFTER_PAINT.push(function crit7Trust() {
+    try { duePaint(); sweep(); } catch (e) { if (window.console) console.error('crit7-trust paint', e); }
+  });
+
+  try {
+    var B = { 'Close without saving?': 'সেভ না করে বন্ধ করবেন?', 'What you typed here is not kept.': 'এখানে যা লিখেছেন তা থাকবে না।',
+      'Clear this invoice?': 'ইনভয়েসটা ক্লিয়ার করবেন?', 'Products, customer and payment are removed.': 'প্রোডাক্ট, কাস্টমার আর পেমেন্ট সব মুছে যাবে।',
+      'Received, not yet in an account': 'পাওয়া গেছে, এখনো কোনো অ্যাকাউন্টে নেই', 'Put them in an account': 'অ্যাকাউন্টে বসান',
+      'Stock on the shelf, at cost': 'তাকে থাকা স্টক, ক্রয়মূল্যে', 'Paid to suppliers, goods not received yet': 'সাপ্লায়ারকে দেওয়া টাকা, মাল এখনো আসেনি',
+      'Owed to suppliers (goods received, not paid)': 'সাপ্লায়ারদের পাওনা (মাল এসেছে, টাকা দেওয়া হয়নি)', 'Customers paid ahead (their advances)': 'কাস্টমারদের আগাম দেওয়া টাকা (অগ্রিম)',
+      'Investors’ returns due, not paid yet': 'বিনিয়োগকারীদের পাওনা লাভ, এখনো দেওয়া হয়নি', 'Expenses not paid yet': 'এখনো না দেওয়া খরচ',
+      'Close (Esc)': 'বন্ধ করুন (Esc)', 'over 60 days': '৬০ দিনের বেশি', 'Customers still owe': 'কাস্টমারদের কাছে এখনো পাওনা' };
+    for (var k in B) if (!I18N_BN[k]) I18N_BN[k] = B[k];
+    if (!I18N_BN.paid) I18N_BN.paid = 'পরিশোধিত';
+    I18N_PAT.push(['^incl\. (৳[0-9,]+) not yet in an account$', 'এর মধ্যে $1 এখনো কোনো অ্যাকাউন্টে নেই']);
+    I18N_PAT.push(['^Our part of the joint stock: (.+)$', 'যৌথ স্টকে আমাদের অংশ: $1']);
+    I18N_PAT.push(['^Owed to the joint stock: (.+) - money from its goods we sold$', 'যৌথ স্টকের পাওনা: $1 - এর মাল আমরা বিক্রি করেছি, সেই টাকা']);
+    I18N_PAT.push(['^Customers still owe (.+) · both belong to the partners in their shares\\.$', 'কাস্টমারদের কাছে এখনো পাওনা $1 · দুটোই অংশীদারদের, তাদের ভাগ অনুযায়ী।']);
+  } catch (e) {}
+})();
+</script>
+<!-- crit7:calm -->
+<!-- crit7-calm (10 Nov 2026): seventh (real-click) critique, the calm pass. (1) ONE rule for the chat bubble on a computer:
+     it never sits over anything you can click - the page keeps room under its last row, the bubble hides on New invoice,
+     Stock entry and while a drawer / window / save bar is there, and over a list it slips to a free spot or steps away;
+     the same chat is always one tap away in the top bar. (2) Settings: no empty strip above the title; the Defaults form
+     is read ahead so it shows at once and refreshes in place. (3) A good-news note goes when you move to another screen
+     (a problem stays until closed); one reading time for every note. (4) A half-made invoice is never forgotten: a chip
+     in the top bar "1 invoice in progress · Open". (5) Bangla never smaller than 14px in the drawers' buttons and badges.
+     (6) Phone Money: all four tabs visible, the accounts first, the money buttons under them, one "in hand" figure.
+     (7) "No WhatsApp connected" in the invoice bar: said in words once a day, then a small grey sign you can tap. -->
+<style>
+/* ---- 1. the chat bubble: room under the last row, a quiet hide, a small size for a side spot */
+@media (min-width:761px) {
+  html.calm-desk body:not([data-fdview="invoice"]) #view { padding-bottom:104px !important; }
+  html.calm-desk #aw_fab { transition:right .18s ease-out, bottom .18s ease-out, width .18s, height .18s, opacity .15s, transform .15s !important; }
+  html.calm-desk #aw_fab.calm-away { opacity:0 !important; visibility:hidden !important; pointer-events:none !important; transform:scale(.6) !important;
+    transition:opacity .15s, transform .15s, visibility 0s linear .15s !important; }
+  html.calm-desk #aw_fab.calm-mini svg { width:20px !important; height:20px !important; }
+  html.calm-desk #aw_fab.calm-mini .dot { top:3px !important; right:3px !important; width:10px !important; height:10px !important; }
+  /* the same chat from the top bar, on every screen of a computer (the phone already has it there) */
+  html:root header.topbar #fd39ask { display:flex !important; width:40px; height:40px; min-width:40px; padding:0; justify-content:center; border-radius:999px; }
+}
+@media (prefers-reduced-motion: reduce) { html.calm-desk #aw_fab, html.calm-desk #aw_fab.calm-away { transition:none !important; } }
+
+/* ---- 4. a half-made invoice waits: one chip in the top bar */
+#calm_inv { display:inline-flex; align-items:center; gap:7px; height:40px; padding:0 10px 0 12px; margin:0 8px 0 0; border-radius:999px; cursor:pointer; flex:0 0 auto;
+  border:1px solid var(--fd-border-strong, var(--fd-border, #d9dbe1)); background:var(--fd-card, #fff); color:var(--fd-text, #17181c); font:inherit; font-size:14px; font-weight:600; white-space:nowrap; }
+#calm_inv:hover { background:var(--fd-surface-2, #f4f5f8); }
+#calm_inv:focus-visible { outline:3px solid var(--fd-focus, rgba(23,24,28,.18)); outline-offset:2px; }
+#calm_inv .d { width:8px; height:8px; border-radius:50%; background:var(--fd-warning, #f59e0b); flex:0 0 8px; }
+#calm_inv .o { color:var(--fd-text-3, #6b6f7a); flex:0 0 16px; margin-left:-2px; }
+@media (max-width:760px) { #calm_inv { display:none !important; } }
+
+/* ---- 5. Bangla: the drawers' buttons, badges and links at body size (two lines allowed on a phone) */
+html[lang="bn"] .fd19-dr .fd19-df .fd19-btn, html[lang="bn"] .fd19-dr .fd19-df .fd19-btn .lb, html[lang="bn"] .fd19-dr .fd19-badge,
+html[lang="bn"] .fd19-dr .fd19-link, html[lang="bn"] .fd19-dr .fd19-btn.is-sm, html[lang="bn"] .fd20-dr .fd20-btn, html[lang="bn"] .fd20-dr [class*="badge"],
+html[lang="bn"] .fd21-drw button, html[lang="bn"] .fd21-drw [class*="badge"] { font-size:14px !important; }
+html[lang="bn"] .fd19-dr .fd19-badge { min-height:28px; height:auto !important; }
+@media (max-width:640px) {
+  html[lang="bn"] .fd19-dr .fd19-df .fd19-btn.sell-lbtn > .sell-sl { font-size:14px !important; line-height:1.15; white-space:normal !important; text-align:center; max-width:76px; }
+  html[lang="bn"] .fd19-dr .fd19-df .fd19-btn { min-height:44px !important; }
+}
+
+/* ---- 6. phone Money: four tabs in two rows, the money buttons under the accounts */
+@media (max-width:640px) {
+  body[data-fdview="cash"] #view .fd21-tabs { display:grid !important; grid-template-columns:1fr 1fr; gap:8px; overflow:visible !important; padding:0 !important;
+    margin-left:0 !important; margin-right:0 !important; width:auto !important; max-width:none !important; -webkit-mask-image:none !important; mask-image:none !important; }
+  body[data-fdview="cash"] #view .fd21-tabs > .fd21-pill { width:100%; min-width:0; justify-content:center; min-height:44px; margin:0 !important; }
+  #view .calm-mmore { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; margin:12px 0 4px; }
+  #view .calm-mmore > .btn { display:inline-flex !important; align-items:center; justify-content:center; gap:6px; width:100%; min-height:44px; height:auto !important; margin:0 !important;
+    white-space:normal; text-align:center; line-height:1.2; padding:8px 8px !important; font-size:14px; }
+  #view .calm-mmore > .btn svg { flex:0 0 16px; }
+}
+#view .cash_tot.calm-one > span:first-child { display:none; }
+#view .cash_tot.calm-empty { display:none !important; }
+
+/* ---- 7. WhatsApp not connected: a small grey sign in the invoice bar */
+.c3bar .calm-wa { position:relative; display:inline-grid; place-items:center; width:40px; height:40px; flex:0 0 40px; margin-right:6px; border:0; border-radius:12px; cursor:pointer;
+  background:transparent; color:var(--fd-text-3, #6b6f7a); }
+.c3bar .calm-wa:hover, .c3bar .calm-wa:focus-visible { background:var(--fd-surface-2, #f4f5f8); color:var(--fd-text-2, #4a4d57); }
+.c3bar .calm-wa svg { width:20px; height:20px; }
+@media (max-width:760px) { #view .c3bar > .calm-wa { order:9; } }
+</style>
+<script>
+(function () {
+  var bn = function () { return typeof LANG !== 'undefined' && LANG === 'bn'; };
+  var T = function (en, b) { return bn() ? b : en; };
+  var E = function (s) { return typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var $ = function (id) { return document.getElementById(id); };
+  var desk = function () { return window.innerWidth > 760; };
+  var phone = function () { return typeof ntPhone === 'function' ? ntPhone() : window.innerWidth <= 640; };
+  var vis = function (e) { if (!e || !e.getClientRects().length) return false; var s = getComputedStyle(e); return s.visibility !== 'hidden' && s.display !== 'none' && +s.opacity !== 0; };
+
+  /* ===================================================================== 1. the chat bubble never covers a control */
+  var ACT = 'button, a[href], input, select, textarea, summary, label, [role="button"], [role="tab"], [role="link"], [tabindex]:not([tabindex="-1"]), ' +
+    '[data-pick], [onclick], tbody tr, .fd19-crow, .fd20-mr, .cash_card, [data-cacc]';
+  var SKIP = '#aw_fab, #toast, #skBtn';
+  var MODAL = '.fd19-dr, .fd20-dr, .fd21-drw, .dlg, #invdone, .modal, [aria-modal="true"], [role="dialog"]:not(#aw_panel), [role="alertdialog"]';
+  var AWAY_VIEWS = { invoice: 1, stock: 1 };   // a form with its own bar / a step-by-step wizard: the bubble steps out
+  var fixedMemo = null;
+  function pinned(e) {     // inside something fixed or sticky (a bar, a drawer, a backdrop)?
+    for (var p = e; p && p !== document.body && p !== document.documentElement; p = p.parentElement) {
+      if (fixedMemo.has(p)) { var m = fixedMemo.get(p); fixedMemo.set(e, m); return m; }
+      var pos = getComputedStyle(p).position;
+      if (pos === 'fixed' || pos === 'sticky') { fixedMemo.set(e, true); return true; }
+    }
+    fixedMemo.set(e, false); return false;
+  }
+  function pointFree(x, y, fab) {
+    var list = document.elementsFromPoint(x, y);
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i];
+      if (e === fab || fab.contains(e)) continue;
+      if (e.closest && e.closest(SKIP)) continue;
+      if (e === document.documentElement || e === document.body) return true;
+      if (e.closest(ACT)) return false;
+      if (pinned(e)) return false;
+      return true;    // the top thing here is plain text or a card: nothing to click
+    }
+    return true;
+  }
+  /** the controls that are really on screen near the bottom (a box each), read once per check */
+  function controlsNearBottom(fab) {
+    var out = [], H = innerHeight, all = document.querySelectorAll(ACT);
+    for (var i = 0; i < all.length; i++) {
+      var e = all[i];
+      if (e === fab || fab.contains(e) || e.closest('#aw_panel, #side, header.topbar')) continue;
+      var r = e.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2 || r.bottom < H - 110 || r.top > H) continue;
+      out.push({ e: e, r: r });
+    }
+    return out;
+  }
+  function boxFree(left, top, size, fab, ctl) {
+    var m = 6, l = left - m, t = top - m, s = size + 2 * m;
+    // 1. no control's box under it (where that control is the thing on top: not one clipped away by a scroller)
+    for (var c = 0; c < ctl.length; c++) {
+      var r = ctl[c].r;
+      if (r.right <= l || r.left >= l + s || r.bottom <= t || r.top >= t + s) continue;
+      var x = Math.max(r.left, l) + (Math.min(r.right, l + s) - Math.max(r.left, l)) / 2, y = Math.max(r.top, t) + (Math.min(r.bottom, t + s) - Math.max(r.top, t)) / 2;
+      var h = document.elementFromPoint(Math.min(innerWidth - 1, Math.max(0, x)), Math.min(innerHeight - 1, Math.max(0, y)));
+      if (h && (h === ctl[c].e || ctl[c].e.contains(h) || h.contains(ctl[c].e))) return false;
+    }
+    // 2. no bar, drawer or backdrop there either (and nothing small missed): a grid of points
+    for (var i = 0; i <= 6; i++) for (var j = 0; j <= 6; j++) {
+      var px = l + (s * i) / 6, py = t + (s * j) / 6;
+      if (px < 0 || py < 0 || px >= innerWidth || py >= innerHeight) continue;
+      if (!pointFree(px, py, fab)) return false;
+    }
+    return true;
+  }
+  function modalOpen() {
+    var m = document.querySelectorAll(MODAL);
+    for (var i = 0; i < m.length; i++) if (vis(m[i])) return true;
+    return false;
+  }
+  function setPos(fab, right, bottom, size) {
+    fab.style.setProperty('right', right + 'px', 'important');
+    fab.style.setProperty('bottom', bottom + 'px', 'important');
+    fab.style.setProperty('width', size + 'px', 'important');
+    fab.style.setProperty('height', size + 'px', 'important');
+  }
+  function clearPos(fab) { ['right', 'bottom', 'width', 'height'].forEach(function (k) { fab.style.removeProperty(k); }); fab.classList.remove('calm-away', 'calm-mini'); }
+  function fabPlace() {
+    var fab = $('aw_fab'), root = document.documentElement;
+    root.classList.toggle('calm-desk', desk());
+    if (!fab) return;
+    if (!desk()) { clearPos(fab); return; }
+    // the chat is open: its own head has the close button, so the round button does not sit on the page under it
+    if (typeof AW !== 'undefined' && AW.open) { clearPos(fab); fab.classList.add('calm-away'); return; }
+    var away = !!AWAY_VIEWS[typeof VIEW !== 'undefined' ? VIEW : ''] || modalOpen() || (typeof ME === 'undefined' || !ME);
+    var spot = null;
+    if (!away) {
+      fixedMemo = new Map();
+      // the bubble is measured where it would be, not where it is now
+      fab.style.setProperty('pointer-events', 'none', 'important');
+      try {
+        var W = innerWidth, H = innerHeight, v = $('view'), vr = v ? v.getBoundingClientRect() : { left: 0, width: W };
+        var cands = [[22, 22, 58]];
+        for (var r = 22; W - r - 44 > vr.left + vr.width * 0.6; r += 52) cands.push([r, 18, 44]);
+        cands.push([Math.round(W - (vr.left + 16) - 44), 18, 44]);    // the bottom-left corner of the content
+        var ctl = controlsNearBottom(fab);
+        for (var k = 0; k < cands.length && !spot; k++) {
+          var c = cands[k];
+          if (boxFree(W - c[0] - c[2], H - c[1] - c[2], c[2], fab, ctl)) spot = c;
+        }
+      } finally { fab.style.removeProperty('pointer-events'); fixedMemo = null; }
+    }
+    if (!spot) { fab.classList.add('calm-away'); return; }
+    fab.classList.remove('calm-away');
+    fab.classList.toggle('calm-mini', spot[2] < 58);
+    setPos(fab, spot[0], spot[1], spot[2]);
+  }
+  window.calmFabPlace = fabPlace;
+  var fabT = 0;
+  function fabSoon(ms) { clearTimeout(fabT); fabT = setTimeout(function () { try { fabPlace(); } catch (e) { if (window.console) console.error('crit7-calm fab', e); } }, ms == null ? 140 : ms); }
+  window.addEventListener('scroll', function () { fabSoon(160); }, { passive: true });
+  window.addEventListener('resize', function () { fabSoon(160); });
+  document.addEventListener('click', function () { fabSoon(260); }, true);
+  document.addEventListener('keyup', function (e) { if (e.key === 'Escape') fabSoon(200); });
+  try { new MutationObserver(function () { fabSoon(80); }).observe(document.body, { childList: true }); } catch (e) {}
+  setInterval(function () { if (!document.hidden) fabSoon(0); }, 1200);    // a drawer, a list that grew, a bar that came
+  if (typeof AFTER_PAINT !== 'undefined' && AFTER_PAINT.push) AFTER_PAINT.push(function calmFab() { fabSoon(60); setTimeout(function () { fabSoon(0); }, 450); });
+  if (typeof awPaint === 'function') {
+    var awPaintCalm = awPaint;
+    awPaint = function () { var r = awPaintCalm.apply(this, arguments); fabSoon(0); return r; };
+  }
+
+  /* ===================================================================== 2. Settings read ahead, refreshed in place */
+  var SET_AHEAD = 0;
+  function readAhead() {
+    try {
+      if (typeof ME === 'undefined' || !ME || typeof SETTINGS === 'undefined' || SETTINGS || SET_ERR || typeof routeAllowed !== 'function' || !routeAllowed('settings')) return;
+      if (typeof VIEW !== 'undefined' && VIEW === 'settings') return;   // the screen loads it itself
+      srv('erpBundle', [['settings']], function (b) {
+        if (!b || !b.settings || SETTINGS) return;
+        SETTINGS = b.settings; SET_AHEAD = Date.now();
+        if (VIEW === 'settings') repaint();
+      }, function () {});
+    } catch (e) {}
+  }
+  (function waitBoot() {
+    if (typeof ME === 'undefined' || !ME || typeof CAT === 'undefined' || !CAT) { setTimeout(waitBoot, 800); return; }
+    setTimeout(readAhead, 2500);
+  })();
+  if (typeof go === 'function') {
+    var goCalmSet = go;
+    go = function (view) {
+      var r = goCalmSet.apply(this, arguments);
+      // read ahead a while ago: show it at once, and read it again quietly (the screen is drawn again with the fresh copy)
+      if (view === 'settings' && SET_AHEAD && Date.now() - SET_AHEAD > 20000 && typeof loadSettings === 'function') { SET_AHEAD = 0; try { loadSettings(); } catch (e) {} }
+      else if (view === 'settings') SET_AHEAD = 0;
+      return r;
+    };
+  }
+
+  /* ===================================================================== 3. notes: good news goes with the screen; one reading time */
+  var TOAST_AT = 0, TOAST_VIEW = '';
+  if (typeof toast === 'function') {
+    var toastCalm = toast;
+    toast = function (html, bad, ms) {
+      if (!bad) {
+        var n = String(html == null ? '' : html).replace(/<[^>]*>/g, '').trim().length;
+        ms = Math.max(Number(ms) || 0, Math.min(10000, Math.max(4000, 3000 + n * 55)));   // longer sentence, longer stay
+      }
+      TOAST_AT = Date.now(); TOAST_VIEW = typeof VIEW !== 'undefined' ? VIEW : '';
+      return toastCalm.call(this, html, bad, ms);
+    };
+  }
+  if (typeof go === 'function') {
+    var goCalmToast = go;
+    go = function (view) {
+      try {
+        var t = $('toast');
+        // shown on the screen the person is leaving, a moment ago or more: it goes. A problem (red) stays until closed.
+        if (t && /\bshow\b/.test(t.className) && !/\bbad\b/.test(t.className) && Date.now() - TOAST_AT > 900 && view !== TOAST_VIEW) t.className = '';
+      } catch (e) {}
+      return goCalmToast.apply(this, arguments);
+    };
+  }
+
+  /* ===================================================================== 4. a half-made invoice: one chip in the top bar */
+  function syncTab(lines) {   // the phone's Invoice tab already carries the count; it also says it in words for a screen reader
+    var b = document.querySelector('#tabbar button[data-tab="invoice"]'); if (!b) return;
+    var lab = lines ? T('Invoice, one in progress', 'ইনভয়েস, একটি চলছে') : '';
+    if (lab) { if (b.getAttribute('aria-label') !== lab) b.setAttribute('aria-label', lab); } else if (b.hasAttribute('aria-label')) b.removeAttribute('aria-label');
+  }
+  var ICON_GO = '<svg class="o" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  function invChip() {
+    var tb = document.querySelector('header.topbar'); if (!tb) return;
+    var c = $('calm_inv');
+    var lines = (typeof CART !== 'undefined' && CART && CART.length) || 0;
+    var show = lines > 0 && typeof ME !== 'undefined' && !!ME && typeof VIEW !== 'undefined' && VIEW !== 'invoice' && (typeof routeAllowed !== 'function' || routeAllowed('invoice'));
+    syncTab(lines);
+    if (!show) { if (c) c.remove(); return; }
+    var txt = T('Invoice in progress', 'ইনভয়েস চলছে');
+    var key = txt + '|' + lines;
+    if (!c) {
+      c = document.createElement('button'); c.type = 'button'; c.id = 'calm_inv'; c.setAttribute('data-noi18n', '1');
+      var plus = $('fdplus'); if (plus && plus.parentNode) plus.parentNode.insertBefore(c, plus); else tb.appendChild(c);
+    }
+    if (c.getAttribute('data-k') !== key) {
+      c.setAttribute('data-k', key);
+      c.setAttribute('aria-label', T('An invoice is in progress (' + lines + ' line' + (lines === 1 ? '' : 's') + '). Open it', 'একটি ইনভয়েস চলছে (' + lines + 'টি লাইন)। খুলুন'));
+      c.innerHTML = '<span class="d" aria-hidden="true"></span><span>' + E(txt) + '</span>' + ICON_GO;
+    }
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('#calm_inv'); if (!b) return;
+    e.preventDefault(); if (typeof go === 'function') go('invoice');
+  });
+  if (typeof AFTER_PAINT !== 'undefined' && AFTER_PAINT.push) AFTER_PAINT.push(function calmInvChip() { try { invChip(); } catch (e) {} });
+  setInterval(function () { try { invChip(); } catch (e) {} }, 1500);   // the draft comes back a moment after sign-in
+
+  /* ===================================================================== 6. phone Money */
+  var num = function (s) { return String(s || '').replace(/[০-৯]/g, function (c) { return String('০১২৩৪৫৬৭৮৯'.indexOf(c)); }).replace(/[^0-9.-]/g, ''); };
+  function moneyTidy() {
+    if (typeof VIEW === 'undefined' || VIEW !== 'cash') return;
+    var v = $('view'); if (!v) return;
+    var tot = v.querySelector('.cash_tot'), grid = v.querySelector('.cash_grid');
+    if (!tot || !grid) return;
+    // one "in hand" figure: the line repeats the tile above it when they agree
+    var line = tot.querySelector(':scope > span:first-child b');
+    var tile = [].filter.call(v.querySelectorAll('.fdd-k'), function (k) { var l = k.querySelector('.fdd-lbl'); return l && /^(Money in hand|হাতে টাকা)$/i.test(l.textContent.trim()); })[0];
+    var tn = tile && tile.querySelector('.fdd-num');
+    tot.classList.toggle('calm-one', !!(line && tn && num(line.textContent) && num(line.textContent) === num(tn.textContent)));
+    if (!phone() || v.querySelector('.calm-mmore')) return;
+    // the account cards first; the money buttons in one row under them (the main one first)
+    var row = document.createElement('div'); row.className = 'calm-mmore';
+    var head = v.querySelector('#fdHead .fdd-tools');
+    var btns = [].slice.call(head ? head.querySelectorAll(':scope > .btn') : []).concat([].slice.call(tot.querySelectorAll(':scope > .btn'))).filter(vis);   // a hidden copy stays where it is
+    btns.sort(function (a, b) { return (b.classList.contains('primary') ? 1 : 0) - (a.classList.contains('primary') ? 1 : 0); });
+    btns.forEach(function (b) { row.appendChild(b); });
+    if (!row.children.length) return;
+    grid.insertAdjacentElement('afterend', row);
+    if (head && ![].some.call(head.children, vis)) head.style.display = 'none';
+    // the line has nothing left to show (its figure is the tile's): it takes no room
+    var left = [].filter.call(tot.children, function (c) { return vis(c) && (c.textContent || '').trim(); });
+    tot.classList.toggle('calm-empty', !left.length);
+  }
+  if (typeof AFTER_PAINT !== 'undefined' && AFTER_PAINT.push) AFTER_PAINT.push(function calmMoney() { try { moneyTidy(); } catch (e) { if (window.console) console.error('crit7-calm money', e); } });
+
+  /* ===================================================================== 7. WhatsApp not connected: words once a day, then a sign */
+  var WA_KEY = 'erp.calm.waBar', WA_WORDS = false;
+  var day = function () { var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+  var ICON_WA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.5L3 21l2-5.5A8.4 8.4 0 1 1 21 11.5z"/><path d="M4 4l16 16"/></svg>';
+  if (typeof viewInvoice === 'function') {
+    var viewInvoiceCalm = viewInvoice;
+    viewInvoice = function () {
+      var h = viewInvoiceCalm.apply(this, arguments);
+      if (!(typeof CART !== 'undefined' && CART && CART.length)) WA_WORDS = false;   // a new invoice starts the question again
+      if (typeof h !== 'string' || h.indexOf('nt-wa no') < 0) return h;
+      var seen = ''; try { seen = localStorage.getItem(WA_KEY) || ''; } catch (e) {}
+      if (!WA_WORDS && seen !== day()) { WA_WORDS = true; try { localStorage.setItem(WA_KEY, day()); } catch (e) {} }
+      if (WA_WORDS) return h;      // said in words on the first invoice of the day (and it stays for that invoice)
+      var tip = T('WhatsApp is not connected, so this invoice will not be sent. Connect a number in Inbox › Chat settings.',
+        'WhatsApp যুক্ত নেই, তাই এই ইনভয়েস পাঠানো হবে না। ইনবক্স › চ্যাট সেটিংস-এ একটি নম্বর যুক্ত করুন।');
+      return h.replace(/<span class="nt-wa no">[\s\S]*?<\/span>/, '<button type="button" class="calm-wa" data-calm-wa data-noi18n="1" title="' + E(tip) + '" aria-label="' + E(tip) + '">' + ICON_WA + '</button>');
+    };
+  }
+  // pressing the sign does not take the focus from a box being typed in (leaving the box redraws the bar)
+  document.addEventListener('mousedown', function (e) { if (e.target && e.target.closest && e.target.closest('[data-calm-wa]')) e.preventDefault(); }, true);
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-calm-wa]'); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var m = b.getAttribute('aria-label') || '';
+    if (typeof uiAlert === 'function') uiAlert(m);
+  }, true);
+
+  /* ===================================================================== Bangla */
+  try {
+    var BN = {
+      'Invoice in progress': 'ইনভয়েস চলছে', 'Invoice, one in progress': 'ইনভয়েস, একটি চলছে',
+      'WhatsApp is not connected, so this invoice will not be sent. Connect a number in Inbox › Chat settings.': 'WhatsApp যুক্ত নেই, তাই এই ইনভয়েস পাঠানো হবে না। ইনবক্স › চ্যাট সেটিংস-এ একটি নম্বর যুক্ত করুন।'
+    };
+    for (var k in BN) if (!I18N_BN[k]) I18N_BN[k] = BN[k];
   } catch (e) {}
 })();
 </script>

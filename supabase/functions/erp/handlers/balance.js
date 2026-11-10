@@ -38,8 +38,13 @@ async function figures(ctx, frozen) {
   const stock = await soft(ctx, () => stockAtCost(ctx, frozen), { cost: 0, units: 0, uncosted: 0, costs: {} });
   const dues = await soft(ctx, async () => num((await erpDues(ctx)).total), 0);
   const credit = await soft(ctx, async () => { const m = await creditMap(ctx); let c = 0; for (const k of Object.keys(m)) if (m[k] > 0) c += m[k]; return c; }, 0);
+  // crit7-trust (10 Nov 2026): money received but not yet in an account is the business's money - its own row, linked to
+  // "Put them in an account". Placing a payment moves it from this row into the account's row: the total stays.
+  const looseN = num(cb.looseN != null ? cb.looseN : (cb.loose || []).length);
+  const looseAmt = Math.round(num(cb.looseTotal != null ? cb.looseTotal : (cb.loose || []).reduce((t, p) => t + num(p.amount), 0)));
   const owns = [
     ...cash.map((c) => ({ key: 'cash', what: c.name, sub: c.kind, amount: c.amount })),
+    ...(looseN ? [{ key: 'loose', what: 'Received, not yet in an account', sub: looseN + ' payment' + (looseN === 1 ? '' : 's') + ' - put them in an account', n: looseN, amount: looseAmt, go: 'place' }] : []),
     { key: 'stock', what: 'Stock on the shelf, at cost', sub: num(stock.units).toLocaleString('en-IN') + ' units' + (stock.uncosted ? ', ' + stock.uncosted + ' products with no cost' : ''), amount: stock.cost },
     { key: 'ahead', what: 'Paid to suppliers, goods not received yet', sub: '', amount: Math.round(num(sup.aheadTotal)) },
     { key: 'dues', what: 'Customers owe', sub: '', amount: Math.round(dues) },
@@ -54,8 +59,9 @@ async function figures(ctx, frozen) {
     // crit6-desk: the sub line in words with money formatting; the parts go along as numbers so the page can say them in Bangla
     const parts = { paidIn: Math.round(num(j.paidIn)), profitShare: Math.round(num(j.profitShare)), sold: Math.round(num(j.sold)) };
     const sub = 'Paid in ' + tkS(parts.paidIn) + ' · profit share ' + tkS(parts.profitShare) + ' · our joint goods sold ' + tkS(parts.sold);
-    if (j.amount >= 0) owns.push({ key: 'joint', what: 'Our part of the joint stock (' + j.pool + ')', sub, parts, amount: Math.round(j.amount) });
-    else owes.push({ key: 'joint', what: 'Owed to the joint stock (' + j.pool + ') - money from its goods we sold', sub, parts, amount: Math.round(-j.amount) });
+    // crit7-trust: the pool's own name once, never nested in a second pair of brackets ("(Filament JV (demo))")
+    if (j.amount >= 0) owns.push({ key: 'joint', what: 'Our part of the joint stock: ' + j.pool, pool: j.pool, sub, parts, amount: Math.round(j.amount) });
+    else owes.push({ key: 'joint', what: 'Owed to the joint stock: ' + j.pool + ' - money from its goods we sold', pool: j.pool, sub, parts, amount: Math.round(-j.amount) });
   }
   return { owns, owes, cb, stock };
 }
@@ -92,20 +98,26 @@ export async function erpBalanceSheet(ctx) {
   const cap = { invest: 0, withdraw: 0, profit: 0 };
   for (const r of await ctx.tx`select type, coalesce(sum(amount), 0) s from capital_book where business_id = ${ctx.biz} and coalesce(btrim(voided), '') = ''
                                and coalesce(on_date, recorded_at::date) >= ${opening.date}::date group by type`) if (r.type in cap) cap[r.type] = num(r.s);
-  const should = Math.round(num(opening.net) + profit + cap.invest - cap.withdraw - cap.profit);
+  // crit7-trust: an opening written before 10 Nov 2026 did not count the money that was then in no account; that money
+  // is counted now, so the part of it still unplaced (received before the opening day) is added to the start - else
+  // counting it would show as a false difference. Openings made from now on carry the 'loose' row themselves.
+  let looseAtOpening = 0;
+  if (!(opening.owns || []).some((r) => r && r.key === 'loose')) {
+    looseAtOpening = Math.round(num((await ctx.tx`select coalesce(sum(amount), 0) s from payments where business_id = ${ctx.biz} and account_id is null and coalesce(amount, 0) <> 0
+      and lower(btrim(coalesce(method, ''))) not in ('adjusted', 'returned', 'advance', 'undone', 'return / refund', '')
+      and paid_at < ${dhakaDayStart(opening.date)}`)[0].s));
+  }
+  const should = Math.round(num(opening.net) + looseAtOpening + profit + cap.invest - cap.withdraw - cap.profit);
   const diff = net - should;
 
-  // what usually makes a difference
+  // what usually makes a difference (money in no account is no longer one: it has its own row in what the business owns)
   const why = [];
-  const loose = (f.cb.loose || []).filter((p) => p.when && new Date(p.when) >= dhakaDayStart(opening.date));
-  if ((f.cb.loose || []).length) why.push({ what: 'Money received with no account', n: (f.cb.loose || []).length, amount: Math.round((f.cb.loose || []).reduce((t, p) => t + num(p.amount), 0)), go: 'cash' });
   if ((f.cb.unassigned || []).length) why.push({ what: 'Courier payouts not given a bank', n: f.cb.unassigned.length, amount: Math.round(f.cb.unassigned.reduce((t, p) => t + num(p.amount), 0)), go: 'cash' });
   const sc = (await ctx.tx`select count(*)::int n, coalesce(sum(amount), 0) a from shipment_costs where business_id = ${ctx.biz} and account_id is null and at >= ${dhakaDayStart(opening.date)}`)[0];
   if (sc.n) why.push({ what: 'Freight or other shipment costs with no account (who paid them?)', n: sc.n, amount: Math.round(num(sc.a)), go: 'shipments' });
   if (f.stock.uncosted) why.push({ what: 'Products in stock with no cost', n: f.stock.uncosted, amount: 0, go: 'costs' });
-  void loose;
   return { ...out, opening: { date: opening.date, net: Math.round(num(opening.net)), by: str(opening.by), at: str(opening.at) },
-           explain: { opening: Math.round(num(opening.net)), profit, invest: Math.round(cap.invest), withdraw: Math.round(cap.withdraw), profitPaid: Math.round(cap.profit), should },
+           explain: { opening: Math.round(num(opening.net)), looseAtOpening, profit, invest: Math.round(cap.invest), withdraw: Math.round(cap.withdraw), profitPaid: Math.round(cap.profit), should },
            difference: diff, why };
 }
 

@@ -16,7 +16,7 @@ function shift(m, n) { let y = Number(m.slice(0, 4)), mo = Number(m.slice(5, 7))
 // id: [the call whose screen this figure belongs to, title, how it is worked out]
 const CARDS = {
   cashInHand:     ['erpCashBook', 'Money in hand', async (ctx) => { const { erpCashBook } = await import('./cash.js'); const c = await erpCashBook(ctx, {});
-                    return { v: R(c.inHand), money: true, go: 'cash', note: (c.accounts || []).filter((a) => !a.archived).length + ' account(s), courier and agent apart' }; }],
+                    return { v: R(c.inHand), money: true, go: 'cash', note: num(c.looseTotal) ? 'incl. ৳' + R(c.looseTotal).toLocaleString('en-IN') + ' not yet in an account' : (c.accounts || []).filter((a) => !a.archived).length + ' account(s), courier and agent apart' }; }],   // crit7-trust
   supplierDue:    ['erpSuppliers', 'We owe suppliers', async (ctx) => { const { erpSuppliers } = await import('./suppliers.js'); const s = await erpSuppliers(ctx);
                     return { v: R(s.owedTotal), money: true, go: 'suppliers', tone: s.owedTotal > 0 ? 'warn' : '', note: (s.suppliers || []).filter((x) => x.owed > 0.5).length + ' supplier(s)' }; }],
   supplierAhead:  ['erpSuppliers', 'Paid ahead to suppliers', async (ctx) => { const { erpSuppliers } = await import('./suppliers.js'); const s = await erpSuppliers(ctx);

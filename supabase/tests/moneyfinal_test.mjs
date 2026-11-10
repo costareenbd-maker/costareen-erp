@@ -103,7 +103,8 @@ for (const a of bk.accounts) {
   if (sum !== a.balance) allOk = false;
 }
 check('every account: its statement lines add up to its balance', allOk, detail);
-check('in hand = the sum of the cash, bank and wallet accounts; total = the sum of all', bk.inHand === bk.accounts.filter((a) => !a.archived && a.kind !== 'courier' && a.kind !== 'agent').reduce((t, a) => t + a.balance, 0) && bk.total === bk.accounts.filter((a) => !a.archived).reduce((t, a) => t + a.balance, 0), bk.accounts);
+// crit7-trust (10 Nov 2026): in hand = in the accounts + received, not yet in an account (owner decision)
+check('in hand = the sum of the cash, bank and wallet accounts (+ money not yet placed); total = the sum of all', bk.inHand === bk.inAccounts + bk.looseTotal && bk.inAccounts === bk.accounts.filter((a) => !a.archived && a.kind !== 'courier' && a.kind !== 'agent').reduce((t, a) => t + a.balance, 0) && bk.total === bk.accounts.filter((a) => !a.archived).reduce((t, a) => t + a.balance, 0), bk.accounts);
 r = await owner('erpBalanceSheet', []);
 const bsCash = r.result.owns.filter((o) => o.key === 'cash');
 check('the balance sheet carries each account at the book’s balance', r.ok && bsCash.length === 4 && bsCash.every((o) => bk.accounts.find((a) => a.name === o.what).balance === o.amount), bsCash);

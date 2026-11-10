@@ -415,7 +415,10 @@ export async function erpFdHead(ctx, payload) {
         if (!(amt > 0) || NOT_MONEY.test(meth) || !d) continue;
         if (monthKey(d) === now) cin += amt; else if (monthKey(d) === prev && same.keep(prev, d)) cprev += amt;
       }
-      cards.push(card('inHand', 'Money in hand', 'wallet', cb.inHand || 0, { money: true, hero: true, note: (cb.accounts || []).length + ' account(s), courier balance apart' }));
+      // crit7-trust: Money in hand counts the money received but not yet in an account; the note says how much of it that is
+      const tkN = (n) => '৳' + Math.round(Number(n) || 0).toLocaleString('en-IN');
+      cards.push(card('inHand', 'Money in hand', 'wallet', cb.inHand || 0, { money: true, hero: true, inAccounts: R(cb.inAccounts || 0), looseTotal: R(cb.looseTotal || 0),
+        note: num(cb.looseTotal) ? 'incl. ' + tkN(cb.looseTotal) + ' not yet in an account' : (cb.accounts || []).length + ' account(s), courier balance apart' }));
       cards.push(card('cashIn', 'Received this month', 'taka', cin, { prev: R(cprev), money: true }));
       // every such payment counted (the cash book's list stops at 200), the same count as the dashboard and System check
       const looseN = (await ctx.tx`select count(*)::int as n from payments where business_id = ${ctx.biz} and account_id is null and coalesce(amount, 0) <> 0

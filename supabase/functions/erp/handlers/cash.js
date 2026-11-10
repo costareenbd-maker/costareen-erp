@@ -221,11 +221,20 @@ export async function erpCashBook(ctx, payload) {
     where business_id = ${ctx.biz} and account_id is null and coalesce(amount, 0) <> 0
       and lower(btrim(coalesce(method, ''))) not in ('adjusted', 'returned', 'advance', 'undone', 'return / refund', '')
     order by paid_at desc limit 200`;
+  // crit7-trust (10 Nov 2026): the whole sum and count (the list above stops at 200). Money received but not yet in an
+  // account is still the business's money: it counts in Money in hand (owner decision) and has its own balance-sheet row.
+  const lt = (await ctx.tx`
+    select count(*)::int as n, coalesce(sum(amount), 0) as s from payments
+    where business_id = ${ctx.biz} and account_id is null and coalesce(amount, 0) <> 0
+      and lower(btrim(coalesce(method, ''))) not in ('adjusted', 'returned', 'advance', 'undone', 'return / refund', '')`)[0];
+  const inAccounts = list.filter((a) => !a.archived && a.kind !== 'courier' && a.kind !== 'agent').reduce((t, a) => t + a.balance, 0);   // an agent's advance is not in hand
+  const looseTotal = Math.round(num(lt.s)), looseN = num(lt.n);
   return {
     setup: false, canEdit: owner, currency: 'BDT', kinds: KINDS, methods, rules,
     loose: loose.map((p) => ({ id: p.id, when: when(p.paid_at), customer: str(p.customer), invoice: str(p.invoice_no), amount: num(p.amount), method: str(p.method) })),
     accounts: list, total: list.filter((a) => !a.archived).reduce((t, a) => t + a.balance, 0),
-    inHand: list.filter((a) => !a.archived && a.kind !== 'courier' && a.kind !== 'agent').reduce((t, a) => t + a.balance, 0),   // an agent's advance is not in hand
+    inAccounts, looseTotal, looseN,
+    inHand: inAccounts + looseTotal,   // crit7-trust: in the accounts + received, not yet placed (placing one moves it, the sum stays)
     account: pick, entries, more, warnings,
     unassigned: un.map((p) => ({ id: p.id, payout: str(p.payout_id), when: when(looseDate(p.paid_at) || looseDate(p.created_src)), amount: Math.round(num(p.paid_to_bank)) })),
     today: formatDate(ctx.now, 'yyyy-MM-dd'),

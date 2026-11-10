@@ -4166,3 +4166,22 @@ Blocks `<!-- crit6:till -->`, `<!-- crit6:desk -->` after `<!-- CRIT6-MERGE 2026
   New customer. Sales list Total / Paid / Due. Charts: straight lines between months. deskfinal_test 9.
 - Checks: real-click invoice + receive desktop/phone, battery 25/25, click reach 0 stolen 44 x 2, crawl EN + BN 0 errors,
   full suite: only ads 4 (old) and golive (IMPORT_DIR).
+
+## crit-7 (10 Nov 2026): fixes from the seventh critique (27/40, real clicks)
+Blocks `<!-- crit7:trust -->`, `<!-- crit7:calm -->` after `<!-- CRIT7-MERGE 2026-11-10 -->`. Snapshot .impeccable/critique/2026-11-10T00-29-08Z.
+- Every full-screen box (Statement + 17 others) closes by a top ✕, Esc and backdrop, traps focus and returns it; a box with typed
+  text asks before closing; small dialogs raised above big boxes.
+- Money received but not yet in an account now COUNTS: erpCashBook returns inAccounts / looseTotal / looseN (SQL sums);
+  Money in hand = in accounts + not yet placed ("incl. ৳X not yet in an account"); balance sheet row "Received, not yet in an
+  account" with Put-them-in-an-account; books opened earlier get the earlier unplaced money at the start; placing payments keeps
+  every total. trustfinal_test 21. (Owner's headline Money in hand on live rises by the unplaced amount - by design.)
+- Clear invoice removes products, customer, payment (back to Cash), delivery, discounts, draft. Known phone note explains the
+  name swap. One due style everywhere (negative-text 600; paid/zero ink). Sales role: no cost on Products list/drawer/page,
+  Joint "paid for stock", month-end stock at cost. Balance sheet date in the app format; joint line wording.
+- Chat bubble: one rule - steps away on New invoice / Stock entry / any open box, otherwise moves to a free spot; 104px room
+  under every desktop page; Ask button in the desktop top bar. Covered controls by the bubble 27 -> 0.
+- Settings gap 80 -> 24px, settings read ahead after sign-in; good-news toasts end on screen change, problems stay; "Invoice in
+  progress ›" chip after a reload; Bangla drawer labels 14px; phone Money tabs 2x2, cards first; WhatsApp bar line once a day
+  then an icon; Leads no longer lights two menu pills.
+- Checks: real-click invoice + receive desktop/phone, battery 25/25, click reach 0 stolen 44 x 2, crawl EN + BN 0 errors, full
+  suite: ads 4 (old), factory (date, fails on older code too), golive (IMPORT_DIR).
