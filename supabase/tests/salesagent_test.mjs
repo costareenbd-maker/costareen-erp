@@ -121,6 +121,11 @@ d1 = await dlv({ address: 'Agrabad, Chittagong', items: [{ code: 'FIL-TST-PLA-RE
 check('two spools (2.6 kg = 3 kg) outside Dhaka: 130 + 40 = 170', d1 && d1.charge === 170 && d1.weight_kg === 3, d1);
 d1 = await dlv({ address: 'Uttara, Dhaka', items: [{ code: 'PRT-BAM-A1-001', qty: 1 }] });
 check('a printer by its weight in the ERP (12 kg): 70 + 11 x 20 = 290', d1 && d1.charge === 290, d1);
+d1 = await dlv({ address: 'Mirpur 10, Dhaka' });
+check('dlv-1: no items: the charge for one filament spool (90, never the bare 70) and a note to pass the items; instant delivery offered inside Dhaka',
+  d1 && d1.charge === 90 && /ONE filament spool/.test(d1.note) && /Pathao/.test(d1.instant_delivery || ''), d1);
+d1 = await dlv({ address: 'Agrabad, Chittagong' });
+check('dlv-1: outside Dhaka: no instant delivery', d1 && d1.charge === 150 && !d1.instant_delivery, d1);
 await sql`update products set weight_g = null where business_id = ${FIX.B} and sku = 'PRT-BAM-A1-001'`;
 d1 = await dlv({ address: 'Uttara, Dhaka', items: [{ code: 'PRT-BAM-A1-001', qty: 1 }] });
 check('a product with no weight in the ERP: named, so the AI says the team confirms', d1 && (d1.weight_not_known_for || []).includes('Bambu A1'), d1);

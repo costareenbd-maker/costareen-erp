@@ -959,7 +959,16 @@ export async function agentReply(ctx, conv, opts) {
       queue.push({ kind: 'buttons', text: str(a.question), buttons: opts2.map((o) => ({ title: o, payload: o })) });
       return { asked: true };
     }
-    if (name === 'delivery') return deliveryFor(p, a.address, Array.isArray(a.items) && a.items.length ? kgOf(p, cat, a.items) : null);
+    if (name === 'delivery') {
+      // dlv-1 (owner 11 Nov 2026): "1 filament is not 70" - a charge without the items was the bare first kg. Without
+      // items: the charge for one filament spool (the usual case) and the rule; inside Dhaka also the instant delivery.
+      const hasItems = Array.isArray(a.items) && a.items.some((x) => cat.find((y) => y.sku.toLowerCase() === str(x.code || x.sku).toLowerCase()));
+      const fil = cat.find((y) => FILAMENT.test(y.cat + ' ' + y.type));
+      const d = deliveryFor(p, a.address, hasItems ? kgOf(p, cat, a.items) : fil ? kgOf(p, cat, [{ code: fil.sku, qty: 1 }]) : null);
+      if (!hasItems) d.note = 'no items given: this is for ONE filament spool (1.3 kg counts 2 kg). More items or a printer cost more (first kg ' + num(p.delivery_in) + ' inside / ' + num(p.delivery_out) + ' outside Dhaka, then ' + num(p.per_kg_in) + ' per kg) - call delivery again with the items (codes + qty) for the exact charge; never say the first-kg price as the charge';
+      if (d.area !== 'outside Dhaka') d.instant_delivery = 'inside Dhaka only: a Pathao / Uber rider in about 1-2 hours; the rider\'s fare is by distance, paid to the rider; the product price is paid to us in advance (payment_details). Mention it in one short line when they are in Dhaka or in a hurry';
+      return d;
+    }
     if (name === 'payment_details') {
       if (effects.paySent) return { sent: true, note: 'already sent in this reply - do not send again' };   // live 9 Nov: the model called it twice
       const pay = await payInfo(ctx);
