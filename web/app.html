@@ -57771,5 +57771,60 @@ document.addEventListener('click', function (e) {
   if (v && window.MutationObserver) new MutationObserver(function () { if (isRv() && !document.querySelector('#view .rv-card')) { var had = !!RV.d; paint(); if (had) load(); } }).observe(v, { childList: true, subtree: true });
 })();
 </script>
+<!-- learn-1: Agent Desk > Learn from our team's chats (handlers/teamlearn.js erpInboxLearn) -->
+<style>
+.ln-card .ln-style{white-space:pre-wrap;background:var(--fd-bg,#f5f6fa);border-radius:12px;padding:10px 12px;margin:8px 0;font-size:14px}
+.ln-card .ln-ex{font-size:13px;margin:4px 0;padding:6px 10px;border-left:3px solid var(--fd-line,#e3e5ee)}
+.ln-card .ln-ex b{font-weight:600}
+.ln-card .ln-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+</style>
+<script>
+(function () {
+  var LN = { d: null, busy: false, open: false };
+  function isDesk() { return typeof VIEW !== 'undefined' && VIEW === 'inbox' && window.IB && IB.tab === 'desk'; }
+  function load() { if (LN.busy) return; LN.busy = true; srv('erpInboxLearn', [{ action: 'get' }], function (r) { LN.busy = false; LN.d = r; paint(); }, function (e) { LN.busy = false; LN.d = { error: (e && e.message) || String(e) }; paint(); }); }
+  function html() {
+    var d = LN.d;
+    var h = '<div class="ib-c ln-card"><h3>Learn from our team\'s chats</h3>';
+    if (!d) { load(); return h + '<div class="loading">Reading…</div></div>'; }
+    if (d.error) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(d.error) + '</div></div></div>';
+    var L = d.learned;
+    h += '<div class="sub">The AI reads the newest real chats where your team answered customers (' + d.teamReplies + ' team replies in the Inbox) and learns how your people write - words, length, Banglish, how they move to the order. It copies the manner only: prices and stock always come from the ERP.</div>';
+    h += '<div class="ln-row" style="margin-top:8px"><button class="btn primary" type="button" data-lnrun="1"' + (LN.busy ? ' disabled' : '') + '>' + (LN.busy === 'run' ? 'Learning… (about a minute)' : L ? 'Learn again from the newest chats' : 'Learn now') + '</button>' +
+      (L ? '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" data-lnon="1"' + (L.on ? ' checked' : '') + '> Use it in replies</label><span class="sub">Learned ' + esc(L.atText) + ' from ' + L.pairs + ' chats' + (L.by ? ' by ' + esc(L.by) : '') + '</span>' : '') + '</div>';
+    if (L) {
+      h += '<div class="ln-style" data-noi18n="1">' + esc(L.style) + '</div>';
+      if ((L.habits || []).length) h += '<div class="sub" style="margin-top:4px">' + L.habits.map(function (x) { return '• ' + esc(x); }).join('<br>') + '</div>';
+      if ((L.examples || []).length) {
+        h += '<button class="btn small" type="button" data-lnex="1" style="margin-top:8px">' + (LN.open ? 'Hide' : 'Show') + ' the ' + L.examples.length + ' real examples it copies</button>';
+        if (LN.open) h += L.examples.map(function (e) { return '<div class="ln-ex" data-noi18n="1"><b>Customer:</b> ' + esc(e.customer) + '<br><b>Our team:</b> ' + esc(e.team) + '</div>'; }).join('');
+      }
+    }
+    return h + '</div>';
+  }
+  function paint() {
+    if (!isDesk()) return;
+    var v = document.getElementById('view'); if (!v) return;
+    var card = v.querySelector('.ln-card'), nh = html();
+    if (card) { if (card.getAttribute('data-h') !== nh) { var t = document.createElement('div'); t.innerHTML = nh; var nc = t.firstChild; nc.setAttribute('data-h', nh); card.replaceWith(nc); } return; }
+    var first = v.querySelector('.ib-c'); if (!first || !first.parentNode) return;
+    var t2 = document.createElement('div'); t2.innerHTML = nh; var c2 = t2.firstChild; c2.setAttribute('data-h', nh);
+    first.parentNode.insertBefore(c2, first);
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-lnrun],[data-lnex]'); if (!b) return;
+    if (b.hasAttribute('data-lnex')) { LN.open = !LN.open; paint(); return; }
+    LN.busy = 'run'; paint();
+    srv('erpInboxLearn', [{ action: 'run' }], function (r) { LN.busy = false; LN.d = r; paint(); toast('Learned from ' + (r.learned ? r.learned.pairs : 0) + ' real chats. The AI now writes like your team.'); },
+      function (er) { LN.busy = false; paint(); toast(esc((er && er.message) || er), true, 9000); });
+  });
+  document.addEventListener('change', function (e) {
+    var c = e.target && e.target.closest && e.target.closest('[data-lnon]'); if (!c) return;
+    srv('erpInboxLearn', [{ action: c.checked ? 'on' : 'off' }], function (r) { LN.d = r; paint(); toast(c.checked ? 'The AI uses what it learned.' : 'Switched off - the AI writes as before.'); }, function (er) { toast(esc((er && er.message) || er), true); });
+  });
+  var v = document.getElementById('view');
+  if (v && window.MutationObserver) new MutationObserver(function () { if (isDesk() && !document.querySelector('#view .ln-card')) paint(); }).observe(v, { childList: true, subtree: true });
+})();
+</script>
 </body>
 </html>

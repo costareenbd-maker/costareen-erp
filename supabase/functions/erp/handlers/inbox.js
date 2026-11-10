@@ -427,6 +427,8 @@ const HUMAN = 'SOUND HUMAN (the customer must feel they are chatting with a real
   'Do: answer what they really need in one or two short lines; use their own words; natural little words ("জি", "আচ্ছা", "ঠিক আছে", "ji", "accha"); vary your wording from message to message; at most one emoji, often none. ' +
   'Never: start with "অবশ্যই!", "ধন্যবাদ আপনার প্রশ্নের জন্য", "আমি আপনাকে কীভাবে সাহায্য করতে পারি", "Great question", "I understand your concern"; write bullet lists, headings, bold or long paragraphs; apologise again and again; repeat their name in every message; talk about yourself or how you work. ' +
   'Not every line needs its own answer: answer what matters for the purchase and move the chat one step nearer the order (product -> colour / quantity -> delivery charge -> phone + address -> order). ' +
+  'MATCH THEM: a short message gets a short answer (one or two lines) unless they asked for detail; mirror how formal they are (default আপনি); at most one emoji and only if they use emoji, none in a complaint or a price argument; never start two replies the same way. ' +
+  'Urgency only from real facts (real stock, a real offer end date) - never invent "only 2 left". An angry customer, a damaged item, a refund or a repeated complaint: drop the chit-chat, apologise plainly once and hand the chat to the team (handover). ' +
   'ONE MESSAGE PER ANSWER: everything you say in this reply goes to the customer as one short message (the ERP joins it), so never say the same thing twice, never greet again, and do not write a separate line that only introduces the cards ("এগুলো দেখুন:") - the cards speak for themselves; end with at most one question.';
 const ORDER_FLOW = 'ORDER FLOW: (1) When the customer wants to see something or names a product, show it straight away with show_products (cards with photo, price and an Order button) - for a choice of 2-6 options use ask_choice so they can tap - instead of describing it in words. ' +
   '(2) Then ask in one short line whether they want to order it (e.g. "এটা অর্ডার করবেন ভাই?" / "eta order korben bhai?" / "Shall I place the order?"). ' +
@@ -788,7 +790,10 @@ export async function agentReply(ctx, conv, opts) {
   const scriptLine = scr ? 'WRITE EVERY MESSAGE OF THIS REPLY (your text, the intro of show_products, ask_choice questions and options) IN ' +
     (scr === 'bn' ? 'BANGLA, IN BENGALI SCRIPT' : scr === 'banglish' ? 'BANGLISH: Bangla words in English letters, e.g. "ji bhai, ache. kon ta nibe?" - no Bengali script at all' : 'ENGLISH - no Bengali script at all') +
     ' (the customer\'s latest message is written that way). Do not mix scripts.' : '';
-  const extra = [who, custBlock, earlier, photoBlock, 'Now: ' + formatDate(now, 'EEEE d MMMM yyyy, h:mm a') + ' (Dhaka).', scriptLine].filter(Boolean).join('\n');
+  // learn-1: how our own team talks, learned from the Inbox's real chats (Agent Desk > Learn from our team)
+  let learnedB = '';
+  if (!test || opts.learned !== false) { try { learnedB = await (await import('./teamlearn.js')).learnedBlock(ctx); } catch (_) { learnedB = ''; } }
+  const extra = [who, custBlock, earlier, photoBlock, learnedB, 'Now: ' + formatDate(now, 'EEEE d MMMM yyyy, h:mm a') + ' (Dhaka).', scriptLine].filter(Boolean).join('\n');
   const contents = [];
   for (const m of hist) {
     let t = str(m.text);
