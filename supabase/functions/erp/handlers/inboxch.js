@@ -281,9 +281,13 @@ export function readHook(kind, body) {
       // walid-1: the phone JID first (remoteJidAlt / senderPn carry it when remoteJid is a LID); a LID alone is kept whole
       const key = d.key || {}, alts = [key.remoteJid, key.remoteJidAlt, key.senderPn, d.senderPn].map(str).filter(Boolean);
       const jid = alts.find((j) => /@s\.whatsapp\.net$/.test(j)) || str(key.remoteJid || key.remoteJidAlt);
-      if (!jid || /@g\.us$|status@broadcast/.test(jid)) continue;      // no groups, no statuses
+      // cgroup-1: a group message comes too (ingest keeps only our customer groups); statuses never
+      const gj = alts.find((j) => /@g\.us$/.test(j));
+      if ((!jid && !gj) || /status@broadcast/.test(jid)) continue;
       const m = d.message || {};
-      const ev = { type: 'message', from: /@lid$/.test(jid) ? jid : jid.replace(/@.*$/, ''), name: str(d.pushName), id: str(key.id), echo: !!key.fromMe, text: '', ad: key.fromMe ? null : adOf(kind, d) };
+      const ev = gj
+        ? { type: 'message', from: gj, group: true, participant: str(key.participantAlt || key.participant || d.participant), name: str(d.pushName), id: str(key.id), echo: !!key.fromMe, text: '', ad: null }
+        : { type: 'message', from: /@lid$/.test(jid) ? jid : jid.replace(/@.*$/, ''), name: str(d.pushName), id: str(key.id), echo: !!key.fromMe, text: '', ad: key.fromMe ? null : adOf(kind, d) };
       ev.text = str(m.conversation || (m.extendedTextMessage && m.extendedTextMessage.text) || (m.imageMessage && m.imageMessage.caption) || '');
       if (m.imageMessage) ev.media = { kind: 'image', base64: str(m.base64 || d.base64 || ''), mime: str(m.imageMessage.mimetype) || 'image/jpeg', url: str(m.imageMessage.url), raw: d };
       else if (m.audioMessage) ev.media = { kind: 'audio', base64: str(m.base64 || d.base64 || ''), mime: str(m.audioMessage.mimetype) || 'audio/ogg', url: str(m.audioMessage.url), raw: d };

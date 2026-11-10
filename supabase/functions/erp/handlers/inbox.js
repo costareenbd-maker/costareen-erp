@@ -47,7 +47,9 @@ export const REASONS = { discount: 'Asked for a discount', complaint: 'Complaint
 export const PROFILE_DEFAULTS = {
   name: '', sells: '', hours: '', phone: '', address: '', lang: 'both', style: 'sir', first_name: true,
   agent_name: '',
-  superior_wa: '',  // boss-1 (owner 10 Nov 2026): the manager's WhatsApp - more discount / a doubt -> "I'll ask my superior"    // name-1 (owner 10 Nov 2026): the salesperson's own name, said when a customer asks who they are talking to
+  superior_wa: '',
+  // cgroup-1 (owner 10 Nov 2026): one WhatsApp group per customer - the MD's WhatsApp, on/off, groups a day
+  team_wa: '', cg_on: false, cg_per_day: 12,  // boss-1 (owner 10 Nov 2026): the manager's WhatsApp - more discount / a doubt -> "I'll ask my superior"    // name-1 (owner 10 Nov 2026): the salesperson's own name, said when a customer asks who they are talking to
   tone: 'Warm and polite, like a helpful shop assistant.', first_message: '',
   delivery_in: 70, delivery_out: 130, days_in: '1-2 days', days_out: '2-4 days', delivery_rule: '',
   payment: 'Cash on delivery all over Bangladesh.', returns: '', discount_answer: '', extra_offer: '',
@@ -221,6 +223,13 @@ async function keepAd(ctx, conv, ad) {
 export async function ingest(ctx, ch, ev) {
   if (ev.type === 'comment') return handleComment(ctx, ch, ev);
   if (!ev.from) return {};
+  // cgroup-1: a WhatsApp group: only our customer groups, on Faujia's number; our team's own messages pause the AI
+  if (ev.group) {
+    if (ev.echo) { /* our own message in a group: kept as it came back below */ }
+    else {
+      try { const g = await ctx.tx.savepoint(async () => (await import('./cgroups.js')).groupInbound(ctx, ch, ev)); if (g) return g; } catch (e) { console.error('groupInbound', e && e.message); return {}; }
+    }
+  }
   // boss-1: the manager answering "#R12 ..." on WhatsApp -> back to that customer's chat
   if (!ev.echo && /^wa_/.test(ch.kind)) { try { if (await ctx.tx.savepoint(async () => (await import('./superior.js')).superiorInbound(ctx, ch, ev))) return { superior: true }; } catch (e) { console.error('superiorInbound', e && e.message); } }
   // our own messages come back as echoes: drop them; a person's reply from the page / the phone is the team's
@@ -830,7 +839,9 @@ export async function agentReply(ctx, conv, opts) {
   if (!test || opts.learned !== false) { try { learnedB = await (await import('./teamlearn.js')).learnedBlock(ctx); } catch (_) { learnedB = ''; } }
   let boss = { block: '', ids: [] };
   if (!test) { try { boss = await (await import('./superior.js')).pendingAnswers(ctx, conv.id); } catch (_) { boss = { block: '', ids: [] }; } }
-  const extra = [who, custBlock, earlier, photoBlock, learnedB, boss.block, 'Now: ' + formatDate(now, 'EEEE d MMMM yyyy, h:mm a') + ' (Dhaka).', scriptLine].filter(Boolean).join('\n');
+  const inGroup = /@g\.us$/.test(str(contact && contact.external_id));
+  const groupLine = inGroup ? 'THIS IS ' + str(contact.name || 'the customer') + '\'S OWN WHATSAPP GROUP with our team (our MD and manager are members). Talk only to the customer; messages marked as from the team are ours - never answer or contradict them, follow what they decided.' : '';
+  const extra = [who, custBlock, earlier, photoBlock, learnedB, boss.block, groupLine, 'Now: ' + formatDate(now, 'EEEE d MMMM yyyy, h:mm a') + ' (Dhaka).', scriptLine].filter(Boolean).join('\n');
   const contents = [];
   for (const m of hist) {
     let t = str(m.text);
@@ -1090,6 +1101,7 @@ export async function agentReply(ctx, conv, opts) {
   if (effects.order && effects.order.items) {
     queue.push({ kind: 'text', text: receiptText(p, effects.order) + (!test && effects.order.page_token && await feat(ctx, 'order_page') ? (p.lang !== 'en' ? '\nঅর্ডারের অবস্থা: ' : '\nYour order: ') + orderLink(ctx, effects.order) : ''),
                  store: 'order', payload: { order: effects.order.no } });
+    if (inGroup) queue.push({ kind: 'text', keep: true, text: (await import('./cgroups.js')).groupNotice(), store: 'notice' });
     if (!test && effects.order.page_token && ctx.deps.svgPng && await feat(ctx, 'bill_picture') && billLink(ctx, effects.order)) queue.push({ kind: 'image', url: billLink(ctx, effects.order) });
     if (p.rating_on && !p.review_on && ch.kind === 'messenger') queue.push({ kind: 'buttons', system: true, text: 'How was your experience ordering from us?', buttons: [1, 2, 3, 4, 5].map((n) => ({ title: '⭐'.repeat(n), payload: 'RATE:' + n })) });
   }
@@ -1244,6 +1256,8 @@ export async function inboxTick(ctx) {
   // delivery updates for orders taken in a chat (from the invoice's delivery status), and the review request
   try { out.updates = await (await import('./inbox2.js')).orderUpdates(ctx); } catch (_) { /* fine */ }
   try { out.bookings = await (await import('./inbox2.js')).bookingReminders(ctx); } catch (_) { /* fine */ }
+  // cgroup-1: the next customer group when it is time
+  try { out.groups = await ctx.tx.savepoint(async () => (await import('./cgroups.js')).cgTick(ctx)); } catch (e) { out.groups = { error: String(e && e.message || e).slice(0, 160) }; }
   // review-1: reviews given in chats go to the website
   try { out.reviews = await ctx.tx.savepoint(async () => (await import('./reviews.js')).reviewTick(ctx)); } catch (_) { /* next tick */ }
   // 136: the Meta pixel hears Lead / Purchase / returns from the server - only for real orders

@@ -35869,7 +35869,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
 
   // ---------------------------------------------------------------- the frame
   var MENU_TABS = {
-    inbox: [['inbox', 'Inbox'], ['day', 'Day review'], ['tasks', 'Notifications'], ['orders', 'Orders'], ['rv', 'Reviews'], ['land', 'Landing pages'], ['bk', 'Bookings'], ['fu', 'Follow-ups'], ['cm', 'Comments'], ['desk', 'Agent Desk'], ['kb', 'Knowledge'], ['chans', 'Chat settings'], ['stats', 'Analytics'], ['cost', 'AI cost'], ['team', 'Team']],
+    inbox: [['inbox', 'Inbox'], ['day', 'Day review'], ['tasks', 'Notifications'], ['orders', 'Orders'], ['rv', 'Reviews'], ['cg', 'Customer groups'], ['land', 'Landing pages'], ['bk', 'Bookings'], ['fu', 'Follow-ups'], ['cm', 'Comments'], ['desk', 'Agent Desk'], ['kb', 'Knowledge'], ['chans', 'Chat settings'], ['stats', 'Analytics'], ['cost', 'AI cost'], ['team', 'Team']],
   };
   var TABS = MENU_TABS.inbox;
   var TAB_FEAT = { team: 'groups', orders: 'orders', land: 'landing', bk: 'bookings', leads: 'leads', fu: 'followups', bc: 'broadcasts', cm: 'comments', kb: 'knowledge', stats: 'analytics' };
@@ -36302,7 +36302,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
   // ---------------------------------------------------------------- Agent Desk
   var BF = [['services', 'Services, fees and durations', true, 'e.g. Consultation ৳800 (20 min); Hair cut ৳500'], ['booking_questions', 'Questions to ask before a booking', true, 'e.g. Which service? Preferred day and time? Age?'],
             ['place', 'Where (address or online)', false, ''], ['advance_rule', 'Advance payment rule', false, 'e.g. ৳300 advance by bKash 01XXXXXXXXX'], ['cancel_rule', 'Cancellation rule', false, 'e.g. Tell us 24 hours before']];
-  var PF = [['name', 'Business name'], ['agent_name', 'Salesperson\'s name (said when a customer asks)'], ['superior_wa', 'Manager\'s WhatsApp (the AI asks here for a bigger discount or a doubt)'], ['sells', 'What you sell (a few words)'], ['hours', 'Opening hours'], ['phone', 'Phone'], ['address', 'Address'],
+  var PF = [['name', 'Business name'], ['agent_name', 'Salesperson\'s name (said when a customer asks)'], ['superior_wa', 'Manager\'s WhatsApp (the AI asks here for a bigger discount or a doubt)'], ['team_wa', 'MD\'s WhatsApp (added to every customer group)'], ['sells', 'What you sell (a few words)'], ['hours', 'Opening hours'], ['phone', 'Phone'], ['address', 'Address'],
             ['delivery_in', 'Delivery inside Dhaka, first kg (৳)'], ['days_in', 'Days inside Dhaka'], ['delivery_out', 'Delivery outside Dhaka, first kg (৳)'], ['days_out', 'Days outside Dhaka'], ['per_kg_in', 'Each more kg inside Dhaka (৳, 0 = flat)'], ['per_kg_out', 'Each more kg outside Dhaka (৳, 0 = flat)'], ['filament_g', 'A filament spool counts as (grams, packed)'], ['order_wa_to', 'WhatsApp alert for each new order: blank = our first WhatsApp number, or phone numbers (comma separated), or off'], ['order_wa_group', 'Or send order alerts + invoice to this WhatsApp group (name; made if missing)'], ['delivery_rule', 'Other delivery rules'],
             ['payment', 'How customers pay'], ['returns', 'Return and exchange rule'], ['discount_answer', 'Answer when asked for a discount'], ['extra_offer', 'Extra offer (mentioned once before the order)'],
             ['tone', 'Tone of voice'], ['first_message', 'First message (website chat)'], ['review_link', 'Facebook / Google review link (offered after a good review)']];
@@ -57822,6 +57822,71 @@ document.addEventListener('click', function (e) {
   });
   var v = document.getElementById('view');
   if (v && window.MutationObserver) new MutationObserver(function () { if (isDesk() && !document.querySelector('#view .ln-card')) paint(); }).observe(v, { childList: true, subtree: true });
+})();
+</script>
+<!-- cgroup-1: Inbox > Customer groups - one WhatsApp group per customer (handlers/cgroups.js erpCustomerGroups) -->
+<style>
+.cg-top{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0 12px}
+.cg-k{background:var(--fd-card,#fff);border:1px solid var(--fd-line,#e3e5ee);border-radius:14px;padding:10px 14px;min-width:110px}
+.cg-k b{display:block;font-size:22px}.cg-k span{font-size:13px;color:var(--fd-muted,#5f6476)}
+.cg-row{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--fd-line,#e3e5ee);flex-wrap:wrap}
+.cg-row .w{flex:1;min-width:180px}.cg-row .sku{font-size:12px}
+.cg-pill{font-size:11px;padding:1px 8px;border-radius:999px;background:#f1f2f6;color:#5f6476}
+.cg-pill.made,.cg-pill.invited{background:#e5f5ed;color:#1d8a5c}.cg-pill.failed{background:#fdecea;color:#c2332d}.cg-pill.queued{background:#eeeefc;color:#5b5bd6}
+</style>
+<script>
+(function () {
+  var CG = { d: null, busy: false };
+  var ST = { queued: 'Waiting', made: 'Group made', invited: 'Invite link sent', failed: 'Failed', skipped: 'Left out' };
+  function isCg() { return typeof VIEW !== 'undefined' && VIEW === 'inbox' && window.IB && IB.tab === 'cg'; }
+  function act(args, after) {
+    if (CG.busy) return; CG.busy = true; paint();
+    srv('erpCustomerGroups', [args], function (r) { CG.busy = false; CG.d = r; paint(); if (r.note) toast(esc(r.note)); if (after) after(r); },
+      function (e) { CG.busy = false; if (!CG.d) CG.d = { error: (e && e.message) || String(e) }; paint(); toast(esc((e && e.message) || e), true, 9000); });
+  }
+  function html() {
+    var d = CG.d;
+    var h = '<div class="ib-c cg-card"><h3>Customer groups (WhatsApp)</h3>';
+    if (!d) { act({ action: 'get' }); return h + '<div class="loading">Reading…</div></div>'; }
+    if (d.error) return h + '<div class="note err"><div class="ico">!</div><div>' + esc(d.error) + '</div></div></div>';
+    var c = d.counts || {};
+    h += '<div class="sub">One group per customer: the customer, our MD, the manager\'s number and the AI salesperson. The manager\'s number makes them, ' + d.perDay + ' a day between 10 am and 9 pm with gaps of 25-55 minutes, and stops by itself after three failures. ' +
+      'Only people we already know: the WhatsApp chats in the Inbox and customers with an invoice in the last 12 months. Check the list and leave out anyone who should not get a group before you press Start.</div>';
+    h += '<div class="cg-top"><div class="cg-k"><b>' + (c.queued || 0) + '</b><span>Waiting</span></div><div class="cg-k"><b>' + ((c.made || 0) + (c.invited || 0)) + '</b><span>Groups made</span></div><div class="cg-k"><b>' + (c.failed || 0) + '</b><span>Failed</span></div><div class="cg-k"><b>' + (c.skipped || 0) + '</b><span>Left out</span></div></div>';
+    h += '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">' +
+      '<button class="btn" type="button" data-cga="fill"' + (CG.busy ? ' disabled' : '') + '>Fill the list</button>' +
+      '<button class="btn ' + (d.on ? '' : 'primary') + '" type="button" data-cga="' + (d.on ? 'stop' : 'start') + '"' + (CG.busy ? ' disabled' : '') + '>' + (d.on ? 'Stop making groups' : 'Start making groups') + '</button>' +
+      '<label style="flex-direction:row;align-items:center;gap:6px">A day <input class="i" data-cgday="1" inputmode="numeric" style="width:64px" value="' + esc(d.perDay) + '"></label>' +
+      '<button class="btn" type="button" data-cga="make_one"' + (CG.busy ? ' disabled' : '') + '>Make the next one now</button>' +
+      '<span class="sub">' + (d.on ? 'Running.' : 'Stopped.') + (d.team ? ' MD: ' + esc(d.team) : ' MD\'s WhatsApp not set (Agent Desk).') + (d.manager ? ' Manager: ' + esc(d.manager) : '') + '</span></div>';
+    h += (d.rows || []).map(function (r) {
+      return '<div class="cg-row"><div class="w"><b data-noi18n="1">' + esc(r.name) + '</b> <span class="sku">+' + esc(r.phone) + ' · ' + esc(r.source) + (r.subject ? ' · ' + esc(r.subject) : '') + (r.at ? ' · ' + esc(r.at) : '') + '</span>' +
+        (r.error ? '<div class="sku" style="color:#c2332d">' + esc(r.error) + '</div>' : '') + '</div><span class="cg-pill ' + esc(r.status) + '">' + esc(ST[r.status] || r.status) + '</span>' +
+        (r.conv ? '<button class="btn small" type="button" data-ibgoconv="' + esc(r.conv) + '">Open</button>' : '') +
+        (r.status === 'queued' ? '<button class="btn small" type="button" data-cga="skip" data-id="' + esc(r.id) + '">Leave out</button>' : '') +
+        (r.status === 'skipped' || r.status === 'failed' ? '<button class="btn small" type="button" data-cga="requeue" data-id="' + esc(r.id) + '">Back to the list</button>' : '') + '</div>';
+    }).join('') + (d.rows && d.rows.length ? '' : '<div class="ib-empty">The list is empty - press Fill the list.</div>');
+    return h + '</div>';
+  }
+  function paint() {
+    if (!isCg()) return;
+    var v = document.getElementById('view'); if (!v) return;
+    var card = v.querySelector('.cg-card'), nh = html();
+    if (card) { if (card.getAttribute('data-h') !== nh) { var t = document.createElement('div'); t.innerHTML = nh; var nc = t.firstChild; nc.setAttribute('data-h', nh); card.replaceWith(nc); } return; }
+    var tabs = v.querySelector('.ib-tabs'); if (!tabs || !tabs.parentNode) return;
+    var t2 = document.createElement('div'); t2.innerHTML = nh; var c2 = t2.firstChild; c2.setAttribute('data-h', nh);
+    tabs.parentNode.insertBefore(c2, tabs.nextSibling);
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('[data-cga]'); if (!b) return;
+    var a = b.getAttribute('data-cga');
+    if (a === 'start' && b.getAttribute('data-sure') !== '1') { b.setAttribute('data-sure', '1'); b.textContent = 'Start: tap again (groups go to real customers)'; return; }
+    if (a === 'make_one' && b.getAttribute('data-sure') !== '1') { b.setAttribute('data-sure', '1'); b.textContent = 'Make it: tap again'; return; }
+    act({ action: a, id: b.getAttribute('data-id') || undefined });
+  });
+  document.addEventListener('change', function (e) { var i = e.target && e.target.closest && e.target.closest('[data-cgday]'); if (i) act({ action: 'per_day', n: Number(i.value) }); });
+  var v = document.getElementById('view');
+  if (v && window.MutationObserver) new MutationObserver(function () { if (isCg() && !document.querySelector('#view .cg-card')) paint(); }).observe(v, { childList: true, subtree: true });
 })();
 </script>
 </body>
