@@ -250,6 +250,17 @@ export async function erpBrandDeskDone(ctx, payload) {
   return { board: await bridge(ctx, '/board/done', { id: num(payload && payload.id) }), pillars: PILLARS, audiences: AUDIENCES };
 }
 
+// 11 Nov 2026 (notes-1): the owner's journal + call notes (Telegram journal bot -> Memos #journal/#call) and open journal
+// tasks (Kanboard), read through the bridge, so the AI can answer "what did Kim promise?" and plan from real talk.
+export async function erpBrandDeskNotes(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {};
+  const kind = ['call', 'journal'].includes(str(p.kind)) ? str(p.kind) : 'all';
+  const days = Math.min(365, Math.max(1, parseInt(p.days, 10) || 60));   // not num(): that one throws 'Pick a card.'
+  const q = str(p.q).slice(0, 120);
+  return bridge(ctx, '/notes?kind=' + kind + '&days=' + days + '&q=' + encodeURIComponent(q));
+}
+
 const ideaId = (v) => { const s = str(v); if (!/^[A-Za-z0-9_-]{4,64}$/.test(s)) throw new Error('Pick an idea.'); return s; };
 export async function erpBrandDeskIdeas(ctx) {
   await gate(ctx);
@@ -341,4 +352,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

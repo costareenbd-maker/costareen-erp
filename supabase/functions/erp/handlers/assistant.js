@@ -75,6 +75,7 @@ export const TOOLS = [
   { name: 'supplier_dues', description: 'What is owed to each supplier.', parameters: { type: 'OBJECT', properties: {} } },
   { name: 'propose_followup', description: 'Prepare a customer follow-up (a call to make on a day) for the person to CONFIRM. due as YYYY-MM-DD.', parameters: { type: 'OBJECT', properties: { phone: { type: 'STRING' }, name: { type: 'STRING' }, due: { type: 'STRING' }, note: { type: 'STRING' } }, required: ['due', 'note'] } },
   { name: 'propose_expense', description: 'Prepare a one-off expense for the person to CONFIRM: amount in taka, what it was for, category (e.g. Rent, Salary, Courier, Utilities, Other), month YYYY-MM (default this month).', parameters: { type: 'OBJECT', properties: { amount: { type: 'NUMBER' }, description: { type: 'STRING' }, category: { type: 'STRING' }, month: { type: 'STRING' } }, required: ['amount', 'description'] } },
+  { name: 'my_notes', description: 'Rahman (the owner) own notes: phone/WhatsApp/Zoom/Meet call notes (who, what was agreed, who must do what, follow-up drafts) and voice/text journal notes, plus his open tasks. Use it for questions like what did a supplier/buyer promise, what is still open, what did I plan. q = words to search (a name, product, company); kind = call | journal | all; days back (default 60). Owner only.', parameters: { type: 'OBJECT', properties: { q: { type: 'STRING' }, kind: { type: 'STRING' }, days: { type: 'NUMBER' } } } },
   { name: 'propose_payment', description: 'Prepare money received from a customer against one invoice (INV-...) for the person to CONFIRM. method Cash | bKash | Nagad | Bank Transfer.', parameters: { type: 'OBJECT', properties: { invoiceNo: { type: 'STRING' }, amount: { type: 'NUMBER' }, method: { type: 'STRING' } }, required: ['invoiceNo', 'amount'] } },
 ];
 const SCREENS = ['dash', 'invoice', 'sales', 'customers', 'products', 'stock', 'shipments', 'suppliers', 'costs', 'cash', 'expenses', 'capital', 'commission', 'profit', 'analytics', 'preorders', 'quotes', 'weborders', 'repairs', 'settings', 'syscheck', 'mindmap', 'guide'];
@@ -170,6 +171,10 @@ export async function runTool(ctx, name, a) {
     if (name === 'commission') { const r = await call(ctx, 'erpCommission', { month: str(a.month) || undefined }); return { month: r.month, total: r.total, sellers: r.sellers }; }
     if (name === 'system_check') { const r = await call(ctx, 'erpSystemCheck', []); return { counts: r.counts, notPassing: (r.checks || []).filter((c) => c.status !== 'pass').map((c) => ({ id: c.id, title: c.title, status: c.status, detail: c.detail })) }; }
     if (name === 'supplier_dues') { const r = await call(ctx, 'erpSuppliers', []); return { owedTotal: r.owedTotal, suppliers: (r.suppliers || []).filter((x) => num(x.owed) > 0.5).map((x) => ({ name: x.name, owed: x.owed })) }; }
+    if (name === 'my_notes') {
+      const r = await call(ctx, 'erpBrandDeskNotes', { q: str(a.q), kind: str(a.kind), days: num(a.days) || 60 });
+      return { notes: (r.notes || []).map((n) => ({ kind: n.kind, at: n.at, text: str(n.text).slice(0, 3000) })), moreNotMatched: r.more || 0, openTasks: r.openTasks || [] };
+    }
     if (name === 'propose_followup') {
       if (!callAllowed(ctx.s, 'erpFollowupSave')) return { error: 'Not allowed for your role.' };
       const due = /today/i.test(str(a.due)) ? today(ctx) : str(a.due);

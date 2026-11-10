@@ -23,6 +23,7 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (url.endsWith('/shorts')) return { body: { jobs: { '18181596-5276-4153-9412-2f441efac82b': { state: 'making' } } } };
   if (/\/videos(\?q=.*)?$/.test(url)) return { body: { videos: [{ id: 'v1', name: 'clip01.mp4', duration: 2800, thumb: 'data:image/webp;base64,AAAA' }], q: decodeURIComponent((url.split('q=')[1] || '')) } };
   if (url.endsWith('/people')) return { body: { people: [{ id: 'p1', name: 'Kim Supplier', email: 'kim@example.com', phone: '', job: 'Export manager', audience: 'supplier', about: 'k-beauty', source: 'LinkedIn post' }] } };
+  if (/\/notes\?/.test(url)) return { body: { notes: [{ id: 'n1', kind: 'call', at: '2026-11-11T03:00:00Z', tags: ['journal', 'call'], text: 'Kim will ship 500 tubes on Wednesday' }], more: 0, openTasks: [{ id: 3, title: 'Send price list', due: 0 }], q: decodeURIComponent(url.split('q=')[1] || '') } };
   if (url.endsWith('/ideas') || url.endsWith('/ideas/board')) return { body: { ideas: [{ id: 'abcd1234', content: 'Why I started', at: '2026-11-03T00:00:00Z', tags: [] }] } };
   if (/\/board(\/(card|move|done))?$/.test(url)) return { body: { columns: [{ id: 1, title: 'Idea', cards: [{ id: 7, title: 'Why I started', tags: ['story'] }] }, { id: 2, title: 'Script', cards: [] }] } };
   return { status: 404, body: {} };
@@ -150,6 +151,14 @@ check('a manager does not see the board', !r.ok, r);
 // 4c. the idea bank (brand-3)
 r = await owner('erpBrandDeskIdeas', []);
 check('the ideas come from the PC', r.ok && r.result.ideas[0].id === 'abcd1234', r);
+// 4c2. journal + call notes for the AI (notes-1)
+r = await owner('erpBrandDeskNotes', [{ q: 'Kim ship', kind: 'call', days: 9999 }]);
+const nu = seen.filter((x) => /\/notes\?/.test(x.url)).pop();
+check('notes come from the PC, days capped at 365, words passed', r.ok && r.result.notes[0].text.includes('500 tubes') && /days=365/.test(nu.url) && /kind=call/.test(nu.url) && /q=Kim%20ship/.test(nu.url), { r, nu });
+r = await owner('erpBrandDeskNotes', [{ kind: 'weird' }]);
+check('an unknown kind reads all notes', r.ok && /kind=all/.test(seen.filter((x) => /\/notes\?/.test(x.url)).pop().url), r);
+r = await mgr('erpBrandDeskNotes', [{}]);
+check('a manager cannot read the owner notes', !r.ok, r);
 r = await owner('erpBrandDeskIdea', [{ content: ' ' }]);
 check('an empty idea is refused', !r.ok, r);
 r = await owner('erpBrandDeskIdea', [{ content: 'Show the warehouse' }]);
