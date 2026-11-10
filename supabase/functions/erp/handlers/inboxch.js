@@ -377,9 +377,18 @@ export async function metaProfile(ctx, ch, id) {
   if (!token) return {};
   const fields = ch.kind === 'instagram' ? 'name,username,profile_pic' : 'first_name,last_name,profile_pic';
   const r = await call(ctx, GRAPH + '/' + encodeURIComponent(id) + '?fields=' + fields + '&access_token=' + encodeURIComponent(token), { method: 'GET' });
-  if (!r.ok) return {};
-  const j = r.json;
-  return { name: str(j.name || [j.first_name, j.last_name].filter(Boolean).join(' ') || j.username), avatar: j.profile_pic ? 'meta' : '' };
+  const j = r.ok && r.json ? r.json : {};
+  let name = str(j.name || [j.first_name, j.last_name].filter(Boolean).join(' ') || j.username);
+  // end-1 (11 Nov 2026): Meta refuses the profile for some people - the page's own conversation still names them
+  if (!name && ch.kind === 'messenger') {
+    try {
+      const c = await call(ctx, GRAPH + '/' + encodeURIComponent(ch.external_id) + '/conversations?platform=messenger&user_id=' + encodeURIComponent(id) + '&fields=participants&access_token=' + encodeURIComponent(token), { method: 'GET' });
+      const conv = c.ok && c.json && Array.isArray(c.json.data) ? c.json.data[0] : null;
+      const p = conv && conv.participants && Array.isArray(conv.participants.data) ? conv.participants.data.find((x) => str(x.id) === str(id)) : null;
+      name = str(p && p.name);
+    } catch (_) { /* fine */ }
+  }
+  return { name, avatar: j.profile_pic ? 'meta' : '' };
 }
 /** Mirror mode: a fresh link to the person's photo from Meta (the links expire; nothing is kept). */
 export async function metaPicUrl(ctx, ch, id) {
