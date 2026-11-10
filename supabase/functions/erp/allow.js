@@ -31,7 +31,7 @@ export const ERP_ALLOW = {
   erpCrm: 'sales', erpCrmTimeline: 'sales', erpCrmViews: 'sales', erpCrmViewSave: 'sales', erpCrmViewRemove: 'sales', erpCrmFields: 'sales', erpCrmFieldSave: 'owner', erpCrmFieldRemove: 'owner',
   erpCrmExtraSave: 'sales', erpCrmCompanies: 'sales', erpCrmCompany: 'sales', erpCrmCompanySave: 'manager', erpCrmCompanyLink: 'sales', erpCrmDupes: 'manager', erpCrmDupCheck: 'sales', erpCrmDupeOk: 'manager',
   erpCrmEvents: 'owner', erpCrmHooks: 'owner', erpCrmHookSave: 'owner', erpCrmHookRemove: 'owner', erpCrmHookTest: 'owner', erpCrmRules: 'owner', erpCrmRuleSave: 'owner', erpCrmRuleRemove: 'owner',
-  erpCrmRemove: 'manager', erpCrmBin: 'manager', erpCrmRestore: 'manager', erpCrmHideSet: 'owner', erpCrmCalendar: 'sales', erpCrmCalLink: 'owner',
+  erpCrmRemove: 'manager', erpCrmBin: 'manager', erpCrmRestore: 'manager', erpCrmHideSet: 'owner', erpCrmCalendar: 'sales', erpCrmCalLink: 'owner', erpCrmAi: 'sales',
   erpRecentInvoices: 'sales', erpCustomers: 'sales', erpSaveCustomer: 'sales',
   erpDaySales: 'sales', erpProduct: 'sales', erpGetTheme: 'sales',
   erpSetTheme: 'sales', erpToday: 'sales', erpDiscontinued: 'sales',

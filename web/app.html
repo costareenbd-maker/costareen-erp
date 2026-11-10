@@ -45833,6 +45833,35 @@ details.nt-fold.nt-pnlfold > .nt-fold-in { padding:0 4px 6px; }
       [['phone', 'Phone numbers'], ['address', 'Addresses'], ['email', 'E-mail addresses']].map(function (x) {
         return '<label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:15px"><input type="checkbox" data-crmhide="' + x[0] + '"' + (hid.indexOf(x[0]) >= 0 ? ' checked' : '') + '> Hide ' + x[1].toLowerCase() + ' from salespeople</label>'; }).join('');
   }
+  // crmai-1 (owner 11 Nov 2026): the AI reads the chats and keeps these tools itself - what it did, on top of the screen
+  function aiHtml() {
+    if (!CRM.ai) { if (!CRM.aiAsk) { CRM.aiAsk = 1; srv('erpCrmAi', [{ action: 'get' }], function (r) { CRM.ai = r; CRM.aiAsk = 0; rp(); }, function () { CRM.aiAsk = 0; }); } return ''; }
+    var r = CRM.ai, T = r.totals || {};
+    var bits = [['chats', 'chats read'], ['leads', 'leads made'], ['followups', 'follow-ups set'], ['fields', 'records filled'], ['companies', 'companies'], ['dupes', 'duplicates cleared'], ['merge', 'to merge']]
+      .filter(function (b) { return T[b[0]]; }).map(function (b) { return '<b>' + fmt(T[b[0]]) + '</b> ' + b[1]; }).join(' · ');
+    var log = (r.log || []).slice(0, CRM.aiMore ? 40 : 6);
+    return '<section><div class="card crm-ai"><h2>The AI keeps this up to date</h2>' +
+      '<div class="sub" style="display:block">' + (r.on ? '<span class="pill ok">On</span> ' : '<span class="pill out">Off</span> ') +
+      'Every ' + r.every + ' minutes the AI reads the chats that went quiet (WhatsApp and the Facebook pages) and writes the leads, follow-ups, the customer’s printer, type and area, and their company. Once a day it checks the duplicates. ' +
+      (r.lastRun ? 'Last run ' + esc(r.lastRun) + '. ' : 'Not run yet. ') + (r.left ? fmt(r.left) + ' chat(s) still to read.' : 'All chats read.') + '</div>' +
+      (bits ? '<div style="margin-top:8px;font-size:14px">' + bits + '</div>' : '') +
+      (log.length ? '<ul class="crm-ailog" style="list-style:none;padding:0;margin:10px 0 0">' + log.map(function (l) {
+        return '<li style="padding:5px 0;border-top:1px solid var(--line,#e5e7eb);font-size:13.5px"><span class="sku" style="margin-right:8px">' + esc(l.atText) + '</span><span data-noi18n="1">' + esc(l.what) + '</span></li>'; }).join('') + '</ul>' : '') +
+      '<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">' +
+      ((r.log || []).length > 6 ? '<button class="btn small" type="button" data-crmaimore="1">' + (CRM.aiMore ? 'Show less' : 'Show all it did') + '</button>' : '') +
+      (isMgr() ? '<button class="btn small" type="button" data-crmai="run">Run now</button>' : '') +
+      (isOwner() ? '<button class="btn small" type="button" data-crmai="' + (r.on ? 'off' : 'on') + '">' + (r.on ? 'Switch off' : 'Switch on') + '</button>' : '') +
+      '</div></div></section>';
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-crmai],[data-crmaimore]');
+    if (!t) return;
+    if (t.hasAttribute('data-crmaimore')) { CRM.aiMore = !CRM.aiMore; rp(); return; }
+    var act = t.getAttribute('data-crmai');
+    t.disabled = true; t.textContent = act === 'run' ? 'Reading the chats…' : 'Saving…';
+    srv('erpCrmAi', [{ action: act }], function (r) { CRM.ai = r; CRM.dupes = null; CRM.cal = null; CRM.cfg = null; toast(act === 'run' ? 'Done - see what the AI did.' : 'Saved.'); rp(); },
+      function (er) { t.disabled = false; fail(er); rp(); });
+  });
   function crmHtml() {
     if (!crmOn()) return '<div class="note"><div class="ico">i</div><div>The customer tools are not switched on for this business.</div></div>';
     loadCfg();
@@ -45842,7 +45871,7 @@ details.nt-fold.nt-pnlfold > .nt-fold-in { padding:0 4px 6px; }
     if (!tabs.some(function (t) { return t[0] === CRM.tab; })) CRM.tab = 'cal';
     var body = CRM.tab === 'cal' ? calHtml() : CRM.tab === 'companies' ? compsHtml() : CRM.tab === 'dupes' ? dupesHtml() : CRM.tab === 'bin' ? binHtml()
       : CRM.tab === 'fields' ? fieldsHtml() : CRM.tab === 'rules' ? rulesHtml() : CRM.tab === 'events' ? eventsHtml() : privacyHtml();
-    return '<section><div class="tabs" role="tablist" style="flex-wrap:wrap">' + tabs.map(function (t) { return '<button type="button" role="tab" data-crmtab="' + t[0] + '" aria-selected="' + (CRM.tab === t[0]) + '">' + esc(t[1]) + (t[0] === 'bin' && CRM.cfg.binCount ? ' <b>' + CRM.cfg.binCount + '</b>' : '') + '</button>'; }).join('') + '</div></section>' +
+    return aiHtml() + '<section><div class="tabs" role="tablist" style="flex-wrap:wrap">' + tabs.map(function (t) { return '<button type="button" role="tab" data-crmtab="' + t[0] + '" aria-selected="' + (CRM.tab === t[0]) + '">' + esc(t[1]) + (t[0] === 'bin' && CRM.cfg.binCount ? ' <b>' + CRM.cfg.binCount + '</b>' : '') + '</button>'; }).join('') + '</div></section>' +
       '<section><div class="card">' + body + '</div></section>';
   }
   function crmPaint() { var v = el('view'); if (!v) return; v.innerHTML = crmHtml(); try { bindTips(v); } catch (e) {} }

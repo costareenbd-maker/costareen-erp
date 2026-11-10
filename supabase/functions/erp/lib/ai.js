@@ -41,7 +41,7 @@ const PURPOSE_TASK = { reply: 'chat', test: 'chat', followup: 'chat', comment: '
   photo: 'read', 'photo-match': 'read', voice: 'read', receive: 'read',
   social: 'write', inspo: 'write', 'reel-script': 'write', 'ad-draft': 'write',
   'leads-find': 'leads', 'leads-capture': 'leads', assistant: 'assistant',
-  'ad-daily': 'write', seo: 'analyze', 'skill-review': 'analyze' };
+  'ad-daily': 'write', seo: 'analyze', 'skill-review': 'analyze', crm: 'analyze' };
 export const taskOf = (purpose) => PURPOSE_TASK[str(purpose)] || (TASKS[str(purpose)] ? str(purpose) : 'default');
 
 // skills-chat-1 (owner 1 Nov 2026: "skills for ads, SEO and the rest that run with ChatGPT"): the switched-on skills of the

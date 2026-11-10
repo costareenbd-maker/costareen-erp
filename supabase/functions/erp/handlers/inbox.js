@@ -1275,6 +1275,8 @@ export async function inboxTick(ctx) {
   try { out.bookings = await (await import('./inbox2.js')).bookingReminders(ctx); } catch (_) { /* fine */ }
   // cgroup-1: the next customer group when it is time
   try { out.groups = await ctx.tx.savepoint(async () => (await import('./cgroups.js')).cgTick(ctx)); } catch (e) { out.groups = { error: String(e && e.message || e).slice(0, 160) }; }
+  // crmai-1: the AI keeps the customer tools (leads, follow-ups, fields, companies, duplicates) from the chats
+  try { out.crmAi = await ctx.tx.savepoint(async () => (await import('./crmai.js')).crmAiTick(ctx)); } catch (e) { out.crmAi = { error: String(e && e.message || e).slice(0, 160) }; }
   // review-1: reviews given in chats go to the website
   try { out.reviews = await ctx.tx.savepoint(async () => (await import('./reviews.js')).reviewTick(ctx)); } catch (_) { /* next tick */ }
   // 136: the Meta pixel hears Lead / Purchase / returns from the server - only for real orders
