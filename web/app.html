@@ -8067,6 +8067,7 @@ function viewWebOrders() {
               : '<button class="btn small" type="button" data-wo="'+esc(o.no)+'"'+
                 (BUSY==='wo'+o.no?' disabled':'')+'>'+
                 (BUSY==='wo'+o.no?'Working…':o.partEntered?'Enter the added lines':'Enter as invoice')+'</button>'+
+                (WALKIN_ON() || /pickup/i.test(o.payment || '') ? ' <button class="btn small" type="button" data-wowalk="'+esc(o.no)+'" title="Bought at the shop: no delivery, no Steadfast, paid in full">Walk-in (shop)</button>' : '')+
                 ' <button class="btn small" type="button" data-womark="'+esc(o.no)+'">Already entered</button>')+
             '</td></tr>';
     });
@@ -57601,6 +57602,43 @@ html[lang="bn"] body .fd19-dr .fd19-df .fd19-btn.sell-lbtn > .sell-sl { line-hei
   I18('Close without saving?', 'সেভ না করে বন্ধ করবেন?');
   I18('What you typed here is not kept.', 'এখানে যা লিখেছেন তা থাকবে না।');
 })();
+</script>
+
+<!-- walkin-1: enter a website order as a counter sale (owner, 10 Nov 2026) -->
+<script>
+// The button shows until the end of 15 Nov 2026 (Dhaka), the 11.11 offer's run plus two days, and always for an order the
+// website marked "pickup". The server takes walkIn {refund, method} at any time.
+var WALKIN_UNTIL = Date.parse('2026-11-16T00:00:00+06:00');
+function WALKIN_ON() { return Date.now() < WALKIN_UNTIL; }
+document.addEventListener('click', async function (e) {
+  var n = e.target && e.target.closest ? e.target.closest('[data-wowalk]') : null;
+  if (!n || BUSY) return;
+  var no = n.getAttribute('data-wowalk');
+  var o = (WEB || []).find(function (x) { return String(x.no) === String(no); }) || {};
+  var items = 0; (o.lines || []).forEach(function (l) { items += Number(l.lineTotal) || 0; });
+  var ship = Math.max(0, Math.round((Number(o.orderTotal) || 0) - items));
+  var pickup = /pickup/i.test(o.payment || '');
+  var refund = await uiPrompt('Order #' + no + ' was bought at the shop (walk-in).\n\n' +
+    'No delivery charge, nothing goes to Steadfast, paid in full.\n\n' +
+    'Delivery money refunded to the customer (৳):', String(pickup ? 0 : ship));
+  if (refund === null || refund === undefined) return;
+  refund = Number(String(refund).replace(/[^0-9.]/g, '')) || 0;
+  var method = await uiPrompt('Paid how? (Cash, bKash, Card, Bank Transfer)', 'Cash');
+  if (method === null || method === undefined) return;
+  BUSY = 'wo' + no; repaint();
+  srvAsk('erpEnterWebOrder', [{ orderNo: no, walkIn: { refund: refund, method: String(method).trim() || 'Cash' } }],
+    function (res) {
+      BUSY = '';
+      toast('Order #' + esc(res.orderNo) + ' entered as a walk-in sale <strong>' + esc(res.invoiceNo) + '</strong>' +
+            (res.pdfUrl ? ' · <a href="' + esc(res.pdfUrl) + '" target="_blank">Open PDF</a>' : ''), false, 15000);
+      WEB = null; CAT = null; D = null; ORDERS = null;
+      loadWeb(); loadAll();
+    },
+    function (err) {
+      BUSY = ''; repaint();
+      toast('Could not enter the order: ' + esc(err && err.message ? err.message : err), true, 15000);
+    });
+});
 </script>
 </body>
 </html>

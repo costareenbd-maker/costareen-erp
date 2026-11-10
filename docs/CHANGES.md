@@ -4204,3 +4204,24 @@ Blocks `<!-- crit8:ret -->`, `<!-- crit8:nav -->` after `<!-- CRIT8-MERGE 2026-1
   stock review one table, neutral "0 in stock"; Bangla drawer line-height 1.5; at most one "?" per label.
 - Checks: real-click invoice + receive desktop/phone, battery 25/25, click reach 0 stolen 44 x 2, crawl EN + BN 0 errors, full
   suite 200: ads 4 (old), factory (date), golive (IMPORT_DIR).
+
+## walkin-1 (10 Nov 2026): enter a website order as a walk-in sale
+
+Owner: during the 11.11 Polymaker offer people come to the shop and order in the Costareen app only to get the offer
+price. The website adds a courier delivery charge (refunded at the counter) and books the parcel with Steadfast, and the
+Web orders screen could only enter such an order as a courier sale. Now:
+
+- Web orders: a **Walk-in (shop)** button beside "Enter as invoice" (shown until the end of 15 Nov 2026 Dhaka, and
+  always for an order the website marked as a shop pickup). It asks the delivery money refunded (default = the order's
+  delivery charge) and how it was paid (default Cash).
+- `erpEnterWebOrder({orderNo, walkIn: {refund, method}})`: the invoice is a counter sale - delivery = the business's
+  pickup option ("Customer pickup"), delivery charge 0, paid in full by that method, note
+  `Walk-in at the shop · WEB-<no> · delivery <refund> refunded` (WEB- not at the front, so it is not listed as a website
+  parcel on the courier screen, but the order stays linked). It is never tied to the website's Steadfast parcel. A refund
+  above the order's delivery charge is refused. A website order whose payment says "pickup" (the website's new
+  "Pick up at the shop" choice, costareen-site 3057e49) is entered this way by itself.
+- Tests: expenses_web_test.mjs (walk-in, refused refund, pickup order by itself, no parcel tie).
+
+NOT done: the website still books its own Steadfast parcels for orders placed before the pickup choice went live - the
+eleven 11.11 orders of 9-10 Nov all have a parcel "in review"; any that were walk-ins must be cancelled in Steadfast's
+panel by hand (the ERP has no cancel call).

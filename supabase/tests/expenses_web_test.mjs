@@ -454,6 +454,28 @@ check('web orders show the consignment beside the order', o4.consignment === '30
 const o3 = (r.result || []).find((o) => o.no === '1003') || {};
 check('an order with no parcel says so (empty)', o3.consignment === '', o3);
 
+// ---- walkin-1: an app order bought at the shop is a counter sale - no delivery, paid in full, no parcel tie
+feed.push(
+  { number: 3001, created: today + ' 11:00:00', status: 'processing', sku: PLA, product: 'Sunlu PLA Black', qty: 1, line_total: 1111,
+    customer: 'Walkin One', phone: '01700000301', address: 'Mirpur', payment: 'Cash on delivery', total: 1226 },
+  { number: 3002, created: today + ' 11:05:00', status: 'processing', sku: A1, product: 'Bambu A1', qty: 1, line_total: 52000,
+    customer: 'Walkin Two', phone: '01700000302', address: 'PICKUP AT SHOP', payment: 'Pay at shop (pickup)', total: 52000 });
+await asOwner((ctx) => W.pullWebOrders(ctx));
+r = await mgr('erpEnterWebOrder', [{ orderNo: '3001', walkIn: { refund: 500, method: 'Cash' } }]);
+check('walk-in refund above the delivery charge refused', !r.ok && /more than the delivery charge on the order \(115\)/.test(r.error), r);
+r = await mgr('erpEnterWebOrder', [{ orderNo: '3001', walkIn: { refund: 115, method: 'bKash' } }]);
+const w1 = r.ok && (await sql`select * from invoices where invoice_no = ${r.result.invoiceNo}`)[0];
+check('walk-in: pickup, no delivery, paid in full by bKash, refund on the note, still linked to the order',
+  r.ok && r.result.walkIn === true && w1.delivery_charge === 0 && w1.grand_total === 1111 && w1.payment_status === 'Paid' &&
+  w1.payment_method === 'bKash' && w1.source === 'Customer pickup' && w1.note === 'Walk-in at the shop · WEB-3001 · delivery 115 refunded' &&
+  w1.web_order_no === '3001', [r, w1]);
+check('walk-in: no courier parcel tied', (await sql`select count(*)::int n from courier_log where business_id = ${B} and invoice_no = ${w1 ? w1.invoice_no : ''}`)[0].n === 0);
+r = await mgr('erpEnterWebOrder', ['3002']);
+const w2 = r.ok && (await sql`select * from invoices where invoice_no = ${r.result.invoiceNo}`)[0];
+check('a website "pickup" order is entered as a walk-in by itself (Cash, no refund)',
+  r.ok && r.result.walkIn === true && w2.source === 'Customer pickup' && w2.payment_status === 'Paid' && w2.payment_method === 'Cash' &&
+  w2.delivery_charge === 0 && w2.note === 'Walk-in at the shop · WEB-3002', [r, w2]);
+
 // another business sees none of it
 const other = await sql`select count(*)::int as n from web_orders where business_id = ${FIX.B2}`;
 check('nothing leaked to B2', other[0].n === 0);

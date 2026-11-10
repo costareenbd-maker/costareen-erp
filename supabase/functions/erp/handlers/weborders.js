@@ -417,23 +417,50 @@ export async function erpEnterWebOrder(ctx, orderNo) {
 
   let itemsTotal = 0;
   for (const l of order.lines) itemsTotal += num(l.lineTotal);
+  const shipped = later ? 0 : Math.max(0, Math.round((num(order.orderTotal) - itemsTotal) * 100) / 100);   // the first invoice carried it
 
-  const pay = webPayment(order.payment);
-  const res = await createInvoice(ctx, {
-    customer: { name: order.customer, phone: order.phone, address: order.address, source: 'Website order' },
-    items,
-    // delivery, and the cash handling fee on a COD order
-    deliveryCharge: later ? 0 : Math.max(0, Math.round((num(order.orderTotal) - itemsTotal) * 100) / 100),   // the first invoice carried it
-    // COD -> cash on delivery; paid online -> paid now; anything else is still owed
-    payMode: /^cod$/i.test(pay.method) ? 'cod' : pay.status === 'Paid' ? 'full' : 'none',
-    paymentMethod: /^cod$/i.test(pay.method) ? '' : pay.method,
-    // offer-1: the offer behind a line's discount is named on the invoice ("WEB-9001 · 11.11 Offer")
-    note: 'WEB-' + no + offerNames(order.lines) + (later ? ' (lines added on the website after it was entered)' : ''),
-  }, { webEntry: true, webOrderNo: no, agreed });
+  // walkin-1 (owner, 10 Nov 2026): the buyer ordered in the app to claim an offer but took it at the shop. The invoice is
+  // a counter sale - pickup, paid in full by the method given, no delivery charge (the charge the website added was
+  // refunded at the shop and is named on the note), and it is never tied to the website's courier parcel.
+  // A website order marked "pickup" (the website's "Pick up at the shop" choice) is entered this way by itself.
+  const walk = ask.walkIn && typeof ask.walkIn === 'object' ? ask.walkIn : (/pickup/i.test(str(order.payment)) ? {} : null);
+  let res;
+  if (walk) {
+    const refund = Math.round(num(walk.refund));
+    if (!(refund >= 0)) throw new Error('The refund cannot be below zero.');
+    if (refund > shipped + 0.5 && refund > 0) throw new Error('The refund (' + refund + ') is more than the delivery charge on the order (' + shipped + ').');
+    const method = str(walk.method) || 'Cash';
+    const pickupName = ((await (await import('../lib/delivery.js')).deliveryOptions(ctx)).find((o) => o.type === 'pickup') || {}).name || 'Customer pickup';
+    res = await createInvoice(ctx, {
+      customer: { name: order.customer, phone: order.phone, address: order.address, source: pickupName },
+      items,
+      deliveryCharge: 0,
+      payMode: 'full',
+      paymentMethod: method,
+      // "WEB-<no>" stays in the note (the order stays linked) but not at the front: a note starting with WEB- is listed
+      // as a website parcel on the courier screen
+      note: 'Walk-in at the shop · WEB-' + no + offerNames(order.lines) +
+            (refund > 0 ? ' · delivery ' + refund + ' refunded' : '') + (later ? ' (lines added on the website after it was entered)' : ''),
+    }, { webEntry: true, webOrderNo: no, agreed });
+    await markEntered(ctx, order.lines.map((l) => l.lineId), res.invoiceId);
+  } else {
+    const pay = webPayment(order.payment);
+    res = await createInvoice(ctx, {
+      customer: { name: order.customer, phone: order.phone, address: order.address, source: 'Website order' },
+      items,
+      // delivery, and the cash handling fee on a COD order
+      deliveryCharge: shipped,
+      // COD -> cash on delivery; paid online -> paid now; anything else is still owed
+      payMode: /^cod$/i.test(pay.method) ? 'cod' : pay.status === 'Paid' ? 'full' : 'none',
+      paymentMethod: /^cod$/i.test(pay.method) ? '' : pay.method,
+      // offer-1: the offer behind a line's discount is named on the invoice ("WEB-9001 · 11.11 Offer")
+      note: 'WEB-' + no + offerNames(order.lines) + (later ? ' (lines added on the website after it was entered)' : ''),
+    }, { webEntry: true, webOrderNo: no, agreed });
 
-  await markEntered(ctx, order.lines.map((l) => l.lineId), res.invoiceId);
-  // the website may have booked the parcel already: tie it to the new invoice so nobody books it twice
-  try { await ctx.tx.savepoint(() => linkWebParcels(ctx, { [no]: res.invoiceNo })); } catch (_) { /* the website did not answer: the next check does it */ }
+    await markEntered(ctx, order.lines.map((l) => l.lineId), res.invoiceId);
+    // the website may have booked the parcel already: tie it to the new invoice so nobody books it twice
+    try { await ctx.tx.savepoint(() => linkWebParcels(ctx, { [no]: res.invoiceNo })); } catch (_) { /* the website did not answer: the next check does it */ }
+  }
 
   // the PDF, when the sales group's builder exists (as the original, a
   // failed PDF does not undo the sale)
@@ -446,7 +473,7 @@ export async function erpEnterWebOrder(ctx, orderNo) {
     }
   } catch (_) { /* not in the web app yet, or it failed silently as before */ }
 
-  return { ok: true, invoiceNo: res.invoiceNo, pdfUrl, orderNo: no };
+  return { ok: true, invoiceNo: res.invoiceNo, pdfUrl, orderNo: no, walkIn: !!walk };
 }
 
 /**
