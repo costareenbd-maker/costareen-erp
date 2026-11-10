@@ -284,4 +284,11 @@ check('name-1: no name set: no name line', !/YOUR NAME/.test(sysOf(bodies[0])));
 // ---- inbox-only-1 (owner 10 Nov): every order in the chat; no website link to buy
 check('inbox-only-1: the prompt keeps every order in the chat and never sends a buying link', /ORDERS ONLY HERE/.test(sysN) && !/\nWebsite: /.test(sysN));
 
+// ---- offer-1 (owner 11 Nov): a running offer is always in the prompt; an ended one is not
+await sql`insert into shop_offers (business_id, label, detail, ends_on) values (${FIX.B}, 'Test 11.11 Deal', 'only in the app: first refill 1111', now()::date + 2), (${FIX.B}, 'Old Deal', 'gone', now()::date - 3)`;
+bodies.length = 0; script = [[{ text: 'ok' }]];
+await reply([{ direction: 'in', kind: 'text', text: 'panchroma refill er dam?' }]);
+const sysO = sysOf(bodies[0]);
+check('offer-1: the running offer is known without calling a tool; an ended one is not', /RUNNING OFFERS/.test(sysO) && /Test 11\.11 Deal: only in the app/.test(sysO) && !/Old Deal/.test(sysO));
+
 await done();

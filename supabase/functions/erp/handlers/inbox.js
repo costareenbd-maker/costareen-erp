@@ -863,6 +863,12 @@ export async function agentReply(ctx, conv, opts) {
   // learn-1: how our own team talks, learned from the Inbox's real chats (Agent Desk > Learn from our team)
   let learnedB = '';
   if (!test || opts.learned !== false) { try { learnedB = await (await import('./teamlearn.js')).learnedBlock(ctx); } catch (_) { learnedB = ''; } }
+  // offer-1 (owner 11 Nov 2026): the running offers are always known (not only when the AI thinks to call offers)
+  try {
+    const offs = await ctx.tx`select label, sku, detail, ends_on from shop_offers where business_id = ${ctx.biz} and active and (starts_on is null or starts_on <= ${formatDate(ctx.now, 'yyyy-MM-dd')}) and (ends_on is null or ends_on >= ${formatDate(ctx.now, 'yyyy-MM-dd')}) limit 6`;
+    if (offs.length) learnedB = [learnedB, 'RUNNING OFFERS (the only ones that exist; mention one in a short line when it fits - they ask about that product, its price, or a discount; follow its own words exactly, they override the other rules for that offer): ' +
+      offs.map((o) => str(o.label) + (o.sku ? ' [' + o.sku + ']' : '') + (o.detail ? ': ' + str(o.detail) : '') + (o.ends_on ? ' (until ' + formatDate(new Date(o.ends_on), 'd MMM') + ')' : '')).join(' | ')].filter(Boolean).join('\n');
+  } catch (_) { /* fine */ }
   // boss-3: what the manager / MD answered before (kept so the AI need not ask the same thing again)
   try { const kb = await ctx.tx.savepoint(async () => (await import('./superior.js')).bossKnowledge(ctx)); if (kb) learnedB = [learnedB, kb].filter(Boolean).join('\n'); } catch (_) { /* fine */ }
   let boss = { block: '', ids: [] };
