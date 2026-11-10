@@ -63,5 +63,5 @@ check('end-1: "ok" to a question of ours is answered', res.dueInMs !== undefined
 const bodies = [];
 web.on(/generativelanguage\.googleapis\.com/, (url, opts) => { bodies.push(JSON.parse(opts.body)); return { status: 200, body: { candidates: [{ content: { parts: [{ text: 'ভালো থাকবেন ভাই।' }] } }], usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 1 } } }; });
 await asB((ctx) => ib.agentReply(ctx, { id: null, channel_id: ch.id }, { test: true, channel: ch, contact: { name: 'Karim Hasan' }, history: [{ direction: 'in', kind: 'text', text: 'thanks' }] }));
-check('end-1: the AI is told to say one short goodbye and stop', bodies.length && /ENDING THE CHAT/.test(bodies[0].systemInstruction.parts[0].text));
+check('end-1: the AI is told to say one short goodbye and stop', bodies.length && /ENDING THE CHAT - only when the chat is really finished/.test(bodies[0].systemInstruction.parts[0].text) && /THANKS IS NOT GOODBYE/.test(bodies[0].systemInstruction.parts[0].text));
 done();
