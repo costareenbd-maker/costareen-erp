@@ -73,4 +73,21 @@ const bodies = [];
 web.on(/generativelanguage\.googleapis\.com/, (url, opts) => { bodies.push(JSON.parse(opts.body)); return { status: 200, body: { candidates: [{ content: { parts: [{ text: 'ভালো থাকবেন ভাই।' }] } }], usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 1 } } }; });
 await asB((ctx) => ib.agentReply(ctx, { id: null, channel_id: ch.id }, { test: true, channel: ch, contact: { name: 'Karim Hasan' }, history: [{ direction: 'in', kind: 'text', text: 'thanks' }] }));
 check('end-1: the AI is told to say one short goodbye and stop', bodies.length && /gets ONLY a tiny welcome/.test(bodies[0].systemInstruction.parts[0].text) && /ignore the thanks and answer only the rest/.test(bodies[0].systemInstruction.parts[0].text));
+check('talk-1: the AI is told never to repeat a question and never to talk over our team', /NEVER REPEAT A QUESTION/.test(bodies[0].systemInstruction.parts[0].text) && /OUR TEAM IN THE CHAT/.test(bodies[0].systemInstruction.parts[0].text));
+
+// --- talk-1: "browsing, plz wait" gets nothing; a real question after it is answered
+check('talk-1: wait messages are known, questions are not', ['browsing, plz wait', 'ektu wait koren', 'ok dekhi', 'দেখছি'].every((t) => ib.isWait(t)) && !['wait, delivery koto?', 'dekhi ki ache?', 'PLA ache?'].some((t) => ib.isWait(t)));
+await ours('জি ভাই, কোন কালারটা নিবেন?');
+res = await say('browsing, plz wait', 'w1');
+check('talk-1: "browsing, plz wait" gets no answer', res.waiting && res.dueInMs === undefined, res);
+res = await say('red ta dekhan', 'w2');
+check('talk-1: the next real message is answered', res.dueInMs !== undefined, res);
+
+// --- talk-1: our team writing from the page inbox: the AI steps back
+await sql`update inbox_conversations set reply_due_at = null where id = ${conv.id}`;
+await asB((ctx) => ib.ingest(ctx, ch, { type: 'message', from: 'PSID1', echo: true, text: 'Vai apnar number den, call e kotha bolbo', id: 'e1' }));
+const cv = (await sql`select * from inbox_conversations where id = ${conv.id}`)[0];
+check('talk-1: a person writing from the page inbox makes the AI quiet (held, timed)', cv.mode === 'human' && cv.human_until && !cv.reply_due_at, cv);
+res = await say('01712345678', 'w3');
+check('talk-1: the customer\'s answer then waits for the person, not the AI', res.dueInMs === undefined, res);
 done();

@@ -250,6 +250,12 @@ export async function ingest(ctx, ch, ev) {
       return { conversationId: conv.id };
     }
     await writeMsg(ctx, conv, { direction: 'out', author: 'team', userName: ch.kind.startsWith('wa_') ? 'From the phone' : 'From the page inbox', text: ev.text, externalId: ev.id });
+    // talk-1 (owner 11 Nov 2026): a person wrote from the page inbox / the phone - the AI steps back (the channel's
+    // "back to the AI after" minutes), so it never talks over our team; "." still takes / gives it for good
+    if (conv.mode === 'ai' && str(ev.text)) {
+      await ctx.tx`update inbox_conversations set mode = 'human', human_until = ${new Date(ctx.now.getTime() + revertMinutes(ch) * 60e3)}, claimed_name = ${ch.kind.startsWith('wa_') ? 'Team (phone)' : 'Team (page inbox)'}, reply_due_at = null where id = ${conv.id}`;
+      await writeMsg(ctx, conv, { direction: 'note', author: 'system', kind: 'event', text: 'A person wrote from ' + (ch.kind.startsWith('wa_') ? 'the phone' : 'the page inbox') + ' - the AI is quiet for ' + revertMinutes(ch) + ' minutes.' });
+    }
     return { conversationId: conv.id };
   }
   if (ev.id && (await ctx.tx`select 1 from inbox_messages where business_id = ${ctx.biz} and external_id = ${ev.id} limit 1`).length) return {};   // sent twice by the platform
@@ -302,6 +308,8 @@ export async function ingest(ctx, ch, ev) {
   }
   // end-1: "of course" / a like after our goodbye - the chat is over, no answer (a reply already waiting still goes)
   if (!conv.reply_due_at && await alreadyClosed(ctx, conv, text, kind)) return { conversationId: conv.id, closed: true };
+  // talk-1: "browsing, plz wait" / "ektu dekhi" - they are looking; say nothing until they write again
+  if (!conv.reply_due_at && kind === 'text' && isWait(text)) return { conversationId: conv.id, waiting: true };
   const wait = waitSeconds(ch);
   await ctx.tx`update inbox_conversations set reply_due_at = ${new Date(ctx.now.getTime() + wait * 1000)} where id = ${conv.id}`;
   // "Seen" a few seconds after the message (later for a photo or a voice note) - sent with the answer's typing
@@ -471,6 +479,9 @@ const HUMAN = 'SOUND HUMAN (the customer must feel they are chatting with a real
   'DISCOUNTS: only for a bigger quantity, and only inside price_offer (check it first, come down in small steps). If they want more than it allows, a special deal, or something feels off: call ask_superior and say in one line that you are checking with your superior right now and will let them know (e.g. "আমি এখনই আমার সুপিরিয়রের সাথে কথা বলে আপনাকে জানাচ্ছি ভাই।"). ' +
   'ORDERS ONLY HERE: take every order in this chat (cards -> Order -> quantity -> phone + address -> place_order). Never send a website or any link to buy, never tell them to order on the website or pay online; if they ask for the website, say the order is quickest right here with cash on delivery. ' +
   'ONE MESSAGE PER ANSWER: everything you say in this reply goes to the customer as one short message (the ERP joins it), so never say the same thing twice, never greet again, and do not write a separate line that only introduces the cards ("এগুলো দেখুন:") - the cards speak for themselves; end with at most one question. ' +
+  'NEVER REPEAT A QUESTION: if one of your last two messages already asked it (e.g. "kon colour nite chan?"), do not ask it again - answer what they said and wait; they will choose when ready. ' +
+  'Take numbers and wishes only from the customer\'s own words (if they said "2 filaments" once, do not keep repeating "2 ta" - follow what they say now). ' +
+  'OUR TEAM IN THE CHAT: messages marked as from the team are ours; never contradict them, never answer what they already answered, and do not talk over them. ' +
   'THANKS (owner 11 Nov 2026): a message that is ONLY "thanks" / "ধন্যবাদ" / "thank you bhai" gets ONLY a tiny welcome in their language - "জি ভাই, ওয়েলকাম 😊" / "welcome bhai!" / "You\'re welcome!" - nothing more: no goodbye, no "ভালো থাকবেন", no new question, no product, no "আর কিছু লাগলে জানাবেন". ' +
   'Thanks with other words before or after it ("thanks, delivery koto din?"): ignore the thanks and answer only the rest, as if the thanks were not there. ' +
   'ENDING THE CHAT: only when they clearly leave ("thik ache, pore janabo", "ok bye", "আজ লাগবে না") say one short goodbye - "ঠিক আছে ভাই, ভালো থাকবেন।" - and stop. Never say goodbye on your own because the chat looks finished. ' +
@@ -479,6 +490,9 @@ const HUMAN = 'SOUND HUMAN (the customer must feel they are chatting with a real
 const CLOSER_RE = /^(?:(?:ok(?:ay|k)?|okey|oky|thanks?|thank\s*(?:you|u)|thx|tnx|ty|of\s*course|sure|fine|alright|right|got\s*it|noted|welcome|you\s*too|same\s*to\s*you|done|great|nice|good|cool|hmm+|ji|jee?|jii|accha|achha|thik\s*ache|thik\s*ase|acha|dhonnobad|dhonyobad|ধন্যবাদ|অসংখ্য\s*ধন্যবাদ|ঠিক\s*আছে|আচ্ছা|ওকে|জি|জ্বি|জী|হুম+|অবশ্যই|ইনশাআল্লাহ|inshallah|insha\s*allah|আলহামদুলিল্লাহ|alhamdulillah|vai|bhai|bro|apu|sir|ভাই|আপু|স্যার|ভাইয়া|vaiya|bhaiya|ji\s*vai|ok\s*vai|thanks\s*vai)[\s,.!?।]*)+$/i;
 const EMOJI_ONLY_RE = /^[\s\p{Extended_Pictographic}‍️\u{1F3FB}-\u{1F3FF}]*$/u;
 export function isCloser(text) { const t = str(text).trim(); return !t || EMOJI_ONLY_RE.test(t) || (t.length <= 40 && CLOSER_RE.test(t)); }
+// talk-1: the customer asks us to wait while they look
+const WAIT_RE = /^(?:ok(?:ay)?[\s,.]*|ji[\s,.]*|bhai[\s,.]*|vai[\s,.]*)*(?:(?:plz|pls|please)\s*)?(?:(?:ektu|1\s*min(?:ute)?|ek\s*min(?:it)?)\s*)?(?:wait|w8|browsing|checking|looking|dekhi|dekhchi|dekhtesi|dekhtechi|dekhe\s*(?:janacchi|janabo|jani)|dara(?:n|o)|hold\s*on|একটু\s*দেখি|দেখছি|দেখে\s*জানাচ্ছি|দাঁড়ান|অপেক্ষা\s*করুন|ওয়েট)(?:\s*(?:plz|pls|please|koren|korun|bhai|vai|kori|a\s*bit|a\s*sec|a\s*min))*[\s,.!।]*$/i;
+export function isWait(text) { const t = str(text).trim(); return t.length > 0 && t.length <= 40 && (WAIT_RE.test(t) || /^browsing,?\s*(?:plz|pls|please)?\s*wait[.!]*$/i.test(t)); }
 // end-2: a short "welcome" answer to a thanks also closes it (a long greeting with "welcome" does not)
 const isGoodbye = (t) => GOODBYE_RE.test(t) || (t.length <= 50 && /ওয়েলকাম|\bwelcome\b/i.test(t));
 const GOODBYE_RE = /জানাবেন|ভালো থাকবেন|ভাল থাকবেন|শুভকামনা|let (?:me|us) know|take care|have a (?:good|nice|great)|you'?re welcome|janaben|valo thakben|bhalo thakben|khushi holam|খুশি হলাম/i;

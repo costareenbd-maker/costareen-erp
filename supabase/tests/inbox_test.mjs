@@ -220,8 +220,11 @@ check('on WhatsApp a product goes as a text or photo (no cards), the answer thro
 // the business's phone replied itself: a team message, the AI is not stopped
 const fromMe = JSON.stringify({ event: 'messages.upsert', data: { key: { remoteJid: '8801811222333@s.whatsapp.net', fromMe: true, id: 'WA2' }, message: { conversation: 'ami nijei bolchi' } } });
 await asB(async (ctx) => ib.hookPost(ctx, await chRow(E.id), fromMe, {}));
-check('a reply from the business\'s phone is written as the team\'s, the AI keeps the chat', (await sql`select count(*)::int n from inbox_messages where conversation_id = ${conv2} and author = 'team'`)[0].n === 1 &&
-  (await sql`select mode from inbox_conversations where id = ${conv2}`)[0].mode === 'ai');
+// talk-1 (owner 11 Nov 2026): a person writing from the phone / page inbox makes the AI step back for the revert time
+const c2m = (await sql`select mode, human_until from inbox_conversations where id = ${conv2}`)[0];
+check('talk-1: a reply from the business\'s phone is written as the team\'s and the AI steps back for a while', (await sql`select count(*)::int n from inbox_messages where conversation_id = ${conv2} and author = 'team'`)[0].n === 1 &&
+  c2m.mode === 'human' && c2m.human_until && new Date(c2m.human_until) > new Date(), c2m);
+await sql`update inbox_conversations set mode = 'ai', human_until = null, claimed_name = null where id = ${conv2}`;
 
 // walid-1: WhatsApp's hidden-number ids (LID): the phone in remoteJidAlt wins; a LID alone is kept whole and answered as a LID;
 // an old contact kept as the LID's digits gets WhatsApp's 400 as a phone and is tried again as a LID
