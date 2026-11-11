@@ -709,28 +709,33 @@ export function nameMatch(ours, theirs, brand) {
 }
 async function sitePictures(ctx, items) {
   if (!items.length) return;
-  const { getConfig, httpFetch } = await import('../lib/ext.js');
+  const { getConfig, setConfig, httpFetch } = await import('../lib/ext.js');
   const dflt = ctx.deps && ctx.deps.install && ctx.deps.install.id ? '' : 'https://costareen.com/wp-json/cz/v1';
   const api = str(await getConfig(ctx, 'website_api', dflt)) || dflt;
   if (!api) return;
   const origin = new URL(api).origin;
   for (const brand of [...new Set(items.map((x) => str(x.brand)).filter(Boolean))].slice(0, 4)) {
     const key = origin + '|' + brand.toLowerCase();
+    // kept in the database (each request is a fresh isolate on the server): 'site_pics:<brand>' = {at, code, list}
+    const ckey = 'site_pics:' + brand.toLowerCase().slice(0, 40);
     let hit = SITE_PICS.get(key);
-    if (!hit || Date.now() - hit.at > 6 * 3600e3) {
-      const list = [];
+    if (!hit) { try { const v = JSON.parse(str(await getConfig(ctx, ckey, '')) || 'null'); if (v && v.at) hit = v; } catch (_) { /* refetch */ } }
+    if (!hit || Date.now() - hit.at > (hit.list && hit.list.length ? 6 : 0.5) * 3600e3) {
+      const list = []; let code = 0;
       for (let page = 1; page <= 4; page++) {
         const r = await httpFetch(ctx, origin + '/api/v1/catalog/products?q=' + encodeURIComponent(brand) + '&page_size=48&page=' + page, { method: 'GET', headers: { 'user-agent': 'costareen-erp' } });
+        code = r ? r.code : 0;
         const its = r && r.json && Array.isArray(r.json.items) ? r.json.items : [];
-        for (const it of its) if (it.thumb_url) list.push({ name: str(it.name_en || it.name_bn), pic: origin + str(it.thumb_url).replace(/_t(\.\w+)$/, '$1'), thumb: origin + str(it.thumb_url), brand: str(it.brand_name) });
+        for (const it of its) if (it.thumb_url) list.push({ name: str(it.name_en || it.name_bn), pic: origin + str(it.thumb_url).replace(/_t(\.\w+)$/, '$1'), brand: str(it.brand_name) });
         if (its.length < 48) break;
       }
-      hit = { at: Date.now(), list };
-      SITE_PICS.set(key, hit);
+      hit = { at: Date.now(), code, list };
+      try { await ctx.tx.savepoint(() => setConfig(ctx, ckey, JSON.stringify(hit))); } catch (_) { /* a read-only call: kept for this request */ }
     }
+    SITE_PICS.set(key, hit);
     for (const x of items.filter((y) => str(y.brand).toLowerCase() === brand.toLowerCase())) {
       const m = hit.list.map((s) => ({ ...s, score: nameMatch(x.name, s.name, brand) })).filter((s) => s.score).sort((a, b) => a.score - b.score || a.name.length - b.name.length)[0];
-      if (m) { x.link = m.pic; x.siteThumb = m.thumb; }
+      if (m) x.link = m.pic;
     }
   }
 }
