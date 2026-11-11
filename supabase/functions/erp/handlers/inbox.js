@@ -714,13 +714,19 @@ async function sitePictures(ctx, items) {
   const api = str(await getConfig(ctx, 'website_api', dflt)) || dflt;
   if (!api) return;
   const origin = new URL(api).origin;
-  for (const brand of [...new Set(items.map((x) => str(x.brand)).filter(Boolean))].slice(0, 4)) {
+  // joint-ai-1c: every brand (the first 4 only never reached Polymaker); cached ones cost nothing, at most 3 fetches per call;
+  // the joint stock's brands first
+  const brands = [...new Set(items.slice().sort((p, q) => (q.joint ? 1 : 0) - (p.joint ? 1 : 0)).map((x) => str(x.brand)).filter(Boolean))].slice(0, 40);
+  let fetches = 0;
+  for (const brand of brands) {
     const key = origin + '|' + brand.toLowerCase();
     // kept in the database (each request is a fresh isolate on the server): 'site_pics:<brand>' = {at, code, list}
     const ckey = 'site_pics:' + brand.toLowerCase().slice(0, 40);
     let hit = SITE_PICS.get(key);
     if (!hit) { try { const v = JSON.parse(str(await getConfig(ctx, ckey, '')) || 'null'); if (v && v.at) hit = v; } catch (_) { /* refetch */ } }
     if (!hit || Date.now() - hit.at > (hit.list && hit.list.length ? 6 : 0.5) * 3600e3) {
+      if (fetches >= 3) { if (!hit) continue; } else {
+      fetches++;
       const list = []; let code = 0;
       for (let page = 1; page <= 4; page++) {
         const r = await httpFetch(ctx, origin + '/api/v1/catalog/products?q=' + encodeURIComponent(brand) + '&page_size=48&page=' + page, { method: 'GET', headers: { 'user-agent': 'costareen-erp' } });
@@ -731,6 +737,7 @@ async function sitePictures(ctx, items) {
       }
       hit = { at: Date.now(), code, list };
       try { await ctx.tx.savepoint(() => setConfig(ctx, ckey, JSON.stringify(hit))); } catch (_) { /* a read-only call: kept for this request */ }
+      }
     }
     SITE_PICS.set(key, hit);
     for (const x of items.filter((y) => str(y.brand).toLowerCase() === brand.toLowerCase())) {
