@@ -677,7 +677,62 @@ async function catalogue(ctx) {
              notes: str(e.notes),   // the public "about" text of the item / landing pages; never given to the customer AI
              desc: str(a.description), details };
   });
+  // joint-ai-1 (owner 11 Nov 2026): "Polymaker is in the joint stock and we sell it - the AI must see it too". The
+  // joint pools' products (the same list New invoice sells from: pool code ~J, the pool's price and stock) join the
+  // catalogue; an order of them becomes an invoice with joint lines like any New invoice. No cost (no discount below
+  // the pool's price; a bigger discount goes to the manager).
+  try {
+    const J = await import('./joint.js');
+    const jc = await ctx.tx.savepoint(() => J.erpJointCatalog(ctx));
+    if (jc && jc.on) {
+      const own = new Set(ctx.memo.inboxCat.filter((x) => x.stock > 0).map((x) => x.sku.toLowerCase()));
+      for (const j of jc.products || []) {
+        if (own.has(str(j.code).toLowerCase())) continue;   // we have our own of the same code in stock
+        ctx.memo.inboxCat.push({ sku: j.sku, name: j.name, brand: str(j.brand), cat: str(j.cat), type: str(j.type), status: 'Active', sell: num(j.sell), stock: num(j.stock),
+          cost: 0, photo: '', thumb: '', link: '', family: '', color: str(j.color), grams: 0, notes: '', desc: '', details: {}, joint: true });
+      }
+    }
+  } catch (e) { console.error('joint catalogue', e && e.message); }
+  // joint-ai-1: a product without a picture here takes the website's picture of the same product (matched by name)
+  try { await sitePictures(ctx, ctx.memo.inboxCat.filter((x) => !x.photo && !x.link)); } catch (e) { console.error('site pictures', e && e.message); }
   return ctx.memo.inboxCat;
+}
+// joint-ai-1: the website's public catalogue (name -> picture), kept 6 hours per brand
+const SITE_PICS = new Map();
+const NAME_NOISE = /\b(refill|filament|spool|1\.75\s*mm|1\.75mm|1\s*kg|1kg|3d|printer|printing|pla\+?)\b/g;
+const nameKey = (s) => str(s).toLowerCase().replace(/[^a-z0-9.+ ]+/g, ' ').replace(/\s+/g, ' ').trim();
+export function nameMatch(ours, theirs, brand) {
+  const b = str(brand).toLowerCase();
+  const tok = (s) => nameKey(s).replace(NAME_NOISE, ' ').split(' ').filter((w) => w && w !== b);
+  const want = tok(ours), have = new Set(tok(theirs));
+  return want.length > 0 && want.every((w) => have.has(w)) && have.size - want.length <= 2 ? 1 + have.size - want.length : 0;   // 1 = exact, more = extra words
+}
+async function sitePictures(ctx, items) {
+  if (!items.length) return;
+  const { getConfig, httpFetch } = await import('../lib/ext.js');
+  const dflt = ctx.deps && ctx.deps.install && ctx.deps.install.id ? '' : 'https://costareen.com/wp-json/cz/v1';
+  const api = str(await getConfig(ctx, 'website_api', dflt)) || dflt;
+  if (!api) return;
+  const origin = new URL(api).origin;
+  for (const brand of [...new Set(items.map((x) => str(x.brand)).filter(Boolean))].slice(0, 4)) {
+    const key = origin + '|' + brand.toLowerCase();
+    let hit = SITE_PICS.get(key);
+    if (!hit || Date.now() - hit.at > 6 * 3600e3) {
+      const list = [];
+      for (let page = 1; page <= 4; page++) {
+        const r = await httpFetch(ctx, origin + '/api/v1/catalog/products?q=' + encodeURIComponent(brand) + '&page_size=48&page=' + page, { method: 'GET', headers: { 'user-agent': 'costareen-erp' } });
+        const its = r && r.json && Array.isArray(r.json.items) ? r.json.items : [];
+        for (const it of its) if (it.thumb_url) list.push({ name: str(it.name_en || it.name_bn), pic: origin + str(it.thumb_url).replace(/_t(\.\w+)$/, '$1'), thumb: origin + str(it.thumb_url), brand: str(it.brand_name) });
+        if (its.length < 48) break;
+      }
+      hit = { at: Date.now(), list };
+      SITE_PICS.set(key, hit);
+    }
+    for (const x of items.filter((y) => str(y.brand).toLowerCase() === brand.toLowerCase())) {
+      const m = hit.list.map((s) => ({ ...s, score: nameMatch(x.name, s.name, brand) })).filter((s) => s.score).sort((a, b) => a.score - b.score || a.name.length - b.name.length)[0];
+      if (m) { x.link = m.pic; x.siteThumb = m.thumb; }
+    }
+  }
 }
 // sales-1: a product detail whose name says it is internal never reaches the customer AI
 const PRIVATE_FIELD = /cost|buy|purchase|supplier|vendor|margin|profit|internal|note|wholesale|landed|কেনা|সাপ্লায়ার/i;
@@ -963,7 +1018,7 @@ export async function agentReply(ctx, conv, opts) {
       if (a.intro) queue.push({ kind: 'text', text: str(a.intro), intro: true });
       const cards = [];
       for (const x of ps) {
-        cards.push({ code: x.sku, title: x.name, subtitle: (x.sell ? '৳' + Math.round(x.sell).toLocaleString('en-IN') : 'Price on request') + ' · ' + x.sku + (x.stock > 0 ? '' : ' · not available now'),
+        cards.push({ code: x.sku, title: x.name, subtitle: (x.sell ? '৳' + Math.round(x.sell).toLocaleString('en-IN') : 'Price on request') + ' · ' + x.sku.replace(/~J[0-9a-f]{4}$/i, '') + (x.stock > 0 ? '' : ' · not available now'),
                      // inbox-only-1 (owner 10 Nov): no link to any page - the website's online payment costs a fee, every
                      // order is taken here in the chat; both buttons come back to the AI (ORDER: / PHOTO:)
                      image: await imageUrl(ctx, x), buttons: [{ title: 'Order', payload: 'ORDER:' + x.sku }, { title: 'More photos', payload: 'PHOTO:' + x.sku }] });
