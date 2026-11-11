@@ -49,7 +49,8 @@ export const PROFILE_DEFAULTS = {
   agent_name: '',
   superior_wa: '',
   // cgroup-1 (owner 10 Nov 2026): one WhatsApp group per customer - the MD's WhatsApp, on/off, groups a day
-  team_wa: '', cg_on: false, cg_per_day: 12,  // boss-1 (owner 10 Nov 2026): the manager's WhatsApp - more discount / a doubt -> "I'll ask my superior"    // name-1 (owner 10 Nov 2026): the salesperson's own name, said when a customer asks who they are talking to
+  team_wa: '', cg_on: false, cg_per_day: 12, cg_mode: '', cg_since: '', cg_welcome: '', cg_welcome_buy: '',  // cgroup-2: groups after a purchase, the manager's greeting
+   // boss-1 (owner 10 Nov 2026): the manager's WhatsApp - more discount / a doubt -> "I'll ask my superior"    // name-1 (owner 10 Nov 2026): the salesperson's own name, said when a customer asks who they are talking to
   tone: 'Warm and polite, like a helpful shop assistant.', first_message: '',
   delivery_in: 70, delivery_out: 130, days_in: '1-2 days', days_out: '2-4 days', delivery_rule: '',
   payment: 'Cash on delivery all over Bangladesh.', returns: '', discount_answer: '', extra_offer: '',

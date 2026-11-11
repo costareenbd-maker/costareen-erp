@@ -53,7 +53,7 @@ r = await owner('erpCustomerGroups', [{ action: 'make_one' }]);
 const g1 = (await sql`select * from customer_groups where phone = '8801711000001'`)[0];
 check('cgroup-1: the group is made by the manager\'s number with the customer, the MD and the AI salesperson; the customer\'s name in the subject',
   r.ok && made.length === 1 && made[0].participants.join() === '8801711000001,8801900000070,8801900000659' && made[0].subject === 'Rahim Vai (Costareen)' && g1.status === 'made' && g1.group_jid, [made, g1]);
-check('cgroup-1: Faujia\'s number sends the welcome into the group (who she is, orders / invoices here)', sent.length === 1 && sent[0].inst === 'ai9' && sent[0].number === g1.group_jid && /আমি ফাউজিয়া আলভি, Costareen থেকে/.test(sent[0].text) && /invoice/.test(sent[0].text) && /ভাই/.test(sent[0].text), sent);
+check('cgroup-2: the MANAGER\'s number greets the group (why it is open), kept as the team\'s message', sent.length === 1 && sent[0].inst === 'boss1' && sent[0].number === g1.group_jid && /ম্যানেজার/.test(sent[0].text) && / ভাই/.test(sent[0].text), sent);
 const gc = (await sql`select * from inbox_contacts where channel_id = ${AI.id} and external_id = ${g1.group_jid}`)[0];
 check('cgroup-1: the group is a chat in the Inbox on Faujia\'s number', gc && g1.conversation_id && gc.name === 'Rahim Uddin');
 
@@ -96,4 +96,31 @@ r = await owner('erpCustomerGroups', [{ action: 'start' }]);
 check('cgroup-1: Start switches it on', r.ok && r.result.on, r);
 r = await mgr('erpCustomerGroups', [{ action: 'skip', id: (await sql`select id from customer_groups where status = 'queued' limit 1`)[0]?.id || null }]);
 check('cgroup-1: the other business has no groups', !(await sql`select 1 from customer_groups where business_id = ${FIX.B2}`).length);
+// ---- cgroup-2: never the owner; only after a purchase; the manager greets, then the invoice
+await owner('erpInboxProfile', [{ save: { team_wa: '01900000070, +82 10-0000-1111', cg_welcome: 'আসসালামু আলাইকুম{salute}\nআমি মেহেদী (test).', cg_welcome_buy: 'আসসালামু আলাইকুম{salute}\nধন্যবাদ (test). নিচে ইনভয়েস।' } }]);
+r = await owner('erpCustomerGroups', [{ action: 'after_purchase' }]);
+check('cgroup-2: "after purchase" mode is set (on, since now)', r.ok && r.result.on && r.result.mode === 'purchase' && r.result.since, r);
+const prof = await asB(async (ctx) => ib.profile(ctx, false));
+let t2 = await asB(async (ctx) => cg.purchaseTick(ctx, prof, true));
+check('cgroup-2: no purchase since - no group (the old list is not worked)', t2.waiting === 'no new buyer', t2);
+await sql`insert into invoices (business_id, invoice_no, customer_name, customer_phone, subtotal, grand_total) values (${FIX.B}, 'INV-CG-9', 'Karim Hasan', '01713-000009', 500, 500)`;
+made.length = 0; sent.length = 0; inGroup = true;
+t2 = await asB(async (ctx) => cg.purchaseTick(ctx, prof, true));
+const g9 = (await sql`select * from customer_groups where phone = '8801713000009'`)[0];
+check('cgroup-2: a buyer gets a group: the customer, the MD and Alvi - NOT the owner\'s number', t2.made && made.length === 1 && made[0].participants.join() === '8801713000009,8801900000070,8801900000659' && g9.source === 'purchase' && g9.invoice_no === 'INV-CG-9', [t2, made, g9]);
+check('cgroup-2: the manager greets with the purchase text', sent.length >= 1 && sent[0].inst === 'boss1' && sent[0].number === g9.group_jid && /ধন্যবাদ \(test\)/.test(sent[0].text), sent);
+check('cgroup-2: the greeting is in the group\'s Inbox chat as the team\'s message', g9 && (await sql`select 1 from inbox_messages where conversation_id = ${g9.conversation_id} and author = 'team' and text like '%ধন্যবাদ (test)%'`).length === 1);
+check('cgroup-2: no invoice PDF stored here: a note says send it by hand (never a crash)', g9 && (await sql`select 1 from inbox_messages where conversation_id = ${g9.conversation_id} and direction = 'note' and text like '%INV-CG-9%'`).length === 1);
+t2 = await asB(async (ctx) => cg.purchaseTick(ctx, prof, true));
+check('cgroup-2: the same buyer is not grouped twice', t2.waiting === 'no new buyer' && made.length === 1, t2);
+// greet the groups made before, once
+sent.length = 0;
+r = await owner('erpCustomerGroups', [{ action: 'greet_all' }]);
+const greeted = sent.filter((x) => x.inst === 'boss1' && /মেহেদী \(test\)/.test(x.text));
+check('cgroup-2: greet_all: the manager\'s greeting once in every group made before', r.ok && greeted.length >= 1 && greeted.every((x) => /@g\.us$/.test(x.number)), [r.result && r.result.note, sent]);
+sent.length = 0;
+r = await owner('erpCustomerGroups', [{ action: 'greet_all' }]);
+check('cgroup-2: greet_all again sends nothing new', r.ok && !sent.length, sent);
+check('cgroup-2: no salute when the gender is unknown', cg.managerWelcome({ cg_welcome: 'আসসালামু আলাইকুম{salute}' }, null, false) === 'আসসালামু আলাইকুম' && cg.managerWelcome({ cg_welcome: 'হাই{salute}' }, 'f', false) === 'হাই আপু');
 done();
+

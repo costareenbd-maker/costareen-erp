@@ -10,6 +10,16 @@
 //
 // Settings live in the Agent Desk profile: cg_on, cg_per_day, team_wa (the MD's WhatsApp); the manager's number is
 // superior_wa (boss-1); Faujia's number is the newest live chat WhatsApp.
+//
+// cgroup-2 (owner 11 Nov 2026): "do not put me in the groups - the customer, the MD, the manager and Alvi only; no more
+// random groups: a group is made only after the customer buys, the manager greets them, says why it is open, then the
+// invoice goes in". So:
+//   members      the customer + the MD (team_wa's FIRST number only - the owner's number there is left out) + Alvi;
+//                the manager's number makes the group
+//   cg_mode      'purchase' (cg_since = when it started): cgTick makes groups only for invoices made after cg_since,
+//                one at a time, 9:00-22:00 Dhaka; the old random queue is never worked again
+//   greeting     from the MANAGER's number (profile cg_welcome / cg_welcome_buy, {salute} = ভাই / আপু / nothing), kept in
+//                the group's Inbox chat as the team's message; after a purchase the invoice PDF follows, then the notice
 
 import { formatDate } from '../lib/time.js';
 import { roleAtLeast } from '../allow.js';
@@ -21,6 +31,15 @@ const num = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
 const MIN = 60e3;
 
 export function teamPhones(p) { return [...new Set(bossPhones(p.superior_wa).concat(bossPhones(p.team_wa)))]; }
+/** cgroup-2: the MD alone (team_wa's first number); the owner's number after it is never put in a customer group. */
+export function mdPhone(p) { return bossPhones(p.team_wa)[0] || ''; }
+const DEF_WELCOME = 'আসসালামু আলাইকুম{salute}\nআমি আমাদের শপের ম্যানেজার।\nআপনার অর্ডার, ইনভয়েস, ডেলিভারির খবর আর যেকোনো সাপোর্ট এক জায়গায় দ্রুত দেওয়ার জন্য এই গ্রুপটা খোলা হয়েছে।\nকিছু লাগলে এখানেই লিখবেন, আমরা দ্রুত উত্তর দেব। ধন্যবাদ 💙';
+const DEF_WELCOME_BUY = 'আসসালামু আলাইকুম{salute}\nআমি আমাদের শপের ম্যানেজার। আমাদের থেকে কেনাকাটার জন্য অনেক ধন্যবাদ!\nআপনার অর্ডার, ডেলিভারির খবর আর যেকোনো সাপোর্টের জন্য এই গ্রুপটা খোলা হয়েছে।\nনিচে আপনার ইনভয়েস দিলাম, একবার দেখে নেবেন। কিছু লাগলে এখানেই লিখবেন 💙';
+/** The manager's greeting: the Agent Desk text (or the default), with ভাই / আপু when the gender is known. */
+export function managerWelcome(p, gender, bought) {
+  const t = str(bought ? p.cg_welcome_buy : p.cg_welcome) || (bought ? DEF_WELCOME_BUY : DEF_WELCOME);
+  return t.replace(/\{salute\}/g, gender === 'f' ? ' আপু' : gender === 'm' ? ' ভাই' : '');
+}
 const phone88 = (v) => { const d = str(v).replace(/[^0-9]/g, ''); return d.length === 11 && d[0] === '0' ? '88' + d : d.length === 10 && d[0] === '1' ? '880' + d : d; };
 
 async function evo(ctx, ch) {
@@ -94,7 +113,7 @@ export async function makeNext(ctx, p, rowId) {
   if (!N.maker) return { error: "the manager's number (Agent Desk > superior WhatsApp) is not a linked WhatsApp in the inbox" };
   if (!N.ai || !N.aiNo) return { error: "the salesperson's WhatsApp number is not linked" };
   const e = await evo(ctx, N.maker);
-  const members = [row.phone, ...bossPhones(p.team_wa), N.aiNo].filter((x, i, a) => x && a.indexOf(x) === i && x !== N.boss);
+  const members = [row.phone, mdPhone(p), N.aiNo].filter((x, i, a) => x && a.indexOf(x) === i && x !== N.boss);
   const subject = subjectFor(row.name, row.gender, p.name);
   const c = await call(ctx, e.base + '/group/create/' + encodeURIComponent(e.inst), { headers: { apikey: e.key }, body: { subject, description: (str(p.name) || 'Shop') + ' - orders, invoices and support', participants: members } });
   const jid = str(c.json && (c.json.id || (c.json.groupMetadata && c.json.groupMetadata.id)));
@@ -122,8 +141,23 @@ export async function makeNext(ctx, p, rowId) {
   const conv = (await ctx.tx`insert into inbox_conversations (business_id, channel_id, contact_id) values (${ctx.biz}, ${N.ai.id}, ${contact.id})
     on conflict (contact_id) do update set channel_id = excluded.channel_id returning *`)[0];
   await ctx.tx`update customer_groups set status = ${status}, group_jid = ${jid}, subject = ${subject}, conversation_id = ${conv.id}, made_at = now(), error = null where id = ${row.id}`;
-  const { deliver } = await import('./inbox.js');
-  await deliver(ctx, N.ai, conv, contact, { kind: 'text', text: welcomeText(p, row.name, row.gender) }, { author: 'ai' });
+  // cgroup-2: the manager greets them from his own number; after a purchase the invoice follows
+  const { writeMsg } = await import('./inbox.js');
+  const bought = row.source === 'purchase';
+  const hello = managerWelcome(p, row.gender, bought);
+  const s1 = await sendOut(ctx, N.maker, { external_id: jid }, { kind: 'text', text: hello });
+  await writeMsg(ctx, conv, { direction: 'out', author: 'team', userName: 'Manager', kind: 'text', text: hello, externalId: s1.externalId || null });
+  if (bought && str(row.invoice_no)) {
+    try {
+      const S = await import('./sales.js');
+      const pdf = await ctx.tx.savepoint(() => S.erpInvoicePdf(ctx, { invoiceNo: str(row.invoice_no) }));
+      if (pdf && pdf.found && pdf.url) {
+        const s2 = await sendOut(ctx, N.maker, { external_id: jid }, { kind: 'document', url: pdf.url, fileName: 'Invoice_' + str(row.invoice_no) + '.pdf', caption: 'Invoice ' + str(row.invoice_no) });
+        await writeMsg(ctx, conv, { direction: 'out', author: 'team', userName: 'Manager', kind: 'text', text: '(invoice ' + str(row.invoice_no) + ' PDF)', externalId: s2.externalId || null });
+        await sendOut(ctx, N.maker, { external_id: jid }, { kind: 'text', text: groupNotice() });
+      } else await writeMsg(ctx, conv, { direction: 'note', author: 'system', kind: 'event', text: 'Group made after invoice ' + str(row.invoice_no) + ' - its PDF was not found, send it by hand.' });
+    } catch (e) { await writeMsg(ctx, conv, { direction: 'note', author: 'system', kind: 'event', text: 'The invoice could not be sent to the group: ' + str(e && e.message).slice(0, 160) }); }
+  }
   return { made: true, id: row.id, jid, status };
 }
 
@@ -132,6 +166,7 @@ export async function cgTick(ctx) {
   const { profile } = await import('./inbox.js');
   const p = await profile(ctx, false);
   if (!p.cg_on) return { off: true };
+  if (str(p.cg_mode) === 'purchase') return purchaseTick(ctx, p);
   const h = Number(formatDate(ctx.now, 'H'));
   if (h < 10 || h >= 21) return { waiting: 'night' };
   const today = (await ctx.tx`select count(*)::int n, max(made_at) last from customer_groups where business_id = ${ctx.biz} and made_at > ${new Date(ctx.now.getTime() - 24 * 3600e3)}`)[0];
@@ -144,6 +179,32 @@ export async function cgTick(ctx) {
   const last3 = await ctx.tx`select status from customer_groups where business_id = ${ctx.biz} and status in ('made', 'invited', 'failed') order by coalesce(made_at, queued_at) desc limit 3`;
   if (last3.length === 3 && last3.every((r) => r.status === 'failed')) return { stopped: 'three failures in a row - check the numbers' };
   return makeNext(ctx, p);
+}
+
+/** cgroup-2: the next customer who bought (an invoice after cg_since) and has no group yet - their group now. */
+export async function purchaseTick(ctx, p, anyHour) {
+  const h = Number(formatDate(ctx.now, 'H'));
+  if (!anyHour && (h < 9 || h >= 22)) return { waiting: 'night' };
+  const since = str(p.cg_since) ? new Date(str(p.cg_since)) : ctx.now;
+  const day = (await ctx.tx`select count(*)::int n from customer_groups where business_id = ${ctx.biz} and made_at > ${new Date(ctx.now.getTime() - 24 * 3600e3)}`)[0].n;
+  if (day >= 30) return { waiting: 'the day is full' };
+  const last3 = await ctx.tx`select status from customer_groups where business_id = ${ctx.biz} and source = 'purchase' and status in ('made', 'invited', 'failed') order by coalesce(made_at, queued_at) desc limit 3`;
+  if (last3.length === 3 && last3.every((r) => r.status === 'failed')) return { stopped: 'three failures in a row - check the numbers' };
+  const team = new Set(teamPhones(p));
+  const inv = await ctx.tx`select invoice_no, customer_name, customer_phone from invoices where business_id = ${ctx.biz} and voided_at is null and created_at > ${since}
+                           and coalesce(customer_phone, '') <> '' order by created_at limit 40`;
+  for (const i of inv) {
+    const ph = phone88(i.customer_phone);
+    if (!/^8801[3-9][0-9]{8}$/.test(ph) || team.has(ph)) continue;
+    const g = (await ctx.tx`select * from customer_groups where business_id = ${ctx.biz} and phone = ${ph}`)[0];
+    if (g && ['made', 'invited'].includes(g.status)) continue;
+    if (g && g.source === 'purchase' && g.status === 'failed') continue;   // tried once for a purchase: the owner retries by hand
+    let id;
+    if (g) { await ctx.tx`update customer_groups set status = 'queued', source = 'purchase', invoice_no = ${String(i.invoice_no)}, error = null where id = ${g.id}`; id = g.id; }
+    else id = (await ctx.tx`insert into customer_groups (business_id, phone, name, source, invoice_no) values (${ctx.biz}, ${ph}, ${str(i.customer_name) || ph}, 'purchase', ${String(i.invoice_no)}) returning id`)[0].id;
+    return makeNext(ctx, p, id);
+  }
+  return { waiting: 'no new buyer' };
 }
 
 /** ingest: a WhatsApp group message. Our customer group on Faujia's number -> handled like a chat (team members pause
@@ -172,16 +233,35 @@ export async function erpCustomerGroups(ctx, payload) {
   const p = await profile(ctx, false);
   const setP = async (patch) => { const { erpInboxProfile } = await import('./inbox2.js'); await erpInboxProfile(ctx, { save: patch }); };
   let note = '';
-  if (['start', 'stop', 'per_day', 'make_one'].includes(a) && !roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner starts, stops or makes customer groups.');
+  if (['start', 'stop', 'per_day', 'make_one', 'after_purchase', 'greet_all'].includes(a) && !roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Only the owner starts, stops or makes customer groups.');
   if (a === 'fill') note = (await fill(ctx, p)) + ' added to the list';
   else if (a === 'skip' || a === 'requeue') await ctx.tx`update customer_groups set status = ${a === 'skip' ? 'skipped' : 'queued'}, error = null where business_id = ${ctx.biz} and id = ${str(payload.id)} and status <> 'made'`;
   else if (a === 'start' || a === 'stop') { if (a === 'start' && !bossPhones(p.team_wa).length) throw new Error("Write the MD's WhatsApp in Agent Desk first."); await setP({ cg_on: a === 'start' }); }
+  else if (a === 'after_purchase') { if (!bossPhones(p.team_wa).length) throw new Error("Write the MD's WhatsApp in Agent Desk first."); await setP({ cg_on: true, cg_mode: 'purchase', cg_since: ctx.now.toISOString() }); note = 'Groups now open only after a purchase'; }
+  else if (a === 'greet_all') {
+    // cgroup-2: the manager's greeting (cg_welcome) once in every group already made
+    const N = await numbers(ctx, p);
+    if (!N.maker) throw new Error("The manager's number is not a linked WhatsApp in the inbox.");
+    const { writeMsg } = await import('./inbox.js');
+    const gs = await ctx.tx`select * from customer_groups where business_id = ${ctx.biz} and status in ('made', 'invited') and group_jid is not null and greeted_at is null`;
+    let sent = 0;
+    for (const g of gs) {
+      const hello = managerWelcome(p, g.gender, false);
+      const r = await sendOut(ctx, N.maker, { external_id: g.group_jid }, { kind: 'text', text: hello });
+      if (!r.ok) continue;
+      sent++;
+      await ctx.tx`update customer_groups set greeted_at = now() where id = ${g.id}`;
+      const v = g.conversation_id ? (await ctx.tx`select * from inbox_conversations where id = ${g.conversation_id}`)[0] : null;
+      if (v) await writeMsg(ctx, v, { direction: 'out', author: 'team', userName: 'Manager', kind: 'text', text: hello, externalId: r.externalId || null });
+    }
+    note = 'Greeted ' + sent + ' of ' + gs.length + ' groups';
+  }
   else if (a === 'per_day') await setP({ cg_per_day: Math.max(1, Math.min(30, Math.round(num(payload.n)) || 12)) });
   else if (a === 'make_one') { const r = await makeNext(ctx, p, str(payload.id) || null); if (r.error) throw new Error(r.error); note = 'Group made: ' + r.jid; }
   const p2 = await profile(ctx, false);
   const counts = (await ctx.tx`select status, count(*)::int n from customer_groups where business_id = ${ctx.biz} group by status`).reduce((o, r) => ({ ...o, [r.status]: r.n }), {});
   const rows = await ctx.tx`select * from customer_groups where business_id = ${ctx.biz} order by (status = 'queued') desc, coalesce(made_at, queued_at) desc limit 200`;
-  return { on: !!p2.cg_on, perDay: num(p2.cg_per_day) || 12, team: p2.team_wa, manager: p2.superior_wa, counts, note,
+  return { on: !!p2.cg_on, mode: str(p2.cg_mode) || 'list', since: str(p2.cg_since), perDay: num(p2.cg_per_day) || 12, team: p2.team_wa, manager: p2.superior_wa, counts, note,
     rows: rows.map((r) => ({ id: r.id, name: r.name, phone: r.phone, source: r.source, status: r.status, subject: str(r.subject), error: str(r.error), conv: r.conversation_id,
       at: r.made_at ? formatDate(new Date(r.made_at), 'd MMM, h:mm a') : '' })) };
 }
