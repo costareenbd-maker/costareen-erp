@@ -31,7 +31,7 @@ export async function asBusiness(deps, row, label, fn) {
   const s = {
     userId: row.user_id, name: row.who || 'Timer', role: 'owner', roleLabel: ERP_ROLES.owner.label,
     discountCap: ERP_DISCOUNT_CAP.owner, businessId: row.business_id, businessName: row.name,
-    memberships: [{ business_id: row.business_id, role: 'owner', name: row.name }], implicit: true,
+    memberships: [{ business_id: row.business_id, role: 'owner', name: row.name }], implicit: true, job: true,   // mgr-quiet-1: a timer / webhook, not a person
   };
   const claims = JSON.stringify({ sub: row.user_id, role: 'authenticated' });
   try {

@@ -61,7 +61,7 @@ check('cgroup-1: the group is a chat in the Inbox on Faujia\'s number', gc && g1
 inGroup = false; sent.length = 0;
 r = await owner('erpCustomerGroups', [{ action: 'make_one' }]);
 const g2 = (await sql`select * from customer_groups where phone = '8801712000002'`)[0];
-check('cgroup-1: when the customer could not be added, the invite link goes to them from the manager\'s number', g2.status === 'invited' && sent.some((s) => s.inst === 'boss1' && s.number === '8801712000002' && /chat\.whatsapp\.com\/ABC123/.test(s.text)), sent);
+check('cgroup-1: when the customer could not be added, the invite link goes to them from Alvi\'s number (mgr-quiet-1)', g2.status === 'invited' && sent.some((s) => s.inst === 'ai9' && s.number === '8801712000002' && /chat\.whatsapp\.com\/ABC123/.test(s.text)) && !sent.some((s) => s.inst === 'boss1' && s.number === '8801712000002'), sent);
 
 // group messages
 const hook = chm.readHook ? chm.readHook : null;
@@ -122,5 +122,21 @@ sent.length = 0;
 r = await owner('erpCustomerGroups', [{ action: 'greet_all' }]);
 check('cgroup-2: greet_all again sends nothing new', r.ok && !sent.length, sent);
 check('cgroup-2: no salute when the gender is unknown', cg.managerWelcome({ cg_welcome: 'আসসালামু আলাইকুম{salute}' }, null, false) === 'আসসালামু আলাইকুম' && cg.managerWelcome({ cg_welcome: 'হাই{salute}' }, 'f', false) === 'হাই আপু');
+// ---- mgr-quiet-1: the manager's number sends nothing automatic - Alvi does; a person may still press Send on it
+const sp = await import(pathToFileURL(path.join(fnDir, 'handlers', 'superior.js')));
+const kB = (await sql`select * from inbox_contacts where channel_id = ${BOSS.id} and external_id = '8801711000001'`)[0];
+const vB = (await sql`insert into inbox_conversations (business_id, channel_id, contact_id) values (${FIX.B}, ${BOSS.id}, ${kB.id}) on conflict (contact_id) do update set channel_id = excluded.channel_id returning *`)[0];
+for (const author of ['system', 'ai', 'team']) {
+  sent.length = 0;
+  const rr = await asB(async (ctx) => ib.deliver(ctx, BOSS, vB, kB, { kind: 'text', text: 'auto ' + author }, { author, userName: 'Timer' }));
+  check('mgr-quiet-1: an automatic message (' + author + ') on the manager\'s number goes from Alvi\'s number instead', rr.ok && sent.length === 1 && sent[0].inst === 'ai9' && sent[0].number === '8801711000001' && sent[0].text === 'auto ' + author, [rr, sent]);
+}
+check('mgr-quiet-1: the manager\'s chat gets a note that Alvi sent it', (await sql`select count(*)::int n from inbox_messages where conversation_id = ${vB.id} and direction = 'note' and text like '%sends nothing automatic%'`)[0].n === 3);
+check('mgr-quiet-1: ...and the message is in Alvi\'s chat with that person', (await sql`select 1 from inbox_messages m join inbox_conversations v on v.id = m.conversation_id join inbox_contacts c on c.id = v.contact_id where c.channel_id = ${AI.id} and c.external_id = '8801711000001' and m.text = 'auto system'`).length === 1);
+sent.length = 0;
+r = await owner('erpInboxSend', [{ id: vB.id, text: 'Mehedi nije likhche' }]);
+check('mgr-quiet-1: a person pressing Send on the manager\'s chat still sends from the manager\'s number', r.ok && sent.length === 1 && sent[0].inst === 'boss1' && sent[0].text === 'Mehedi nije likhche', [r.error, sent]);
+sent.length = 0;
+const hq = await asB(async (ctx) => sp.superiorInbound(ctx, BOSS, { from: '8801900000070', text: 'aj sale koto?' }));
+check('mgr-quiet-1: the MD writing to the manager\'s number gets no automatic answer from it', hq === true && !sent.length, sent);
 done();
-

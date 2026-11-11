@@ -131,7 +131,7 @@ export async function makeNext(ctx, p, rowId) {
     if (Array.isArray(list) && list.length && !ids.includes(row.phone)) {
       const ic = await call(ctx, e.base + '/group/inviteCode/' + encodeURIComponent(e.inst) + '?groupJid=' + encodeURIComponent(jid), { method: 'GET', headers: { apikey: e.key } });
       const link = str(ic.json && (ic.json.inviteUrl || (ic.json.inviteCode ? 'https://chat.whatsapp.com/' + ic.json.inviteCode : '')));
-      if (link) { await sendOut(ctx, N.maker, { external_id: row.phone }, { kind: 'text', text: 'আপনার অর্ডার, invoice আর সাপোর্টের জন্য ' + (str(p.name) || 'আমাদের') + ' টিমের সাথে আপনার আলাদা group খুলেছি - এই লিংকে ঢুকে যান: ' + link }); status = 'invited'; }
+      if (link) { await sendOut(ctx, N.ai, { external_id: row.phone }, { kind: 'text', text: 'আপনার অর্ডার, invoice আর সাপোর্টের জন্য ' + (str(p.name) || 'আমাদের') + ' টিমের সাথে আপনার আলাদা group খুলেছি - এই লিংকে ঢুকে যান: ' + link }); status = 'invited'; }
     }
   } catch (_) { /* made; the welcome still goes */ }
   // the group becomes a chat in the Inbox on Faujia's number, and she welcomes them
@@ -141,7 +141,8 @@ export async function makeNext(ctx, p, rowId) {
   const conv = (await ctx.tx`insert into inbox_conversations (business_id, channel_id, contact_id) values (${ctx.biz}, ${N.ai.id}, ${contact.id})
     on conflict (contact_id) do update set channel_id = excluded.channel_id returning *`)[0];
   await ctx.tx`update customer_groups set status = ${status}, group_jid = ${jid}, subject = ${subject}, conversation_id = ${conv.id}, made_at = now(), error = null where id = ${row.id}`;
-  // cgroup-2: the manager greets them from his own number; after a purchase the invoice follows
+  // cgroup-2: the manager greets them from his own number (the ONE automatic message his number sends - mgr-quiet-1);
+  // after a purchase Alvi's number sends the invoice and the notice
   const { writeMsg } = await import('./inbox.js');
   const bought = row.source === 'purchase';
   const hello = managerWelcome(p, row.gender, bought);
@@ -152,9 +153,9 @@ export async function makeNext(ctx, p, rowId) {
       const S = await import('./sales.js');
       const pdf = await ctx.tx.savepoint(() => S.erpInvoicePdf(ctx, { invoiceNo: str(row.invoice_no) }));
       if (pdf && pdf.found && pdf.url) {
-        const s2 = await sendOut(ctx, N.maker, { external_id: jid }, { kind: 'document', url: pdf.url, fileName: 'Invoice_' + str(row.invoice_no) + '.pdf', caption: 'Invoice ' + str(row.invoice_no) });
-        await writeMsg(ctx, conv, { direction: 'out', author: 'team', userName: 'Manager', kind: 'text', text: '(invoice ' + str(row.invoice_no) + ' PDF)', externalId: s2.externalId || null });
-        await sendOut(ctx, N.maker, { external_id: jid }, { kind: 'text', text: groupNotice() });
+        const s2 = await sendOut(ctx, N.ai, { external_id: jid }, { kind: 'document', url: pdf.url, fileName: 'Invoice_' + str(row.invoice_no) + '.pdf', caption: 'Invoice ' + str(row.invoice_no) });
+        await writeMsg(ctx, conv, { direction: 'out', author: 'ai', kind: 'text', text: '(invoice ' + str(row.invoice_no) + ' PDF)', externalId: s2.externalId || null });
+        await sendOut(ctx, N.ai, { external_id: jid }, { kind: 'text', text: groupNotice() });
       } else await writeMsg(ctx, conv, { direction: 'note', author: 'system', kind: 'event', text: 'Group made after invoice ' + str(row.invoice_no) + ' - its PDF was not found, send it by hand.' });
     } catch (e) { await writeMsg(ctx, conv, { direction: 'note', author: 'system', kind: 'event', text: 'The invoice could not be sent to the group: ' + str(e && e.message).slice(0, 160) }); }
   }

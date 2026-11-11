@@ -72,7 +72,8 @@ export async function orderAlert(ctx, p, o, fromCh) {
   const text = orderAlertText(p, o, fromCh);
   const bill = ctx.deps && ctx.deps.svgPng && o.page_token ? billLink(ctx, o) : '';
   let last = 'no WhatsApp number could send it';
-  for (const ch of chs) {
+  const { isChatCh } = await import('./inbox.js');
+  for (const ch of chs.filter((c) => isChatCh(c))) {   // mgr-quiet-1: never from the manager's number
     const e = await evo(ctx, ch);
     if (!e) { last = 'the WhatsApp number "' + str(ch.name) + '" has no server set'; continue; }
     const phones = alertPhones(to);

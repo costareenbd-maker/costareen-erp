@@ -145,8 +145,31 @@ async function writeMsg(ctx, conv, m) {
   return r.id;
 }
 
+// mgr-quiet-1 (owner 11 Nov 2026): "the manager (Mehedi) sends nothing automatic - to nobody, not even me. Only the one
+// greeting after a group is made. Every automatic message goes from Alvi." A WhatsApp number that is not the chat
+// number (purpose 'collect' - the manager's) sends only what a person presses Send for; anything automatic (the AI,
+// updates, reviews, timers, broadcasts) goes from the chat number (Alvi's) to the same person instead.
+export function isChatCh(ch) { return !/^wa_/.test(str(ch && ch.kind)) || str(((ch && ch.settings) || {}).purpose || 'chat') === 'chat'; }
+export async function aiWaChannel(ctx) {
+  const rows = await ctx.tx`select * from inbox_channels where business_id = ${ctx.biz} and kind in ('wa_evo', 'wa_cloud') and status = 'live' order by created_at desc, id`;
+  return rows.find((c) => isChatCh(c)) || null;
+}
+const byPerson = (ctx, who) => who && who.author === 'team' && !(ctx.s && ctx.s.job);
+
 /** Send something to the customer and write it down (an AI message, a team reply, an update). */
 export async function deliver(ctx, ch, conv, contact, msg, who) {
+  if (!isChatCh(ch) && !byPerson(ctx, who)) {
+    if (msg.kind === 'seen' || msg.kind === 'typing') return { ok: true };
+    const ai = await aiWaChannel(ctx);
+    if (!ai || ai.id === ch.id || !contact) {
+      if (conv && conv.id) await writeMsgNote(ctx, conv, 'Not sent: the manager\'s number sends nothing automatic, and no chat number (Alvi) is live.');
+      return { ok: false, error: 'the manager\'s number sends nothing automatic' };
+    }
+    const c2 = await upsertContact(ctx, ai, { from: str(contact.external_id), name: str(contact.name) });
+    const v2 = await upsertConv(ctx, ai, c2);
+    if (conv && conv.id) await writeMsgNote(ctx, conv, 'Sent from ' + str(ai.name) + ' instead (the manager\'s number sends nothing automatic).');
+    return deliver(ctx, ai, v2, c2, msg, who);
+  }
   const res = await sendOut(ctx, ch, contact, msg);
   const id = await writeMsg(ctx, conv, {
     direction: 'out', author: who.author, userId: who.userId, userName: who.userName, kind: msg.kind === 'buttons' ? 'buttons' : msg.kind === 'cards' ? 'cards' : msg.kind === 'image' ? 'image' : msg.store || 'text',

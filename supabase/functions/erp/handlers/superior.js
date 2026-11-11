@@ -119,6 +119,8 @@ export async function superiorInbound(ctx, ch, ev) {
   const role = mg.includes(from) ? 'manager' : 'md';
   const text = str(ev.text);
   if (!text) return true;
+  // mgr-quiet-1: the manager's number answers nothing by itself - the boss chat lives on Alvi's number
+  if (str((ch.settings || {}).purpose || 'chat') !== 'chat') return true;
   const sir = role === 'md' ? 'স্যার' : 'ভাই';
   const say = async (t) => { try { await sendOut(ctx, ch, { external_id: from }, { kind: 'text', text: t }); } catch (_) { /* fine */ } };
   // an explicit "#R12 ..." still answers that question at once (fast, no AI needed)
