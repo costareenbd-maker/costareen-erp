@@ -158,7 +158,7 @@ wa.length = 0; bodies.length = 0;
 script = [[{ functionCall: { name: 'stock', args: { q: 'PLA Black' } } }], [{ text: 'স্যার, Testa PLA Black 1kg আছে ৪৮টা, দাম ৳১,৬০০।' }]];
 await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801681443070', text: 'Give stock details' }));
 check('boss-4: "Give stock details": the AI looks the stock up in the ERP and answers in plain words', bodies.length === 2 && /Testa PLA Black 1kg/.test(JSON.stringify(bodies[1].contents)) && /৳1,600/.test(JSON.stringify(bodies[1].contents)) && wa.length === 1 && /৪৮টা/.test(wa[0].text), [wa, JSON.stringify(bodies[1] && bodies[1].contents).slice(-600)]);
-check('boss-4: the MD may see money and profit tools; the owner\'s notes and invoice-making are not there', /month_profit/.test(JSON.stringify(bodies[0].tools)) && !/my_notes|propose_invoice/.test(JSON.stringify(bodies[0].tools)));
+check('boss-4: the MD may see money and profit tools; the owner\'s notes and invoice-making are not there', /month_profit/.test(JSON.stringify(bodies[0].tools)) && !/my_notes/.test(JSON.stringify(bodies[0].tools)) && /propose_invoice/.test(JSON.stringify(bodies[0].tools)));
 bodies.length = 0;
 script = [[{ text: 'OK.' }]];
 await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801847800652', text: 'aj koto sale holo?' }));
@@ -184,6 +184,57 @@ await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801681443070', tex
 bodies.length = 0;
 await reply([{ direction: 'in', kind: 'text', text: 'printer pre-order?' }]);
 check('boss-4: "remember": the rule is in every later customer chat', /within 2 weeks with a 50% advance/.test(bodies[0].systemInstruction.parts[0].text));
+// ---- boss-5: IT technician + accountant, only for the MD and the owner; every change waits for a separate yes
+await owner('erpInboxProfile', [{ save: { team_wa: '01681-443070, +82 10-2151-0000' } }]);
+await owner('erpCashAccountSave', [{ name: 'Testcash', kind: 'cash', opening: 5000, openingDate: '2026-01-01' }]);
+await owner('erpCashAccountSave', [{ name: 'Testbank', kind: 'bank', opening: 0, openingDate: '2026-01-01' }]);
+bodies.length = 0;
+script = [[{ text: 'OK.' }]];
+await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801847800652', text: 'cash theke bank e 1000 pathao' }));
+check('boss-5: the manager has no IT / accounting tools', !/propose_transfer|it_status|propose_expense|confirm/.test(JSON.stringify(bodies[0].tools)));
+bodies.length = 0;
+script = [[{ text: 'OK.' }]];
+await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '82102151' + '0000', text: 'hello' }));
+check('boss-5: the owner\'s number is known as the owner, with the IT + accountant tools', /the OWNER of the business/.test(bodies[0].systemInstruction.parts[0].text) && /propose_transfer/.test(JSON.stringify(bodies[0].tools)) && /it_status/.test(JSON.stringify(bodies[0].tools)) && /IT technician and accountant/.test(bodies[0].systemInstruction.parts[0].text));
+// IT check
+bodies.length = 0;
+script = [[{ functionCall: { name: 'it_status', args: {} } }], [{ text: 'স্যার, সব চ্যানেল চালু আছে।' }]];
+await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801681443070', text: 'kichu problem ache?' }));
+check('boss-5: it_status shows the channels and chats waiting', /channels/.test(JSON.stringify(bodies[1].contents)) && /chatsWaitingTooLong/.test(JSON.stringify(bodies[1].contents)), JSON.stringify(bodies[1] && bodies[1].contents.slice(-1)).slice(0, 900));
+// a transfer: proposed, a confirm in the same turn is refused, the next "yes" does it
+const bal = async () => (await sql`select a.name, coalesce(sum(m.amount), 0)::float + coalesce(a.opening, 0)::float b from money_accounts a left join money_moves m on m.account_id = a.id and coalesce(btrim(m.voided), '') = '' where a.business_id = ${FIX.B} and a.name in ('Testcash', 'Testbank') group by a.id, a.name, a.opening`.catch(() => []));
+bodies.length = 0; wa.length = 0;
+script = [[{ functionCall: { name: 'propose_transfer', args: { from: 'Testcash', to: 'Testbank', amount: 1000, note: 'bank deposit' } } }], [{ functionCall: { name: 'confirm', args: {} } }], [{ text: 'স্যার, Testcash থেকে Testbank-এ ৳1,000 পাঠাব। করব?' }]];
+await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801681443070', text: 'cash theke bank e 1000 pathao' }));
+check('boss-5: a confirm in the same turn as the proposal is refused', /have not said yes yet/.test(JSON.stringify(bodies[2].contents)) && !(await sql`select 1 from money_moves where business_id = ${FIX.B} and kind = 'transfer' and amount = 1000`).length);
+script = [[{ functionCall: { name: 'confirm', args: {} } }], [{ text: 'জি স্যার, করে দিয়েছি।' }]];
+await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801681443070', text: 'haa koro' }));
+const mv = await sql`select * from money_moves where business_id = ${FIX.B} and kind = 'transfer' and amount = 1000`;
+check('boss-5: "haa koro": the transfer is written through the cash book', mv.length === 1 && /WhatsApp/.test(mv[0].note), mv);
+const act = await sql`select * from erp_activity where business_id = ${FIX.B} and action = 'whatsapp:transfer'`;
+check('boss-5: ...and written to the activity log under the MD\'s name', act.length === 1 && /MD via WhatsApp/.test(act[0].who), act);
+script = [[{ functionCall: { name: 'confirm', args: {} } }], [{ text: 'ok' }]];
+await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801681443070', text: 'haa' }));
+check('boss-5: a second yes does nothing (nothing waiting)', (await sql`select 1 from money_moves where business_id = ${FIX.B} and kind = 'transfer' and amount = 1000`).length === 1);
+// an expense through the assistant's proposal
+script = [[{ functionCall: { name: 'propose_expense', args: { amount: 350, description: 'Test courier bill', category: 'Courier' } } }], [{ text: 'স্যার, ৳৩৫০ courier খরচ লিখব। করব?' }]];
+await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '82102151' + '0000', text: 'courier bill 350 lekho' }));
+script = [[{ functionCall: { name: 'confirm', args: {} } }], [{ text: 'জি স্যার।' }]];
+await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '82102151' + '0000', text: 'ji' }));
+check('boss-5: an expense: proposed, yes, written', (await sql`select 1 from expenses where business_id = ${FIX.B} and description like 'Test courier bill%'`.catch(() => [])).length === 1 &&
+  (await sql`select who from erp_activity where business_id = ${FIX.B} and action = 'whatsapp:expense'`)[0].who.startsWith('Owner'));
+// an IT fix: the AI off on a channel
+script = [[{ functionCall: { name: 'propose_fix', args: { action: 'ai_off', channel: W.name } } }], [{ text: 'করব?' }]];
+await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801681443070', text: 'whatsapp e AI bondho koro' }));
+script = [[{ functionCall: { name: 'confirm', args: {} } }], [{ text: 'জি স্যার।' }]];
+await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801681443070', text: 'yes' }));
+check('boss-5: an IT fix: the AI is off on that channel after the yes', (await sql`select ai_on from inbox_channels where id = ${W.id}`)[0].ai_on === false);
+await sql`update inbox_channels set ai_on = true where id = ${W.id}`;
+// a code fault is written down for the developer
+script = [[{ functionCall: { name: 'report_bug', args: { what: 'Invoice PDF shows the wrong date' } } }], [{ text: 'স্যার, লিখে রাখলাম।' }]];
+await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801681443070', text: 'invoice pdf e date vul' }));
+check('boss-5: report_bug keeps a ticket for the developer', /wrong date/.test((await sql`select value from business_config where business_id = ${FIX.B} and key = 'it_tickets'`)[0]?.value || ''));
+
 // no AI answers: an open question still takes the message as its answer; nothing open -> one plain sentence
 web.on(/generativelanguage\.googleapis\.com/, () => ({ status: 500, body: { error: { message: 'down' } } }));
 wa.length = 0;
