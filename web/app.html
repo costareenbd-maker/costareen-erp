@@ -58037,10 +58037,10 @@ document.addEventListener('click', function (e) {
      still do the work of the inner sections; this block only lays them out in the cockpit and restyles them.
      Server: erpBrandDeskCockpit (bridge /cockpit). -->
 <style>
-#view.bc-on{max-width:none;padding:0}
+#view.bc-on{max-width:none;padding:0;container-type:inline-size;container-name:bc}
 .bc{--bc-ink:#16181D;--bc-ink-2:#454A55;--bc-ink-3:#5C626E;--bc-rule:#E4E6EA;--bc-ground:#FFFFFF;--bc-shelf:#F2F3F5;--bc-alert:#E0301E;--bc-alert-ink:#A8260F;--bc-wait:#F2A900;--bc-good:#14803F;
   --li:#0A66C2;--fb:#1877F2;--ig:#C13584;--yt:#E62117;--tt:#111111;--bs:#1185FE;--tg:#229ED9;--x:#3A3F47;--th:#5B5F66;
-  display:grid;grid-template-columns:232px minmax(0,1fr) 400px;min-height:calc(100vh - 64px);background:var(--bc-ground);color:var(--bc-ink);
+  display:grid;grid-template-columns:200px minmax(0,1fr) 360px;min-height:calc(100vh - 64px);background:var(--bc-ground);color:var(--bc-ink);
   font:15px/1.5 Pretendard,"Hind Siliguri",Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;color-scheme:light}
 .bc ::selection{background:#0A66C233}
 .bc :focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px;border-radius:6px}
@@ -58076,7 +58076,7 @@ document.addEventListener('click', function (e) {
 .bc-btn[disabled]{opacity:.5;cursor:default}
 .bc-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .bc-pills{display:inline-flex;gap:4px;background:var(--bc-shelf);border-radius:999px;padding:3px}
-.bc-pills button{all:unset;cursor:pointer;font:600 13px "Hind Siliguri",Pretendard;padding:5px 12px;border-radius:999px;color:var(--bc-ink-2)}
+.bc-pills button{all:unset;cursor:pointer;white-space:nowrap;font:600 13px "Hind Siliguri",Pretendard;padding:5px 12px;border-radius:999px;color:var(--bc-ink-2)}
 .bc-pills button.on{background:var(--bc-ink);color:#fff}
 .bc-wait{display:flex;align-items:center;gap:16px;background:var(--bc-ink);color:#fff;border-radius:16px;padding:16px 18px;margin-bottom:22px}
 .bc-wait b{font:800 34px/1 Pretendard,system-ui}
@@ -58086,19 +58086,21 @@ document.addEventListener('click', function (e) {
 .bc-wait.calm{background:var(--bc-shelf);color:var(--bc-ink)}
 .bc-wait.calm p small{color:var(--bc-ink-3)}
 .bc-h2{display:flex;align-items:baseline;gap:10px;margin:0 0 8px}
-.bc-h2 h2{font:700 17px "Hind Siliguri",Pretendard;margin:0}
+.bc-h2 h2{font:700 17px "Hind Siliguri",Pretendard;margin:0;white-space:nowrap}
+.bc-h2{flex-wrap:wrap;row-gap:6px}
 .bc-h2 span{font-size:13px;color:var(--bc-ink-3)}
 .bc-h2 .bc-sp{flex:1}
 /* the line map */
-.bc-map{position:relative;user-select:none}
-.bc-days{display:grid;grid-template-columns:118px repeat(7,1fr);font-size:12.5px;color:var(--bc-ink-3);font-weight:600;padding-bottom:6px;border-bottom:1px solid var(--bc-rule)}
+.bc-map{position:relative;user-select:none;--lab:118px}
+.bc-days{display:grid;grid-template-columns:var(--lab) repeat(7,1fr);font-size:12.5px;color:var(--bc-ink-3);font-weight:600;padding-bottom:6px;border-bottom:1px solid var(--bc-rule)}
 .bc-days span{text-align:center}
 .bc-days span small{display:block;font-weight:500;font-size:11.5px}
 .bc-days .t{color:var(--bc-ink);font-weight:800}
-.bc-ln{display:grid;grid-template-columns:118px 1fr;align-items:center;height:46px;border-bottom:1px solid var(--bc-rule);transition:opacity .18s ease-out}
-.bc-ln label{font:600 13.5px Pretendard,system-ui;display:flex;gap:8px;align-items:center;color:var(--bc-ink-2);min-width:0}
+.bc-ln{display:grid;grid-template-columns:var(--lab) 1fr;align-items:center;height:46px;border-bottom:1px solid var(--bc-rule);transition:opacity .18s ease-out}
+.bc-ln label{font:600 13.5px Pretendard,system-ui;display:flex;gap:8px;align-items:center;color:var(--bc-ink-2);min-width:0;line-height:1.2}
+.bc-ln label>span{display:flex;flex-direction:column;min-width:0}
 .bc-ln label s{width:12px;height:12px;border-radius:3px;flex:none;background:var(--c)}
-.bc-ln label i{font-style:normal;font-size:11.5px;color:var(--bc-ink-3);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bc-ln label i{font-style:normal;font-size:11px;color:var(--bc-ink-3);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:92px}
 .bc-track{position:relative;height:46px}
 .bc-track::before{content:"";position:absolute;left:0;right:0;top:20px;height:5px;border-radius:3px;background:var(--c);opacity:.9}
 .bc-track .fut{position:absolute;top:20px;height:5px;right:0;background:var(--bc-ground)}
@@ -58109,8 +58111,8 @@ document.addEventListener('click', function (e) {
 .bc-st.q:hover,.bc-st.q.sel{box-shadow:inset 0 0 0 3px #fff,0 2px 8px rgba(22,24,29,.25)}
 .bc-st.x{border-color:var(--bc-alert);background:var(--bc-alert)}
 .bc-st.x::after{content:"";position:absolute;inset:2px;background:linear-gradient(45deg,transparent 42%,#fff 42% 58%,transparent 58%),linear-gradient(-45deg,transparent 42%,#fff 42% 58%,transparent 58%)}
-.bc-now{position:absolute;top:0;bottom:0;width:2px;background:var(--bc-ink);pointer-events:none}
-.bc-now::before{content:"এখন";position:absolute;top:-2px;left:4px;font:700 10.5px "Hind Siliguri";color:var(--bc-ink);background:var(--bc-ground);padding:0 3px}
+.bc-now{position:absolute;top:34px;bottom:0;width:2px;background:var(--bc-ink);pointer-events:none}
+.bc-now::before{content:"এখন";position:absolute;top:-1px;left:4px;font:700 10.5px "Hind Siliguri";color:var(--bc-ink);background:var(--bc-ground);padding:0 3px}
 .bc-map.lit .bc-ln{opacity:.28}
 .bc-map.lit .bc-ln.lit{opacity:1}
 .bc-key{display:flex;gap:16px;font-size:12.5px;color:var(--bc-ink-3);margin-top:10px;align-items:center;flex-wrap:wrap}
@@ -58192,11 +58194,12 @@ document.addEventListener('click', function (e) {
 .bc-tbl th{text-align:left;font-weight:600;color:var(--bc-ink-3);font-size:12.5px;padding:8px 6px;border-bottom:1px solid var(--bc-rule)}
 .bc-tbl td{padding:10px 6px;border-bottom:1px solid var(--bc-rule)}
 .bc-tbl td.n{text-align:right;font-weight:700}
-@media (max-width:1279px){
-  .bc{grid-template-columns:212px minmax(0,1fr)}
+@container bc (min-width:1500px){.bc{grid-template-columns:224px minmax(0,1fr) 400px}}
+@container bc (max-width:1139px){
+  .bc{grid-template-columns:200px minmax(0,1fr)}
   .bc-side{grid-column:2;border-left:0;border-top:1px solid var(--bc-rule);background:var(--bc-ground);padding:18px 28px 64px}
 }
-@media (max-width:899px){
+@container bc (max-width:759px){
   .bc{display:block;min-height:0}
   .bc-rail{position:sticky;top:0;z-index:5;height:auto;flex-direction:row;overflow-x:auto;padding:8px 12px;gap:4px;border-right:0;border-bottom:1px solid var(--bc-rule);scrollbar-width:none}
   .bc-rail::-webkit-scrollbar{display:none}
@@ -58208,8 +58211,7 @@ document.addEventListener('click', function (e) {
   .bc-side{padding:4px 16px 40px;border-top:0}
   .bc-scroll{overflow-x:auto;margin:0 -16px;padding:0 16px}
   .bc-map{min-width:640px}
-  .bc-days,.bc-ln{grid-template-columns:92px repeat(7,1fr)}
-  .bc-ln{grid-template-columns:92px 1fr}
+  .bc-map{--lab:92px}
   .bc-ln label i{display:none}
   .bc-res{grid-template-columns:1fr 1fr}
   .bc-two{grid-template-columns:1fr}
@@ -58305,7 +58307,7 @@ document.addEventListener('click', function (e) {
         '<div class="bc-track">' + (futL < 100 ? '<span class="fut" style="left:' + futL.toFixed(2) + '%"></span>' : '') +
         mine.map(function (s) { var f = (new Date(s.at) - w0) / (w1 - w0) * 100; return '<button type="button" class="bc-st ' + (s.st === 'go' ? '' : s.st) + (C.pick === s.key ? ' sel' : '') + '" style="left:' + f.toFixed(2) + '%" data-bc="st" data-id="' + esc(s.key) + '" aria-label="' + esc(netName(s.net) + ', ' + stLabel(s)) + '"></button>'; }).join('') + '</div></div>';
     }).join('');
-    var nowLine = nowPct > 0 && nowPct < 1 ? '<span class="bc-now" style="left:calc(118px + (100% - 118px) * ' + nowPct.toFixed(4) + ')"></span>' : '';
+    var nowLine = nowPct > 0 && nowPct < 1 ? '<span class="bc-now" style="left:calc(var(--lab) + (100% - var(--lab)) * ' + nowPct.toFixed(4) + ')"></span>' : '';
     if (!ls.length) rows = '<div class="bc-empty-line">কোনো network যুক্ত নেই। Postiz-এ account যুক্ত হলে এখানে তার লাইন আসবে।</div>';
     var inWeek = all.filter(function (s) { var t = new Date(s.at); return t >= w0 && t < w1; }).length;
     return '<div class="bc-h2"><h2>কোন লাইনে কী গেল</h2><span>' + dDate(w0) + ' – ' + dDate(new Date(w1 - 864e5)) + '</span><span class="bc-sp"></span>' +
