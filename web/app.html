@@ -59281,7 +59281,8 @@ select.bc-in{padding-right:28px}
       var G = g[k], vid = G.yt ? k : '';
       return '<section class="yt-grp" data-noi18n="1">' + (vid ? '<a class="yt-v" href="https://youtu.be/' + esc(vid) + '" target="_blank" rel="noopener"><img alt="" loading="lazy" src="https://i.ytimg.com/vi/' + esc(vid) + '/mqdefault.jpg"><span><b>' + esc(G.ch || 'YouTube') + '</b><small>' + bn(G.list.length) + 'টা comment বাছাই · ভিডিও খুলুন</small></span></a>' :
         '<div class="yt-v paste"><span class="ph-media" style="width:120px;aspect-ratio:16/9;padding:0">' + pi('comment') + '</span><span><b>পেস্ট করা comment</b><small>' + esc(String(k).slice(6) || 'লিংক দেওয়া হয়নি') + '</small></span></div>') +
-        G.list.map(function (c) { return ytComment(c, biz); }).join('') + '</section>';
+        G.list.slice(0, C.fold['v' + k] ? 999 : 3).map(function (c) { return ytComment(c, biz); }).join('') +
+        (G.list.length > 3 ? '<button type="button" class="bc-fold' + (C.fold['v' + k] ? ' on' : '') + '" data-bc="fold" data-id="v' + esc(k) + '" style="margin:2px 0 10px 48px">' + svg('right') + (C.fold['v' + k] ? 'কম দেখান' : 'আরও ' + bn(G.list.length - 3) + 'টা comment') + '</button>' : '') + '</section>';
     }).join('');
   }
   function ytComment(c, biz) {
