@@ -58399,6 +58399,37 @@ select.bc-in{padding-right:28px}
 .bc-why{margin-top:18px;background:var(--bc-shelf);border-radius:14px;padding:14px 16px;min-height:56px}
 .bc-why b{font:700 15px "Pretendard Variable",Pretendard,"Hind Siliguri",system-ui,sans-serif}
 .bc-why p{margin:4px 0 0;font-size:14px;color:var(--bc-ink-2)}
+.bc-desk{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:0;border:1px solid var(--bc-rule);border-radius:16px;overflow:hidden;background:#fff}
+.bc-desk.one{grid-template-columns:1fr;max-width:820px}
+.bc-dl{border-right:1px solid var(--bc-rule);background:#FAFAFB;max-height:calc(100vh - 220px);overflow:auto;padding:6px 0 14px}
+.bc-dg{padding:10px 0 6px;border-bottom:1px solid var(--bc-rule)}
+.bc-dg-h{padding:4px 16px 8px;display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+.bc-dg-h b{font:700 14.5px/1.35 "Pretendard Variable",Pretendard,"Hind Siliguri",system-ui,sans-serif}
+.bc-dg-a{display:flex;flex-wrap:wrap;gap:6px;padding:6px 16px 4px}
+.bc-dg-a:empty{display:none}
+.bc-dr{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 8px;width:100%;padding:10px 16px;cursor:pointer;transition:background .15s ease-out}
+.bc-dr:hover{background:#F0F1F3}
+.bc-dr.on{background:#fff;box-shadow:inset 0 0 0 2px var(--bc-ink)}
+.bc-dr .t{grid-column:1/-1;font:14px/1.4 "Hind Siliguri","Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bc-dr .m{grid-column:2;grid-row:1;display:flex;gap:4px}
+.bc-dr.old .t,.bc-dr.old .bc-lb{opacity:.55}
+.bc-dt{padding:20px 24px 24px;min-width:0}
+.bc-dt.in{padding:12px 16px 18px;background:#fff;border-top:1px solid var(--bc-rule);border-bottom:1px solid var(--bc-rule)}
+.bc-dt-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.bc-dt-i{font:600 13.5px "Pretendard Variable",Pretendard,"Hind Siliguri",system-ui,sans-serif;color:var(--bc-ink-3);margin-bottom:12px}
+.bc-dt .bc-ta{min-height:250px}
+.bc-cnt{font-size:12.5px;color:var(--bc-ink-3);text-align:right;margin-top:4px}
+.bc-dt-a{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--bc-rule)}
+.bc-pv{border:1px solid var(--bc-rule);border-radius:12px;padding:14px 16px;background:#fff;max-width:560px}
+.bc-pv-h{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.bc-pv-h .av{width:34px;height:34px;border-radius:50%;background:var(--c);flex:none;box-shadow:inset 0 0 0 3px #fff,0 0 0 1px var(--bc-rule)}
+.bc-pv-h b{display:block;font:600 14px "Pretendard Variable",Pretendard,"Hind Siliguri",system-ui,sans-serif}
+.bc-pv-h small{font-size:12px;color:var(--bc-ink-3)}
+.bc-pv p{margin:0;font:14px/1.5 "Hind Siliguri","Pretendard Variable",Pretendard,system-ui,sans-serif;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--bc-ink)}
+.bc-pv .more{color:var(--bc-ink-3);font-weight:600}
+.bc-pv-f{margin-top:10px;padding-top:8px;border-top:1px dashed var(--bc-rule);font-size:12.5px;color:var(--bc-ink-3)}
+@container bc (max-width:1139px){.bc-desk{grid-template-columns:minmax(260px,320px) minmax(0,1fr)}}
+@container bc (max-width:759px){.bc-desk{display:block;border-radius:12px}.bc-dl{max-height:none;border-right:0;background:#fff}.bc-dt .bc-ta{min-height:200px}}
 @container bc (min-width:1500px){.bc{grid-template-columns:224px minmax(0,1fr) 400px}.bc.noside{grid-template-columns:224px minmax(0,1fr)}}
 @container bc (max-width:1139px){
   .bc{grid-template-columns:200px minmax(0,1fr)}
@@ -58651,7 +58682,13 @@ select.bc-in{padding-right:28px}
   function groups() {
     var g = {}, order = [];
     waitingList().forEach(function (x) { var k = x.idea_id != null ? 'i' + x.idea_id : 'd' + x.id; if (!g[k]) { g[k] = { key: k, title: x.title_working || untag(x.hook) || 'Draft', topic: x.topic, list: [] }; order.push(k); } g[k].list.push(x); });
-    return order.map(function (k) { return g[k]; });
+    return order.map(function (k) {
+      var G = g[k], best = {};
+      G.list.forEach(function (x) { if (!best[x.platform] || x.id > best[x.platform]) best[x.platform] = x.id; });
+      G.list.forEach(function (x) { x._old = best[x.platform] !== x.id; });
+      G.list.sort(function (p, q) { return (p._old - q._old) || PLATS.indexOf(p.platform) - PLATS.indexOf(q.platform) || q.id - p.id; });
+      return G;
+    });
   }
   function flagsHtml(x) {
     return (x.legal_flags || []).map(function (f) { return '<div class="bc-flag"><span class="bc-tag ' + (f.severity === 'block' ? 'x' : 'w') + '">' + (f.severity === 'block' ? 'পোস্ট আটকাবে' : 'দেখে নিন') + '</span><span data-noi18n="1">' + esc(f.reason || '') + (f.match ? ' (“' + esc(f.match) + '”)' : '') + '</span></div>'; }).join('');
@@ -58690,11 +58727,61 @@ select.bc-in{padding-right:28px}
     var gs = groups();
     if (!gs.length) return '<div class="bc-clear"><b>সব পরিষ্কার</b><p>কোনো draft আপনার অপেক্ষায় নেই। আইডিয়া থেকে AI দিয়ে নতুন draft লেখান।</p><button class="bc-btn" type="button" data-bc="sec" data-id="ideas">আইডিয়া খুলুন</button></div>';
     return gs.map(function (g) {
-      var ready = g.list.filter(function (x) { return accSel(x, accountsFor(x)).length; }).length;
+      var ready = g.list.filter(function (x) { return !x._old && accSel(x, accountsFor(x)).length; }).length;
       return '<section class="bc-grp"><div class="bc-grp-h"><h3 data-noi18n="1">' + esc(g.title) + '</h3>' + (g.topic ? '<span class="bc-tag">' + esc(topicName(g.topic)) + '</span>' : '') +
         (!compact && ready > 1 ? btn('এই আইডিয়ার সব অনুমোদন দিন (' + bn(ready) + ')', 'data-bc="approveall" data-id="' + g.key + '"', 'sm', 'aa' + g.key) : '') + '</div>' +
         g.list.map(function (x) { return ticket(x, compact); }).join('') + '</section>';
     }).join('');
+  }
+  // the review desk: the drafts as a list on the left, the picked one opened on the right with a preview of how it looks
+  // on that network (what shows before "see more"); approve or drop moves straight to the next one
+  var FOLD = { linkedin: 210, facebook: 480, instagram: 125, threads: 500, x: 280, youtube: 157, tiktok: 150, bluesky: 300, telegram: 600 };
+  function deskOrder() { var o = []; groups().forEach(function (g) { g.list.forEach(function (x) { o.push(x); }); }); return o; }
+  function deskSel() { var o = deskOrder(); if (!o.length) return null; var x = o.filter(function (d) { return String(d.id) === String(C.dsel); })[0]; if (!x) { x = o.filter(function (d) { return !d._old; })[0] || o[0]; C.dsel = x.id; } return x; }
+  function previewHtml(platform, text, acc) {
+    var p = netOf(platform), f = FOLD[p] || 300, t = String(text || ''), cut = t.length > f;
+    var head = cut ? t.slice(0, f).replace(/\s+\S*$/, '') : t;
+    return '<div class="bc-pv" style="--c:' + netCol(p) + '"><div class="bc-pv-h"><span class="av"></span><span><b data-noi18n="1">' + esc(acc || 'Rahman Najir') + '</b><small>' + esc(netName(p)) + ' · এখন</small></span></div>' +
+      '<p data-noi18n="1">' + esc(head) + (cut ? '<span class="more">… আরও দেখুন</span>' : '') + '</p>' +
+      '<div class="bc-pv-f">' + (cut ? 'প্রথম ' + bn(head.length) + ' অক্ষর দেখা যায়, বাকিটা “আরও দেখুন”-এর নিচে। আসল কথা এর মধ্যে রাখুন।' : 'পুরো লেখাটাই একবারে দেখা যায়।') + '</div></div>';
+  }
+  function deskRow(x, on) {
+    var b = v('e' + x.id, x.body || ''), first = String(b).split('\n').filter(function (l) { return l.trim(); })[0] || '', mine = accountsFor(x), block = (x.legal_flags || []).some(function (f) { return f.severity === 'block'; });
+    return '<button type="button" class="bc-dr' + (on ? ' on' : '') + (x._old ? ' old' : '') + '" data-bc="dsel" data-id="' + x.id + '" aria-current="' + (on ? 'true' : 'false') + '">' + lb(x.platform, LANG[x.lang] || x.lang || '') +
+      '<span class="t" data-noi18n="1">' + esc(first) + '</span><span class="m">' + (x._old ? '<span class="bc-tag">পুরনো সংস্করণ</span>' : '') + (block ? '<span class="bc-tag x">আটকাবে</span>' : '') + (!mine.length ? '<span class="bc-tag w">account নেই</span>' : '') + '</span></button>';
+  }
+  function deskHtml() {
+    var gs = groups();
+    if (!gs.length) return draftsHtml(false);
+    var x = deskSel(), narrow = narrowNow();
+    var list = gs.map(function (g) {
+      var fresh = g.list.filter(function (d) { return !d._old && accSel(d, accountsFor(d)).length; }).length, olds = g.list.filter(function (d) { return d._old; }).length;
+      return '<div class="bc-dg"><div class="bc-dg-h"><b data-noi18n="1">' + esc(g.title) + '</b>' + (g.topic ? '<span class="bc-tag">' + esc(topicName(g.topic)) + '</span>' : '') + '</div>' +
+        g.list.map(function (d) { return deskRow(d, x && d.id === x.id) + (narrow && x && d.id === x.id ? '<div class="bc-dt in">' + detailHtml(d) + '</div>' : ''); }).join('') +
+        '<div class="bc-dg-a">' + (fresh > 1 ? btn('সব নতুনগুলো অনুমোদন দিন (' + bn(fresh) + ')', 'data-bc="approveall" data-id="' + g.key + '"', 'sm', 'aa' + g.key) : '') + (olds ? btn('পুরনো সংস্করণ বাদ দিন (' + bn(olds) + ')', 'data-bc="dropold" data-id="' + g.key + '"', 'sm ghost', 'do' + g.key) : '') + '</div></div>';
+    }).join('');
+    return '<div class="bc-desk"><div class="bc-dl">' + list + (narrow ? '' : '<div class="bc-note" style="padding:0 16px">↑ ↓ দিয়ে আগের/পরের draft · Ctrl+Enter দিয়ে অনুমোদন</div>') + '</div>' + (narrow ? '' : '<div class="bc-dt">' + (x ? detailHtml(x) : '') + '</div>') + '</div>';
+  }
+  function detailHtml(x) {
+    var mine = accountsFor(x), sel = accSel(x, mine), id = x.id, body = v('e' + id, x.body || ''), g = groups().filter(function (q) { return q.list.some(function (d) { return d.id === x.id; }); })[0];
+    var acc = mine.length === 1 ? 'যাবে: <span data-noi18n="1">' + esc(mine[0].name || '') + '</span>' : !mine.length ? '<span class="bc-tag w">এই network-এর account যুক্ত নেই: লেখা কপি করে নিজে পোস্ট করুন</span>' : '';
+    var h = '<div class="bc-dt-h">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sub">' + acc + '</span><span class="bc-sp"></span>' + (x._old ? '<span class="bc-tag">একই আইডিয়ার নতুন সংস্করণও আছে</span>' : '') + '</div>';
+    if (g) h += '<div class="bc-dt-i" data-noi18n="1">' + esc(g.title) + '</div>';
+    h += ta('e' + id, '', x.body || '', ' rows="12"') + '<div class="bc-cnt">' + bn(String(body).length) + ' অক্ষর</div>' + flagsHtml(x);
+    if ((x.title_options || []).length) h += '<div class="bc-titles"><b>শিরোনাম (ভিডিও বা লেখার মাথায়):</b> <span data-noi18n="1">' + x.title_options.map(esc).join(' · ') + '</span></div>';
+    if (mine.length > 1) h += '<div class="bc-lbl">কোন account-এ যাবে</div><div class="bc-ncs">' + mine.map(function (n) { return '<button type="button" class="bc-nc' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" aria-pressed="' + (C.acc[id][n.id] ? 'true' : 'false') + '" data-noi18n="1">' + esc(n.name || netName(n.platform)) + '</button>'; }).join('') + '</div>';
+    h += '<div class="bc-lbl">যেমন দেখাবে</div><div id="bc_pv">' + previewHtml(x.platform, body, mine[0] && mine[0].name) + '</div>';
+    h += '<div class="bc-dt-a">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : btn(svg('copy') + 'লেখা কপি', 'data-bc="copy" data-id="' + id + '"', 'dark', '')) + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
+      '<span class="bc-sp"></span><label class="bc-sub" for="bci_a' + id + '">কখন</label>' + inp('a' + id, '', ' title="খালি রাখলে পরের ফাঁকা সময়ে যাবে"', 'datetime-local') + '</div>';
+    var c = C.cards[id];
+    h += '<div class="bc-more"><div class="bc-row" style="margin-top:0">' + (mine.length ? '<button type="button" class="bc-btn sm" data-bc="copy" data-id="' + id + '">' + svg('copy') + 'লেখা কপি</button>' : '') +
+      btn(c && c.state === 'making' ? 'ছবি বানাচ্ছি…' : 'carousel আর quote ছবি বানান', 'data-bc="cards" data-id="' + id + '"', 'sm', '', c && c.state === 'making') + '</div>' +
+      '<div class="bc-lbl">নিজে পোস্ট করলে (যেমন Facebook profile), লিংক দিয়ে রেখে দিন</div><div class="bc-row" style="margin-top:0">' + inp('u' + id, 'https://… (না দিলেও চলে)', ' style="flex:1;min-width:200px"') + btn('নিজে পোস্ট করেছি', 'data-bc="manual" data-id="' + id + '"', 'sm', 'mn' + id) + '</div>' + cardsHtml(id) + '</div>';
+    return h;
+  }
+  function deskNext(fromId) {
+    var o = deskOrder(), i = -1; o.forEach(function (d, k) { if (String(d.id) === String(fromId)) i = k; });
+    var n = o[i + 1] || o[i - 1]; C.dsel = n ? n.id : '';
   }
   function jobsBar() {
     var jobs = (C.d.drafts && C.d.drafts.jobs) || {}, ks = Object.keys(jobs).sort(); if (!ks.length) return '';
@@ -58731,6 +58818,10 @@ select.bc-in{padding-right:28px}
     var h = '<div class="bc-h2" id="bc_sidehd"><h2>আপনার অপেক্ষায়</h2><span>draft · অনুমোদন দিন বা বাদ দিন</span></div>';
     if (!ready()) return h + '<div class="bc-note">Mac যুক্ত হলে এখানে আসবে।</div>';
     if (!C.d.drafts) return h + (C.err.drafts ? '<div class="bc-note">' + esc(C.err.drafts) + '</div>' : skel(90) + skel(90));
+    if (narrowNow() && waitingList().length > 2) {
+      var first = waitingList().slice(0, 2);
+      return h + '<div id="bc_side_drafts">' + first.map(function (d) { return ticket(d, true); }).join('') + '<div class="bc-row" style="margin:4px 0 26px"><button class="bc-btn" type="button" data-bc="ptab" data-id="wait">বাকি ' + bn(waitingList().length - 2) + 'টা draft দেখুন</button></div></div>';
+    }
     return h + '<div id="bc_side_drafts">' + draftsHtml(true) + '</div>';
   }
   function deps(kind) {
@@ -58752,10 +58843,12 @@ select.bc-in{padding-right:28px}
     var all = stations(), nW = waitingList().length, nQ = all.filter(function (s) { return s.st === 'q'; }).length, nG = all.filter(function (s) { return s.st === 'go'; }).length, nX = all.filter(function (s) { return s.st === 'x'; }).length;
     var tab = C.ptab || (nW ? 'wait' : nX ? 'stuck' : 'next');
     var T = [['wait', 'অপেক্ষায়', nW, 'w'], ['next', 'সামনে', nQ, ''], ['gone', 'গেছে', nG, ''], ['stuck', 'আটকে', nX, 'x']];
-    var h = headHtml('পোস্ট', 'যা অপেক্ষায়, যা যাবে, যা গেছে') + '<div class="bc-pills big" role="tablist" style="margin-bottom:22px">' + T.map(function (t) {
+    C.ptabNow = tab;
+    var h = headHtml('পোস্ট', 'যা অপেক্ষায়, যা যাবে, যা গেছে', '<button type="button" class="bc-btn' + (tab === 'new' ? ' dark' : '') + '" data-bc="ptab" data-id="new">' + svg('plus') + 'নতুন পোস্ট</button>') + '<div class="bc-pills big" role="tablist" style="margin-bottom:22px">' + T.map(function (t) {
       return '<button type="button" role="tab" aria-selected="' + (tab === t[0]) + '" data-bc="ptab" data-id="' + t[0] + '"' + (tab === t[0] ? ' class="on"' : '') + '>' + t[1] + (t[2] ? '<em class="' + (t[2] ? t[3] : '') + '">' + bn(t[2]) + '</em>' : '') + '</button>';
     }).join('') + '</div>';
-    if (tab === 'wait') h += jobsBar() + draftsHtml(false);
+    if (tab === 'wait') h += jobsBar() + deskHtml();
+    else if (tab === 'new') h += '<div class="bc-desk one"><div class="bc-dt">' + composerHtml() + '</div></div>';
     else h += deps(tab === 'next' ? 'q' : tab === 'gone' ? 'go' : 'x');
     return h;
   }
@@ -59050,7 +59143,7 @@ select.bc-in{padding-right:28px}
   function narrowNow() { var vw = el('view'), p = vw && vw.parentNode; return !!(p && p.clientWidth && p.clientWidth < 760); }
   function sideHtml(narrow) {
     if (C.sec === 'home') return narrow ? '' : sideDrafts();
-    if (C.sec === 'posts') return composerHtml();
+    if (C.sec === 'posts') return '';
     if (C.sec === 'people') return personForm();
     return '';
   }
@@ -59110,6 +59203,7 @@ select.bc-in{padding-right:28px}
     C.v[k] = x.type === 'checkbox' ? x.checked : x.value;
     if (k === 'ctext') { var m = el('bc_meters'); if (m) m.innerHTML = metersHtml(); var pb = document.querySelector('[data-bc="cpost"]'), lb2 = document.querySelector('[data-bc="clint"]'); var pk = C.v.cnets || {}; if (pb) pb.disabled = !x.value || !Object.keys(pk).some(function (q) { return pk[q]; }); if (lb2) lb2.disabled = !x.value; C.cmpLint = null; }
     if (k === 'vq') C.vq = x.value;
+    if (/^e\d+$/.test(k)) { var dx = findDraft(k.slice(1)), pv = el('bc_pv'), cn = x.parentNode && x.parentNode.querySelector('.bc-cnt'); if (dx && pv) { var mn = accountsFor(dx); pv.innerHTML = previewHtml(dx.platform, x.value, mn[0] && mn[0].name); } if (cn) cn.textContent = bn(x.value.length) + ' অক্ষর'; }
   });
   document.addEventListener('change', function (e) { var x = e.target; if (on() && x.getAttribute && x.getAttribute('data-bcin')) C.v[x.getAttribute('data-bcin')] = x.type === 'checkbox' ? x.checked : x.value; });
   document.addEventListener('keydown', function (e) {
@@ -59119,6 +59213,11 @@ select.bc-in{padding-right:28px}
     if (e.key === 'Enter' && t.id === 'bci_card') { e.preventDefault(); addCard(); return; }
     if ((e.key === 'Enter' || e.key === ' ') && t.closest && t.closest('.bc-health,.bc-dep') && t === t.closest('.bc-health,.bc-dep')) { e.preventDefault(); t.click(); return; }
     if (e.key === 'Escape' && (C.pick || C.dep)) { C.pick = ''; C.dep = ''; draw(); }
+    if (C.sec === 'posts' && C.ptabNow === 'wait' && C.dsel) {
+      var typing = /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName);
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); approve(C.dsel); return; }
+      if (!typing && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); var o = deskOrder(), i = -1; o.forEach(function (d, k) { if (String(d.id) === String(C.dsel)) i = k; }); var n = o[i + (e.key === 'ArrowDown' ? 1 : -1)]; if (n) { C.dsel = n.id; draw(); var r0 = el('bc_root').querySelector('.bc-dr.on'); if (r0) r0.focus(); } }
+    }
   });
   document.addEventListener('submit', function (e) { var f = e.target; if (on() && f.getAttribute && f.getAttribute('data-bc-form') === 'vfind') { e.preventDefault(); findVids(); } });
   function findVids() { C.d.videos = null; C.err.videos = ''; get('videos'); draw(); }
@@ -59144,7 +59243,7 @@ select.bc-in{padding-right:28px}
     if (!sel.length) { if (bad) bad(); if (C.sec !== 'posts') { C.sec = 'posts'; C.ptab = 'wait'; draw(); } return toast('কোন account-এ যাবে, বেছে নিন।', true); }
     var at = v('a' + id);
     act('ap' + id, 'erpBrandDeskDraftDecide', { id: Number(id), action: 'approve', networks: sel.map(function (n) { return { id: n.id, platform: n.platform }; }), body: v('e' + id, x.body || ''), at: at ? new Date(at).toISOString() : null },
-      function (r) { C.d.drafts = r; delete C.v['e' + id]; delete C.v['a' + id]; if (!done) toast('অনুমোদন হলো, লাইনে দেওয়া হলো।'); get('cockpit', true); if (done) done(); }, bad);
+      function (r) { if (String(C.dsel) === String(id)) deskNext(id); C.d.drafts = r; delete C.v['e' + id]; delete C.v['a' + id]; if (!done) toast('অনুমোদন হলো, লাইনে দেওয়া হলো।'); get('cockpit', true); if (done) done(); }, bad);
   }
   document.addEventListener('click', function (e) {
     if (!on()) return;
@@ -59169,13 +59268,20 @@ select.bc-in{padding-right:28px}
     else if (w === 'approve') approve(id);
     else if (w === 'approveall') {
       var g = groups().filter(function (x) { return x.key === id; })[0]; if (!g) return;
-      var ids = g.list.filter(function (x) { return accSel(x, accountsFor(x)).length; }).map(function (x) { return x.id; }), n = 0;
+      var ids = g.list.filter(function (x) { return !x._old && accSel(x, accountsFor(x)).length; }).map(function (x) { return x.id; }), n = 0;
       C.busy['aa' + id] = 1; draw();
       var fin = function () { C.busy['aa' + id] = 0; if (n) toast(bn(n) + 'টা অনুমোদন হলো, লাইনে দেওয়া হলো।'); draw(); };
       (function next() { if (!ids.length) return fin(); approve(ids.shift(), function () { n++; next(); }, fin); })();
     }
-    else if (w === 'reject') act('rj' + id, 'erpBrandDeskDraftDecide', { id: Number(id), action: 'reject' }, function (r) { C.d.drafts = r; toast('বাদ দেওয়া হলো।'); get('cockpit', true); });
-    else if (w === 'edit') { C.sec = 'posts'; C.ptab = 'wait'; C.open = C.open || {}; draw(); setTimeout(function () { var b = el('bci_e' + id); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.focus({ preventScroll: true }); } }, 60); }
+    else if (w === 'dsel') { C.dsel = id; draw(); }
+    else if (w === 'dropold') {
+      var gd = groups().filter(function (q) { return q.key === id; })[0]; if (!gd) return;
+      var olds = gd.list.filter(function (q) { return q._old; }).map(function (q) { return q.id; }), k2 = 0; C.busy['do' + id] = 1; draw();
+      (function nx() { if (!olds.length) { C.busy['do' + id] = 0; toast(bn(k2) + 'টা পুরনো সংস্করণ বাদ দেওয়া হলো।'); draw(); return; } var one = olds.shift();
+        srv('erpBrandDeskDraftDecide', [{ id: Number(one), action: 'reject', note: 'older version' }], function (r) { C.d.drafts = r; k2++; nx(); }, function (e6) { C.busy['do' + id] = 0; toast(msg(e6), true, 9000); draw(); }); })();
+    }
+    else if (w === 'reject') act('rj' + id, 'erpBrandDeskDraftDecide', { id: Number(id), action: 'reject' }, function (r) { if (String(C.dsel) === String(id)) deskNext(id); C.d.drafts = r; toast('বাদ দেওয়া হলো।'); get('cockpit', true); });
+    else if (w === 'edit') { C.sec = 'posts'; C.ptab = 'wait'; C.dsel = id; draw(); setTimeout(function () { var b = el('bci_e' + id); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.focus({ preventScroll: true }); } }, 60); }
     else if (w === 'acc') { var n2 = t.getAttribute('data-n'); C.acc[id] = C.acc[id] || {}; C.acc[id][n2] = !C.acc[id][n2]; draw(); }
     else if (w === 'more') { C.open[id] = !C.open[id]; draw(); }
     else if (w === 'copy') { var x = findDraft(id), txt = v('e' + id, x ? x.body : ''); try { navigator.clipboard.writeText(txt).then(function () { toast('কপি হলো। পোস্ট করে “নিজে পোস্ট করেছি” চাপুন।'); }, function () { toast('কপি করা গেল না; লেখাটা বেছে নিজে কপি করুন।', true); }); } catch (e4) { toast('কপি করা গেল না।', true); } }
