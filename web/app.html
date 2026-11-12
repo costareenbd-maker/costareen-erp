@@ -58588,6 +58588,22 @@ select.bc-in{padding-right:28px}
 .ph-slot.side{width:100%;margin-bottom:22px}
 .ph-slot.side .ph{border-radius:16px}
 @container bc (max-width:759px){.yt-v img{width:96px}.yt-grp{padding:4px 12px}}
+/* ideas inbox: the Telegram chat with the journal bot */
+.tg{border-radius:16px;overflow:hidden;border:1px solid var(--bc-rule);max-width:720px;font-family:Roboto,"Segoe UI",Arial,"Hind Siliguri",system-ui,sans-serif}
+.tg-h{display:flex;gap:10px;align-items:center;padding:10px 14px;background:#fff;border-bottom:1px solid #E7E9EC}
+.tg-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(#72D5FD,#2AA3E0);color:#fff;display:grid;place-items:center;font-weight:700}
+.tg-h b{display:block;font-size:15px}
+.tg-h small{font:12.5px "Hind Siliguri",system-ui,sans-serif;color:#707579}
+.tg-body{background:#DCE8D2 linear-gradient(135deg,#D6E5C6,#E4EBD2);padding:14px 14px 6px;display:flex;flex-direction:column;align-items:flex-end;gap:12px;max-height:520px;overflow:auto}
+.tg-m{max-width:min(520px,92%);display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.tg-b{background:#EFFDDE;border-radius:14px 14px 4px 14px;padding:8px 11px 6px;box-shadow:0 1px 1px rgba(0,0,0,.08)}
+.tg-b p{margin:0;font-size:14.5px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;color:#000}
+.tg-tags{display:block;font-size:13px;color:#3A8A2F;margin-top:2px}
+.tg-b small{display:block;text-align:right;font-size:11.5px;color:#5DA05D;margin-top:2px}
+.tg-a{display:flex;gap:6px}
+.tg-a .bc-btn{background:rgba(255,255,255,.75)}
+.tg-a .bc-btn.ghost{background:rgba(255,255,255,.5)}
+.tg-empty{align-self:center;background:rgba(0,0,0,.18);color:#fff;border-radius:999px;padding:6px 14px;font:13px "Hind Siliguri",system-ui,sans-serif;margin:30px 0}
 @container bc (min-width:1500px){.bc{grid-template-columns:224px minmax(0,1fr) 400px}.bc.noside{grid-template-columns:224px minmax(0,1fr)}}
 @container bc (max-width:1139px){
   .bc{grid-template-columns:200px minmax(0,1fr)}
@@ -59129,11 +59145,15 @@ select.bc-in{padding-right:28px}
       '<button type="button" data-bc="jump" data-id="bc_board"><i></i><b>' + bn(onBoard) + '</b><span>বোর্ডে</span><small>স্ক্রিপ্ট থেকে প্রকাশ পর্যন্ত</small></button>' +
       '<button type="button" data-bc="sec" data-id="posts"><i class="q"></i><b>' + bn(wait.length) + '</b><span>draft অপেক্ষায়</span><small>অনুমোদন দিলে লাইনে যায়</small></button></div>';
     // inbox (Memos)
-    h += '<div class="bc-block" id="bc_inbox" style="margin-top:0"><div class="bc-h2"><h2>ধরা হয়েছে</h2><span>এখনো বাছাই হয়নি</span></div>' + (memos.length ? memos.map(function (m) {
-      var t = untag(m.content), first = t.split(/[.\n।]/)[0] || t;
-      return '<div class="bc-li"><div class="c"><b data-noi18n="1">' + esc(t.slice(0, 180)) + '</b><small>' + ago(m.at) + ((m.tags || []).length ? ' · <span data-noi18n="1">#' + m.tags.map(esc).join(' #') + '</span>' : '') + '</small></div><div class="a">' +
-        btn('বোর্ডে তুলুন', 'data-bc="toboard" data-id="' + esc(m.id) + '"', 'sm ghost', 'tb' + m.id) + btn('draft লিখুন', 'data-bc="writetext" data-id="' + esc(m.id) + '"', 'sm', 'write') + '</div></div>';
-    }).join('') : '<div class="bc-li"><div class="c"><small>খালি। উপরে লিখে রাখুন, বা ফোনে journal bot-কে বলুন “#idea …”।</small></div></div>') + '</div>';
+    // the inbox looks like the Telegram chat it comes from: his own notes to the journal bot, newest at the bottom
+    var tg = memos.slice().sort(function (p1, q1) { return new Date(p1.at) - new Date(q1.at); });
+    h += '<div class="bc-block" id="bc_inbox" style="margin-top:0"><div class="bc-h2"><h2>ধরা হয়েছে</h2><span>journal bot-এ বলা বা এখানে লেখা ভাবনা, এখনো বাছাই হয়নি</span></div>' +
+      '<div class="tg" data-noi18n="1"><div class="tg-h"><span class="tg-av">J</span><span><b>Journal bot</b><small>আপনার ভাবনার খাতা · ' + bn(memos.length) + 'টা</small></span></div><div class="tg-body">' +
+      (tg.length ? tg.map(function (m) {
+        var t = untag(m.content), d = new Date(m.at);
+        return '<div class="tg-m"><div class="tg-b"><p>' + esc(t.slice(0, 600)) + '</p>' + ((m.tags || []).length ? '<span class="tg-tags">#' + m.tags.map(esc).join(' #') + '</span>' : '') + '<small>' + (isNaN(d) ? '' : dDate(d) + ', ' + dTime(d)) + ' ✓✓</small></div>' +
+          '<div class="tg-a">' + btn('বোর্ডে তুলুন', 'data-bc="toboard" data-id="' + esc(m.id) + '"', 'sm ghost', 'tb' + m.id) + btn('AI দিয়ে draft লিখুন', 'data-bc="writetext" data-id="' + esc(m.id) + '"', 'sm', 'write') + '</div></div>';
+      }).join('') : '<div class="tg-empty">এখনো কিছু নেই। ফোনে journal bot-কে লিখুন বা বলুন “#idea …”, বা উপরে লিখে রাখুন।</div>') + '</div></div></div>';
     // bank by topic
     var waitBy = {}; wait.forEach(function (x) { if (x.idea_id != null) waitBy[x.idea_id] = (waitBy[x.idea_id] || 0) + 1; });
     var byT = {}, tOrder = [], loose = [];
@@ -59179,7 +59199,7 @@ select.bc-in{padding-right:28px}
     var nLead = all.filter(isLead).length;
     h += '<div class="bc-h2"><h2>মানুষ কী নিয়ে লিখছে</h2><span>এ পর্যন্ত ' + bnN(tot) + 'টা comment বাছাই হয়েছে; নিচের তালিকায় শেষ ' + bn(all.length) + 'টা</span></div>';
     h += '<div class="bc-sbar' + (C.lf !== 'all' && C.lf !== 'leads' ? ' f' : '') + '">' + counts.map(function (c) { var I = INT[c.intent] || [c.intent, '#8A909B'], pc = c.n / (tot || 1) * 100, light = /B4B9C1|D5D8DD/.test(I[1]);
-      return '<button type="button" data-bc="lf" data-id="' + esc(c.intent) + '" class="' + (C.lf === c.intent ? 'on' : '') + '" style="flex:' + c.n + ' 1 0;--c:' + I[1] + ';--t:' + (light ? '#16181D' : '#fff') + '" title="' + esc(I[0] + ': ' + c.n) + '" aria-label="' + esc(I[0] + ' ' + c.n) + '">' + (pc > 7 ? esc(I[0]) + ' ' + bn(Math.round(pc)) + '%' : '') + '</button>'; }).join('') + '</div>';
+      return '<button type="button" data-bc="lf" data-id="' + esc(c.intent) + '" class="' + (C.lf === c.intent ? 'on' : '') + '" style="flex:' + c.n + ' 1 0;--c:' + I[1] + ';--t:' + (light ? '#16181D' : '#fff') + '" title="' + esc(I[0] + ': ' + c.n) + '" aria-label="' + esc(I[0] + ' ' + c.n) + '">' + (pc > (narrowNow() ? 15 : 7) ? esc(I[0]) + ' ' + bn(Math.round(pc)) + '%' : '') + '</button>'; }).join('') + '</div>';
     h += '<div class="bc-leg"><button type="button" data-bc="lf" data-id="all"' + (C.lf === 'all' ? ' class="on"' : '') + '>সব</button><button type="button" data-bc="lf" data-id="leads"' + (C.lf === 'leads' ? ' class="on"' : '') + '><i style="--c:#16181D"></i>ব্যবসায়ী লিড <b>' + bn(nLead) + '</b></button>' +
       counts.map(function (c) { var I = INT[c.intent] || [c.intent, '#8A909B']; return '<button type="button" data-bc="lf" data-id="' + esc(c.intent) + '"' + (C.lf === c.intent ? ' class="on"' : '') + '><i style="--c:' + I[1] + '"></i>' + esc(I[0]) + ' <b>' + bnN(c.n) + '</b></button>'; }).join('') + '</div>';
     var cl = (d.clusters || []).slice().sort(function (a, b) { return b.mention_count - a.mention_count; }), mx = cl.length ? cl[0].mention_count : 1;
@@ -59277,13 +59297,14 @@ select.bc-in{padding-right:28px}
   function ytFeed(list, biz) {
     var g = {}, order = [];
     list.forEach(function (c) { var k = c.platform === 'youtube_ext' && c.source_ref ? c.source_ref : 'paste:' + (c.source_ref || ''); if (!g[k]) { g[k] = { k: k, ch: c.channel_title, yt: c.platform === 'youtube_ext', list: [] }; order.push(k); } g[k].list.push(c); });
-    return order.map(function (k) {
+    var more = order.length > 6 && !C.fold.vids ? order.length - 6 : 0;
+    return order.slice(0, more ? 6 : 999).map(function (k) {
       var G = g[k], vid = G.yt ? k : '';
       return '<section class="yt-grp" data-noi18n="1">' + (vid ? '<a class="yt-v" href="https://youtu.be/' + esc(vid) + '" target="_blank" rel="noopener"><img alt="" loading="lazy" src="https://i.ytimg.com/vi/' + esc(vid) + '/mqdefault.jpg"><span><b>' + esc(G.ch || 'YouTube') + '</b><small>' + bn(G.list.length) + 'টা comment বাছাই · ভিডিও খুলুন</small></span></a>' :
         '<div class="yt-v paste"><span class="ph-media" style="width:120px;aspect-ratio:16/9;padding:0">' + pi('comment') + '</span><span><b>পেস্ট করা comment</b><small>' + esc(String(k).slice(6) || 'লিংক দেওয়া হয়নি') + '</small></span></div>') +
         G.list.slice(0, C.fold['v' + k] ? 999 : 3).map(function (c) { return ytComment(c, biz); }).join('') +
         (G.list.length > 3 ? '<button type="button" class="bc-fold' + (C.fold['v' + k] ? ' on' : '') + '" data-bc="fold" data-id="v' + esc(k) + '" style="margin:2px 0 10px 48px">' + svg('right') + (C.fold['v' + k] ? 'কম দেখান' : 'আরও ' + bn(G.list.length - 3) + 'টা comment') + '</button>' : '') + '</section>';
-    }).join('');
+    }).join('') + (more ? '<button type="button" class="bc-btn" data-bc="fold" data-id="vids">আরও ' + bn(more) + 'টা ভিডিওর comment দেখুন</button>' : '');
   }
   function ytComment(c, biz) {
     var lead = isLead(c), I = INT[c.intent] || [c.intent || '', '#8A909B'], nm = String(c.author_name || '@viewer');
