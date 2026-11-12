@@ -321,23 +321,25 @@ pill. No square corners on interactive things.
 
 ## Surface: Brand Cockpit (Line Map world)
 
-Scope: ONLY the owner-only Brand desk screen (view `branddesk`, `web/app.html` block `brand-12`, root `.bc`, built
-13 Nov 2026). It replaces the Tidy Counter world on that one screen. Everything above stays the rule for every other
-screen. Nothing below may leak into other screens, and the Tidy Counter's lime, pastel tiles and grey canvas do not
-appear inside the cockpit. The normative source is the custom properties on `.bc`. The block below copies them and is
-not part of the ERP-wide frontmatter.
+Scope: ONLY the owner-only Brand desk screen (view `branddesk`, `web/app.html` block `brand-13`, root `.bc` inside its own
+`#bc_root` beside `#view`, rebuilt 13 Nov 2026). It covers every cockpit page: home, posts, ideas, media, listen,
+people, results, rules and connections. It replaces the Tidy Counter world on that one screen. Everything above stays
+the rule for every other screen. Nothing below may leak into other screens, and the Tidy Counter's lime, pastel tiles and
+grey canvas do not appear inside the cockpit. The normative source is the custom properties on `.bc`. The block below
+copies them and is not part of the ERP-wide frontmatter.
 
 ```yaml
 colors:            # .bc custom properties
-  lm-ink: "#16181D"        # --bc-ink: text, selected rail item, the wait bar, the today rule, dark buttons
+  lm-ink: "#16181D"        # --bc-ink: text, selected rail item and pill, the wait bar, the today rule, dark buttons, spine
   lm-ink-2: "#454A55"      # --bc-ink-2: rail labels, line labels, secondary text
   lm-ink-3: "#5C626E"      # --bc-ink-3: sub-lines, day heads, meta
   lm-rule: "#E4E6EA"       # --bc-rule: every 1px rule and card border
   lm-ground: "#FFFFFF"     # --bc-ground: page ground
-  lm-shelf: "#F2F3F5"      # --bc-shelf: rail, result tiles, pill track, calm wait bar, secondary buttons
+  lm-shelf: "#F2F3F5"      # --bc-shelf: rail, pill track, calm wait bar, secondary buttons, result pills
   lm-alert: "#E0301E"      # --bc-alert: stuck stations, stuck callout ring, red badges and buttons
   lm-alert-ink: "#A8260F"  # --bc-alert-ink: red text on #FDECEA soft tags
-  lm-wait: "#F2A900"       # --bc-wait: waiting count badges, amber button (Ink text on it)
+  lm-wait: "#F2A900"       # --bc-wait: waiting badges, waiting-draft stations, amber button (Ink text on it)
+  lm-wait-soft: "#FFF4D6"  # .bc-tag.w and .ph-warn fill, text #7A5200; also the jump-to flash
   line-linkedin: "#0A66C2"
   line-facebook: "#1877F2"
   line-instagram: "#C13584"
@@ -347,109 +349,156 @@ colors:            # .bc custom properties
   line-telegram: "#229ED9"
   line-x: "#3A3F47"
   line-threads: "#5B5F66"
-typography:        # Pretendard (variable, jsDelivr) for Latin and figures; Hind Siliguri for Bangla
-  body: "400 15px/1.5 Pretendard, Hind Siliguri, Inter, system-ui; tabular-nums"
+typography:        # "Pretendard Variable" self-hosted (web/fonts/PretendardStdVariable.woff2); Hind Siliguri from Google Fonts
+  body: "400 15px/1.5 'Pretendard Variable', Pretendard, Hind Siliguri, Inter, system-ui; tabular-nums"
   wait-figure: "800 34px/1 Pretendard (28px on phone)"
-  result-figure: "800 24px/1.2 Pretendard"
-  page-title: "700 22px/1.25 Hind Siliguri, -0.005em"
+  spine-figure: "800 22px/1.15 Pretendard (18px on phone)"
+  page-title: "700 22px/1.25 Hind Siliguri, -0.005em (20px on phone)"
   section-title: "700 17px Hind Siliguri"
+  group-title: "700 17px/1.35 Pretendard (idea heads over drafts)"
   rail-item: "600 14.5px Hind Siliguri"
   button: "600 14px Hind Siliguri"
   line-label: "600 13.5px Pretendard"
   meta: "12.5-13px, lm-ink-3"
-rounded: { pill: "999px", wait-bar: "16px", panel: "14px", node: "12px", control: "10px", station: "50%" }
+rounded: { pill: "999px", wait-bar: "16px", capture: "16px", panel: "14px", node: "12px", field: "12px", control: "10px", phone-card: "20px", station: "50%" }
 ```
 
 ### Overview
 **Creative North Star: "The Line Map"**: the week is a metro map. Each network is a coloured line and each post is a
-station (gone, queued or stuck). A black "today" rule cuts across the map. The ground is white, with one cool shelf grey
-and hairline rules. Colour comes only from the network lines and from two signals: stuck red and waiting amber. Black
-bars mark what is waiting for the owner.
+station (gone, queued, stuck, or a draft waiting for the owner). A black "today" rule cuts across the map. The ground is
+white, with one cool shelf grey and hairline rules. Colour comes from the network lines and from two signals: stuck red
+and waiting amber. Black bars mark what is waiting for the owner. Pages that are not the map borrow the map's grammar:
+ideas and the empty media page run on a black spine of stations, the idea board is a line of steps, and every network
+name is shown as a line badge.
 
 ### Colors
-**The Lines-Carry-Colour Rule.** Inside the cockpit, a hue means one of three things: a network line (or its node ring
-on the Connections map), stuck (lm-alert) or waiting (lm-wait). Everything else is ink, shelf grey, white or rule.
+**The Lines-Carry-Colour Rule.** Inside the cockpit's own chrome, a hue means one of: a network line (its badge, chip,
+meter, node ring or bar), stuck (lm-alert) or waiting (lm-wait, which also marks the waiting-draft station on today's
+line). The only other hue is the 9px green "working" dot (#1EA35A) on the health line and connection nodes. Everything
+else is ink, shelf grey, white or rule. Categories that are not networks (listen intents, idea topics) are shaded in an
+ink-to-grey ramp (#16181D, #454A55, #6B717C, #8A909B, #B4B9C1, #D5D8DD), never in new hues.
 **The Ink-On-Amber Rule.** Amber fills (badges, the amber button) carry Ink text. Red fills carry white text.
+**The Mirror Exception (owner, 13 Nov 2026).** Inside phone cards on Posts and Home, each network's own interface colours
+and fonts are allowed: the Facebook, LinkedIn, Instagram, TikTok and YouTube cards (`.ph-fb`, `.ph-li`, `.ph-ig`,
+`.ph-tt`, `.ph-yt`; X, Threads, Bluesky and Telegram share the neutral `.ph-gen`), the Listen YouTube comment threads
+(`.yt-*`), and the Ideas inbox drawn as the Telegram chat (`.tg-*`). These mirror the real apps on purpose, so the
+owner sees how a post will look. The exception ends at the card edge: the actions under a card (approve, reject, edit,
+when) are cockpit chrome and follow the Line Map rules.
 
 ### Typography
-Pretendard leads Latin text and every figure (tabular). Hind Siliguri leads Bangla labels, headings and buttons
-(`.bc-bn` makes a run Bangla first). Weight does the work: 800 for figures, 700 for titles, 600 for labels and buttons.
+"Pretendard Variable" (weights 45-920) is self-hosted at `web/fonts/PretendardStdVariable.woff2`, because the page CSP
+allows fonts only from the site itself and Google Fonts; never load it from a font CDN. Hind Siliguri comes from Google
+Fonts. Pretendard leads Latin text and every figure (tabular). Hind Siliguri leads Bangla labels, headings and buttons.
+Weight does the work: 800 for figures, 700 for titles, 600 for labels and buttons. Inside phone cards the mirrored
+network's own stack leads (Helvetica/Arial for Facebook and TikTok, the system stack for LinkedIn, Roboto for YouTube and
+Telegram), with Hind Siliguri behind it for Bangla.
 
 ### Layout
-- Desktop: three columns. The rail is 200px, the map column takes the rest (min 0, 1fr, padding 22px 28px) and the
-  drafts column is 360px. Once the cockpit container is 1500px or wider, the rail grows to 224px and the drafts column
-  to 400px. These are container queries on the cockpit (`container-name: bc`), not viewport media queries. With no
-  drafts, the side column drops (`noside`).
-- 1139px and below: two columns. The drafts column moves under the map in the main column.
-- 759px and below: the rail becomes a fixed bottom bar (icon over a 12px label, badge on the corner, safe-area
-  padding). The map scrolls sideways inside a 640px minimum, with sticky line labels in a 92px label column. Result
-  tiles go 2 across. The two task lists stack. The Connections map becomes a single list: the wires are hidden and each
-  node shows its "to" line.
-- On the cockpit, the ERP side menu and the phone tab bar are hidden. The rail is the only menu.
+- Desktop: three columns. The rail is 200px, the main column takes the rest (min 0, 1fr, padding 22px 28px) and the side
+  column is 360px. Once the cockpit container is 1500px or wider, the rail grows to 224px and the side column to 400px.
+  These are container queries on the cockpit (`container-name: bc`), not viewport media queries. Pages without a side
+  column drop it (`noside`).
+- 1139px and below: two columns. The side column moves under the main column. The composer stacks.
+- 759px and below: the rail becomes a fixed bottom bar of 4 slots (home, posts, ideas, listen) plus a "আরও" slot. "আরও"
+  opens a sheet above the bar (2 columns, 16px corners) holding the other pages and the ERP settings and apps links. The
+  slot is shown selected while one of those pages is open. The JS switch is the view's parent being under 760px wide.
+  On home the waiting drafts come before the map. The map scrolls sideways inside a 640px minimum with sticky line
+  labels in a 92px label column. Phone cards go full width. Departure rows, people rows and rule rows stack. The
+  Connections map becomes a single list: the wires are hidden and each node shows its "to" line.
+- On the cockpit, the ERP side menu and the phone tab bar are hidden, and the older desk in `#view` is hidden. The rail
+  is the only menu.
 
 ### Elevation & Depth
-Flat. White against shelf grey and 1px rules does the separating. A shadow appears only as a response:
+Flat. White against shelf grey and 1px rules does the separating. A shadow appears only as a response, or on something
+that floats:
 - a hovered or selected station (`0 2px 8px rgba(22,24,29,.25)`)
 - a hovered or lit node (`0 2px 10px rgba(22,24,29,.10)`)
 - the floating station tooltip (`0 6px 20px rgba(0,0,0,.25)`)
+- the phone "আরও" sheet (`0 10px 30px rgba(22,24,29,.18)`)
+- phone cards, under the Mirror Exception (`0 1px 2px rgba(22,24,29,.06), 0 10px 28px rgba(22,24,29,.07)`)
 
-Cards inside the cockpit drop the ERP card shadow and take a 1px rule instead.
+Cockpit panels and cards carry a 1px rule, not a shadow.
 
 ### Shapes
-- Pills for tab switches (999px).
-- 16px for the wait bar.
-- 14px for panels, callouts, result tiles and restyled cards.
-- 12px for map nodes.
-- 10px for buttons, rail items and inputs.
-- Stations are 19px rings with a 4px border in the line colour.
-- Line tracks are 5px rounded bars.
+- Pills for tab switches, network chips, idea topic chips and result pills (999px).
+- 16px for the wait bar, the idea capture box, the people/rules summary panel and the YouTube and Telegram frames.
+- 14px for panels, callouts and the station pick panel.
+- 12px for map nodes, text areas, board cards and video thumbnails.
+- 10px for buttons, rail items and inputs (9px for small buttons).
+- 20px for phone cards (16px in the side column).
+- Stations are 19px rings with a 4px border in the line colour; spine stations are 32px with a 6px Ink border.
+- Line tracks are 5px rounded bars; the spine is a 6px Ink bar.
 - Legend swatches are 12px squares with 3px corners.
 
 ### Components
-- **Rail:** a shelf-grey column of 40px items with 19px stroke icons (inline SVG, 1.9 stroke). A live count badge sits
-  on the right: amber with Ink text, or red with white text for stuck posts. Hover is #E7E9EC. The selected item is an
-  Ink fill with white text. A health line with a 9px status dot sits at the foot. On phones the selected item turns
-  shelf grey with Ink text.
-- **Wait bar:** Ink, 16px corners, 16px 18px padding. It holds a big count (wait-figure), one line of text, a small
-  #C9CDD4 sub-line and an action button. When nothing is waiting it switches to the calm variant (shelf grey, Ink text).
-  The calm variant also carries the not-connected and offline messages.
-- **Line map and stations:** seven day columns after a 118px label column. Today's column head is bold Ink. Each line
-  row is 46px with a hairline below. The track is the line colour, and the part still ahead is dashed (6px on, 5px off).
-  - Station states: gone is a white ring; queued is filled with a 3px white inner ring; stuck is a red fill with a
-    white cross.
-  - Stations closer than 1.5% of the week merge into one station that shows the worst state and a count, so a stuck
-    post is never hidden.
-  - The today rule is a 2px Ink line.
-  - Lines with no posts this week sit at 42% opacity.
-  - Hovering a station keeps its line at full strength and fades the others to 28%. An Ink tooltip names the post.
-  - Clicking a station opens it beside the map in the pick panel (1px rule, 14px corners, colour square, text,
-    actions).
-  - A legend under the map repeats the three station states in ink-3.
-- **Stuck callout:** a 2px lm-alert ring with 14px corners. It shows the network name in bold, what happened, and a fix
-  button at the end. At most three show. The same form carries the load error with a "try again" button.
-- **Result tiles:** four shelf-grey buttons in a row (2 across on phones), 14px corners. Each has a 13px label, the
-  result-figure and a 12px sub-line, and opens its section. Hover is #E7E9EC.
-- **Connections map:** four columns of nodes joined by SVG wires (#8A909B, 2px).
-  - A node is white with a 1px rule and 12px corners. A 13px ring in its line colour sits before the name and a status
-    dot sits on the right.
-  - The hub node is an Ink fill with white text and an inverted ring.
-  - Hovering or selecting a node lights it and its wires (Ink border and wire). Other nodes fade to 45% and other
-    wires to 25%.
-  - A shelf-grey "why" panel under the map explains the lit node.
-- **Compact draft rows (drafts column):** drafts are separated by hairlines. A closed row shows a 66px shelf-grey
-  preview of the text and only Approve and Edit. Approve is always Ink. Opening a row shows the meta, checks, schedule
-  and pictures.
-- **Buttons:** 38px tall with 10px corners. Default is shelf grey; `dark` is Ink, `amber` is wait, `red` is alert.
-  Disabled is 50% opacity.
+- **Class shield:** the ERP has short global class names, so inside `.bc` the words `c a m t q go side none wide n h s l
+  k w av ph` are reset with `:where(.bc) :is(...){all:revert}` and only this block styles them. A new cockpit class must
+  not use any of those words, and must also avoid `empty` and `none`: use `bcidle` for an idle state.
+- **Rail:** a shelf-grey column of 40px items with 19px stroke icons (inline SVG, 1.9 stroke). A live count badge sits on
+  the right: amber with Ink text, or red with white text for stuck. Hover is #E7E9EC. The selected item is an Ink fill
+  with white text. A health line with a 9px status dot sits at the foot. On phones: the bottom bar, icon over a 12px
+  label, badge on the corner, selected slot shelf grey with Ink text, safe-area padding.
+- **Line badge (`.bc-lb`):** how every network is named. A 24x6px piece of the line in its colour with a 12px white
+  station ring on it, the network name in 600 13.5px Pretendard, and an optional ink-3 sub-label (language, account).
+- **Station (`.bc-st`):** gone is a white ring; `q` (queued) is filled with a 3px white inner ring; `x` (stuck) is a red
+  fill with a white cross; `wt` (waiting draft) is a white ring with an amber border and a soft amber halo, placed just
+  after today on this week's line and opening the waiting tab. Stations closer than 1.5% of the week merge into one
+  that shows the worst state and a count, so a stuck post is never hidden. The legend repeats all four states.
+- **Line map:** seven day columns after a 118px label column. Today's column head is bold Ink. Each line row is 46px with
+  a hairline. The part still ahead is dashed (6px on, 5px off). The today rule is a 2px Ink line. Lines with no posts
+  this week are `bcidle` (label 50%, track 45%). Hovering a station fades other lines to 28% and shows an Ink tooltip;
+  clicking opens the pick panel (1px rule, 14px corners).
+- **Wait bar:** Ink, 16px corners, 16px 18px padding, a big count (wait-figure), one line of text, a #C9CDD4 sub-line and
+  an amber action. With nothing waiting it switches to the calm variant (shelf grey, Ink text), which also carries the
+  not-connected and setup messages.
+- **Pill tabs (`.bc-pills`):** a shelf-grey 999px track, 600 13px items, the selected one Ink with white text. Counts sit
+  in a white badge (`em`), amber `w` or red `x`. A `big` size is used for page-level tabs (14.5px).
+- **Stuck callout:** a 2px lm-alert ring with 14px corners: network name in bold, what happened, the fix button. It also
+  carries load errors.
+- **Result pills (`.bc-line`):** under the home map, shelf-grey 999px buttons with an 800 Pretendard figure; each opens
+  its page.
+- **Phone card (`.ph`):** a 340px slot (`.ph-slot`, full width on phones) with a line badge on top, then the card drawn as
+  the network's own post (Mirror Exception): `.ph-fb`, `.ph-li`, `.ph-ig`, `.ph-tt` (black, 9:16 video), `.ph-yt` (16:9
+  video, grey description box) and `.ph-gen` for the rest. Over-limit text is marked in soft red with a strike. Editing
+  happens in place in a 2px Ink-bordered field. Under the card: a meta line (character count, when it goes) and the
+  actions. Older versions sit at 62% until hovered. Cards are grouped by idea under a 2px Ink rule (`.ph-grp`).
+- **Departures (`.bc-dep`):** posts by day under a day head (today in Ink). Each row is a grid of time (700 14.5px
+  Pretendard), line badge, text and actions; hover #F7F8F9; opening a row shows the full text and meta.
+- **Spine (`.bc-spine`):** a 6px Ink bar through N columns of 32px Ink stations, each with a 22px figure, a label and a
+  sub-line; the step of ideas from capture to draft, and the "how videos get here" path on an empty media page.
+- **Idea board as a line:** columns of steps joined by a 5px Ink bar with 18px stations in the heads; 1px-rule cards.
+- **Composer tabs (`.cm-*`):** a two-column composer (editor 320-520px, sticky; previews beside it). Tabs on a 1px rule:
+  "সাধারণ লেখা" first, then one tab per network with a 3px underline in the line colour at 35%; the selected tab takes a
+  3px Ink underline. Shared text shows in a dashed read-only box. Each tab has a character meter (`.bc-mt`), red when
+  over the limit.
+- **Bangla when-picker:** unset, it reads "যাবে লাইনের পরের ফাঁকা সময়ে" with a "সময় ঠিক করুন" button. Set, it is two
+  selects: day (আজ, কাল, then weekday and Bangla date, 14 days) and time (every 30 minutes, Bangla digits with সকাল /
+  দুপুর / সন্ধ্যা), plus a clear button.
+- **YouTube thread (`.yt-*`):** comments grouped under their video (120px thumbnail, title) in a 16px white frame, drawn
+  in YouTube's own type and greys; a cockpit-styled summary line and actions under each comment.
+- **Telegram inbox (`.tg-*`):** the Ideas inbox as the journal bot chat: white header with the bot avatar, green chat
+  ground, outgoing bubbles (#EFFDDE, tags in #3A8A2F, time with read ticks), and two translucent cockpit buttons under
+  each bubble.
+- **Network chips (`.bc-nc`):** 34px pills with a ring in the line colour; selected fills the ring and tints the chip 7%
+  of the line colour; disabled chips have a dashed ring at 55%.
+- **Connections map:** four columns of nodes joined by SVG wires (#8A909B, 2px). The hub node is an Ink fill. Hover or
+  select lights a node and its wires; others fade to 45% and 25%. A shelf-grey "why" panel explains the lit node.
+- **Buttons:** 38px tall (32px `sm`) with 10px corners. Default is shelf grey; `dark` Ink, `amber` wait, `red` alert,
+  `ghost` transparent. Busy buttons show a 13px spinner and are disabled; disabled is 50% opacity.
 - **States:**
   - Loading: shelf-grey shimmer blocks (1.4s).
   - Jump-to highlight: a 1.2s #FFF4D6 flash.
-  - Focus: a 2px Ink outline with a 2px offset.
+  - Focus: a 2px Ink outline with a 2px offset; fields take an Ink border and a 3px #16181D14 ring.
   - Reduced motion: every transition and animation is off.
 
 ### Do's and Don'ts
 - **Do** keep colour on the lines. A new cockpit element is ink, grey or rule unless it is a network, stuck or waiting.
 - **Do** keep stuck posts visible at every zoom level and through every merge.
+- **Do** name a network with the line badge, not a logo or a coloured word.
+- **Do** keep a network's own colours and fonts inside its phone card, YouTube thread or Telegram inbox; the chrome around
+  them stays Line Map.
+- **Don't** use the shielded short class words (or `empty`, `none`) for new cockpit classes.
+- **Don't** load fonts from a CDN; the CSP blocks it.
 - **Don't** bring the ERP's lime, pastel KPI tiles or grey canvas into the cockpit, and don't take the Line Map palette
   out of it.
 - **Don't** open the cockpit on KPI cards with a table below. The map leads.

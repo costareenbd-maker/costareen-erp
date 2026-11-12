@@ -1,6 +1,6 @@
 {
  "schemaVersion": 2,
- "generatedAt": "2026-11-13T00:00:00+00:00",
+ "generatedAt": "2026-11-13T12:00:00+00:00",
  "title": "Design System: Costareen ERP",
  "extensions": {
   "colorMeta": {
@@ -41,7 +41,7 @@
   "surfaces": {
    "brand-cockpit": {
     "displayName": "Brand Cockpit (Line Map world)",
-    "scope": "Only view 'branddesk' (owner-only Brand desk), root .bc in web/app.html block brand-12. Replaces the Tidy Counter world on that screen only.",
+    "scope": "Only view 'branddesk' (owner-only Brand desk), root .bc in its own #bc_root beside #view, web/app.html block brand-13 (13 Nov 2026): home, posts, ideas, media, listen, people, results, rules, connections. Replaces the Tidy Counter world on that screen only.",
     "northStar": "The Line Map",
     "colors": {
      "lm-ink": "#16181D",
@@ -61,14 +61,16 @@
      "line-bluesky": "#1185FE",
      "line-telegram": "#229ED9",
      "line-x": "#3A3F47",
-     "line-threads": "#5B5F66"
+     "line-threads": "#5B5F66",
+     "lm-wait-soft": "#FFF4D6"
     },
     "typography": {
-     "body": "400 15px/1.5 Pretendard, 'Hind Siliguri', Inter, system-ui; tabular-nums",
+     "body": "400 15px/1.5 'Pretendard Variable', Pretendard, 'Hind Siliguri', Inter, system-ui; tabular-nums",
      "wait-figure": "800 34px/1 Pretendard (28px phone)",
-     "result-figure": "800 24px/1.2 Pretendard",
-     "page-title": "700 22px/1.25 'Hind Siliguri'",
+     "spine-figure": "800 22px/1.15 Pretendard (18px phone)",
+     "page-title": "700 22px/1.25 'Hind Siliguri' (20px phone)",
      "section-title": "700 17px 'Hind Siliguri'",
+     "group-title": "700 17px/1.35 Pretendard",
      "rail-item": "600 14.5px 'Hind Siliguri'",
      "button": "600 14px 'Hind Siliguri'",
      "line-label": "600 13.5px Pretendard"
@@ -76,9 +78,12 @@
     "rounded": {
      "pill": "999px",
      "wait-bar": "16px",
+     "capture": "16px",
      "panel": "14px",
      "node": "12px",
+     "field": "12px",
      "control": "10px",
+     "phone-card": "20px",
      "station": "50%"
     },
     "shadows": [
@@ -96,6 +101,16 @@
       "name": "tooltip",
       "value": "0 6px 20px rgba(0,0,0,.25)",
       "purpose": "Station tooltip."
+     },
+     {
+      "name": "sheet",
+      "value": "0 10px 30px rgba(22,24,29,.18)",
+      "purpose": "Phone 'আরও' sheet above the bottom rail."
+     },
+     {
+      "name": "phone-card",
+      "value": "0 1px 2px rgba(22,24,29,.06), 0 10px 28px rgba(22,24,29,.07)",
+      "purpose": "Phone cards only (Mirror Exception)."
      }
     ],
     "motion": [
@@ -123,19 +138,19 @@
     "breakpoints": [
      {
       "name": "wide",
-      "value": "container >= 1500px: rail 224px, drafts 400px"
+      "value": "container >= 1500px: rail 224px, side 400px"
      },
      {
       "name": "desktop",
-      "value": "container 1140-1499px: rail 200px | map | drafts 360px"
+      "value": "container 1140-1499px: rail 200px | main | side 360px"
      },
      {
       "name": "two-col",
-      "value": "container <= 1139px: drafts under the map"
+      "value": "container <= 1139px: side column under main, composer stacks"
      },
      {
       "name": "phone",
-      "value": "container <= 759px: bottom rail, map scrolls sideways (min 640px)"
+      "value": "container <= 759px: fixed bottom rail of 4 slots + 'আরও' sheet, map scrolls sideways (min 640px)"
      }
     ],
     "components": [
@@ -152,22 +167,10 @@
       "css": ".ds-bc-wait{display:flex;align-items:center;gap:16px;background:#16181D;color:#fff;border-radius:16px;padding:16px 18px;font:15px/1.35 'Hind Siliguri',Pretendard,system-ui}.ds-bc-wait b{font:800 34px/1 Pretendard,system-ui}.ds-bc-wait p{margin:0}.ds-bc-wait small{display:block;color:#C9CDD4;font-size:13px}.ds-bc-wait span{flex:1}.ds-bc-wait button{all:unset;height:38px;padding:0 14px;border-radius:10px;background:#F2A900;color:#16181D;font:600 14px 'Hind Siliguri',system-ui;cursor:pointer}.ds-bc-wait button:hover{background:#E09D00}"
      },
      {
-      "name": "Line map row + stations",
-      "kind": "custom",
-      "html": "<div class=\"ds-bc-ln\" style=\"--c:#0A66C2\"><label><s></s>LinkedIn</label><div class=\"t\"><i style=\"left:20%\"></i><i class=\"q\" style=\"left:55%\"></i><i class=\"x\" style=\"left:75%\"></i><u style=\"left:45%\"></u></div></div>",
-      "css": ".ds-bc-ln{display:grid;grid-template-columns:118px 1fr;align-items:center;height:46px;border-bottom:1px solid #E4E6EA;font:600 13.5px Pretendard,system-ui;color:#454A55}.ds-bc-ln label{display:flex;gap:8px;align-items:center}.ds-bc-ln s{width:12px;height:12px;border-radius:3px;background:var(--c)}.ds-bc-ln .t{position:relative;height:46px}.ds-bc-ln .t::before{content:'';position:absolute;left:0;right:0;top:20px;height:5px;border-radius:3px;background:var(--c)}.ds-bc-ln i{position:absolute;top:13px;width:19px;height:19px;box-sizing:border-box;border-radius:50%;background:#fff;border:4px solid var(--c);transform:translateX(-50%);cursor:pointer;transition:transform .15s ease-out,box-shadow .15s ease-out}.ds-bc-ln i:hover{transform:translateX(-50%) scale(1.28);box-shadow:0 2px 8px rgba(22,24,29,.25)}.ds-bc-ln i.q{background:var(--c);box-shadow:inset 0 0 0 3px #fff}.ds-bc-ln i.x{background:#E0301E;border-color:#E0301E}.ds-bc-ln u{position:absolute;top:0;bottom:0;width:2px;background:#16181D}"
-     },
-     {
       "name": "Stuck callout",
       "kind": "custom",
       "html": "<div class=\"ds-bc-call\"><span><b>Instagram</b> · বুধ ১২ নভেম্বর-এর পোস্ট আটকে গেছে</span><i></i><button>ঠিক করুন</button></div>",
       "css": ".ds-bc-call{display:flex;align-items:center;gap:10px;border:2px solid #E0301E;border-radius:14px;padding:10px 12px 10px 14px;font:14px 'Hind Siliguri',Pretendard,system-ui;color:#16181D}.ds-bc-call b{font-family:Pretendard,system-ui}.ds-bc-call i{flex:1}.ds-bc-call button{all:unset;height:38px;padding:0 14px;border-radius:10px;background:#E0301E;color:#fff;font-weight:600;cursor:pointer}"
-     },
-     {
-      "name": "Result tile",
-      "kind": "card",
-      "html": "<button class=\"ds-bc-res\"><span>এ সপ্তাহে গেছে</span><b>১২</b><small>লাইনে আছে ৪</small></button>",
-      "css": ".ds-bc-res{all:unset;display:block;box-sizing:border-box;min-width:160px;cursor:pointer;background:#F2F3F5;border-radius:14px;padding:12px 14px;font-family:'Hind Siliguri',Pretendard,system-ui;color:#16181D;transition:background .15s ease-out}.ds-bc-res:hover{background:#E7E9EC}.ds-bc-res:focus-visible{outline:2px solid #16181D;outline-offset:2px}.ds-bc-res span{display:block;font-size:13px;color:#5C626E}.ds-bc-res b{display:block;font:800 24px/1.2 Pretendard,system-ui;font-variant-numeric:tabular-nums}.ds-bc-res small{font-size:12px;color:#5C626E}"
      },
      {
       "name": "Connections node",
@@ -180,28 +183,115 @@
       "kind": "chip",
       "html": "<div class=\"ds-bc-pills\"><button class=\"on\">এ সপ্তাহ</button><button>পরের সপ্তাহ</button></div>",
       "css": ".ds-bc-pills{display:inline-flex;gap:4px;background:#F2F3F5;border-radius:999px;padding:3px}.ds-bc-pills button{all:unset;cursor:pointer;font:600 13px 'Hind Siliguri',Pretendard;padding:5px 12px;border-radius:999px;color:#454A55}.ds-bc-pills button.on{background:#16181D;color:#fff}.ds-bc-pills button:focus-visible{outline:2px solid #16181D;outline-offset:2px}"
+     },
+     {
+      "name": "Line badge",
+      "kind": "chip",
+      "html": "<span class=\"ds-lb\" style=\"--c:#0A66C2\"><i></i>LinkedIn<small>English</small></span> <span class=\"ds-lb\" style=\"--c:#1877F2\"><i></i>Facebook<small>বাংলা</small></span>",
+      "css": ".ds-lb{display:inline-flex;align-items:center;gap:8px;font:600 13.5px 'Pretendard Variable',Pretendard,'Hind Siliguri',system-ui;color:#16181D;white-space:nowrap}.ds-lb i{width:24px;height:6px;border-radius:3px;background:var(--c);position:relative;flex:none}.ds-lb i::after{content:'';position:absolute;left:4px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:#fff;border:3px solid var(--c);box-sizing:border-box}.ds-lb small{font:500 12.5px 'Hind Siliguri',system-ui;color:#5C626E}"
+     },
+     {
+      "name": "Line map row + stations (gone, q, x, wt)",
+      "kind": "custom",
+      "html": "<div class=\"ds-ln\" style=\"--c:#0A66C2\"><label><s></s>LinkedIn</label><div class=\"tr\"><i style=\"left:15%\"></i><i class=\"q\" style=\"left:62%\"></i><i class=\"x\" style=\"left:30%\"></i><i class=\"wt\" style=\"left:48%\"></i><u style=\"left:45%\"></u></div></div>",
+      "css": ".ds-ln{display:grid;grid-template-columns:118px 1fr;align-items:center;height:46px;border-bottom:1px solid #E4E6EA;font:600 13.5px Pretendard,system-ui;color:#454A55}.ds-ln label{display:flex;gap:8px;align-items:center}.ds-ln s{width:12px;height:12px;border-radius:3px;background:var(--c)}.ds-ln .tr{position:relative;height:46px}.ds-ln .tr::before{content:'';position:absolute;left:0;right:0;top:20px;height:5px;border-radius:3px;background:var(--c);opacity:.9}.ds-ln i{position:absolute;top:13px;width:19px;height:19px;box-sizing:border-box;border-radius:50%;background:#fff;border:4px solid var(--c);transform:translateX(-50%);cursor:pointer;transition:transform .15s ease-out,box-shadow .15s ease-out}.ds-ln i:hover{transform:translateX(-50%) scale(1.28);box-shadow:0 2px 8px rgba(22,24,29,.25)}.ds-ln i.q{background:var(--c);box-shadow:inset 0 0 0 3px #fff}.ds-ln i.x{background:#E0301E;border-color:#E0301E}.ds-ln i.x::after{content:'';position:absolute;inset:2px;background:linear-gradient(45deg,transparent 42%,#fff 42% 58%,transparent 58%),linear-gradient(-45deg,transparent 42%,#fff 42% 58%,transparent 58%)}.ds-ln i.wt{border-color:#F2A900;box-shadow:0 0 0 3px #F2A90033}.ds-ln u{position:absolute;top:0;bottom:0;width:2px;background:#16181D}"
+     },
+     {
+      "name": "Phone card (Facebook, Mirror Exception)",
+      "kind": "card",
+      "html": "<div class=\"ds-slot\"><article class=\"ds-ph\"><header><span class=\"av\"></span><div><b>Rahman Najir</b><small>এখন · public</small></div></header><p>প্রতিটি চালানে আমি ৩টি বিষয় আগে দেখি। Invoice, batch code আর মেয়াদ।</p><footer><span>Like</span><span>Comment</span><span>Share</span></footer></article><div class=\"ds-meta\">৬৬২ অক্ষর · যাবে পরের ফাঁকা সময়ে</div></div>",
+      "css": ".ds-slot{width:340px;max-width:100%}.ds-ph{background:#fff;border:1px solid #DADDE1;border-radius:20px;overflow:hidden;box-shadow:0 1px 2px rgba(22,24,29,.06),0 10px 28px rgba(22,24,29,.07);font:15px/1.38 Helvetica,Arial,'Hind Siliguri',system-ui;color:#050505}.ds-ph header{display:flex;gap:10px;align-items:center;padding:12px 14px 8px}.ds-ph .av{width:40px;height:40px;border-radius:50%;background:#E4E6EB;flex:none}.ds-ph header b{display:block;font-size:15px}.ds-ph header small{font-size:12.5px;color:#65676B}.ds-ph p{margin:0;padding:2px 14px 12px}.ds-ph footer{display:flex;border-top:1px solid #E4E6EB;margin:0 10px;padding:4px 0}.ds-ph footer span{flex:1;text-align:center;line-height:36px;font-size:14px;font-weight:600;color:#65676B}.ds-meta{margin-top:8px;font:12.5px 'Hind Siliguri',system-ui;color:#5C626E}"
+     },
+     {
+      "name": "Departure row",
+      "kind": "custom",
+      "html": "<div class=\"ds-day\">আজ, ১৩ নভেম্বর</div><div class=\"ds-dep\"><b>৭:৩০ সন্ধ্যা</b><span class=\"ds-lb\" style=\"--c:#1877F2\"><i></i>Facebook</span><p>প্রতিটি চালানে আমি ৩টি বিষয় আগে দেখি।</p><em>লাইনে আছে</em></div>",
+      "css": ".ds-day{font:700 13px 'Hind Siliguri',system-ui;color:#16181D;padding:0 0 7px;border-bottom:1px solid #E4E6EA}.ds-dep{display:grid;grid-template-columns:96px 150px minmax(0,1fr) auto;gap:14px;align-items:center;padding:11px 6px;border-bottom:1px solid #E4E6EA;border-radius:8px;cursor:pointer;font:14.5px 'Hind Siliguri',system-ui;color:#16181D}.ds-dep:hover{background:#F7F8F9}.ds-dep b{font:700 14.5px Pretendard,system-ui}.ds-dep p{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ds-dep em{font:700 12.5px 'Hind Siliguri',system-ui;font-style:normal;padding:3px 10px;border-radius:999px;background:#F2F3F5;color:#454A55}.ds-lb{display:inline-flex;align-items:center;gap:8px;font:600 13.5px Pretendard,system-ui}.ds-lb i{width:24px;height:6px;border-radius:3px;background:var(--c);position:relative}.ds-lb i::after{content:'';position:absolute;left:4px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:#fff;border:3px solid var(--c);box-sizing:border-box}"
+     },
+     {
+      "name": "Spine",
+      "kind": "custom",
+      "html": "<div class=\"ds-spine\" style=\"--n:3\"><div><i></i><b>৪০</b><span>আইডিয়া</span></div><div><i class=\"q\"></i><b>৬</b><span>বোর্ডে</span></div><div><i></i><b>৯</b><span>draft</span></div></div>",
+      "css": ".ds-spine{position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));max-width:520px}.ds-spine::before{content:'';position:absolute;left:calc(50% / var(--n));right:calc(50% / var(--n));top:13px;height:6px;border-radius:3px;background:#16181D}.ds-spine>div{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px}.ds-spine i{width:32px;height:32px;box-sizing:border-box;border-radius:50%;background:#fff;border:6px solid #16181D}.ds-spine i.q{background:#16181D;box-shadow:inset 0 0 0 4px #fff}.ds-spine b{font:800 22px/1.15 Pretendard,system-ui;margin-top:4px}.ds-spine span{font:600 13.5px 'Hind Siliguri',system-ui;color:#454A55}"
+     },
+     {
+      "name": "YouTube thread (Mirror Exception)",
+      "kind": "custom",
+      "html": "<section class=\"ds-yt\"><div class=\"v\"><span class=\"th\"></span><span><b>Korean skincare haul</b><small>৩টা comment</small></span></div><div class=\"c\"><span class=\"av\">S</span><div><b>@sadia</b> <small>২ দিন আগে</small><p>Dhaka-তে কোথায় পাব? দাম কত?</p></div></div></section>",
+      "css": ".ds-yt{border:1px solid #E4E6EA;border-radius:16px;padding:6px 16px 4px;background:#fff;font-family:Roboto,Arial,'Hind Siliguri',system-ui;max-width:560px}.ds-yt .v{display:flex;gap:12px;align-items:center;padding:10px 0 12px;border-bottom:1px solid #E5E5E5;color:#0F0F0F}.ds-yt .th{width:120px;aspect-ratio:16/9;border-radius:8px;background:#E5E5E5}.ds-yt .v b{display:block;font-size:14.5px;font-weight:600}.ds-yt small{font-size:12px;color:#606060}.ds-yt .c{display:flex;gap:12px;padding:12px 0}.ds-yt .av{width:36px;height:36px;border-radius:50%;background:#454A55;color:#fff;display:grid;place-items:center;font-weight:600;flex:none}.ds-yt .c b{font-size:13px;font-weight:600;color:#0F0F0F}.ds-yt p{margin:3px 0 0;font-size:14px;line-height:1.45;color:#0F0F0F}"
+     },
+     {
+      "name": "Telegram inbox (Mirror Exception)",
+      "kind": "custom",
+      "html": "<div class=\"ds-tg\"><div class=\"h\"><span class=\"av\">J</span><span><b>Journal bot</b><small>আপনার ভাবনার খাতা · ১২টা</small></span></div><div class=\"body\"><div class=\"b\"><p>কোরিয়া থেকে batch code কীভাবে মেলাই, একটা পোস্ট</p><span class=\"tags\">#idea</span><small>১৩ নভেম্বর, ৯:১০ সকাল</small></div></div></div>",
+      "css": ".ds-tg{border-radius:16px;overflow:hidden;border:1px solid #E4E6EA;max-width:520px;font-family:Roboto,'Segoe UI',Arial,'Hind Siliguri',system-ui}.ds-tg .h{display:flex;gap:10px;align-items:center;padding:10px 14px;background:#fff;border-bottom:1px solid #E7E9EC}.ds-tg .av{width:38px;height:38px;border-radius:50%;background:linear-gradient(#72D5FD,#2AA3E0);color:#fff;display:grid;place-items:center;font-weight:700}.ds-tg .h b{display:block;font-size:15px}.ds-tg .h small{font-size:12.5px;color:#707579}.ds-tg .body{background:linear-gradient(135deg,#D6E5C6,#E4EBD2);padding:14px;display:flex;flex-direction:column;align-items:flex-end}.ds-tg .b{background:#EFFDDE;border-radius:14px 14px 4px 14px;padding:8px 11px 6px;box-shadow:0 1px 1px rgba(0,0,0,.08);max-width:92%}.ds-tg p{margin:0;font-size:14.5px;line-height:1.45;color:#000}.ds-tg .tags{display:block;font-size:13px;color:#3A8A2F}.ds-tg .b small{display:block;text-align:right;font-size:11.5px;color:#5DA05D}"
+     },
+     {
+      "name": "Bangla when-picker",
+      "kind": "input",
+      "html": "<div class=\"ds-when\"><select><option>আজ, ১৩ নভেম্বর</option><option>কাল, ১৪ নভেম্বর</option></select><select><option>৭:৩০ সন্ধ্যা</option></select><button>পরের ফাঁকা সময়</button></div>",
+      "css": ".ds-when{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.ds-when select{height:32px;border:1px solid #E4E6EA;border-radius:10px;padding:0 8px;font:13px 'Hind Siliguri',system-ui;color:#16181D;background:#fff}.ds-when select:focus{outline:none;border-color:#16181D;box-shadow:0 0 0 3px #16181D14}.ds-when button{all:unset;height:32px;padding:0 11px;border-radius:9px;font:600 13px 'Hind Siliguri',system-ui;color:#454A55;cursor:pointer}.ds-when button:hover{background:#F2F3F5;color:#16181D}"
+     },
+     {
+      "name": "Composer tabs",
+      "kind": "nav",
+      "html": "<div class=\"ds-cm\"><button class=\"on\">সাধারণ লেখা<small>৩টা network</small></button><button style=\"--c:#0A66C2\">LinkedIn<small>English</small><i></i></button><button style=\"--c:#1877F2\">Facebook<small>বাংলা</small><i></i></button></div>",
+      "css": ".ds-cm{display:flex;border-bottom:1px solid #E4E6EA}.ds-cm button{all:unset;cursor:pointer;position:relative;display:flex;flex-direction:column;gap:1px;padding:9px 14px;font:600 14px Pretendard,'Hind Siliguri',system-ui;color:#5C626E;border-bottom:3px solid transparent;margin-bottom:-1px}.ds-cm button small{font:500 11.5px 'Hind Siliguri',system-ui;color:#5C626E}.ds-cm button i{position:absolute;left:14px;right:14px;bottom:-3px;height:3px;background:var(--c);opacity:.35;border-radius:2px}.ds-cm button.on{color:#16181D;border-bottom-color:#16181D}"
      }
     ],
     "rules": [
      {
       "name": "The Lines-Carry-Colour Rule",
-      "body": "Inside the cockpit, a hue means one of three things: a network line (or its node ring on the Connections map), stuck (lm-alert) or waiting (lm-wait). Everything else is ink, shelf grey, white or rule.",
-      "section": "colors"
+      "section": "colors",
+      "body": "In the cockpit's own chrome, a hue means a network line (badge, chip, meter, node ring, bar), stuck (lm-alert) or waiting (lm-wait, which also marks waiting drafts on today's line). The only other hue is the 9px green working dot. Non-network categories use an ink-to-grey ramp, never new hues."
      },
      {
       "name": "The Ink-On-Amber Rule",
-      "body": "Amber fills (badges, the amber button) carry Ink text. Red fills carry white text.",
-      "section": "colors"
+      "section": "colors",
+      "body": "Amber fills (badges, the amber button) carry Ink text. Red fills carry white text."
+     },
+     {
+      "name": "The Mirror Exception",
+      "section": "colors",
+      "body": "Owner-directed 13 Nov 2026: inside phone cards on Posts and Home (Facebook, LinkedIn, Instagram, TikTok, YouTube), the Listen YouTube comment threads and the Ideas inbox drawn as the Telegram chat, each network's own interface colours and fonts are allowed, so the owner sees how a post will look. It ends at the card edge."
+     },
+     {
+      "name": "The Class Shield Rule",
+      "section": "components",
+      "body": "Short ERP class words (c a m t q go side none wide n h s l k w av ph) are reverted inside .bc. New cockpit classes must not use them, nor 'empty' or 'none'; use 'bcidle'."
      }
     ],
     "dos": [
      "Do keep colour on the lines. A new cockpit element is ink, grey or rule unless it is a network, stuck or waiting.",
-     "Do keep stuck posts visible at every zoom level and through every merge."
+     "Do keep stuck posts visible at every zoom level and through every merge.",
+     "Do name a network with the line badge, not a logo or a coloured word.",
+     "Do keep a network's own colours and fonts inside its phone card, YouTube thread or Telegram inbox; the chrome around them stays Line Map."
     ],
     "donts": [
+     "Don't use the shielded short class words (or 'empty', 'none') for new cockpit classes.",
+     "Don't load fonts from a CDN; the CSP blocks it. Pretendard is self-hosted.",
      "Don't bring the ERP's lime, pastel KPI tiles or grey canvas into the cockpit, and don't take the Line Map palette out of it.",
      "Don't open the cockpit on KPI cards with a table below. The map leads."
-    ]
+    ],
+    "fonts": {
+     "Pretendard Variable": "self-hosted, web/fonts/PretendardStdVariable.woff2, weights 45-920; the page CSP blocks font CDNs",
+     "Hind Siliguri": "Google Fonts (allowed by the CSP)"
+    },
+    "classShield": {
+     "selector": ":where(.bc) :is(.c,.a,.m,.t,.q,.go,.side,.none,.wide,.n,.h,.s,.l,.k,.w,.av,.ph){all:revert}",
+     "why": "The ERP has short global class names; inside the cockpit they fall back to browser defaults.",
+     "rule": "New cockpit classes must not use those words, nor 'empty' or 'none'; use 'bcidle' for an idle state."
+    },
+    "mirrorException": {
+     "since": "2026-11-13, owner-directed",
+     "where": [
+      "phone cards on Posts and Home: .ph-fb, .ph-li, .ph-ig, .ph-tt, .ph-yt (others .ph-gen)",
+      "Listen YouTube comment threads (.yt-*)",
+      "Ideas inbox drawn as the Telegram chat (.tg-*)"
+     ],
+     "allows": "each network's own interface colours and fonts, so the owner sees how a post will look",
+     "ends": "at the card edge; actions under a card are cockpit chrome"
+    }
    }
   }
  },
