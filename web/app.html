@@ -58039,7 +58039,7 @@ document.addEventListener('click', function (e) {
      (timetable, topic mix steppers, connectors, bridge key), connections. -->
 <style>
 /* the ERP has short global class names (.c .t .n .av .ph .none ...); inside the cockpit they fall back to browser defaults, so only this block styles them */
-.bc .c,.bc .a,.bc .m,.bc .t,.bc .q,.bc .go,.bc .side,.bc .none,.bc .wide,.bc .n,.bc .h,.bc .s,.bc .l,.bc .k,.bc .w,.bc .av,.bc .ph{all:revert}
+:where(.bc) :is(.c,.a,.m,.t,.q,.go,.side,.none,.wide,.n,.h,.s,.l,.k,.w,.av,.ph){all:revert}
 
 /* Pretendard (Latin + figures), self-hosted: the page CSP allows fonts only from this site and Google Fonts */
 @font-face{font-family:"Pretendard Variable";font-style:normal;font-weight:45 920;font-display:swap;src:url("fonts/PretendardStdVariable.woff2") format("woff2-variations"),url("fonts/PretendardStdVariable.woff2") format("woff2")}
@@ -58947,7 +58947,7 @@ select.bc-in{padding-right:28px}
   function netAcc(platform) { var p = netOf(platform); return nets().filter(function (n) { return netOf(n.platform) === p; })[0] || null; }
   function avatar(acc, size) {
     var nm = (acc && acc.name) || 'Rahman Najir';
-    return acc && acc.picture ? '<img class="av" alt="" width="' + size + '" height="' + size + '" src="' + esc(acc.picture) + '" data-fallback="' + esc(nm.charAt(0)) + '">' : '<span class="av ph-ini" style="width:' + size + 'px;height:' + size + 'px">' + esc(nm.charAt(0)) + '</span>';
+    return acc && acc.picture ? '<img class="av" alt="" width="' + size + '" height="' + size + '" style="width:' + size + 'px;height:' + size + 'px" src="' + esc(acc.picture) + '" data-fallback="' + esc(nm.charAt(0)) + '">' : '<span class="av ph-ini" style="width:' + size + 'px;height:' + size + 'px">' + esc(nm.charAt(0)) + '</span>';
   }
   function handle(acc) { return String((acc && acc.name) || 'rahmannajir').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
   function foldText(net, text, key) {
