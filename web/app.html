@@ -58038,6 +58038,8 @@ document.addEventListener('click', function (e) {
      channels), people (Listen buyers + add straight to Leads: erpBrandDeskAddLead), results (15-day chart, per line), rules
      (timetable, topic mix steppers, connectors, bridge key), connections. -->
 <style>
+/* Pretendard (Latin + figures), self-hosted: the page CSP allows fonts only from this site and Google Fonts */
+@font-face{font-family:"Pretendard Variable";font-style:normal;font-weight:45 920;font-display:swap;src:url("fonts/PretendardStdVariable.woff2") format("woff2-variations"),url("fonts/PretendardStdVariable.woff2") format("woff2")}
 /* the cockpit lives in its own root beside #view, so the older desk (hidden in #view) can never wipe it */
 body.bc-live #view{display:none!important}
 .bc-root{display:none}
@@ -58666,7 +58668,7 @@ select.bc-in{padding-right:28px}
   function fonts() {
     if (document.getElementById('bc_font')) return;
     var l = document.createElement('link'); l.id = 'bc_font'; l.rel = 'stylesheet';
-    l.href = 'https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css'; document.head.appendChild(l);
+    l.href = 'https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap'; document.head.appendChild(l);
   }
   // ---------- data: one store, one loader per read; bridge reads wait until the cockpit says the Mac is on
   var CALL = { cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings' };
@@ -58938,17 +58940,17 @@ select.bc-in{padding-right:28px}
     o = o || {}; var p = netOf(net), nm = esc((acc && acc.name) || 'Rahman Najir'), ed = o.edit;
     var body = bodyBlock(p, text, key, ed), noAcc = !acc ? '<div class="ph-warn">এই network-এর account যুক্ত নেই, তাই এটা নিজে পোস্ট করতে হবে</div>' : '';
     var mediaSlot = '<div class="ph-media">' + pi('media') + '<span>' + (needMedia(p) ? 'এই network-এ ছবি বা ভিডিও ছাড়া পোস্ট যায় না' : 'ছবি নেই (শুধু লেখা যাবে)') + '</span></div>';
-    if (p === 'facebook') return '<article class="ph ph-fb">' + noAcc + '<header>' + avatar(acc, 40) + '<div><b data-noi18n="1">' + nm + '</b><small>এখন · ' + pi('globe') + '</small></div>' + pi('dots') + '</header>' + body +
+    if (p === 'facebook') return '<article data-noi18n="1" class="ph ph-fb">' + noAcc + '<header>' + avatar(acc, 40) + '<div><b data-noi18n="1">' + nm + '</b><small>এখন · ' + pi('globe') + '</small></div>' + pi('dots') + '</header>' + body +
       '<div class="ph-cnt"><span class="rx"><i class="l"></i><i class="h"></i></span>০<span class="bc-sp"></span>০ comment</div><footer>' + '<span>' + pi('like') + 'Like</span><span>' + pi('comment') + 'Comment</span><span>' + pi('share') + 'Share</span></footer></article>';
-    if (p === 'linkedin') return '<article class="ph ph-li">' + noAcc + '<header>' + avatar(acc, 44) + '<div><b data-noi18n="1">' + nm + ' <em>• You</em></b><small data-noi18n="1">Founder · K-beauty sourcing, Seoul ↔ Dhaka</small><small>এখন • ' + pi('globe') + '</small></div>' + pi('dots') + '</header>' + body +
+    if (p === 'linkedin') return '<article data-noi18n="1" class="ph ph-li">' + noAcc + '<header>' + avatar(acc, 44) + '<div><b data-noi18n="1">' + nm + ' <em>• You</em></b><small data-noi18n="1">Founder · K-beauty sourcing, Seoul ↔ Dhaka</small><small>এখন • ' + pi('globe') + '</small></div>' + pi('dots') + '</header>' + body +
       '<footer><span>' + pi('like') + 'Like</span><span>' + pi('comment') + 'Comment</span><span>' + pi('repost') + 'Repost</span><span>' + pi('send') + 'Send</span></footer></article>';
-    if (p === 'instagram') return '<article class="ph ph-ig">' + noAcc + '<header>' + avatar(acc, 32) + '<b data-noi18n="1">' + esc(handle(acc)) + '</b><span class="bc-sp"></span>' + pi('dots') + '</header>' + mediaSlot.replace('ph-media', 'ph-media sq') +
+    if (p === 'instagram') return '<article data-noi18n="1" class="ph ph-ig">' + noAcc + '<header>' + avatar(acc, 32) + '<b data-noi18n="1">' + esc(handle(acc)) + '</b><span class="bc-sp"></span>' + pi('dots') + '</header>' + mediaSlot.replace('ph-media', 'ph-media sq') +
       '<div class="ph-ic">' + pi('heart') + pi('comment') + pi('send') + '<span class="bc-sp"></span>' + pi('save') + '</div><div class="ph-cap"><b data-noi18n="1">' + esc(handle(acc)) + '</b> ' + body + '</div></article>';
-    if (p === 'tiktok') return '<article class="ph ph-tt">' + noAcc + '<div class="ph-vid">' + pi('play') + '<span>ভিডিও লাগবে</span><div class="ph-rail">' + avatar(acc, 38) + '<span>' + pi('heart') + '০</span><span>' + pi('comment') + '০</span><span>' + pi('save') + '০</span><span>' + pi('share') + '০</span></div>' +
+    if (p === 'tiktok') return '<article data-noi18n="1" class="ph ph-tt">' + noAcc + '<div class="ph-vid">' + pi('play') + '<span>ভিডিও লাগবে</span><div class="ph-rail">' + avatar(acc, 38) + '<span>' + pi('heart') + '০</span><span>' + pi('comment') + '০</span><span>' + pi('save') + '০</span><span>' + pi('share') + '০</span></div>' +
       '<div class="ph-ov"><b data-noi18n="1">@' + esc(handle(acc)) + '</b>' + body + '<small>' + pi('music') + 'original sound</small></div></div></article>';
-    if (p === 'youtube') return '<article class="ph ph-yt">' + noAcc + '<div class="ph-media wide">' + pi('play') + '<span>ভিডিও লাগবে</span></div><div class="ph-yh">' + avatar(acc, 36) + '<div><b data-noi18n="1">' + esc(o.title || String(text).split('\n')[0].slice(0, 90)) + '</b><small data-noi18n="1">' + nm + ' · ০ views · এখন</small></div></div>' +
+    if (p === 'youtube') return '<article data-noi18n="1" class="ph ph-yt">' + noAcc + '<div class="ph-media wide">' + pi('play') + '<span>ভিডিও লাগবে</span></div><div class="ph-yh">' + avatar(acc, 36) + '<div><b data-noi18n="1">' + esc(o.title || String(text).split('\n')[0].slice(0, 90)) + '</b><small data-noi18n="1">' + nm + ' · ০ views · এখন</small></div></div>' +
       '<div class="ph-desc">' + body + '</div></article>';
-    return '<article class="ph ph-gen" style="--c:' + netCol(p) + '">' + noAcc + '<header>' + avatar(acc, 40) + '<div><b data-noi18n="1">' + nm + '</b><small data-noi18n="1">@' + esc(handle(acc)) + ' · এখন · ' + esc(netName(p)) + '</small></div></header>' + body +
+    return '<article data-noi18n="1" class="ph ph-gen" style="--c:' + netCol(p) + '">' + noAcc + '<header>' + avatar(acc, 40) + '<div><b data-noi18n="1">' + nm + '</b><small data-noi18n="1">@' + esc(handle(acc)) + ' · এখন · ' + esc(netName(p)) + '</small></div></header>' + body +
       '<footer><span>' + pi('comment') + '</span><span>' + pi('repost') + '</span><span>' + pi('heart') + '</span><span>' + pi('share') + '</span></footer></article>';
   }
   // a draft on the wall: its phone card, then what he can do with it
@@ -58959,8 +58961,8 @@ select.bc-in{padding-right:28px}
     h += '<div class="ph-meta"><span id="bc_cnt_' + id + '" class="' + (body.length > lim ? 'over' : '') + '">' + bn(body.length) + ' / ' + bn(lim) + ' অক্ষর</span>' + (mine.length > 1 ? '<span class="bc-sp"></span>' + mine.map(function (n) { return '<button type="button" class="bc-nc' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" data-noi18n="1">' + esc(n.name || '') + '</button>'; }).join('') : '') + '</div>' + flagsHtml(x);
     if ((x.title_options || []).length && (editing || netOf(x.platform) === 'youtube')) h += '<div class="bc-ncs" style="margin-top:8px">' + x.title_options.map(function (t) { return '<button type="button" class="bc-pl" style="--c:#16181D" data-bc="tcopy" data-t="' + esc(t) + '" title="চাপলে কপি হবে" data-noi18n="1">' + esc(t) + '</button>'; }).join('') + '</div>';
     h += '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : btn(svg('copy') + 'লেখা কপি', 'data-bc="copy" data-id="' + id + '"', 'dark', '')) + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
-      '<button type="button" class="bc-btn ghost" data-bc="pedit" data-id="' + id + '" aria-pressed="' + !!editing + '">' + (editing ? 'দেখা হয়ে গেলে বন্ধ' : 'লেখা বদলান') + '</button><button type="button" class="bc-btn ghost" data-bc="more" data-id="' + id + '" aria-expanded="' + !!C.open[id] + '" aria-label="আরও">' + svg('right') + '</button></div>';
-    h += '<div class="ph-when">' + whenHtml('a' + id) + '</div>';
+      '<button type="button" class="bc-btn ghost" data-bc="pedit" data-id="' + id + '" aria-pressed="' + !!editing + '">' + (editing ? 'লেখা হয়ে গেছে' : 'লেখা বদলান') + '</button></div>';
+    h += '<div class="ph-when">' + whenHtml('a' + id) + '<span class="bc-sp"></span><button type="button" class="bc-btn ghost sm" data-bc="more" data-id="' + id + '" aria-expanded="' + !!C.open[id] + '">আরও' + svg('right') + '</button></div>';
     if (C.open[id]) {
       var c = C.cards[id];
       h += '<div class="bc-more">' + (mine.length ? '<button type="button" class="bc-btn sm" data-bc="copy" data-id="' + id + '">' + svg('copy') + 'লেখা কপি</button> ' : '') + btn(c && c.state === 'making' ? 'ছবি বানাচ্ছি…' : 'carousel আর quote ছবি বানান', 'data-bc="cards" data-id="' + id + '"', 'sm', '', c && c.state === 'making') +
