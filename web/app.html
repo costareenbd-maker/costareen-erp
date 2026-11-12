@@ -58607,6 +58607,16 @@ select.bc-in{padding-right:28px}
 .ph-pic{position:relative;background:#000}
 .ph-pic img{display:block;width:100%;max-height:420px;object-fit:contain}
 .ph-pic span{position:absolute;right:10px;top:10px;background:rgba(0,0,0,.6);color:#fff;font:600 12px Helvetica,Arial,sans-serif;padding:2px 8px;border-radius:999px}
+.bc-map,.bc-rl-days,.bc-block{--lab:118px}
+.bc-ln{grid-template-columns:var(--lab,118px) 1fr}
+.bc-days{grid-template-columns:var(--lab,118px) repeat(7,1fr)}
+.bc-wait b em{font:700 15px "Hind Siliguri",system-ui,sans-serif;font-style:normal;margin-left:3px}
+.bc-st.wt{background:#fff;border-color:var(--bc-wait);box-shadow:0 0 0 3px #F2A90033}
+.bc-key i.wt{border-color:var(--bc-wait)}
+.bc-tag.ol{background:#fff;color:var(--bc-ink-2);box-shadow:inset 0 0 0 1px var(--bc-ink-3)}
+.bc-nc[disabled]{opacity:.55;cursor:not-allowed}
+.bc-nc[disabled]::before{border-style:dashed}
+.ph-meta>span+span{margin-left:2px}
 @container bc (min-width:1500px){.bc{grid-template-columns:224px minmax(0,1fr) 400px}.bc.noside{grid-template-columns:224px minmax(0,1fr)}}
 @container bc (max-width:1139px){
   .bc{grid-template-columns:200px minmax(0,1fr)}
@@ -58801,7 +58811,8 @@ select.bc-in{padding-right:28px}
     var days = '<div class="bc-days"><span></span>';
     for (var i = 0; i < 7; i++) { var d = new Date(w0); d.setDate(w0.getDate() + i); days += '<span class="' + (d.toDateString() === now.toDateString() ? 't' : '') + '">' + DAY[d.getDay()] + '<small>' + bn(d.getDate()) + '</small></span>'; }
     days += '</div>';
-    var nowPct = (now - w0) / (w1 - w0), RANK = { go: 0, q: 1, x: 2 };
+    var nowPct = (now - w0) / (w1 - w0), RANK = { go: 0, q: 1, x: 2 }, waitBy = {};
+    groups().forEach(function (g) { g.list.forEach(function (x) { if (!x._old) { var k = netOf(x.platform); waitBy[k] = (waitBy[k] || 0) + 1; } }); });
     var rows = ls.map(function (l) {
       var mine = all.filter(function (s) { var t = new Date(s.at); return s.net === l.net && t >= w0 && t < w1; }), groups = [];
       mine.map(function (s) { return { s: s, f: (new Date(s.at) - w0) / (w1 - w0) * 100 }; }).sort(function (p, q) { return p.f - q.f; }).forEach(function (o) {
@@ -58810,6 +58821,7 @@ select.bc-in{padding-right:28px}
       var futL = Math.max(0, Math.min(1, nowPct)) * 100;
       return '<div class="bc-ln' + (mine.length ? '' : ' bcidle') + '" data-net="' + esc(l.net) + '" style="--c:' + netCol(l.net) + '"><label><s></s><span>' + esc(netName(l.net)) + '<i data-noi18n="1">' + esc(l.acc || '') + '</i></span></label>' +
         '<div class="bc-track">' + (futL < 100 ? '<span class="fut" style="left:' + futL.toFixed(2) + '%"></span>' : '') +
+        (C.wk === 0 && waitBy[l.net] ? '<button type="button" class="bc-st wt" style="left:' + futL.toFixed(2) + '%" data-bc="ptab" data-id="wait" aria-label="' + esc(netName(l.net) + ': ' + waitBy[l.net] + 'টা draft আপনার অনুমোদনের অপেক্ষায়') + '" title="' + esc(netName(l.net) + ': ' + bn(waitBy[l.net]) + 'টা draft অপেক্ষায়') + '"><span class="n">' + bn(waitBy[l.net]) + '</span></button>' : '') +
         groups.map(function (g) { var s = g.s; return '<button type="button" class="bc-st ' + (s.st === 'go' ? '' : s.st) + (C.pick === s.key ? ' sel' : '') + '" style="left:' + g.f.toFixed(2) + '%" data-bc="st" data-id="' + esc(s.key) + '" aria-label="' + esc(netName(s.net) + ', ' + stLabel(s) + (g.n > 1 ? ', ' + g.n + 'টা পোস্ট' : '')) + '">' + (g.n > 1 ? '<span class="n">' + bn(g.n) + '</span>' : '') + '</button>'; }).join('') + '</div></div>';
     }).join('');
     var nowLine = nowPct > 0 && nowPct < 1 ? '<span class="bc-now" style="left:calc(var(--lab) + (100% - var(--lab)) * ' + nowPct.toFixed(4) + ')"></span>' : '';
@@ -58818,7 +58830,7 @@ select.bc-in{padding-right:28px}
     return '<div class="bc-h2"><h2>কোন লাইনে কী গেল</h2><span>' + dDate(w0) + ' – ' + dDate(new Date(w1 - 864e5)) + '</span><span class="bc-sp"></span>' +
       '<div class="bc-pills"><button type="button" data-bc="wk" data-id="-1"' + (C.wk === -1 ? ' class="on"' : '') + '>আগের</button><button type="button" data-bc="wk" data-id="0"' + (C.wk === 0 ? ' class="on"' : '') + '>এই সপ্তাহ</button><button type="button" data-bc="wk" data-id="1"' + (C.wk === 1 ? ' class="on"' : '') + '>পরের</button></div></div>' +
       '<div class="bc-scroll"><div class="bc-map" id="bc_map">' + days + rows + nowLine + '</div></div>' +
-      '<div class="bc-key"><span><i></i>গেছে</span><span><i class="q"></i>লাইনে আছে</span><span><i class="x"></i>আটকে গেছে</span>' + (inWeek ? '' : '<span>· এই সপ্তাহে এখনো কোনো পোস্ট নেই</span>') + '</div>' + pickHtml();
+      '<div class="bc-key"><span><i></i>গেছে</span><span><i class="q"></i>লাইনে আছে</span><span><i class="x"></i>আটকে গেছে</span><span><i class="wt"></i>draft আপনার অপেক্ষায়</span>' + (inWeek ? '' : '<span>· এই সপ্তাহে এখনো কোনো পোস্ট নেই</span>') + '</div>' + pickHtml();
   }
   function pickHtml() {
     var s = C.pick && findSt(C.pick); if (!s) return '';
@@ -58914,7 +58926,7 @@ select.bc-in{padding-right:28px}
   function deskRow(x, on) {
     var b = v('e' + x.id, x.body || ''), first = String(b).split('\n').filter(function (l) { return l.trim(); })[0] || '', mine = accountsFor(x), block = (x.legal_flags || []).some(function (f) { return f.severity === 'block'; });
     return '<button type="button" class="bc-dr' + (on ? ' on' : '') + (x._old ? ' old' : '') + '" data-bc="dsel" data-id="' + x.id + '" aria-current="' + (on ? 'true' : 'false') + '">' + lb(x.platform, LANG[x.lang] || x.lang || '') +
-      '<span class="t" data-noi18n="1">' + esc(first) + '</span><span class="m">' + (x._old ? '<span class="bc-tag">পুরনো সংস্করণ</span>' : '') + (block ? '<span class="bc-tag x">আটকাবে</span>' : '') + (!mine.length ? '<span class="bc-tag w">account নেই</span>' : '') + '</span></button>';
+      '<span class="t" data-noi18n="1">' + esc(first) + '</span><span class="m">' + (x._old ? '<span class="bc-tag">পুরনো সংস্করণ</span>' : '') + (block ? '<span class="bc-tag x">আটকাবে</span>' : '') + (!mine.length ? '<span class="bc-tag ol">account নেই</span>' : '') + '</span></button>';
   }
   function deskHtml() {
     var gs = groups();
@@ -58973,7 +58985,7 @@ select.bc-in{padding-right:28px}
     var p = netOf(net), f = PHFOLD[p] || 250, lim = LIMIT[p] || 5000, t = String(text || ''), open = C.exp[key];
     var MORE = { facebook: 'See more', linkedin: '…more', instagram: 'more', tiktok: 'more', youtube: '…more' };
     if (!t) return '<span class="ph-empty">(লেখা নেই)</span>';
-    if (!open && t.length > f) { var head = t.slice(0, f).replace(/\s+\S*$/, ''); return esc(head) + (p === 'facebook' ? '… ' : ' ') + '<button type="button" class="ph-more" data-bc="exp" data-id="' + key + '">' + (MORE[p] || '…more') + '</button>'; }
+    if (!open && t.length > f) { var head = t.slice(0, f).replace(/\s+\S*$/, ''), br = Math.max(head.lastIndexOf('\n'), head.lastIndexOf('. '), head.lastIndexOf('। ')); if (br > f * .55) head = head.slice(0, br + 1).replace(/\s+$/, ''); return esc(head) + (p === 'facebook' ? '… ' : ' ') + '<button type="button" class="ph-more" data-bc="exp" data-id="' + key + '">' + (MORE[p] || '…more') + '</button>'; }
     return esc(t.slice(0, lim)) + (t.length > lim ? '<mark title="এই অংশ ' + esc(netName(p)) + '-এর সীমার বাইরে, কেটে যাবে">' + esc(t.slice(lim)) + '</mark>' : '') + (t.length > f ? ' <button type="button" class="ph-more" data-bc="exp" data-id="' + key + '">কম</button>' : '');
   }
   function bodyBlock(net, text, key, editKey) {
@@ -59003,14 +59015,15 @@ select.bc-in{padding-right:28px}
     var mine = accountsFor(x), sel = accSel(x, mine), id = x.id, body = v('e' + id, x.body || ''), editing = C.edit[id], block = (x.legal_flags || []).some(function (f) { return f.severity === 'block'; }), lim = LIMIT[netOf(x.platform)] || 5000;
     var h = '<div class="ph-slot' + (x._old ? ' old' : '') + '" id="bc_tk_' + id + '"><div class="ph-top">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sp"></span>' + (x._old ? '<span class="bc-tag">পুরনো সংস্করণ</span>' : '') + (block ? '<span class="bc-tag x">আটকাবে</span>' : '') + '</div>' +
       phoneCard(x.platform, mine[0] || null, body, 'd' + id, { edit: editing ? 'e' + id : '', title: (x.title_options || [])[0], pic: picOf(id), npic: ((C.cards[id] || {}).pictures || []).length });
-    h += '<div class="ph-meta"><span id="bc_cnt_' + id + '" class="' + (body.length > lim ? 'over' : '') + '">' + bn(body.length) + ' / ' + bn(lim) + ' অক্ষর</span>' + (mine.length > 1 ? '<span class="bc-sp"></span>' + mine.map(function (n) { return '<button type="button" class="bc-nc' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" data-noi18n="1">' + esc(n.name || '') + '</button>'; }).join('') : '') + '</div>' + flagsHtml(x);
+    h += '<div class="ph-meta"><span id="bc_cnt_' + id + '" class="' + (body.length > lim ? 'over' : '') + '">' + bn(body.length) + (body.length > lim * .8 ? ' / ' + bn(lim) : '') + ' অক্ষর</span><span>· ' + (v('a' + id) ? 'যাবে ' + whenWords(v('a' + id)) : 'যাবে পরের ফাঁকা সময়ে') + '</span>' + (mine.length > 1 ? '<span class="bc-sp"></span>' + mine.map(function (n) { return '<button type="button" class="bc-nc' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" data-noi18n="1">' + esc(n.name || '') + '</button>'; }).join('') : '') + '</div>' + flagsHtml(x);
     if ((x.title_options || []).length && (editing || netOf(x.platform) === 'youtube')) h += '<div class="bc-ncs" style="margin-top:8px">' + x.title_options.map(function (t) { return '<button type="button" class="bc-pl" style="--c:#16181D" data-bc="tcopy" data-t="' + esc(t) + '" title="চাপলে কপি হবে" data-noi18n="1">' + esc(t) + '</button>'; }).join('') + '</div>';
     h += '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : btn(svg('copy') + 'লেখা কপি', 'data-bc="copy" data-id="' + id + '"', 'dark', '')) + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
       '<button type="button" class="bc-btn ghost" data-bc="pedit" data-id="' + id + '" aria-pressed="' + !!editing + '">' + (editing ? 'লেখা হয়ে গেছে' : 'লেখা বদলান') + '</button></div>';
-    h += '<div class="ph-when">' + whenHtml('a' + id) + '<span class="bc-sp"></span><button type="button" class="bc-btn ghost sm" data-bc="more" data-id="' + id + '" aria-expanded="' + !!C.open[id] + '">আরও' + svg('right') + '</button></div>';
+    h = h.replace(/<\/div>$/, '');
+    h += '<button type="button" class="bc-btn ghost" data-bc="more" data-id="' + id + '" aria-expanded="' + !!C.open[id] + '">আরও' + svg('right') + '</button></div>';
     if (C.open[id]) {
       var c = C.cards[id];
-      h += '<div class="bc-more">' + (mine.length ? '<button type="button" class="bc-btn sm" data-bc="copy" data-id="' + id + '">' + svg('copy') + 'লেখা কপি</button> ' : '') + btn(c && c.state === 'making' ? 'ছবি বানাচ্ছি…' : 'carousel আর quote ছবি বানান', 'data-bc="cards" data-id="' + id + '"', 'sm', '', c && c.state === 'making') +
+      h += '<div class="bc-more"><div class="bc-lbl" style="margin-top:0">কখন যাবে</div><div class="ph-when">' + whenHtml('a' + id) + '</div><div class="bc-row">' + (mine.length ? '<button type="button" class="bc-btn sm" data-bc="copy" data-id="' + id + '">' + svg('copy') + 'লেখা কপি</button> ' : '') + btn(c && c.state === 'making' ? 'ছবি বানাচ্ছি…' : 'carousel আর quote ছবি বানান', 'data-bc="cards" data-id="' + id + '"', 'sm', '', c && c.state === 'making') + '</div>' +
         '<div class="bc-lbl">নিজে পোস্ট করলে, লিংক দিয়ে রেখে দিন</div><div class="bc-row" style="margin-top:0">' + inp('u' + id, 'https://… (না দিলেও চলে)', ' style="flex:1;min-width:150px"') + btn('নিজে পোস্ট করেছি', 'data-bc="manual" data-id="' + id + '"', 'sm', 'mn' + id) + '</div>' + cardsHtml(id) + '</div>';
     }
     return h + '</div>';
@@ -59040,7 +59053,8 @@ select.bc-in{padding-right:28px}
     var s0 = cmpState(), ns = nets(), inc = ns.filter(function (n) { return s0.inc[n.id]; });
     if (!ns.length) return '<div class="bc-note">কোনো account যুক্ত নেই। Postiz-এ account যুক্ত হলে এখানে আসবে।</div>';
     if (s0.tab !== 'common' && !s0.inc[s0.tab]) s0.tab = 'common';
-    var h = '<div class="cm"><div class="cm-ed"><div class="bc-lbl" style="margin-top:0">কোথায় যাবে</div><div class="bc-ncs">' + ns.map(function (n) { var p = netOf(n.platform); return '<button type="button" class="bc-nc' + (s0.inc[n.id] ? ' on' : '') + '" style="--c:' + netCol(p) + '" data-bc="cinc" data-id="' + esc(n.id) + '" aria-pressed="' + !!s0.inc[n.id] + '">' + esc(netName(p)) + '</button>'; }).join('') + '</div>';
+    var h = '<div class="cm"><div class="cm-ed"><div class="bc-lbl" style="margin-top:0">কোথায় যাবে</div><div class="bc-ncs">' + ns.map(function (n) { var p = netOf(n.platform), vid = needMedia(p); if (vid) delete s0.inc[n.id]; return '<button type="button" class="bc-nc' + (s0.inc[n.id] ? ' on' : '') + '" style="--c:' + netCol(p) + '" data-bc="cinc" data-id="' + esc(n.id) + '" aria-pressed="' + !!s0.inc[n.id] + '"' + (vid ? ' disabled title="ভিডিও লাগবে; মিডিয়া থেকে বেছে নেওয়া পরের ধাপে আসবে"' : '') + '>' + esc(netName(p)) + (vid ? '<small>ভিডিও লাগবে</small>' : '') + '</button>'; }).join('') + '</div>';
+    inc = ns.filter(function (n) { return s0.inc[n.id]; });
     if (inc.length) {
       var nShared = inc.filter(function (n) { return !s0.own[n.id]; }).length;
       h += '<div class="cm-tabs" role="tablist"><button type="button" role="tab" data-bc="ctab" data-id="common" class="' + (s0.tab === 'common' ? 'on' : '') + '">সাধারণ লেখা<small>' + bn(nShared) + 'টা network</small></button>' + inc.map(function (n) {
@@ -59140,8 +59154,8 @@ select.bc-in{padding-right:28px}
     var onBoard = cols.reduce(function (a, c) { return a + (c.cards || []).length; }, 0), wait = waitingList();
     var h = headHtml('আইডিয়া', 'ভাবনা থেকে পোস্ট, এক লাইনে');
     h += '<div class="bc-cap">' + ta('cap', 'একটা ভাবনা লিখে রাখুন: গল্প, শিক্ষা, আজ যা দেখলেন। Enter চাপলে জমা থাকবে।', '', ' rows="2"') +
-      '<div class="bc-row"><span class="bc-sub">AI কোন network-এর জন্য লিখবে (৪টা পর্যন্ত):</span>' + draftPlats().map(function (p) { return '<button type="button" class="bc-pl' + (C.plats[p] ? ' on' : '') + '" style="--c:' + netCol(p) + '" data-bc="plat" data-id="' + p + '" aria-pressed="' + (C.plats[p] ? 'true' : 'false') + '">' + esc(netName(p)) + '</button>'; }).join('') +
-      '<span class="bc-sp"></span>' + btn('জমা রাখুন', 'data-bc="capsave"', 'ghost', 'capsave') + btn('AI দিয়ে draft লিখুন', 'data-bc="capwrite"', 'dark', 'write') + '</div></div>';
+      '<div class="bc-row"><span class="bc-sub">AI কোন network-এর জন্য লিখবে (একবারে ৪টা):</span>' + draftPlats().map(function (p) { return '<button type="button" class="bc-pl' + (C.plats[p] ? ' on' : '') + '" style="--c:' + netCol(p) + '" data-bc="plat" data-id="' + p + '" aria-pressed="' + (C.plats[p] ? 'true' : 'false') + '">' + esc(netName(p)) + '</button>'; }).join('') +
+      (noAI().length ? '<span class="bc-sub">' + esc(noAI().join(', ')) + '-এর জন্য AI এখনো লেখে না</span>' : '') + '<span class="bc-sp"></span>' + btn('জমা রাখুন', 'data-bc="capsave"', 'ghost', 'capsave') + btn('AI দিয়ে draft লিখুন', 'data-bc="capwrite"', 'dark', 'write') + '</div></div>';
     h += jobsBar();
     h += '<div class="bc-spine" style="--n:4">' +
       '<button type="button" data-bc="jump" data-id="bc_inbox"><i></i><b>' + bn(memos.length) + '</b><span>ধরা হয়েছে</span><small>journal আর এখানে লেখা ভাবনা</small></button>' +
@@ -59238,7 +59252,7 @@ select.bc-in{padding-right:28px}
     var now = new Date(), h = headHtml('আজ, ' + DAY[now.getDay()] + ' ' + dDate(now), '');
     var o = offline(); if (o || !C.d.cockpit.cockpit) return h + o;
     var n = counts(), k = C.d.cockpit.cockpit;
-    h += '<div class="bc-wait' + (n.waiting ? '' : ' calm') + '"><b>' + bn(n.waiting) + '</b><p>' + (n.waiting ? 'টা draft আপনার অনুমোদনের অপেক্ষায়<small>অনুমোদন দিলে লাইনে যায়: প্রতি network-এ একটা করে, ২০ মিনিট পর পর।</small>' : 'টা draft অপেক্ষায়, সব পরিষ্কার<small>নতুন draft লিখতে আইডিয়া পেজে যান।</small>') + '</p><span class="bc-sp"></span>' +
+    h += '<div class="bc-wait' + (n.waiting ? '' : ' calm') + '"><b>' + bn(n.waiting) + '<em>টা</em></b><p>' + (n.waiting ? 'draft আপনার অনুমোদনের অপেক্ষায়<small>অনুমোদন দিলে লাইনে যায়: প্রতি network-এ একটা করে, ২০ মিনিট পর পর।</small>' : 'draft অপেক্ষায়, সব পরিষ্কার<small>নতুন draft লিখতে আইডিয়া পেজে যান।</small>') + '</p><span class="bc-sp"></span>' +
       (n.waiting ? '<button class="bc-btn amber" type="button" data-bc="' + (narrow ? 'todrafts' : 'ptab') + '" data-id="wait">' + (narrow ? 'দেখুন' : 'অনুমোদন দিতে যান') + '</button>' : '<button class="bc-btn" type="button" data-bc="sec" data-id="ideas">আইডিয়া</button>') + '</div>';
     n.stuck.filter(function (s) { return s.key !== C.pick; }).slice(0, 3).forEach(function (s) { var t = new Date(s.at); h += '<div class="bc-call" style="margin:-10px 0 22px"><span><b>' + esc(netName(s.net)) + '</b> · ' + DAY[t.getDay()] + ' ' + dDate(t) + '-এর পোস্ট ' + (s.ask ? 'দেরি হয়ে গেছে' : 'আটকে গেছে') + '</span><span class="bc-sp"></span>' + stActs(s) + '<button class="bc-btn ghost sm" type="button" data-bc="st" data-id="' + esc(s.key) + '">লেখাটা দেখুন</button></div>'; });
     if (narrow) h += sideDrafts();
@@ -59368,6 +59382,15 @@ select.bc-in{padding-right:28px}
     return h;
   }
   var RISK = { low: 'কম', medium: 'মাঝারি', high: 'বেশি' };
+  var CONN = {
+    postiz: ['Postiz · সব network', 'প্রতিটা network-এ আসল পোস্টটা এটাই করে, আপনার নিজের app দিয়ে'],
+    erp_bridge_tiktok: ['TikTok · ERP-এর নিজের সংযোগ', 'Postiz ছাড়া সরাসরি TikTok-এ ভিডিও পাঠানোর বিকল্প পথ'],
+    linkedin_email_parse: ['LinkedIn · notification e-mail', 'LinkedIn-এর e-mail থেকে আপনার পোস্টের comment তুলে আনে (ব্যক্তিগত পোস্টের API নেই)'],
+    meta_graph: ['Facebook ও Instagram · Meta API', 'আপনার Page আর Instagram-এর comment ও message ERP-তে আনে'],
+    threads_api: ['Threads · API', 'Threads-এ reply দেওয়ার আগে আপনার অনুমোদন নেয়'],
+    youtube_data_api: ['YouTube · Data API', 'অন্যের ভিডিওর comment পড়ে (শোনা পেজ), দিনে ১০ হাজার ইউনিট'],
+    linkedin_mcp_readonly: ['LinkedIn · পড়ার জন্য পরীক্ষামূলক টুল', 'শুধু পরীক্ষা, শুধু পড়া; LinkedIn এটা পছন্দ করে না, তাই বন্ধ রাখা']
+  };
   function rulesHtml() {
     var h = headHtml('নিয়ম', 'কোন লাইনে কী, কত বার');
     var d0 = C.d.cockpit;
@@ -59382,7 +59405,7 @@ select.bc-in{padding-right:28px}
       cad.map(function (c) {
         var p = netOf(c.platform), dots = '';
         for (var i = 0; i < c.per_week_max; i++) dots += '<i class="' + (i < c.per_week_min ? 'q' : '') + '"></i>';
-        return '<div class="bc-cad" style="--c:' + netCol(p) + '">' + lb(p) + '<span data-noi18n="1">' + esc(FMT[c.format] || String(c.format || '').replace(/_/g, ' ')) + (conn.indexOf(p) < 0 ? ' · <span class="bc-tag w">account নেই</span>' : '') + '</span><span class="bc-dots">' + dots + '</span><b>' + bn(c.per_week_min) + (c.per_week_max !== c.per_week_min ? '–' + bn(c.per_week_max) : '') + 'টা</b></div>';
+        return '<div class="bc-cad" style="--c:' + netCol(p) + '">' + lb(p) + '<span data-noi18n="1">' + esc(FMT[c.format] || String(c.format || '').replace(/_/g, ' ')) + (conn.indexOf(p) < 0 ? ' · <span class="bc-tag ol">account নেই</span>' : '') + '</span><span class="bc-dots">' + dots + '</span><b>' + bn(c.per_week_min) + (c.per_week_max !== c.per_week_min ? '–' + bn(c.per_week_max) : '') + 'টা</b></div>';
       }).join('') +
       conn.filter(function (p) { return !withCad[p]; }).map(function (p) { return '<div class="bc-cad" style="--c:' + netCol(p) + '">' + lb(p) + '<span>নিয়ম নেই</span><span class="bc-dots"></span><b class="bc-sub">যখন দেবেন</b></div>'; }).join('') +
       '<div class="bc-note">প্রশ্ন আর অর্ডার নিয়মিত আসতে থাকলে “বাড়ানো”-তে যান।</div>';
@@ -59391,7 +59414,7 @@ select.bc-in{padding-right:28px}
       plats.map(function (p) {
         var cur = C.rw[p] || W[p] || {}, sum = 0; topics.forEach(function (t) { sum += Number(cur[t.key] || 0); });
         var dirty = !!C.rw[p], open = C.open['w' + p];
-        return '<div class="bc-mix"><div class="bc-mix-h">' + lb(p) + (conn.indexOf(netOf(p)) < 0 ? '<span class="bc-tag w">account নেই</span>' : '') + '<span class="bc-sp"></span><span class="bc-sum' + (sum === 100 ? '' : ' bad') + '">' + bn(sum) + ' / ১০০</span>' +
+        return '<div class="bc-mix"><div class="bc-mix-h">' + lb(p) + (conn.indexOf(netOf(p)) < 0 ? '<span class="bc-tag ol">account নেই</span>' : '') + '<span class="bc-sp"></span><span class="bc-sum' + (sum === 100 ? '' : ' bad') + '">' + bn(sum) + ' / ১০০</span>' +
           (open ? (dirty ? btn('রাখুন', 'data-bc="wsave" data-id="' + p + '"', 'dark sm', 'ws' + p, sum !== 100) + '<button type="button" class="bc-btn ghost sm" data-bc="wundo" data-id="' + p + '">বাতিল</button>' : '<button type="button" class="bc-btn ghost sm" data-bc="wopen" data-id="' + p + '">বন্ধ</button>') : '<button type="button" class="bc-btn ghost sm" data-bc="wopen" data-id="' + p + '">বদলান</button>') + '</div>' +
           '<div class="bc-mixbar">' + topics.map(function (t, i) { var nn = Number(cur[t.key] || 0); return nn ? '<i style="flex:' + nn + ' 1 0;--c:' + TSH[i % 6] + ';--t:' + (i > 3 ? '#16181D' : '#fff') + '" title="' + esc((t.label_bn || t.label_en) + ' ' + nn + '%') + '">' + (nn >= 10 ? bn(i + 1) + ' · ' + bn(nn) + '%' : bn(i + 1)) + '</i>' : ''; }).join('') + '</div>' +
           (open ? '<div class="bc-stps">' + topics.map(function (t, i) { var nn = Number(cur[t.key] || 0); return '<div class="bc-stp" style="--c:' + TSH[i % 6] + '"><s></s><span>' + bn(i + 1) + '. ' + esc(t.label_bn || t.label_en) + '</span><button type="button" data-bc="wstep" data-id="' + p + '" data-t="' + esc(t.key) + '" data-d="-5" aria-label="৫ কমান">' + svg('minus') + '</button><b>' + bn(nn) + '</b><button type="button" data-bc="wstep" data-id="' + p + '" data-t="' + esc(t.key) + '" data-d="5" aria-label="৫ বাড়ান">' + svg('plus') + '</button></div>'; }).join('') + '</div>' : '') + '</div>';
@@ -59399,13 +59422,15 @@ select.bc-in{padding-right:28px}
     var con = d.connectors || [];
     h += '<div class="bc-block"><div class="bc-h2"><h2>পোস্ট যাওয়ার পথ</h2><span>অনানুষ্ঠানিক পথ বন্ধ দিয়ে শুরু হয়; Mac থেকে একটা একটা করে খোলা হয়</span></div>' + con.map(function (c, i) {
       var stt = c.kill_switch ? ['থামানো', 'x'] : c.enabled ? ['চালু', 'lead'] : ['বন্ধ', ''], op = C.open['c' + i];
-      return '<div class="bc-con"><b>' + esc(netName(c.platform)) + ' · ' + (c.official ? 'অফিসিয়াল পথ' : 'অনানুষ্ঠানিক পথ') + '</b><span class="bc-tag ' + stt[1] + '">' + stt[0] + '</span><small>' + (c.official ? 'network-এর নিজের অনুমোদিত উপায়ে পোস্ট হয়' : 'network-এর অনুমতি ছাড়া চলে, তাই account আটকানোর ঝুঁকি আছে') + ' · ঝুঁকি ' + (RISK[c.risk] || esc(c.risk || '')) +
+      var cd = CONN[c.key] || [netName(c.platform), c.official ? 'network-এর নিজের অনুমোদিত উপায়' : 'network-এর অনুমতি ছাড়া চলে, account আটকানোর ঝুঁকি'];
+      return '<div class="bc-con"><b>' + esc(cd[0]) + '</b><span class="bc-tag ' + stt[1] + '">' + stt[0] + '</span><small>' + esc(cd[1]) + ' · ' + (c.official ? 'অফিসিয়াল' : 'অনানুষ্ঠানিক') + ', ঝুঁকি ' + (RISK[c.risk] || esc(c.risk || '')) +
         ' · <button type="button" class="bc-lnk" data-bc="copen" data-id="' + i + '" aria-expanded="' + !!op + '">' + (op ? 'বিস্তারিত লুকান' : 'বিস্তারিত') + '</button>' + (op ? '<span class="bc-raw" data-noi18n="1">' + esc(c.key) + (c.note ? ' · ' + esc(c.note) : '') + '</span>' : '') + '</small></div>';
     }).join('') + '</div>';
     return h + setupHtml(true);
   }
   var FMT = { post: 'লেখা পোস্ট', post_or_reel: 'পোস্ট বা reel', long: 'লম্বা ভিডিও', short: 'ছোট ভিডিও', carousel: 'carousel', reel: 'reel', video: 'ভিডিও', thread: 'thread', story: 'story' };
   // when a draft or post goes: by default the next free slot of its line; or a day and a time picked in Bangla
+  function whenWords(val) { var d = new Date(val); if (isNaN(d)) return ''; var t0 = new Date(); t0.setHours(0, 0, 0, 0); var df = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - t0) / 864e5); return (df === 0 ? 'আজ' : df === 1 ? 'কাল' : DAY[d.getDay()] + ' ' + dDate(d)) + ', ' + dTime(d); }
   function ymd(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
   function whenHtml(key) {
     var val = v(key);
@@ -59587,6 +59612,7 @@ select.bc-in{padding-right:28px}
     act('cardadd', 'erpBrandDeskCard', { title: t, column: col ? col.id : null }, function (r) { C.d.board = r; C.v.card = ''; });
   }
   function draftPlats() { var c = lines().map(function (l) { return l.net; }); var o = PLATS.filter(function (p) { return c.indexOf(p) >= 0; }); return o.length ? o : PLATS; }
+  function noAI() { return lines().map(function (l) { return l.net; }).filter(function (n) { return PLATS.indexOf(n) < 0; }).map(netName); }
   function platsPicked() { var ok = draftPlats(); return PLATS.filter(function (p) { return C.plats[p] && ok.indexOf(p) >= 0; }); }
   function write(args) {
     var pl = platsPicked(); if (!pl.length) return toast('অন্তত একটা network বেছে নিন।', true);
