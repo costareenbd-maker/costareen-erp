@@ -58173,17 +58173,17 @@ body.bc-live #side,body.bc-live #navBackdrop{display:none!important}
 .bc .i:focus{border-color:var(--bc-ink);outline:none;box-shadow:0 0 0 3px #16181D1A}
 .bc .bd-col{background:var(--bc-shelf)}
 .bc .bd-card{border:1px solid var(--bc-rule);box-shadow:none}
-.bc-side #bd8_today .card{border:0;padding:0;background:transparent}
-.bc-side #bd8_today .card>h3{display:none}
-.bc-side .bd8-draft{border-top:1px solid var(--bc-rule);padding:14px 0}
-.bc-side .bd8-draft textarea{min-height:120px;font-size:14px}
-.bc-side .bd8-head b{font-size:14.5px}
+#bd8_today.bc-cmp .card{border:0;padding:0;background:transparent}
+#bd8_today.bc-cmp .card>h3{display:none}
+#bd8_today.bc-cmp .bd8-draft{border-top:1px solid var(--bc-rule);padding:14px 0}
+#bd8_today.bc-cmp .bd8-draft textarea{min-height:120px;font-size:14px}
+#bd8_today.bc-cmp .bd8-head b{font-size:14.5px}
 .bc-side .ap-row{display:flex}
 .bc [data-bd8="approve"]{background:var(--bc-ink)!important;color:#fff!important;border-color:var(--bc-ink)!important}
 .bc [data-bd8="approve"][disabled]{opacity:.45}
 .bc input[type="datetime-local"]{border:1px solid var(--bc-rule);border-radius:10px;padding:6px 8px;font:14px Pretendard,system-ui;color:var(--bc-ink);background:var(--bc-ground);color-scheme:light}
-.bc-side .bd8-draft:not(.open) .bd-meta,.bc-side .bd8-draft:not(.open) .bd7-hit:not(:has(.block)),.bc-side .bd8-draft:not(.open) .ap-row+.ap-row,.bc-side .bd8-draft:not(.open) .ap-row label,.bc-side .bd8-draft:not(.open) .bd8-pics{display:none!important}
-.bc-side .bd8-draft:not(.open) textarea{min-height:0;height:66px;overflow:hidden;resize:none;background:var(--bc-shelf);border-color:transparent}
+#bd8_today.bc-cmp .bd8-draft:not(.open) .bd-meta,#bd8_today.bc-cmp .bd8-draft:not(.open) .bd7-hit:not(:has(.block)),#bd8_today.bc-cmp .bd8-draft:not(.open) .ap-row+.ap-row,#bd8_today.bc-cmp .bd8-draft:not(.open) .ap-row label,#bd8_today.bc-cmp .bd8-draft:not(.open) .bd8-pics{display:none!important}
+#bd8_today.bc-cmp .bd8-draft:not(.open) textarea{min-height:0;height:66px;overflow:hidden;resize:none;background:var(--bc-shelf);border-color:transparent}
 .bc-edit{all:unset;cursor:pointer;font:600 13px "Hind Siliguri",Pretendard;color:var(--bc-ink-2);padding:0 8px;height:34px;display:inline-flex;align-items:center;border-radius:10px}
 .bc-edit:hover{background:var(--bc-shelf)}
 /* the Connections map */
@@ -58517,7 +58517,7 @@ body.bc-live #side,body.bc-live #navBackdrop{display:none!important}
     var own = !secOld(C.sec);
     if (main) main.innerHTML = C.sec === 'home' ? homeHtml() : C.sec === 'results' ? resultsHtml() : C.sec === 'map' ? mapPageHtml() : headHtml((SECS.filter(function (s) { return s[0] === C.sec; })[0] || [])[1] || '', '');
     if (old) old.classList.toggle('show', !own);
-    var dr = el('bd8_today');
+    var dr = el('bd8_today'); if (dr) dr.classList.toggle('bc-cmp', C.sec === 'home');
     shell.classList.toggle('noside', C.sec !== 'home');
     if (side) {
       if (C.sec === 'home') {
