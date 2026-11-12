@@ -58562,6 +58562,29 @@ select.bc-in{padding-right:28px}
 .cm-shared{min-height:120px;max-height:260px;overflow:auto;border:1px dashed var(--bc-rule);border-radius:12px;padding:11px 13px;white-space:pre-wrap;font:15px/1.55 "Hind Siliguri",system-ui,sans-serif;color:var(--bc-ink-2);background:#FAFAFB}
 @container bc (max-width:1139px){.cm{grid-template-columns:1fr}.cm-ed{position:static}}
 @container bc (max-width:759px){.ph-slot{width:100%}.ph-wall{gap:24px}}
+/* listen: YouTube's own comment look, grouped under the video they came from */
+.yt-grp{border:1px solid var(--bc-rule);border-radius:16px;padding:6px 16px 4px;margin-bottom:18px;background:#fff;font-family:Roboto,Arial,"Hind Siliguri",system-ui,sans-serif}
+.yt-v{display:flex;gap:12px;align-items:center;padding:10px 0 12px;border-bottom:1px solid #E5E5E5;text-decoration:none;color:#0F0F0F}
+.yt-v img{width:120px;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:#E5E5E5;flex:none}
+.yt-v b{display:block;font-size:14.5px;font-weight:600}
+.yt-v small{font-size:12.5px;color:#606060}
+.yt-c{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #F0F0F0}
+.yt-c:last-child{border-bottom:0}
+.yt-av{width:36px;height:36px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;font:600 15px Roboto,Arial,sans-serif}
+.yt-b{flex:1;min-width:0}
+.yt-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.yt-h b{font-size:13px;font-weight:600;color:#0F0F0F}
+.yt-h small{font-size:12px;color:#606060}
+.yt-t{margin:3px 0 0;font-size:14px;line-height:1.45;color:#0F0F0F;white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+.yt-c.open .yt-t{display:block}
+.yt-s{margin:5px 0 0;font:13px/1.4 "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;color:var(--bc-ink-2)}
+.yt-s span{font-weight:700;color:var(--bc-ink-3)}
+.yt-a{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.yt-a>span:first-child{display:inline-flex;gap:5px;align-items:center;font-size:12.5px;color:#606060;margin-right:6px}
+.yt-a svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ph-slot.side{width:100%;margin-bottom:22px}
+.ph-slot.side .ph{border-radius:16px}
+@container bc (max-width:759px){.yt-v img{width:96px}.yt-grp{padding:4px 12px}}
 @container bc (min-width:1500px){.bc{grid-template-columns:224px minmax(0,1fr) 400px}.bc.noside{grid-template-columns:224px minmax(0,1fr)}}
 @container bc (max-width:1139px){
   .bc{grid-template-columns:200px minmax(0,1fr)}
@@ -59026,11 +59049,16 @@ select.bc-in{padding-right:28px}
     var h = '<div class="bc-h2" id="bc_sidehd"><h2>আপনার অপেক্ষায়</h2><span>draft · অনুমোদন দিন বা বাদ দিন</span></div>';
     if (!ready()) return h + '<div class="bc-note">Mac যুক্ত হলে এখানে আসবে।</div>';
     if (!C.d.drafts) return h + (C.err.drafts ? '<div class="bc-note">' + esc(C.err.drafts) + '</div>' : skel(90) + skel(90));
-    if (narrowNow() && waitingList().length > 2) {
-      var first = waitingList().slice(0, 2);
-      return h + '<div id="bc_side_drafts">' + first.map(function (d) { return ticket(d, true); }).join('') + '<div class="bc-row" style="margin:4px 0 26px"><button class="bc-btn" type="button" data-bc="ptab" data-id="wait">বাকি ' + bn(waitingList().length - 2) + 'টা draft দেখুন</button></div></div>';
-    }
-    return h + '<div id="bc_side_drafts">' + draftsHtml(true) + '</div>';
+    var fresh = []; groups().forEach(function (g) { g.list.forEach(function (x) { if (!x._old) fresh.push(x); }); });
+    if (!fresh.length) return h + draftsHtml(true);
+    var olds = waitingList().length - fresh.length, show = narrowNow() ? fresh.slice(0, 2) : fresh;
+    return h + '<div id="bc_side_drafts">' + show.map(sideCard).join('') + (show.length < fresh.length || olds ? '<div class="bc-row" style="margin:4px 0 26px"><button class="bc-btn" type="button" data-bc="ptab" data-id="wait">' + (show.length < fresh.length ? 'বাকি ' + bn(fresh.length - show.length) + 'টা দেখুন' : 'সব draft দেখুন') + (olds ? ' · ' + bn(olds) + 'টা পুরনো সংস্করণ' : '') + '</button></div>' : '') + '</div>';
+  }
+  function sideCard(x) {
+    var mine = accountsFor(x), id = x.id;
+    return '<div class="ph-slot side" id="bc_tk_' + id + '"><div class="ph-top">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sp"></span><span class="bc-sub" data-noi18n="1" style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(x.title_working || '') + '</span></div>' +
+      phoneCard(x.platform, mine[0] || null, v('e' + id, x.body || ''), 's' + id, { title: (x.title_options || [])[0] }) +
+      '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark sm', 'ap' + id) : '') + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', 'sm', 'rj' + id) + '<button type="button" class="bc-btn ghost sm" data-bc="edit" data-id="' + id + '">বদলান</button></div></div>';
   }
   function deps(kind) {
     var list = stations().filter(function (s) { return s.st === kind; }).sort(function (a, b) { return kind === 'q' ? new Date(a.at) - new Date(b.at) : new Date(b.at) - new Date(a.at); });
@@ -59155,7 +59183,7 @@ select.bc-in{padding-right:28px}
     if (cl.length) h += '<div class="bc-block"><div class="bc-h2"><h2>সবচেয়ে বেশি যা জিজ্ঞেস করে</h2><span>“প্রশ্ন থেকে আইডিয়া” এগুলোকে আইডিয়া বানায়</span></div>' + cl.map(function (k) {
       return '<div class="bc-rk"><span data-noi18n="1">' + esc(k.label) + '<small title="' + esc(k.summary || '') + '">' + esc(k.summary || '') + '</small></span><u><i style="width:' + (k.mention_count / mx * 100).toFixed(1) + '%"></i></u><b>' + bn(k.mention_count) + '</b></div>'; }).join('') + '</div>';
     var list = all.filter(function (c) { return C.lf === 'all' || (C.lf === 'leads' ? isLead(c) : c.intent === C.lf); });
-    h += '<div class="bc-block"><div class="bc-h2"><h2>comment</h2><span>শেষ ' + bn(all.length) + 'টার মধ্যে ' + bn(list.length) + 'টা দেখাচ্ছে</span></div>' + (list.some(isLead) ? targetBar(biz) : '') + (list.length ? list.slice(0, 60).map(function (c) { return commentHtml(c, biz); }).join('') : '<div class="bc-note">এই ভাগে এখনো কিছু নেই।</div>') + '</div>';
+    h += '<div class="bc-block"><div class="bc-h2"><h2>comment</h2><span>শেষ ' + bn(all.length) + 'টার মধ্যে ' + bn(list.length) + 'টা দেখাচ্ছে</span></div>' + (list.some(isLead) ? targetBar(biz) : '') + (list.length ? ytFeed(list.slice(0, 80), biz) : '<div class="bc-note">এই ভাগে এখনো কিছু নেই।</div>') + '</div>';
     var ch = d.channels || [];
     h += '<div class="bc-block"><div class="bc-h2"><h2>যেসব channel শুনি</h2><span>' + bn(ch.filter(function (c) { return c.active; }).length) + 'টা চালু</span></div>' + ch.map(function (c) {
       return '<div class="bc-li' + (c.active ? '' : ' mute') + '"><div class="c"><b data-noi18n="1">' + esc(c.title) + '</b><small>' + (c.subscribers ? bnN(c.subscribers) + ' subscriber' : '') + (c.is_suggestion ? ' · AI-এর বাছাই' : '') + (c.last_pulled ? ' · শেষ পড়া ' + ago(c.last_pulled) : '') + '</small></div><div class="a">' +
@@ -59243,6 +59271,23 @@ select.bc-in{padding-right:28px}
     }).join('') + '</div>';
   }
   function isLead(c) { return !!c.lead_kind && c.lead_kind !== 'none' && c.lead_kind !== 'retail_buyer'; }
+  function ytFeed(list, biz) {
+    var g = {}, order = [];
+    list.forEach(function (c) { var k = c.platform === 'youtube_ext' && c.source_ref ? c.source_ref : 'paste:' + (c.source_ref || ''); if (!g[k]) { g[k] = { k: k, ch: c.channel_title, yt: c.platform === 'youtube_ext', list: [] }; order.push(k); } g[k].list.push(c); });
+    return order.map(function (k) {
+      var G = g[k], vid = G.yt ? k : '';
+      return '<section class="yt-grp" data-noi18n="1">' + (vid ? '<a class="yt-v" href="https://youtu.be/' + esc(vid) + '" target="_blank" rel="noopener"><img alt="" loading="lazy" src="https://i.ytimg.com/vi/' + esc(vid) + '/mqdefault.jpg"><span><b>' + esc(G.ch || 'YouTube') + '</b><small>' + bn(G.list.length) + 'টা comment বাছাই · ভিডিও খুলুন</small></span></a>' :
+        '<div class="yt-v paste"><span class="ph-media" style="width:120px;aspect-ratio:16/9;padding:0">' + pi('comment') + '</span><span><b>পেস্ট করা comment</b><small>' + esc(String(k).slice(6) || 'লিংক দেওয়া হয়নি') + '</small></span></div>') +
+        G.list.map(function (c) { return ytComment(c, biz); }).join('') + '</section>';
+    }).join('');
+  }
+  function ytComment(c, biz) {
+    var lead = isLead(c), I = INT[c.intent] || [c.intent || '', '#8A909B'], nm = String(c.author_name || '@viewer');
+    return '<div class="yt-c' + (C.lopen[c.id] ? ' open' : '') + '"><span class="yt-av" style="background:hsl(' + (nm.charCodeAt(1) * 37 % 360) + ' 18% 42%)">' + esc(nm.replace(/^@/, '').charAt(0).toUpperCase()) + '</span><div class="yt-b">' +
+      '<div class="yt-h"><b>' + esc(nm) + '</b><small>' + (c.fetched_at ? ago(c.fetched_at) : '') + '</small><span class="bc-tag">' + esc(I[0]) + '</span>' + (lead ? '<span class="bc-tag lead">' + esc(LK[c.lead_kind] || String(c.lead_kind).replace(/_/g, ' ')) + '</span>' : '') + '</div>' +
+      '<p class="yt-t" data-bc="lopen" data-id="' + c.id + '" title="চাপলে পুরোটা">' + esc(c.text || '') + '</p>' + (c.summary ? '<p class="yt-s"><span>AI:</span> ' + esc(c.summary) + '</p>' : '') +
+      '<div class="yt-a"><span>' + pi('like') + (c.likes ? bnN(c.likes) : '') + '</span>' + (lead && biz.length ? (c.handed_at ? '<span class="bc-tag lead">Leads-এ আছে</span>' : btn('Leads-এ পাঠান', 'data-bc="lhand" data-id="' + c.id + '"', 'sm dark', 'lh' + c.id)) : '') + btn('আইডিয়া বানান', 'data-bc="lidea" data-id="' + c.id + '"', 'sm ghost', 'li' + c.id) + '</div></div></div>';
+  }
   function commentHtml(c, biz, forPeople) {
     var lead = isLead(c), I = INT[c.intent] || [c.intent || '', '#8A909B'];
     return '<div class="bc-cm' + (C.lopen[c.id] ? ' open' : '') + '"><div class="h"><b data-noi18n="1">' + esc(c.author_name || '') + '</b>' + (c.channel_title ? '<span data-noi18n="1">' + esc(c.channel_title) + '</span>' : '<span>পেস্ট করা</span>') +
@@ -59589,7 +59634,7 @@ select.bc-in{padding-right:28px}
         srv('erpBrandDeskDraftDecide', [{ id: Number(one), action: 'reject', note: 'older version' }], function (r) { C.d.drafts = r; k2++; nx(); }, function (e6) { C.busy['do' + id] = 0; toast(msg(e6), true, 9000); draw(); }); })();
     }
     else if (w === 'reject') act('rj' + id, 'erpBrandDeskDraftDecide', { id: Number(id), action: 'reject' }, function (r) { if (String(C.dsel) === String(id)) deskNext(id); C.d.drafts = r; toast('বাদ দেওয়া হলো।'); get('cockpit', true); });
-    else if (w === 'edit') { C.sec = 'posts'; C.ptab = 'wait'; C.dsel = id; draw(); setTimeout(function () { var b = el('bci_e' + id); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.focus({ preventScroll: true }); } }, 60); }
+    else if (w === 'edit') { C.sec = 'posts'; C.ptab = 'wait'; C.dsel = id; C.edit[id] = true; draw(); setTimeout(function () { var b = el('bci_e' + id); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.focus({ preventScroll: true }); } }, 60); }
     else if (w === 'acc') { var n2 = t.getAttribute('data-n'); C.acc[id] = C.acc[id] || {}; C.acc[id][n2] = !C.acc[id][n2]; draw(); }
     else if (w === 'more') { C.open[id] = !C.open[id]; draw(); }
     else if (w === 'copy') { var x = findDraft(id), txt = v('e' + id, x ? x.body : ''); try { navigator.clipboard.writeText(txt).then(function () { toast('কপি হলো। পোস্ট করে “নিজে পোস্ট করেছি” চাপুন।'); }, function () { toast('কপি করা গেল না; লেখাটা বেছে নিজে কপি করুন।', true); }); } catch (e4) { toast('কপি করা গেল না।', true); } }
