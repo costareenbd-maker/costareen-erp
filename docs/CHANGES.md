@@ -4259,3 +4259,20 @@ reviews show on the website. As easy as possible, a review for every purchase."
   before this one - not touched here) and golive (needs the sheet export).
 - NOT done: photos with a review; website (non-chat) orders keep the site's own review ask; Instagram uses the
   Messenger card path untested; live release not done (dev only).
+
+## reel-ctx-1 (12 Nov 2026): the content writers know THIS business
+Owner: "the ERP has enough idea of the business, and the website shows what we work on". The reel script, ad of the day,
+weekly ad factory and What to push copy were hard-coded to "a small 3D-printing supplies shop in Bangladesh". New
+`handlers/bizctx.js`: `bizText` (Business Brain via brainText + product groups + website) and `productText` (the product's
+own page text from product_ai / site reading). Hook list = 22 shapes adapted from Jakeschincariol/youtube-agent-skill (MIT;
+shape + when it fails, no YouTube examples); `erpSocialScript({skipHooks})` lets a caller ask for different hooks per reel.
+Tests: socialmake 51 (2 new), factory 28, push 22, social 37, socials3 23, brain 31 green.
+Demo on DEV: business "Oliareen (demo)" 11826232 (3 real Oliareen products, product page text, Brain DRAFT written from
+oliareen.com, AI = own gateway gpt-5.6-sol) -> 3 Bangla reels, three hooks (direct-address, teardown, question), Bangla
+conjuncts render right (HTML slides). Files: G:\bendar-brand\docs\reel-demo.
+Dev infra for it: dev edge had no RENDER_URL -> second render server `czrender-dev` (systemd-run transient unit, NOT
+permanent; /opt/czrender/server-dev.js, data-dev, listens 172.18.0.1:8795, storage origin = dev storage, key
+/root/czrender-dev.key); /opt/erp-dev-migration/docker-compose.json got RENDER_URL/RENDER_KEY (backup .before-render-20261112).
+Live czrender untouched. NOT done: dev has no 'inbox'/'social' minute timer, so dev assets stay "rendering" in the list
+(files are in storage); reel page button for "3 versions"; nicer beauty slide look (current slides are the generic dark theme);
+live release.
