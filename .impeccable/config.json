@@ -17,6 +17,45 @@
         "rule": "overused-font",
         "value": "arial",
         "createdAt": "2026-11-10T03:48:11.983Z"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "roboto",
+        "createdAt": "2026-11-10T11:52:02.808Z",
+        "reason": "Claude: same system font stack as the sibling public pages web/order.html and hold.html (Bangla falls back to bundled Noto Sans Bengali)"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "pretendard",
+        "createdAt": "2026-11-12T13:49:00.169Z",
+        "reason": "Claude: Brand Cockpit is a replacement visual world (owner asked 12 Nov to not follow the ERP design); new DESIGN.md comes at finish"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/assigned.html"
+        ],
+        "createdAt": "2026-11-12T13:49:38.422Z",
+        "reason": "Claude: decision sketches for a replacement visual world; fonts are the proposed world's, not DESIGN.md's"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/model-pick.html"
+        ],
+        "createdAt": "2026-11-12T13:49:38.777Z",
+        "reason": "Claude: decision sketches for a replacement visual world; fonts are the proposed world's, not DESIGN.md's"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/challenger-splitflap.html"
+        ],
+        "createdAt": "2026-11-12T13:49:39.263Z",
+        "reason": "Claude: decision sketches for a replacement visual world; fonts are the proposed world's, not DESIGN.md's"
       }
     ]
   }
