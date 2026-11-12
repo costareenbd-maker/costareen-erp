@@ -1,6 +1,6 @@
 {
  "schemaVersion": 2,
- "generatedAt": "2026-10-30T00:00:00+00:00",
+ "generatedAt": "2026-11-13T00:00:00+00:00",
  "title": "Design System: Costareen ERP",
  "extensions": {
   "colorMeta": {
@@ -37,7 +37,173 @@
    {"name": "phone", "value": "760px"},
    {"name": "rail", "value": "761px-1279px"},
    {"name": "desktop", "value": "1280px"}
-  ]
+  ],
+  "surfaces": {
+   "brand-cockpit": {
+    "displayName": "Brand Cockpit (Line Map world)",
+    "scope": "Only view 'branddesk' (owner-only Brand desk), root .bc in web/app.html block brand-12. Replaces the Tidy Counter world on that screen only.",
+    "northStar": "The Line Map",
+    "colors": {
+     "lm-ink": "#16181D",
+     "lm-ink-2": "#454A55",
+     "lm-ink-3": "#5C626E",
+     "lm-rule": "#E4E6EA",
+     "lm-ground": "#FFFFFF",
+     "lm-shelf": "#F2F3F5",
+     "lm-alert": "#E0301E",
+     "lm-alert-ink": "#A8260F",
+     "lm-wait": "#F2A900",
+     "line-linkedin": "#0A66C2",
+     "line-facebook": "#1877F2",
+     "line-instagram": "#C13584",
+     "line-youtube": "#E62117",
+     "line-tiktok": "#111111",
+     "line-bluesky": "#1185FE",
+     "line-telegram": "#229ED9",
+     "line-x": "#3A3F47",
+     "line-threads": "#5B5F66"
+    },
+    "typography": {
+     "body": "400 15px/1.5 Pretendard, 'Hind Siliguri', Inter, system-ui; tabular-nums",
+     "wait-figure": "800 34px/1 Pretendard (28px phone)",
+     "result-figure": "800 24px/1.2 Pretendard",
+     "page-title": "700 22px/1.25 'Hind Siliguri'",
+     "section-title": "700 17px 'Hind Siliguri'",
+     "rail-item": "600 14.5px 'Hind Siliguri'",
+     "button": "600 14px 'Hind Siliguri'",
+     "line-label": "600 13.5px Pretendard"
+    },
+    "rounded": {
+     "pill": "999px",
+     "wait-bar": "16px",
+     "panel": "14px",
+     "node": "12px",
+     "control": "10px",
+     "station": "50%"
+    },
+    "shadows": [
+     {
+      "name": "station-hover",
+      "value": "0 2px 8px rgba(22,24,29,.25)",
+      "purpose": "Hovered or selected station."
+     },
+     {
+      "name": "node-lit",
+      "value": "0 2px 10px rgba(22,24,29,.10)",
+      "purpose": "Hovered or lit Connections node."
+     },
+     {
+      "name": "tooltip",
+      "value": "0 6px 20px rgba(0,0,0,.25)",
+      "purpose": "Station tooltip."
+     }
+    ],
+    "motion": [
+     {
+      "name": "state",
+      "value": ".15s ease-out",
+      "purpose": "Hover, lit and selected changes."
+     },
+     {
+      "name": "tooltip",
+      "value": ".12s ease-out",
+      "purpose": "Tooltip fade and 4px rise."
+     },
+     {
+      "name": "skeleton",
+      "value": "1.4s linear infinite",
+      "purpose": "Loading shimmer."
+     },
+     {
+      "name": "flash",
+      "value": "1.2s ease-out, #FFF4D6",
+      "purpose": "Jump-to highlight on a draft."
+     }
+    ],
+    "breakpoints": [
+     {
+      "name": "wide",
+      "value": "container >= 1500px: rail 224px, drafts 400px"
+     },
+     {
+      "name": "desktop",
+      "value": "container 1140-1499px: rail 200px | map | drafts 360px"
+     },
+     {
+      "name": "two-col",
+      "value": "container <= 1139px: drafts under the map"
+     },
+     {
+      "name": "phone",
+      "value": "container <= 759px: bottom rail, map scrolls sideways (min 640px)"
+     }
+    ],
+    "components": [
+     {
+      "name": "Rail",
+      "kind": "nav",
+      "html": "<nav class=\"ds-bc-rail\"><button class=\"on\">হোম</button><button>পোস্ট<em>3</em></button><button>শোনা<em class=\"x\">1</em></button></nav>",
+      "css": ".ds-bc-rail{display:flex;flex-direction:column;gap:2px;width:200px;padding:18px 12px;background:#F2F3F5;border-right:1px solid #E4E6EA}.ds-bc-rail button{all:unset;display:flex;align-items:center;gap:10px;height:40px;padding:0 10px;border-radius:10px;font:600 14.5px 'Hind Siliguri',Pretendard,system-ui;color:#454A55;cursor:pointer;transition:background .15s ease-out}.ds-bc-rail button:hover{background:#E7E9EC;color:#16181D}.ds-bc-rail button.on{background:#16181D;color:#fff}.ds-bc-rail button:focus-visible{outline:2px solid #16181D;outline-offset:2px}.ds-bc-rail em{margin-left:auto;font:700 12px Pretendard,system-ui;font-style:normal;min-width:22px;height:20px;padding:0 6px;border-radius:999px;background:#F2A900;color:#16181D;display:grid;place-items:center}.ds-bc-rail em.x{background:#E0301E;color:#fff}"
+     },
+     {
+      "name": "Wait bar",
+      "kind": "custom",
+      "html": "<div class=\"ds-bc-wait\"><b>৩</b><p>৩টা draft আপনার অনুমোদনের অপেক্ষায়<small>ডানদিকে খুলুন</small></p><span></span><button>দেখুন</button></div>",
+      "css": ".ds-bc-wait{display:flex;align-items:center;gap:16px;background:#16181D;color:#fff;border-radius:16px;padding:16px 18px;font:15px/1.35 'Hind Siliguri',Pretendard,system-ui}.ds-bc-wait b{font:800 34px/1 Pretendard,system-ui}.ds-bc-wait p{margin:0}.ds-bc-wait small{display:block;color:#C9CDD4;font-size:13px}.ds-bc-wait span{flex:1}.ds-bc-wait button{all:unset;height:38px;padding:0 14px;border-radius:10px;background:#F2A900;color:#16181D;font:600 14px 'Hind Siliguri',system-ui;cursor:pointer}.ds-bc-wait button:hover{background:#E09D00}"
+     },
+     {
+      "name": "Line map row + stations",
+      "kind": "custom",
+      "html": "<div class=\"ds-bc-ln\" style=\"--c:#0A66C2\"><label><s></s>LinkedIn</label><div class=\"t\"><i style=\"left:20%\"></i><i class=\"q\" style=\"left:55%\"></i><i class=\"x\" style=\"left:75%\"></i><u style=\"left:45%\"></u></div></div>",
+      "css": ".ds-bc-ln{display:grid;grid-template-columns:118px 1fr;align-items:center;height:46px;border-bottom:1px solid #E4E6EA;font:600 13.5px Pretendard,system-ui;color:#454A55}.ds-bc-ln label{display:flex;gap:8px;align-items:center}.ds-bc-ln s{width:12px;height:12px;border-radius:3px;background:var(--c)}.ds-bc-ln .t{position:relative;height:46px}.ds-bc-ln .t::before{content:'';position:absolute;left:0;right:0;top:20px;height:5px;border-radius:3px;background:var(--c)}.ds-bc-ln i{position:absolute;top:13px;width:19px;height:19px;box-sizing:border-box;border-radius:50%;background:#fff;border:4px solid var(--c);transform:translateX(-50%);cursor:pointer;transition:transform .15s ease-out,box-shadow .15s ease-out}.ds-bc-ln i:hover{transform:translateX(-50%) scale(1.28);box-shadow:0 2px 8px rgba(22,24,29,.25)}.ds-bc-ln i.q{background:var(--c);box-shadow:inset 0 0 0 3px #fff}.ds-bc-ln i.x{background:#E0301E;border-color:#E0301E}.ds-bc-ln u{position:absolute;top:0;bottom:0;width:2px;background:#16181D}"
+     },
+     {
+      "name": "Stuck callout",
+      "kind": "custom",
+      "html": "<div class=\"ds-bc-call\"><span><b>Instagram</b> · বুধ ১২ নভেম্বর-এর পোস্ট আটকে গেছে</span><i></i><button>ঠিক করুন</button></div>",
+      "css": ".ds-bc-call{display:flex;align-items:center;gap:10px;border:2px solid #E0301E;border-radius:14px;padding:10px 12px 10px 14px;font:14px 'Hind Siliguri',Pretendard,system-ui;color:#16181D}.ds-bc-call b{font-family:Pretendard,system-ui}.ds-bc-call i{flex:1}.ds-bc-call button{all:unset;height:38px;padding:0 14px;border-radius:10px;background:#E0301E;color:#fff;font-weight:600;cursor:pointer}"
+     },
+     {
+      "name": "Result tile",
+      "kind": "card",
+      "html": "<button class=\"ds-bc-res\"><span>এ সপ্তাহে গেছে</span><b>১২</b><small>লাইনে আছে ৪</small></button>",
+      "css": ".ds-bc-res{all:unset;display:block;box-sizing:border-box;min-width:160px;cursor:pointer;background:#F2F3F5;border-radius:14px;padding:12px 14px;font-family:'Hind Siliguri',Pretendard,system-ui;color:#16181D;transition:background .15s ease-out}.ds-bc-res:hover{background:#E7E9EC}.ds-bc-res:focus-visible{outline:2px solid #16181D;outline-offset:2px}.ds-bc-res span{display:block;font-size:13px;color:#5C626E}.ds-bc-res b{display:block;font:800 24px/1.2 Pretendard,system-ui;font-variant-numeric:tabular-nums}.ds-bc-res small{font-size:12px;color:#5C626E}"
+     },
+     {
+      "name": "Connections node",
+      "kind": "custom",
+      "html": "<button class=\"ds-bc-node\" style=\"--lc:#1877F2\"><b>Postiz<i></i></b><span>পোস্ট পাঠায়</span></button> <button class=\"ds-bc-node hub\"><b>ERP</b><span>সব এখানে জড়ো হয়</span></button>",
+      "css": ".ds-bc-node{all:unset;box-sizing:border-box;display:inline-block;width:200px;vertical-align:top;background:#fff;border:1px solid #E4E6EA;border-radius:12px;padding:10px 12px;cursor:pointer;color:#16181D;transition:border-color .15s ease-out,box-shadow .15s ease-out}.ds-bc-node:hover{border-color:#16181D;box-shadow:0 2px 10px rgba(22,24,29,.10)}.ds-bc-node b{display:flex;align-items:center;gap:8px;font:700 14px Pretendard,'Hind Siliguri',system-ui}.ds-bc-node b::before{content:'';width:13px;height:13px;box-sizing:border-box;border-radius:50%;border:3px solid var(--lc,#16181D);background:#fff}.ds-bc-node b i{margin-left:auto;width:9px;height:9px;border-radius:50%;background:#1EA35A}.ds-bc-node span{display:block;font:12.5px/1.35 'Hind Siliguri',system-ui;color:#5C626E;margin-top:2px}.ds-bc-node.hub{background:#16181D;border-color:#16181D;color:#fff}.ds-bc-node.hub b::before{border-color:#fff;background:#16181D}.ds-bc-node.hub span{color:#C9CDD4}"
+     },
+     {
+      "name": "Pill tabs",
+      "kind": "chip",
+      "html": "<div class=\"ds-bc-pills\"><button class=\"on\">এ সপ্তাহ</button><button>পরের সপ্তাহ</button></div>",
+      "css": ".ds-bc-pills{display:inline-flex;gap:4px;background:#F2F3F5;border-radius:999px;padding:3px}.ds-bc-pills button{all:unset;cursor:pointer;font:600 13px 'Hind Siliguri',Pretendard;padding:5px 12px;border-radius:999px;color:#454A55}.ds-bc-pills button.on{background:#16181D;color:#fff}.ds-bc-pills button:focus-visible{outline:2px solid #16181D;outline-offset:2px}"
+     }
+    ],
+    "rules": [
+     {
+      "name": "The Lines-Carry-Colour Rule",
+      "body": "Inside the cockpit, a hue means one of three things: a network line (or its node ring on the Connections map), stuck (lm-alert) or waiting (lm-wait). Everything else is ink, shelf grey, white or rule.",
+      "section": "colors"
+     },
+     {
+      "name": "The Ink-On-Amber Rule",
+      "body": "Amber fills (badges, the amber button) carry Ink text. Red fills carry white text.",
+      "section": "colors"
+     }
+    ],
+    "dos": [
+     "Do keep colour on the lines. A new cockpit element is ink, grey or rule unless it is a network, stuck or waiting.",
+     "Do keep stuck posts visible at every zoom level and through every merge."
+    ],
+    "donts": [
+     "Don't bring the ERP's lime, pastel KPI tiles or grey canvas into the cockpit, and don't take the Line Map palette out of it.",
+     "Don't open the cockpit on KPI cards with a table below. The map leads."
+    ]
+   }
+  }
  },
  "components": [
   {"name": "Primary Button", "kind": "button", "refersTo": "button-primary", "description": "The one main action in an area.",
