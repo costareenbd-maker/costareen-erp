@@ -4279,3 +4279,29 @@ live release.
 
 ## brand-12 — Brand Cockpit (13 Nov 2026, dev, owner-only)
 The Brand desk is rebuilt as one cockpit in the "Line Map" world the owner picked on the impeccable decision page. PC first: its own rail of sections with live counts takes the place of the ERP side menu on that screen (phone: a bottom bar); the week is a metro map where each network is a line and each post a station (gone / queued / stuck, close ones merged with a count so a stuck post is never hidden); the drafts that wait for him sit in the right column (phone: under the black bar) with Approve as the main button and Bangla words; a stuck post can be sent again from the cockpit (through the pacer, urgent); results, journal tasks and recent calls sit under the map; a Connections page draws how every tool on the Mac is wired with a live up/down dot. The older brand blocks still render Posts, Ideas, Media, Listen, People and Rules inside the cockpit, restyled. Server: `erpBrandDeskCockpit` (bridge `/cockpit`, which also returns the health of 11 tools). NOT done: clicks/visits (Umami, LinkedIn numbers) are not connected and the screen says so; same-idea drafts are not grouped; Pretendard comes from the jsdelivr CDN, not self-hosted; the Connections nodes are cards with ring marks, not full metro stations.
+
+## brand-13 — every Brand Cockpit page redrawn (13 Nov 2026, dev, owner-only)
+Owner: home was right, every other page was still the old messy look. Impeccable roadmap in
+`.impeccable/shape/brand-cockpit-pages.md`; two finish-review rounds; captures in `.impeccable/review/` (desktop 1600 + phone 390).
+- The cockpit now renders in its own root `#bc_root` beside `#view` (the older brand-1..11 desk still renders, hidden, in
+  `#view`), so a repaint never wipes it or a half-typed post. Inputs keep their text in state.
+- Posts: drafts as phone-sized cards in each network's own interface (Facebook, LinkedIn, Instagram, TikTok, YouTube,
+  generic for X/Threads/Bluesky/Telegram) with his real Postiz photo + name, the app's "See more" fold, the part over the
+  network's limit marked red; cards wrap into rows, grouped by idea; older versions of the same idea + network are marked,
+  approve-all takes only the newest, "drop older versions" button. Edit in place inside the card. Composer tab: shared text
+  + per-network tabs (any network can get its own text), live phone previews, one post call per distinct text.
+  Bangla day/time picker (no mm/dd/yyyy). Sent / queued / stuck as departures by day.
+- Ideas: capture field, four-station spine, the inbox drawn as the Telegram chat with the journal bot, bank by topic
+  (5 per topic + fold), board as a line of steps; AI network chips = draftable AND connected networks.
+- Listen: intent bar (grey ramp, complaints red), most-asked clusters, comments as YouTube threads under the video
+  thumbnail (3 per video, 6 videos, folds), "make an idea" per comment.
+- People: only real business leads (retail_buyer = one shopper, not a lead; bridge cockpit count fixed too), honest empty
+  state, form adds straight to a business's Leads: new `erpBrandDeskAddLead` (owner, tested).
+- Results: one sentence, 15-day chart, each network as a line with stations. Rules: cadence as stations, numbered topic mix
+  with steppers, connectors in Bangla (raw key behind a toggle), bridge key. Home: no KPI tiles / personal to-dos; calls
+  can become ideas; right column = small phone cards. Phone: 4 rail slots + "আরও" sheet.
+- Found and fixed: the page CSP blocked the Pretendard CDN (it never loaded) - now self-hosted `web/fonts/PretendardStdVariable.woff2`
+  (OFL); CSP img-src now allows social.costareen.com (profile photos) and i.ytimg.com (video thumbnails); the ERP's short
+  global classes (.c .t .n .empty .none ...) leaked in - shielded with `:where(.bc) :is(...){all:revert}`.
+NOT done: picking a photo/video for a post (TikTok/Instagram/YouTube need one; needs a bridge upload to Postiz), clicks and
+visits (Umami, LinkedIn), the one-video-everywhere draft rule, English cluster names (AI data), live release.

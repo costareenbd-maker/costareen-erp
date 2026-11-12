@@ -58604,6 +58604,9 @@ select.bc-in{padding-right:28px}
 .tg-a .bc-btn{background:rgba(255,255,255,.75)}
 .tg-a .bc-btn.ghost{background:rgba(255,255,255,.5)}
 .tg-empty{align-self:center;background:rgba(0,0,0,.18);color:#fff;border-radius:999px;padding:6px 14px;font:13px "Hind Siliguri",system-ui,sans-serif;margin:30px 0}
+.ph-pic{position:relative;background:#000}
+.ph-pic img{display:block;width:100%;max-height:420px;object-fit:contain}
+.ph-pic span{position:absolute;right:10px;top:10px;background:rgba(0,0,0,.6);color:#fff;font:600 12px Helvetica,Arial,sans-serif;padding:2px 8px;border-radius:999px}
 @container bc (min-width:1500px){.bc{grid-template-columns:224px minmax(0,1fr) 400px}.bc.noside{grid-template-columns:224px minmax(0,1fr)}}
 @container bc (max-width:1139px){
   .bc{grid-template-columns:200px minmax(0,1fr)}
@@ -58981,10 +58984,10 @@ select.bc-in{padding-right:28px}
   function phoneCard(net, acc, text, key, o) {
     o = o || {}; var p = netOf(net), nm = esc((acc && acc.name) || 'Rahman Najir'), ed = o.edit;
     var body = bodyBlock(p, text, key, ed), noAcc = !acc ? '<div class="ph-warn">এই network-এর account যুক্ত নেই, তাই এটা নিজে পোস্ট করতে হবে</div>' : '';
-    var mediaSlot = '<div class="ph-media">' + pi('media') + '<span>' + (needMedia(p) ? 'এই network-এ ছবি বা ভিডিও ছাড়া পোস্ট যায় না' : 'ছবি নেই (শুধু লেখা যাবে)') + '</span></div>';
-    if (p === 'facebook') return '<article data-noi18n="1" class="ph ph-fb">' + noAcc + '<header>' + avatar(acc, 40) + '<div><b data-noi18n="1">' + nm + '</b><small>এখন · ' + pi('globe') + '</small></div>' + pi('dots') + '</header>' + body +
+    var mediaSlot = o.pic ? '<div class="ph-pic"><img alt="" src="' + o.pic + '">' + (o.npic > 1 ? '<span>১ / ' + bn(o.npic) + '</span>' : '') + '</div>' : '<div class="ph-media">' + pi('media') + '<span>' + (needMedia(p) ? 'এই network-এ ছবি বা ভিডিও ছাড়া পোস্ট যায় না' : 'ছবি নেই (শুধু লেখা যাবে)') + '</span></div>';
+    if (p === 'facebook') return '<article data-noi18n="1" class="ph ph-fb">' + noAcc + '<header>' + avatar(acc, 40) + '<div><b data-noi18n="1">' + nm + '</b><small>এখন · ' + pi('globe') + '</small></div>' + pi('dots') + '</header>' + body + (o.pic ? mediaSlot : '') +
       '<div class="ph-cnt"><span class="rx"><i class="l"></i><i class="h"></i></span>০<span class="bc-sp"></span>০ comment</div><footer>' + '<span>' + pi('like') + 'Like</span><span>' + pi('comment') + 'Comment</span><span>' + pi('share') + 'Share</span></footer></article>';
-    if (p === 'linkedin') return '<article data-noi18n="1" class="ph ph-li">' + noAcc + '<header>' + avatar(acc, 44) + '<div><b data-noi18n="1">' + nm + ' <em>• You</em></b><small data-noi18n="1">Founder · K-beauty sourcing, Seoul ↔ Dhaka</small><small>এখন • ' + pi('globe') + '</small></div>' + pi('dots') + '</header>' + body +
+    if (p === 'linkedin') return '<article data-noi18n="1" class="ph ph-li">' + noAcc + '<header>' + avatar(acc, 44) + '<div><b data-noi18n="1">' + nm + ' <em>• You</em></b><small data-noi18n="1">Founder · K-beauty sourcing, Seoul ↔ Dhaka</small><small>এখন • ' + pi('globe') + '</small></div>' + pi('dots') + '</header>' + body + (o.pic ? mediaSlot : '') +
       '<footer><span>' + pi('like') + 'Like</span><span>' + pi('comment') + 'Comment</span><span>' + pi('repost') + 'Repost</span><span>' + pi('send') + 'Send</span></footer></article>';
     if (p === 'instagram') return '<article data-noi18n="1" class="ph ph-ig">' + noAcc + '<header>' + avatar(acc, 32) + '<b data-noi18n="1">' + esc(handle(acc)) + '</b><span class="bc-sp"></span>' + pi('dots') + '</header>' + mediaSlot.replace('ph-media', 'ph-media sq') +
       '<div class="ph-ic">' + pi('heart') + pi('comment') + pi('send') + '<span class="bc-sp"></span>' + pi('save') + '</div><div class="ph-cap"><b data-noi18n="1">' + esc(handle(acc)) + '</b> ' + body + '</div></article>';
@@ -58999,7 +59002,7 @@ select.bc-in{padding-right:28px}
   function draftCard(x) {
     var mine = accountsFor(x), sel = accSel(x, mine), id = x.id, body = v('e' + id, x.body || ''), editing = C.edit[id], block = (x.legal_flags || []).some(function (f) { return f.severity === 'block'; }), lim = LIMIT[netOf(x.platform)] || 5000;
     var h = '<div class="ph-slot' + (x._old ? ' old' : '') + '" id="bc_tk_' + id + '"><div class="ph-top">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sp"></span>' + (x._old ? '<span class="bc-tag">পুরনো সংস্করণ</span>' : '') + (block ? '<span class="bc-tag x">আটকাবে</span>' : '') + '</div>' +
-      phoneCard(x.platform, mine[0] || null, body, 'd' + id, { edit: editing ? 'e' + id : '', title: (x.title_options || [])[0] });
+      phoneCard(x.platform, mine[0] || null, body, 'd' + id, { edit: editing ? 'e' + id : '', title: (x.title_options || [])[0], pic: picOf(id), npic: ((C.cards[id] || {}).pictures || []).length });
     h += '<div class="ph-meta"><span id="bc_cnt_' + id + '" class="' + (body.length > lim ? 'over' : '') + '">' + bn(body.length) + ' / ' + bn(lim) + ' অক্ষর</span>' + (mine.length > 1 ? '<span class="bc-sp"></span>' + mine.map(function (n) { return '<button type="button" class="bc-nc' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" data-noi18n="1">' + esc(n.name || '') + '</button>'; }).join('') : '') + '</div>' + flagsHtml(x);
     if ((x.title_options || []).length && (editing || netOf(x.platform) === 'youtube')) h += '<div class="bc-ncs" style="margin-top:8px">' + x.title_options.map(function (t) { return '<button type="button" class="bc-pl" style="--c:#16181D" data-bc="tcopy" data-t="' + esc(t) + '" title="চাপলে কপি হবে" data-noi18n="1">' + esc(t) + '</button>'; }).join('') + '</div>';
     h += '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : btn(svg('copy') + 'লেখা কপি', 'data-bc="copy" data-id="' + id + '"', 'dark', '')) + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
@@ -59012,6 +59015,7 @@ select.bc-in{padding-right:28px}
     }
     return h + '</div>';
   }
+  function picOf(id) { var c = C.cards[id]; return c && c.pictures && c.pictures[0] ? c.pictures[0].src : ''; }
   function wallHtml() {
     var gs = groups();
     if (!gs.length) return draftsHtml(false);
