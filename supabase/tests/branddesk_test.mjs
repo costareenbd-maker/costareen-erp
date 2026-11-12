@@ -190,6 +190,15 @@ const lead = await sql`select kind, name, email, note from inbox_leads where bus
 check('the person becomes a supplier lead of that business', r.ok && r.result.added && lead.length === 1 && lead[0].kind === 'supplier' && /LinkedIn post/.test(lead[0].note), lead);
 r = await owner('erpBrandDeskToLeads', [{ id: 'p1', business: tgt.id }]);
 check('handing the same person twice adds nothing', r.ok && r.result.added === false, r);
+r = await owner('erpBrandDeskAddLead', [{ business: tgt.id, name: '' }]);
+check('a lead without a name is refused', !r.ok, r);
+r = await owner('erpBrandDeskAddLead', [{ business: B, name: 'Shop X' }]);
+check('the brand desk itself cannot take a typed lead', !r.ok, r);
+r = await owner('erpBrandDeskAddLead', [{ business: tgt.id, name: 'Shop X Dhaka', phone: '01711000111', kind: 'customer', want: '50 sunscreens', source: 'Facebook comment' }]);
+const typed = await sql`select kind, want, note from inbox_leads where business_id = ${tgt.id} and name = 'Shop X Dhaka'`;
+check('a typed person becomes a customer lead of that business', r.ok && r.result.added && typed.length === 1 && typed[0].kind === 'customer' && /Facebook comment/.test(typed[0].note), typed);
+r = await mgr('erpBrandDeskAddLead', [{ business: tgt.id, name: 'Shop Y' }]);
+check('a manager cannot add a brand desk lead', !r.ok, r);
 
 // 4a3. brand-11: Listen
 r = await owner('erpBrandDeskListen', []);

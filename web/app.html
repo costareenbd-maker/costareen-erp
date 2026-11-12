@@ -58030,24 +58030,27 @@ document.addEventListener('click', function (e) {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 </script>
-<!-- brand-12 (owner 13 Nov 2026, impeccable redesign, world "Line Map"): the Brand desk becomes one cockpit. PC first:
-     left rail of sections with live counts, the week as a metro map (each network a line, each post a station: gone /
-     queued / stuck), the drafts that wait for him in the right column with Approve inline, results and tasks under the map,
-     and a Connections map that shows, live, how every tool on the Mac hangs together. The older brand blocks (brand-1..11)
-     still do the work of the inner sections; this block only lays them out in the cockpit and restyles them.
-     Server: erpBrandDeskCockpit (bridge /cockpit). -->
+<!-- brand-13 (owner 13 Nov 2026, impeccable roadmap .impeccable/shape/brand-cockpit-pages.md): every Brand Cockpit page is
+     drawn here in the Line Map world (brand-12 drew only home + Connections and lent the old brand-1..11 screens for the
+     rest). The cockpit now lives in its own root (#bc_root) beside #view, so the older desk - still rendering hidden in
+     #view - can never wipe it or a half-typed post. Pages: home (map + drafts), posts (drafts grouped by idea, departures by
+     day, composer), ideas (capture, spine, bank by topic, board as a line), media, listen (intent bar, most asked, feed,
+     channels), people (Listen buyers + add straight to Leads: erpBrandDeskAddLead), results (15-day chart, per line), rules
+     (timetable, topic mix steppers, connectors, bridge key), connections. -->
 <style>
-#view.bc-on{max-width:none;padding:0;container-type:inline-size;container-name:bc}
+/* the cockpit lives in its own root beside #view, so the older desk (hidden in #view) can never wipe it */
+body.bc-live #view{display:none!important}
+.bc-root{display:none}
+body.bc-live .bc-root{display:block;container-type:inline-size;container-name:bc}
 .bc{--bc-ink:#16181D;--bc-ink-2:#454A55;--bc-ink-3:#5C626E;--bc-rule:#E4E6EA;--bc-ground:#FFFFFF;--bc-shelf:#F2F3F5;--bc-alert:#E0301E;--bc-alert-ink:#A8260F;--bc-wait:#F2A900;--bc-good:#14803F;
-  --li:#0A66C2;--fb:#1877F2;--ig:#C13584;--yt:#E62117;--tt:#111111;--bs:#1185FE;--tg:#229ED9;--x:#3A3F47;--th:#5B5F66;
   display:grid;grid-template-columns:200px minmax(0,1fr) 360px;min-height:calc(100vh - 64px);background:var(--bc-ground);color:var(--bc-ink);
-  font:15px/1.5 Pretendard,"Hind Siliguri",Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;color-scheme:light}
+  font:15px/1.5 Pretendard,"Hind Siliguri",Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;color-scheme:light;text-align:left}
 .bc ::selection{background:#0A66C233}
 .bc :focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px;border-radius:6px}
-.bc-bn{font-family:"Hind Siliguri",Pretendard,system-ui,sans-serif}
+.bc textarea::placeholder,.bc input::placeholder{color:#7A808B}
+.bc *{scrollbar-width:thin;scrollbar-color:#C9CDD4 transparent}
 .bc.noside{grid-template-columns:200px minmax(0,1fr)}
-.bc.noside .bc-side{display:none}
-.bc-rail{background:var(--bc-shelf);border-right:1px solid var(--bc-rule);padding:18px 12px;display:flex;flex-direction:column;gap:2px;position:sticky;top:0;align-self:start;height:calc(100vh - 64px);overflow:auto}
+.bc-rail{background:var(--bc-shelf);border-right:1px solid var(--bc-rule);padding:18px 12px;display:flex;flex-direction:column;gap:2px;position:sticky;top:0;align-self:start;height:calc(100vh - 64px);overflow:auto;box-sizing:border-box}
 .bc-me{padding:4px 10px 16px}
 .bc-me b{display:block;font:800 17px/1.2 Pretendard,system-ui;letter-spacing:-.01em}
 .bc-me span{font-size:12.5px;color:var(--bc-ink-3)}
@@ -58055,7 +58058,7 @@ document.addEventListener('click', function (e) {
 .bc-rail button:hover{background:#E7E9EC;color:var(--bc-ink)}
 .bc-rail button.on{background:var(--bc-ink);color:#fff}
 .bc-rail button svg{width:19px;height:19px;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-.bc-rail button em{margin-left:auto;font:700 12px Pretendard,system-ui;font-style:normal;min-width:22px;height:20px;padding:0 6px;border-radius:999px;background:var(--bc-wait);color:var(--bc-ink);display:grid;place-items:center}
+.bc-rail button em{margin-left:auto;font:700 12px Pretendard,system-ui;font-style:normal;min-width:22px;height:20px;padding:0 6px;border-radius:999px;background:var(--bc-wait);color:var(--bc-ink);display:grid;place-items:center;box-sizing:border-box}
 .bc-rail button em.x{background:var(--bc-alert);color:#fff}
 .bc-rail hr{border:0;border-top:1px solid var(--bc-rule);margin:10px 6px}
 .bc-rail .bc-health{margin-top:auto;padding:10px;font-size:12.5px;color:var(--bc-ink-3);display:flex;gap:8px;align-items:center;cursor:pointer;border-radius:10px}
@@ -58064,35 +58067,277 @@ document.addEventListener('click', function (e) {
 .bc-dot.off{background:var(--bc-alert)}
 .bc-main{padding:22px 28px 64px;min-width:0}
 .bc-side{border-left:1px solid var(--bc-rule);padding:22px 20px 64px;min-width:0;background:#FCFCFD}
-.bc-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.bc-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
 .bc-head h1{font:700 22px/1.25 "Hind Siliguri",Pretendard,system-ui;margin:0;letter-spacing:-.005em}
-.bc-head .bc-sub{font-size:13.5px;color:var(--bc-ink-3)}
-.bc-head .bc-sp{flex:1}
-.bc-btn{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;padding:0 14px;border-radius:10px;font:600 14px "Hind Siliguri",Pretendard,system-ui;cursor:pointer;background:var(--bc-shelf);color:var(--bc-ink);transition:background .15s ease-out}
+.bc-head .bc-sub,.bc-sub{font-size:13.5px;color:var(--bc-ink-3)}
+.bc-sp{flex:1}
+.bc-btn{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;padding:0 14px;border-radius:10px;font:600 14px "Hind Siliguri",Pretendard,system-ui;cursor:pointer;background:var(--bc-shelf);color:var(--bc-ink);white-space:nowrap;transition:background .15s ease-out}
 .bc-btn:hover{background:#E4E6EA}
 .bc-btn.dark{background:var(--bc-ink);color:#fff}
 .bc-btn.dark:hover{background:#2A2E36}
 .bc-btn.amber{background:var(--bc-wait);color:var(--bc-ink)}
 .bc-btn.amber:hover{background:#E09D00}
 .bc-btn.red{background:var(--bc-alert);color:#fff}
-.bc-btn[disabled]{opacity:.5;cursor:default}
-.bc-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.bc-pills{display:inline-flex;gap:4px;background:var(--bc-shelf);border-radius:999px;padding:3px}
-.bc-pills button{all:unset;cursor:pointer;white-space:nowrap;font:600 13px "Hind Siliguri",Pretendard;padding:5px 12px;border-radius:999px;color:var(--bc-ink-2)}
+.bc-btn.red:hover{background:#C42A1A}
+.bc-btn.ghost{background:transparent;color:var(--bc-ink-2)}
+.bc-btn.ghost:hover{background:var(--bc-shelf);color:var(--bc-ink)}
+.bc-btn.sm{height:32px;padding:0 11px;font-size:13px;border-radius:9px}
+.bc-btn[disabled]{opacity:.5;cursor:default;pointer-events:none}
+.bc-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bc-spin{width:13px;height:13px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:bcSpin .7s linear infinite;flex:none;box-sizing:border-box}
+@keyframes bcSpin{to{transform:rotate(360deg)}}
+.bc-pills{display:inline-flex;gap:4px;background:var(--bc-shelf);border-radius:999px;padding:3px;max-width:100%;overflow-x:auto;scrollbar-width:none;box-sizing:border-box}
+.bc-pills::-webkit-scrollbar{display:none}
+.bc-pills button{all:unset;cursor:pointer;white-space:nowrap;font:600 13px "Hind Siliguri",Pretendard;padding:5px 12px;border-radius:999px;color:var(--bc-ink-2);display:inline-flex;align-items:center;gap:6px}
+.bc-pills button:hover{color:var(--bc-ink)}
 .bc-pills button.on{background:var(--bc-ink);color:#fff}
+.bc-pills.big{padding:4px}
+.bc-pills.big button{font-size:14.5px;padding:8px 16px}
+.bc-pills button em{font:700 12px Pretendard;font-style:normal;min-width:20px;height:20px;padding:0 6px;box-sizing:border-box;border-radius:999px;background:#fff;color:var(--bc-ink-2);display:grid;place-items:center}
+.bc-pills button em.w{background:var(--bc-wait);color:var(--bc-ink)}
+.bc-pills button em.x{background:var(--bc-alert);color:#fff}
 .bc-wait{display:flex;align-items:center;gap:16px;background:var(--bc-ink);color:#fff;border-radius:16px;padding:16px 18px;margin-bottom:22px}
 .bc-wait b{font:800 34px/1 Pretendard,system-ui}
 .bc-wait p{margin:0;font-size:15px;line-height:1.35}
 .bc-wait p small{display:block;color:#C9CDD4;font-size:13px}
-.bc-wait .bc-sp{flex:1}
 .bc-wait.calm{background:var(--bc-shelf);color:var(--bc-ink)}
 .bc-wait.calm p small{color:var(--bc-ink-3)}
-.bc-h2{display:flex;align-items:baseline;gap:10px;margin:0 0 8px}
+.bc-h2{display:flex;align-items:baseline;gap:10px;margin:0 0 10px;flex-wrap:wrap;row-gap:6px}
 .bc-h2 h2{font:700 17px "Hind Siliguri",Pretendard;margin:0;white-space:nowrap}
-.bc-h2{flex-wrap:wrap;row-gap:6px}
 .bc-h2 span{font-size:13px;color:var(--bc-ink-3)}
-.bc-h2 .bc-sp{flex:1}
-/* the line map */
+.bc-block{margin-top:34px}
+.bc-note{font-size:13px;color:var(--bc-ink-3);margin-top:8px}
+.bc-call{margin-top:12px;border:2px solid var(--bc-alert);border-radius:14px;padding:10px 12px 10px 14px;display:flex;align-items:center;gap:10px;font-size:14px;flex-wrap:wrap}
+.bc-call b{font-family:Pretendard,system-ui}
+.bc-skel{background:linear-gradient(90deg,var(--bc-shelf) 0 40%,#E9EBEE 50%,var(--bc-shelf) 60%) 0 0/300% 100%;animation:bcSk 1.4s linear infinite;border-radius:12px}
+@keyframes bcSk{to{background-position:-150% 0}}
+.bc-flash{animation:bcFlash 1.2s ease-out 1}
+@keyframes bcFlash{0%{background:#FFF4D6}100%{background:transparent}}
+@media (prefers-reduced-motion:reduce){.bc *{transition:none!important;animation:none!important}}
+body.bc-live #side,body.bc-live #navBackdrop{display:none!important}
+@media (max-width:759px){body.bc-live #tabbar{display:none!important}body.bc-live,body.bc-live #app,body.bc-live #app>div,body.bc-live main,body.bc-live .main{background:#fff!important;background-image:none!important}}
+/* line badge: a short piece of the network's line with its station, the network's name beside it */
+.bc-lb{display:inline-flex;align-items:center;gap:8px;font:600 13.5px Pretendard,system-ui;color:var(--bc-ink);white-space:nowrap;min-width:0}
+.bc-lb i{width:24px;height:6px;border-radius:3px;background:var(--c);position:relative;flex:none}
+.bc-lb i::after{content:"";position:absolute;left:4px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:#fff;border:3px solid var(--c);box-sizing:border-box}
+.bc-lb small{font:500 12.5px "Hind Siliguri",Pretendard;color:var(--bc-ink-3)}
+.bc-tag{display:inline-block;font:600 12px "Hind Siliguri",Pretendard;background:var(--bc-shelf);color:var(--bc-ink-2);border-radius:6px;padding:2px 8px;white-space:nowrap}
+.bc-tag.lead{background:#E6F4EC;color:#11663A}
+.bc-tag.x{background:#FDECEA;color:var(--bc-alert-ink)}
+.bc-tag.w{background:#FFF4D6;color:#7A5200}
+/* network chips (pick where a post goes) */
+.bc-ncs{display:flex;flex-wrap:wrap;gap:6px}
+.bc-nc{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px 0 10px;border:1px solid var(--bc-rule);border-radius:999px;font:600 13.5px Pretendard,"Hind Siliguri";color:var(--bc-ink-2);background:#fff;transition:background .15s ease-out,border-color .15s ease-out}
+.bc-nc::before{content:"";width:13px;height:13px;border-radius:50%;border:3px solid var(--c);box-sizing:border-box;background:#fff;flex:none}
+.bc-nc:hover{border-color:#C9CDD4}
+.bc-nc.on{border-color:var(--c);color:var(--bc-ink);background:color-mix(in srgb,var(--c) 7%,#fff)}
+.bc-nc.on::before{background:var(--c);box-shadow:inset 0 0 0 2px #fff}
+.bc-nc small{font:500 12px "Hind Siliguri";color:var(--bc-ink-3)}
+/* fields */
+.bc-ta{display:block;width:100%;box-sizing:border-box;border:1px solid var(--bc-rule);border-radius:12px;padding:11px 13px;font:15px/1.55 "Hind Siliguri",Pretendard,system-ui;color:var(--bc-ink);background:var(--bc-ground);resize:vertical;min-height:132px;caret-color:var(--bc-ink)}
+.bc-in{height:38px;border:1px solid var(--bc-rule);border-radius:10px;padding:0 11px;font:14.5px "Hind Siliguri",Pretendard,system-ui;color:var(--bc-ink);background:var(--bc-ground);box-sizing:border-box;min-width:0;caret-color:var(--bc-ink)}
+select.bc-in{padding-right:28px}
+.bc-ta:focus,.bc-in:focus{outline:none;border-color:var(--bc-ink);box-shadow:0 0 0 3px #16181D14}
+.bc-in[type="datetime-local"]{font-family:Pretendard,system-ui}
+.bc-lbl{display:block;font:600 13px "Hind Siliguri",Pretendard;color:var(--bc-ink-2);margin:14px 0 6px}
+.bc-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.bc-chk{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--bc-ink-2);cursor:pointer}
+.bc-chk input{width:17px;height:17px;accent-color:#16181D;margin:0}
+/* drafts: one block per idea, one ticket per network */
+.bc-grp{border-top:2px solid var(--bc-ink);padding-top:12px;margin-bottom:30px}
+.bc-grp-h{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:2px}
+.bc-grp-h h3{font:700 17px/1.35 Pretendard,"Hind Siliguri",system-ui;margin:0;min-width:0;flex:1 1 280px}
+.bc-tk{padding:16px 0;border-top:1px solid var(--bc-rule)}
+.bc-grp-h+.bc-tk{border-top:0}
+.bc-tk-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px}
+.bc-tk-h .acc{font-size:13px;color:var(--bc-ink-3)}
+.bc-tk-p{margin:0;font:14.5px/1.5 "Hind Siliguri",Pretendard;color:var(--bc-ink-2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.bc-flag{display:flex;gap:8px;align-items:baseline;font-size:13.5px;margin-top:8px;color:var(--bc-ink-2)}
+.bc-flag .bc-tag{flex:none}
+.bc-more{margin-top:12px;background:var(--bc-shelf);border-radius:12px;padding:12px 14px}
+.bc-pics{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:10px}
+.bc-pics img{width:100%;display:block;border-radius:8px;border:1px solid var(--bc-rule)}
+.bc-side .bc-tk{padding:14px 0}
+.bc-side .bc-tk .bc-row{margin-top:10px}
+.bc-titles{font-size:13px;color:var(--bc-ink-3);margin-top:8px}
+.bc-titles b{color:var(--bc-ink-2);font-weight:600}
+/* departures: every post on its line, by day */
+.bc-day{font:700 13px "Hind Siliguri",Pretendard;color:var(--bc-ink-3);padding:18px 0 7px;border-bottom:1px solid var(--bc-rule);display:flex;gap:8px;align-items:baseline}
+.bc-day:first-child{padding-top:0}
+.bc-day.t{color:var(--bc-ink)}
+.bc-dep{display:grid;grid-template-columns:96px 150px minmax(0,1fr) auto;gap:14px;align-items:center;padding:11px 6px;margin:0 -6px;border-bottom:1px solid var(--bc-rule);cursor:pointer;border-radius:8px;transition:background .15s ease-out}
+.bc-dep:hover{background:#F7F8F9}
+.bc-dep .tm{font:700 14.5px Pretendard,system-ui}
+.bc-dep p{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px;min-width:0}
+.bc-dep.open{align-items:start;background:#F7F8F9}
+.bc-dep.open p{white-space:pre-wrap;overflow-wrap:anywhere}
+.bc-dep .a{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.bc-dep .m{display:block;font-size:12.5px;color:var(--bc-ink-3);margin-top:6px;white-space:normal}
+.bc-stt{font:700 12.5px "Hind Siliguri",Pretendard;padding:3px 10px;border-radius:999px;background:var(--bc-shelf);color:var(--bc-ink-2);white-space:nowrap}
+.bc-stt.x{background:#FDECEA;color:var(--bc-alert-ink)}
+.bc-stt.go{background:#E6F4EC;color:#11663A}
+.bc-clear{padding:34px 0;text-align:left}
+.bc-clear b{display:block;font:700 18px "Hind Siliguri",Pretendard}
+.bc-clear p{margin:4px 0 14px;color:var(--bc-ink-3);font-size:14px}
+/* composer meters */
+.bc-mt{display:grid;grid-template-columns:96px 1fr auto;gap:10px;align-items:center;font-size:12.5px;color:var(--bc-ink-3);margin-top:7px}
+.bc-mt u{display:block;height:5px;border-radius:3px;background:var(--bc-shelf);position:relative;overflow:hidden;text-decoration:none}
+.bc-mt u i{position:absolute;left:0;top:0;bottom:0;background:var(--c);border-radius:3px}
+.bc-mt.over{color:var(--bc-alert-ink);font-weight:600}
+.bc-mt.over u i{background:var(--bc-alert)}
+/* a line of stations as a page's spine (Ideas, empty Media) */
+.bc-spine{position:relative;display:grid;grid-template-columns:repeat(var(--n,4),minmax(0,1fr));margin:4px 0 30px}
+.bc-spine::before{content:"";position:absolute;left:calc(50% / var(--n,4));right:calc(50% / var(--n,4));top:13px;height:6px;border-radius:3px;background:var(--bc-ink)}
+.bc-spine>*{all:unset;box-sizing:border-box;position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:0 6px}
+.bc-spine>button{cursor:pointer}
+.bc-spine i{width:32px;height:32px;box-sizing:border-box;border-radius:50%;background:#fff;border:6px solid var(--bc-ink);transition:transform .15s ease-out}
+.bc-spine>button:hover i{transform:scale(1.12)}
+.bc-spine i.q{background:var(--bc-ink);box-shadow:inset 0 0 0 4px #fff}
+.bc-spine b{font:800 22px/1.15 Pretendard,system-ui;margin-top:4px}
+.bc-spine span{font:600 13.5px "Hind Siliguri",Pretendard;color:var(--bc-ink-2)}
+.bc-spine small{font-size:12.5px;color:var(--bc-ink-3);max-width:220px;line-height:1.4}
+/* ideas */
+.bc-cap{border:1px solid var(--bc-rule);border-radius:16px;padding:14px;margin-bottom:26px;background:#fff}
+.bc-cap .bc-ta{border:0;padding:4px 2px;min-height:64px;box-shadow:none;font-size:16px;resize:none}
+.bc-cap .bc-ta:focus{box-shadow:none}
+.bc-cap .bc-row{border-top:1px solid var(--bc-rule);padding-top:12px;margin-top:8px}
+.bc-pl{all:unset;cursor:pointer;display:inline-flex;align-items:center;height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--bc-rule);font:600 13px Pretendard;color:var(--bc-ink-2);gap:6px}
+.bc-pl::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c);opacity:.35}
+.bc-pl.on{border-color:var(--bc-ink);color:var(--bc-ink)}
+.bc-pl.on::before{opacity:1}
+.bc-li{display:flex;gap:12px;align-items:center;padding:11px 0;border-top:1px solid var(--bc-rule)}
+.bc-li .c{flex:1;min-width:0}
+.bc-li .c b{display:block;font:600 15px/1.4 Pretendard,"Hind Siliguri";overflow-wrap:anywhere}
+.bc-li .c small{font-size:12.5px;color:var(--bc-ink-3)}
+.bc-li .a{display:flex;gap:6px;flex:none;flex-wrap:wrap;justify-content:flex-end}
+.bc-li.mute .c b{font-weight:500;color:var(--bc-ink-3)}
+.bc-topic{display:flex;align-items:center;gap:10px;margin:22px 0 2px}
+.bc-topic h3{font:700 15px "Hind Siliguri",Pretendard;margin:0}
+.bc-topic s{width:12px;height:12px;border-radius:3px;background:var(--c);flex:none}
+.bc-fold{all:unset;cursor:pointer;font:600 13.5px "Hind Siliguri",Pretendard;color:var(--bc-ink-2);display:inline-flex;gap:6px;align-items:center;margin-top:16px;padding:6px 0}
+.bc-fold svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;transition:transform .15s ease-out}
+.bc-fold.on svg{transform:rotate(90deg)}
+.bc-jobs{display:flex;align-items:center;gap:10px;background:var(--bc-shelf);border-radius:12px;padding:10px 14px;font-size:14px;margin-bottom:18px}
+.bc-jobs.done{background:#E6F4EC;color:#11663A}
+.bc-jobs.bad{background:#FDECEA;color:var(--bc-alert-ink)}
+/* board as a line of steps */
+.bc-steps{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:0;overflow-x:auto;padding-bottom:10px}
+.bc-step{padding-right:14px;min-width:0}
+.bc-step h4{display:flex;align-items:center;gap:8px;font:700 13.5px Pretendard,system-ui;margin:0 0 12px;position:relative;height:22px}
+.bc-step h4::after{content:"";position:absolute;left:8px;right:-14px;top:50%;height:5px;margin-top:-2.5px;background:var(--bc-ink);border-radius:3px}
+.bc-step:last-child h4::after{right:auto;width:0}
+.bc-step h4 i{width:18px;height:18px;border-radius:50%;border:4px solid var(--bc-ink);box-sizing:border-box;background:#fff;flex:none;position:relative;z-index:1}
+.bc-step h4 span{position:relative;z-index:1;background:#fff;padding:0 6px 0 2px}
+.bc-step h4 em{position:relative;z-index:1;background:#fff;font:700 12px Pretendard;font-style:normal;color:var(--bc-ink-3);padding:0 4px}
+.bc-card{border:1px solid var(--bc-rule);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff}
+.bc-card b{display:block;font:600 14px/1.4 Pretendard,"Hind Siliguri";overflow-wrap:anywhere}
+.bc-card p{margin:4px 0 0;font-size:12.5px;color:var(--bc-ink-3);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.bc-card .a{display:flex;justify-content:flex-end;margin-top:8px}
+.bc-card-new{display:flex;gap:6px;margin-bottom:10px}
+.bc-card-new .bc-in{flex:1;height:34px;font-size:13.5px}
+.bc-step .bc-empty{font-size:12.5px;color:#8A909B;padding:4px 2px}
+/* media */
+.bc-search{display:flex;gap:8px;align-items:center;border:1px solid var(--bc-rule);border-radius:14px;padding:6px 6px 6px 14px;background:#fff}
+.bc-search:focus-within{border-color:var(--bc-ink);box-shadow:0 0 0 3px #16181D14}
+.bc-search svg{width:19px;height:19px;stroke:var(--bc-ink-3);fill:none;stroke-width:2;flex:none}
+.bc-search input{all:unset;flex:1;min-width:0;font:16px "Hind Siliguri",Pretendard;height:40px;color:var(--bc-ink)}
+.bc-ex{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 24px}
+.bc-vg{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px 16px}
+.bc-v{min-width:0}
+.bc-v .th{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:var(--bc-shelf)}
+.bc-v img{width:100%;height:100%;object-fit:cover;display:block}
+.bc-v .du{position:absolute;right:8px;bottom:8px;background:rgba(22,24,29,.84);color:#fff;font:700 12px Pretendard;padding:2px 7px;border-radius:6px}
+.bc-v .sj{position:absolute;left:8px;top:8px;background:#fff;color:var(--bc-ink);font:600 12px "Hind Siliguri";padding:3px 8px;border-radius:999px;display:flex;gap:6px;align-items:center;box-shadow:0 2px 6px rgba(22,24,29,.18)}
+.bc-v b{display:block;font:600 14px Pretendard;margin-top:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bc-v small{font-size:12.5px;color:var(--bc-ink-3)}
+.bc-v .bc-row{margin-top:8px}
+/* listen */
+.bc-sbar{display:flex;height:44px;border-radius:10px;overflow:hidden;gap:2px;margin:4px 0 12px}
+.bc-sbar button{all:unset;box-sizing:border-box;cursor:pointer;height:100%;background:var(--c);min-width:6px;color:var(--t,#fff);font:700 13px Pretendard;display:flex;align-items:center;padding-left:9px;overflow:hidden;white-space:nowrap;transition:opacity .15s ease-out}
+.bc-sbar.f button:not(.on){opacity:.28}
+.bc-leg{display:flex;flex-wrap:wrap;gap:4px 6px}
+.bc-leg button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font:600 13.5px "Hind Siliguri",Pretendard;color:var(--bc-ink-2);padding:5px 10px;border-radius:8px}
+.bc-leg button:hover{background:var(--bc-shelf)}
+.bc-leg button.on{background:var(--bc-ink);color:#fff}
+.bc-leg button b{font:700 13px Pretendard}
+.bc-leg i{width:11px;height:11px;border-radius:3px;background:var(--c);flex:none;box-shadow:inset 0 0 0 1px rgba(22,24,29,.08)}
+.bc-rk{display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr) 44px;gap:14px;align-items:center;padding:8px 0;border-top:1px solid var(--bc-rule)}
+.bc-rk span{font-size:14px;line-height:1.35;min-width:0}
+.bc-rk span small{display:block;font-size:12.5px;color:var(--bc-ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bc-rk u{display:block;height:10px;border-radius:5px;background:var(--bc-shelf);text-decoration:none;position:relative}
+.bc-rk u i{position:absolute;left:0;top:0;bottom:0;background:var(--bc-ink);border-radius:5px}
+.bc-rk b{font:700 14px Pretendard;text-align:right}
+.bc-cm{padding:14px 0;border-top:1px solid var(--bc-rule);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px}
+.bc-cm .h{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--bc-ink-3)}
+.bc-cm .h b{color:var(--bc-ink);font:600 13.5px Pretendard}
+.bc-cm .s{font:600 15px/1.45 Pretendard,"Hind Siliguri";margin:2px 0 0;grid-column:1}
+.bc-cm .t{font-size:13.5px;color:var(--bc-ink-2);margin:0;grid-column:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;cursor:pointer}
+.bc-cm.open .t{display:block}
+.bc-cm .a{grid-column:2;grid-row:1/span 3;display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;justify-content:flex-end}
+.bc-paste{background:var(--bc-shelf);border-radius:14px;padding:14px;margin:0 0 22px}
+.bc-paste .bc-ta{min-height:110px}
+.bc-two{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:30px}
+.bc-it{display:flex;gap:10px;align-items:baseline;padding:10px 0;border-top:1px solid var(--bc-rule)}
+.bc-it s{width:9px;height:9px;border-radius:50%;flex:none;background:var(--bc-rule);transform:translateY(-1px)}
+.bc-it p{margin:0;font-size:14.5px;line-height:1.4;flex:1;min-width:0;overflow-wrap:anywhere}
+.bc-it small{color:var(--bc-ink-3);font-size:12.5px;white-space:nowrap}
+/* results */
+.bc-fig{display:flex;flex-wrap:wrap;gap:10px 34px;margin:0 0 28px;padding-bottom:20px;border-bottom:1px solid var(--bc-rule)}
+.bc-fig div span{display:block;font-size:13px;color:var(--bc-ink-3)}
+.bc-fig div b{font:800 30px/1.15 Pretendard,system-ui}
+.bc-fig div b.x{color:var(--bc-alert-ink)}
+.bc-chart{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));gap:6px;align-items:end;height:170px;border-bottom:2px solid var(--bc-ink);position:relative}
+.bc-chart .c{display:flex;flex-direction:column-reverse;gap:2px;height:100%;justify-content:flex-start;position:relative;cursor:default}
+.bc-chart .c i{display:block;border-radius:3px;background:var(--bc-ink);min-height:3px}
+.bc-chart .c i.q{background:repeating-linear-gradient(135deg,#8A909B 0 3px,#C9CDD4 3px 6px)}
+.bc-chart .c i.x{background:var(--bc-alert)}
+.bc-chart .c b{position:absolute;left:0;right:0;text-align:center;font:700 12px Pretendard;color:var(--bc-ink-2)}
+.bc-chart .c.t::before{content:"";position:absolute;inset:-6px -3px 0;background:#F2F3F5;border-radius:6px 6px 0 0;z-index:-1}
+.bc-chart{z-index:0}
+.bc-cl{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));gap:6px;font-size:12px;color:var(--bc-ink-3);text-align:center;margin-top:6px}
+.bc-cl span.t{color:var(--bc-ink);font-weight:800}
+.bc-key{display:flex;gap:16px;font-size:12.5px;color:var(--bc-ink-3);margin-top:12px;align-items:center;flex-wrap:wrap}
+.bc-key i{display:inline-block;width:12px;height:12px;border-radius:50%;border:3px solid var(--bc-ink-3);vertical-align:-1px;margin-right:5px;box-sizing:border-box}
+.bc-key i.q{background:var(--bc-ink-3);box-shadow:inset 0 0 0 2px #fff}
+.bc-key i.x{background:var(--bc-alert);border-color:var(--bc-alert)}
+.bc-key i.sq{border-radius:3px;border:0;background:var(--bc-ink)}
+.bc-key i.sq.q{background:repeating-linear-gradient(135deg,#8A909B 0 3px,#C9CDD4 3px 6px);box-shadow:none}
+.bc-key i.sq.x{background:var(--bc-alert)}
+.bc-nb{display:grid;grid-template-columns:160px minmax(0,1fr) 150px;gap:16px;align-items:center;padding:11px 0;border-bottom:1px solid var(--bc-rule)}
+.bc-nb u{display:flex;height:12px;border-radius:6px;background:var(--bc-shelf);overflow:hidden;text-decoration:none;gap:2px}
+.bc-nb u i{height:100%;background:var(--c)}
+.bc-nb u i.q{opacity:.35}
+.bc-nb u i.x{background:var(--bc-alert)}
+.bc-nb small{font-size:13px;color:var(--bc-ink-3);text-align:right}
+/* rules */
+.bc-who{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 22px;align-items:baseline;padding:16px 18px;background:var(--bc-shelf);border-radius:16px;margin-bottom:30px}
+.bc-who b{font:800 22px/1.2 Pretendard,system-ui;grid-row:1/span 2}
+.bc-who span{font-size:14px;color:var(--bc-ink-2)}
+.bc-who span.k{font-size:13px;color:var(--bc-ink-3)}
+.bc-cad{display:grid;grid-template-columns:150px 110px minmax(0,1fr) 92px;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid var(--bc-rule);font-size:13.5px}
+.bc-cad u{display:block;height:8px;border-radius:4px;background:var(--bc-shelf);position:relative;text-decoration:none}
+.bc-cad u i{position:absolute;top:0;bottom:0;border-radius:4px;background:var(--c)}
+.bc-cad b{text-align:right;font:700 13.5px "Hind Siliguri",Pretendard}
+.bc-cad span{color:var(--bc-ink-3)}
+.bc-mix{padding:16px 0;border-bottom:1px solid var(--bc-rule)}
+.bc-mix-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.bc-mixbar{display:flex;height:24px;border-radius:6px;overflow:hidden;gap:2px;margin-top:10px;background:var(--bc-shelf)}
+.bc-mixbar i{height:100%;background:var(--c);color:var(--t,#fff);font:700 11.5px Pretendard;font-style:normal;display:flex;align-items:center;padding-left:6px;overflow:hidden;white-space:nowrap;box-sizing:border-box}
+.bc-sum{font:700 13.5px Pretendard}
+.bc-sum.bad{color:var(--bc-alert-ink)}
+.bc-stps{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px 22px;margin-top:14px}
+.bc-stp{display:flex;align-items:center;gap:8px;font-size:13.5px}
+.bc-stp s{width:10px;height:10px;border-radius:3px;background:var(--c);flex:none}
+.bc-stp span{flex:1;min-width:0}
+.bc-stp button{all:unset;cursor:pointer;width:30px;height:30px;border-radius:8px;background:var(--bc-shelf);display:grid;place-items:center;flex:none}
+.bc-stp button:hover{background:#E4E6EA}
+.bc-stp button svg{width:14px;height:14px;stroke:var(--bc-ink);stroke-width:2.4;fill:none;stroke-linecap:round}
+.bc-stp b{width:34px;text-align:center;font:700 14px Pretendard}
+.bc-con{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 14px;padding:11px 0;border-bottom:1px solid var(--bc-rule);align-items:center}
+.bc-con b{font:600 14px Pretendard}
+.bc-con small{grid-column:1;font-size:12.5px;color:var(--bc-ink-3)}
+.bc-con .bc-tag{grid-column:2;grid-row:1/span 2}
+/* the line map (home) */
 .bc-map{position:relative;user-select:none;--lab:118px}
 .bc-days{display:grid;grid-template-columns:var(--lab) repeat(7,1fr);font-size:12.5px;color:var(--bc-ink-3);font-weight:600;padding-bottom:6px;border-bottom:1px solid var(--bc-rule)}
 .bc-days span{text-align:center}
@@ -58118,12 +58363,8 @@ document.addEventListener('click', function (e) {
 .bc-now{position:absolute;top:34px;bottom:0;width:2px;background:var(--bc-ink);pointer-events:none}
 .bc-map.lit .bc-ln{opacity:.28}
 .bc-map.lit .bc-ln.lit{opacity:1}
-.bc-key{display:flex;gap:16px;font-size:12.5px;color:var(--bc-ink-3);margin-top:10px;align-items:center;flex-wrap:wrap}
-.bc-key i{display:inline-block;width:12px;height:12px;border-radius:50%;border:3px solid var(--bc-ink-3);vertical-align:-1px;margin-right:5px;box-sizing:border-box}
-.bc-key i.q{background:var(--bc-ink-3);box-shadow:inset 0 0 0 2px #fff}
-.bc-key i.x{background:var(--bc-alert);border-color:var(--bc-alert)}
 .bc-empty-line{font-size:12.5px;color:var(--bc-ink-3);padding:10px 0}
-.bc-tip{position:fixed;z-index:60;max-width:300px;background:var(--bc-ink,#16181D);color:#fff;border-radius:10px;padding:8px 11px;font:13px/1.4 Pretendard,"Hind Siliguri",system-ui;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.25);opacity:0;transform:translateY(4px);transition:opacity .12s ease-out,transform .12s ease-out}
+.bc-tip{position:fixed;z-index:60;max-width:300px;background:#16181D;color:#fff;border-radius:10px;padding:8px 11px;font:13px/1.4 Pretendard,"Hind Siliguri",system-ui;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.25);opacity:0;transform:translateY(4px);transition:opacity .12s ease-out,transform .12s ease-out}
 .bc-tip.on{opacity:1;transform:none}
 .bc-tip small{display:block;color:#C9CDD4;font-size:12px}
 .bc-pick{margin-top:14px;border:1px solid var(--bc-rule);border-radius:14px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start}
@@ -58131,61 +58372,12 @@ document.addEventListener('click', function (e) {
 .bc-pick .m{font-size:12.5px;color:var(--bc-ink-3)}
 .bc-pick p{margin:4px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;max-height:140px;overflow:auto}
 .bc-pick .a{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.bc-call{margin-top:12px;border:2px solid var(--bc-alert);border-radius:14px;padding:10px 12px 10px 14px;display:flex;align-items:center;gap:10px;font-size:14px}
-.bc-call b{font-family:Pretendard,system-ui}
-.bc-call .bc-sp{flex:1}
 .bc-res{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:24px}
 .bc-res button{all:unset;box-sizing:border-box;cursor:pointer;background:var(--bc-shelf);border-radius:14px;padding:12px 14px;transition:background .15s ease-out}
 .bc-res button:hover{background:#E7E9EC}
 .bc-res span{font-size:13px;color:var(--bc-ink-3);display:block}
 .bc-res b{font:800 24px/1.2 Pretendard,system-ui;display:block}
 .bc-res small{font-size:12px;color:var(--bc-ink-3)}
-.bc-gap{font-size:12.5px;color:var(--bc-ink-3);margin-top:8px}
-.bc-two{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:26px}
-.bc-it{display:flex;gap:10px;align-items:baseline;padding:10px 0;border-top:1px solid var(--bc-rule)}
-.bc-it s{width:9px;height:9px;border-radius:50%;flex:none;background:var(--bc-rule);transform:translateY(-1px)}
-.bc-it p{margin:0;font-size:14.5px;line-height:1.4;flex:1;min-width:0;overflow-wrap:anywhere}
-.bc-it small{color:var(--bc-ink-3);font-size:12.5px;white-space:nowrap}
-.bc-skel{background:linear-gradient(90deg,var(--bc-shelf) 0 40%,#E9EBEE 50%,var(--bc-shelf) 60%) 0 0/300% 100%;animation:bcSk 1.4s linear infinite;border-radius:12px}
-@keyframes bcSk{to{background-position:-150% 0}}
-@media (prefers-reduced-motion:reduce){.bc *{transition:none!important;animation:none!important}}
-/* one menu: on the cockpit the ERP side menu and phone tab bar step aside; Settings / Apps sit at the foot of the rail */
-body.bc-live #side,body.bc-live #navBackdrop{display:none!important}
-@media (max-width:759px){body.bc-live #tabbar{display:none!important}body.bc-live,body.bc-live #app,body.bc-live #app>div,body.bc-live main{background:#fff!important;background-image:none!important}body.bc-live #view.bc-on{padding:0!important}}
-.bc-flash{animation:bcFlash 1.2s ease-out 1}
-@keyframes bcFlash{0%{background:#FFF4D6}100%{background:transparent}}
-/* the older sections, restyled inside the cockpit */
-.bc-old{display:none}
-.bc-old.show{display:block}
-.bc-old>section:first-child,.bc-old .bd-tabs{display:none!important}
-.bc .card{background:var(--bc-ground);border:1px solid var(--bc-rule);border-radius:14px;box-shadow:none;padding:16px 18px}
-.bc .card h3{font:700 16px "Hind Siliguri",Pretendard,system-ui}
-.bc section{margin:0 0 14px}
-.bc .bd-chip{border:1px solid var(--bc-rule);background:var(--bc-ground);color:var(--bc-ink-2);font-weight:600;transition:background .15s ease-out}
-.bc .bd-chip:hover{background:var(--bc-shelf)}
-.bc .bd-chip.on{background:var(--bc-ink);border-color:var(--bc-ink);color:#fff}
-.bc .bd-tag{background:var(--bc-shelf);color:var(--bc-ink-2);font-weight:600}
-.bc .bd-tag.ask,.bc .bd-tag.failed,.bc .bd7-hit .bd-tag.block{background:#FDECEA;color:var(--bc-alert-ink)}
-.bc .bd7-hit .bd-tag.warn{background:#FFF4D6;color:#7A5200}
-.bc .bd-meta{color:var(--bc-ink-3)}
-.bc .btn.small{border-radius:10px;height:34px;padding:0 12px;font-weight:600}
-.bc .i{border-radius:10px;border:1px solid var(--bc-rule);background:var(--bc-ground)}
-.bc .i:focus{border-color:var(--bc-ink);outline:none;box-shadow:0 0 0 3px #16181D1A}
-.bc .bd-col{background:var(--bc-shelf)}
-.bc .bd-card{border:1px solid var(--bc-rule);box-shadow:none}
-#bd8_today.bc-cmp .card{border:0;padding:0;background:transparent}
-#bd8_today.bc-cmp .card>h3{display:none}
-#bd8_today.bc-cmp .bd8-draft{border-top:1px solid var(--bc-rule);padding:14px 0}
-#bd8_today.bc-cmp .bd8-draft textarea{min-height:120px;font-size:14px}
-#bd8_today.bc-cmp .bd8-head b{font-size:14.5px}
-.bc-side .ap-row{display:flex}
-.bc [data-bd8="approve"]{background:var(--bc-ink)!important;color:#fff!important;border-color:var(--bc-ink)!important}
-.bc [data-bd8="approve"][disabled]{opacity:.45}
-.bc input[type="datetime-local"]{border:1px solid var(--bc-rule);border-radius:10px;padding:6px 8px;font:14px Pretendard,system-ui;color:var(--bc-ink);background:var(--bc-ground);color-scheme:light}
-#bd8_today.bc-cmp .bd8-draft:not(.open) .bd-meta,#bd8_today.bc-cmp .bd8-draft:not(.open) .bd7-hit:not(:has(.block)),#bd8_today.bc-cmp .bd8-draft:not(.open) .ap-row+.ap-row,#bd8_today.bc-cmp .bd8-draft:not(.open) .ap-row label,#bd8_today.bc-cmp .bd8-draft:not(.open) .bd8-pics{display:none!important}
-#bd8_today.bc-cmp .bd8-draft:not(.open) textarea{min-height:0;height:66px;overflow:hidden;resize:none;background:var(--bc-shelf);border-color:transparent}
-.bc-edit{all:unset;cursor:pointer;font:600 13px "Hind Siliguri",Pretendard;color:var(--bc-ink-2);padding:0 8px;height:34px;display:inline-flex;align-items:center;border-radius:10px}
-.bc-edit:hover{background:var(--bc-shelf)}
 /* the Connections map */
 .bc-net{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:22px 40px;margin-top:8px}
 .bc-net svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
@@ -58207,62 +58399,87 @@ body.bc-live #side,body.bc-live #navBackdrop{display:none!important}
 .bc-why{margin-top:18px;background:var(--bc-shelf);border-radius:14px;padding:14px 16px;min-height:56px}
 .bc-why b{font:700 15px Pretendard,"Hind Siliguri"}
 .bc-why p{margin:4px 0 0;font-size:14px;color:var(--bc-ink-2)}
-.bc-tbl{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
-.bc-tbl th{text-align:left;font-weight:600;color:var(--bc-ink-3);font-size:12.5px;padding:8px 6px;border-bottom:1px solid var(--bc-rule)}
-.bc-tbl td{padding:10px 6px;border-bottom:1px solid var(--bc-rule)}
-.bc-tbl td.n{text-align:right;font-weight:700}
-@container bc (min-width:1500px){.bc{grid-template-columns:224px minmax(0,1fr) 400px}}
+@container bc (min-width:1500px){.bc{grid-template-columns:224px minmax(0,1fr) 400px}.bc.noside{grid-template-columns:224px minmax(0,1fr)}}
 @container bc (max-width:1139px){
   .bc{grid-template-columns:200px minmax(0,1fr)}
-  .bc-side{grid-column:2;border-left:0;border-top:1px solid var(--bc-rule);background:var(--bc-ground);padding:18px 28px 64px}
+  .bc-side{grid-column:2;border-left:0;border-top:1px solid var(--bc-rule);background:var(--bc-ground);padding:22px 28px 64px}
 }
 @container bc (max-width:759px){
-  .bc{display:block;min-height:0}
-  .bc-rail{position:sticky;top:0;z-index:5;height:auto;flex-direction:row;overflow-x:auto;padding:8px 12px;gap:4px;border-right:0;border-bottom:1px solid var(--bc-rule);scrollbar-width:none}
+  .bc,.bc.noside{display:block;min-height:0}
+  .bc-rail{position:fixed;top:auto;bottom:0;left:0;right:0;z-index:30;height:auto;flex-direction:row;overflow-x:auto;justify-content:space-around;gap:2px;border-right:0;border-top:1px solid var(--bc-rule);padding:6px 4px calc(6px + env(safe-area-inset-bottom));background:var(--bc-ground);scrollbar-width:none}
   .bc-rail::-webkit-scrollbar{display:none}
-  .bc-me,.bc-rail hr,.bc-rail .bc-health{display:none}
-  .bc-rail button{flex:none;height:auto;min-width:56px;padding:6px 6px;border-radius:12px;font-size:12px;flex-direction:column;gap:2px;position:relative}
+  .bc-me,.bc-rail hr,.bc-rail .bc-health,.bc-rail .bc-x{display:none}
+  .bc-rail button{flex:none;height:auto;min-width:54px;padding:6px 4px;border-radius:12px;font-size:12px;flex-direction:column;gap:2px;position:relative}
   .bc-rail button.on{background:var(--bc-shelf);color:var(--bc-ink)}
   .bc-rail button em{position:absolute;top:0;right:2px;min-width:18px;height:17px;font-size:10.5px}
-  .bc-rail .bc-x{display:none}
-  .bc-main{padding:16px 16px 40px}
-  .bc-side{padding:4px 16px 40px;border-top:0}
-  .bc-scroll{overflow-x:auto;margin:0 -16px;padding:0 16px;scrollbar-width:thin;scrollbar-color:var(--bc-rule) transparent}
+  .bc-main{padding:16px 16px 96px}
+  .bc-side{padding:0 16px 96px;border-top:0;background:var(--bc-ground)}
+  .bc-head h1{font-size:20px}
+  .bc-scroll{overflow-x:auto;margin:0 -16px;padding:0 16px}
   .bc-ln label,.bc-days>span:first-child{position:sticky;left:0;z-index:2;background:var(--bc-ground);height:100%}
-  .bc-rail{position:fixed;top:auto;bottom:0;left:0;right:0;z-index:30;justify-content:space-around;border-bottom:0;border-top:1px solid var(--bc-rule);padding:6px 4px calc(6px + env(safe-area-inset-bottom));background:var(--bc-ground)}
-  .bc-main{padding-bottom:96px}
-  .bc-map{min-width:640px}
-  .bc-map{--lab:92px}
+  .bc-map{min-width:640px;--lab:92px}
   .bc-ln label i{display:none}
   .bc-res{grid-template-columns:1fr 1fr}
   .bc-two{grid-template-columns:1fr}
+  .bc-wait{flex-wrap:wrap}
   .bc-wait b{font-size:28px}
   .bc-pick{grid-template-columns:auto 1fr}
   .bc-pick .a{grid-column:1/-1;justify-content:flex-start}
   .bc-net{grid-template-columns:1fr;gap:4px}
   .bc-net svg.wires{display:none}
   .bc-node span.to{display:block}
+  .bc-dep{grid-template-columns:auto minmax(0,1fr);gap:6px 12px}
+  .bc-dep p{grid-column:1/-1;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .bc-dep .a{grid-column:1/-1;justify-content:flex-start}
+  .bc-dep .bc-lb{justify-self:start}
+  .bc-spine b{font-size:18px}
+  .bc-spine small{display:none}
+  .bc-spine span{font-size:12px}
+  .bc-rk{grid-template-columns:minmax(0,1fr) 80px 34px;gap:10px}
+  .bc-cm{grid-template-columns:1fr}
+  .bc-cm .a{grid-column:1;grid-row:auto;justify-content:flex-start}
+  .bc-nb{grid-template-columns:110px minmax(0,1fr);gap:4px 12px}
+  .bc-nb small{grid-column:1/-1;text-align:left}
+  .bc-cad{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px}
+  .bc-cad u{grid-column:1/-1;grid-row:3}
+  .bc-who{grid-template-columns:1fr}
+  .bc-who b{grid-row:auto}
+  .bc-chart{height:130px;gap:3px}
+  .bc-cl{gap:3px;font-size:10.5px}
+  .bc-vg{grid-template-columns:1fr 1fr;gap:16px 10px}
+  .bc-li{flex-wrap:wrap}
+  .bc-li .a{width:100%;justify-content:flex-start}
+  .bc-fig{gap:10px 22px}
+  .bc-fig div b{font-size:24px}
 }
 </style>
+
 <script>
 (function () {
-  try { SRV_SLOW.erpBrandDeskCockpit = 40000; } catch (e) {}
-  var C = { sec: 'home', data: null, busy: false, err: '', wk: 0, pick: '', lit: '', node: '' };
+  try { ['erpBrandDeskCockpit', 'erpBrandDeskDrafts', 'erpBrandDeskListen', 'erpBrandDeskDraftDecide', 'erpBrandDeskMakeDrafts', 'erpBrandDeskSettings', 'erpBrandDeskBoard', 'erpBrandDeskIdeas', 'erpBrandDeskPeople', 'erpBrandDeskPost', 'erpBrandDeskLint', 'erpBrandDeskCards', 'erpBrandDeskMakeCards'].forEach(function (n) { SRV_SLOW[n] = 45000; });
+    SRV_SLOW.erpBrandDeskVideos = 60000; SRV_SLOW.erpBrandDeskListenPull = 90000; SRV_SLOW.erpBrandDeskListenIdeas = 90000; SRV_SLOW.erpBrandDeskListenPaste = 90000; } catch (e) {}
+  var C = { sec: 'home', wk: 0, pick: '', node: '', ptab: '', dep: '', d: {}, busy: {}, err: {}, v: {}, acc: {}, open: {}, cards: {}, plats: { linkedin: 1, facebook: 1 }, lf: 'all', lopen: {}, fold: {}, rw: {}, nk: 'customer', paste: false, t: 0 };
   try { var s0 = localStorage.getItem('bc_sec'); if (s0) C.sec = s0; } catch (e) {}
   var NET = {
     linkedin: ['LinkedIn', '#0A66C2'], facebook: ['Facebook', '#1877F2'], instagram: ['Instagram', '#C13584'], 'instagram-standalone': ['Instagram', '#C13584'],
     youtube: ['YouTube', '#E62117'], tiktok: ['TikTok', '#111111'], bluesky: ['Bluesky', '#1185FE'], telegram: ['Telegram', '#229ED9'], x: ['X', '#3A3F47'], threads: ['Threads', '#5B5F66']
   };
+  var LIMIT = { x: 280, bluesky: 300, threads: 500, linkedin: 3000, tiktok: 2200, instagram: 2200, telegram: 4096, youtube: 5000, facebook: 63000 };
   function netOf(p) { p = String(p || '').toLowerCase(); if (NET[p]) return p; for (var k in NET) if (p.indexOf(k) === 0) return k; return p || 'other'; }
   function netName(p) { var n = NET[netOf(p)]; return n ? n[0] : (p || '—'); }
   function netCol(p) { var n = NET[netOf(p)]; return n ? n[1] : '#5C626E'; }
   var BN = '০১২৩৪৫৬৭৮৯';
   function bn(v) { return String(v).replace(/[0-9]/g, function (d) { return BN[d]; }); }
+  function bnN(v) { return bn(Number(v || 0).toLocaleString('en-IN')); }
   var MON = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
   var DAY = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র', 'শনি'];
   function dDate(d) { return bn(d.getDate()) + ' ' + MON[d.getMonth()]; }
   function dTime(d) { var h = d.getHours(), m = d.getMinutes(); return bn((h % 12 || 12) + ':' + ('0' + m).slice(-2)) + (h < 12 ? ' সকাল' : h < 17 ? ' দুপুর' : ' সন্ধ্যা'); }
+  function ago(v) { var d = new Date(v); if (isNaN(d)) return ''; return dDate(d); }
   function strip(t) { return String(t || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim(); }
+  function untag(t) { return String(t || '').replace(/(^|\s)#[^\s#]+/g, ' ').replace(/\*\*/g, '').replace(/\s+/g, ' ').trim(); }
+  function msg(e) { return esc((e && e.message) || String(e)); }
+  function v(k, dflt) { return C.v[k] != null ? C.v[k] : (dflt == null ? '' : dflt); }
   var ICO = {
     home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
     posts: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
@@ -58271,32 +58488,79 @@ body.bc-live #side,body.bc-live #navBackdrop{display:none!important}
     listen: '<path d="M4 12a8 8 0 0 1 16 0v5a2 2 0 0 1-2 2h-1v-6h3M4 13h3v6H6a2 2 0 0 1-2-2z"/>',
     people: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c.8-3.4 3.2-5 6-5s5.2 1.6 6 5M16 5.2a3 3 0 0 1 0 5.6M18 15c1.6.7 2.6 2.4 3 5"/>',
     results: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
-    rules: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+    rules: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
     map: '<circle cx="5" cy="6" r="2.2"/><circle cx="19" cy="6" r="2.2"/><circle cx="12" cy="18" r="2.2"/><path d="M7 7l4 9M17 7l-4 9M7.2 6h9.6"/>',
-    reload: '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/>',
-    left: '<path d="M15 6l-6 6 6 6"/>', right: '<path d="M9 6l6 6-6 6"/>'
+    reload: '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/>', search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>', right: '<path d="M9 6l6 6-6 6"/>', check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
+    copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>', send: '<path d="M4 12l16-8-6 16-2.5-6.5z"/>'
   };
   function svg(k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICO[k] + '</svg>'; }
-  // the rail: label, which older tab serves it (null = drawn here)
-  var SECS = [
-    ['home', 'হোম', null], ['posts', 'পোস্ট', 'today'], ['ideas', 'আইডিয়া', 'ideas'], ['media', 'মিডিয়া', 'videos'],
-    ['listen', 'শোনা', 'listen'], ['people', 'মানুষ', 'people'], ['results', 'ফলাফল', null], ['rules', 'নিয়ম', 'rules'], ['map', 'সংযোগ', null]
-  ];
-  function secOld(s) { for (var i = 0; i < SECS.length; i++) if (SECS[i][0] === s) return SECS[i][2]; return null; }
+  function lb(p, extra) { return '<span class="bc-lb" style="--c:' + netCol(p) + '"><i></i>' + esc(netName(p)) + (extra ? '<small>' + extra + '</small>' : '') + '</span>'; }
+  function btn(label, data, cls, bk, dis) { var b = bk && C.busy[bk]; return '<button type="button" class="bc-btn' + (cls ? ' ' + cls : '') + '" ' + data + (b || dis ? ' disabled' : '') + '>' + (b ? '<span class="bc-spin"></span>' : '') + label + '</button>'; }
+  function inp(key, ph, extra, type) { return '<input class="bc-in" id="bci_' + key + '" data-bcin="' + key + '" type="' + (type || 'text') + '" data-noi18n="1" placeholder="' + esc(ph || '') + '" value="' + esc(v(key)) + '"' + (extra || '') + '>'; }
+  function ta(key, ph, dflt, extra) { return '<textarea class="bc-ta" id="bci_' + key + '" data-bcin="' + key + '" data-noi18n="1" placeholder="' + esc(ph || '') + '"' + (extra || '') + '>' + esc(v(key, dflt)) + '</textarea>'; }
+  var SECS = [['home', 'হোম'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ']];
+  var NEED = { home: ['cockpit', 'drafts'], posts: ['cockpit', 'drafts'], ideas: ['drafts', 'memos', 'board'], media: ['videos', 'shorts'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen'], rules: ['settings'], map: ['cockpit'] };
   function on() { return typeof VIEW !== 'undefined' && VIEW === 'branddesk' && typeof ME !== 'undefined' && ME && ME.role === 'owner'; }
   function fonts() {
     if (document.getElementById('bc_font')) return;
     var l = document.createElement('link'); l.id = 'bc_font'; l.rel = 'stylesheet';
     l.href = 'https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css'; document.head.appendChild(l);
   }
-  function load() {
-    if (C.busy) return; C.busy = true; C.err = '';
-    srv('erpBrandDeskCockpit', [], function (r) { C.busy = false; C.data = r; draw(); }, function (e) { C.busy = false; C.err = (e && e.message) || String(e); draw(); });
+  // ---------- data: one store, one loader per read; bridge reads wait until the cockpit says the Mac is on
+  var CALL = { cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings' };
+  function ready() { var d = C.d.cockpit; return !!(d && d.online && d.keySet); }
+  function get(k, force) {
+    if (C.busy['g_' + k] || (C.d[k] && !force)) return;
+    if (k !== 'cockpit' && !ready()) return;
+    C.busy['g_' + k] = 1;
+    var args = k === 'videos' ? [{ q: C.vq || '' }] : [];
+    srv(CALL[k], args, function (r) { C.busy['g_' + k] = 0; C.d[k] = r; C.err[k] = ''; if (k === 'cockpit') C.t = Date.now(); poll(k); draw(); },
+      function (e) { C.busy['g_' + k] = 0; C.err[k] = (e && e.message) || String(e); draw(); });
+  }
+  var POLL = {};
+  function poll(k) {
+    var r = C.d[k] || {}, jobs = r.jobs || {}, ks = Object.keys(jobs), run = false;
+    if (k === 'drafts') run = ks.some(function (x) { return jobs[x].state === 'writing'; });
+    if (k === 'listen') run = ks.some(function (x) { return jobs[x].state === 'reading'; });
+    if (k === 'shorts') run = ks.some(function (x) { return jobs[x].state === 'fetching' || jobs[x].state === 'making'; });
+    clearTimeout(POLL[k]); if (run) POLL[k] = setTimeout(function () { if (on()) get(k, true); }, k === 'drafts' ? 12000 : 20000);
+  }
+  function need() { (NEED[C.sec] || []).forEach(function (k) { if (k === 'cockpit' || ready()) get(k); }); }
+  function has(k) { return !!C.d[k]; }
+  function act(key, name, args, ok, bad) {
+    if (C.busy[key]) { if (bad) bad(); return; } C.busy[key] = 1; draw();
+    srv(name, [args], function (r) { C.busy[key] = 0; if (ok) ok(r); draw(); }, function (e) { C.busy[key] = 0; toast(msg(e), true, 9000); if (bad) bad(e); draw(); });
+  }
+  // ---------- shared states
+  function skel(h) { return '<div class="bc-skel" style="height:' + (h || 120) + 'px;margin-bottom:14px"></div>'; }
+  function offline() {
+    var d = C.d.cockpit;
+    if (C.err.cockpit) return '<div class="bc-call"><span>' + esc(C.err.cockpit) + '</span><span class="bc-sp"></span><button class="bc-btn" type="button" data-bc="reload">আবার চেষ্টা</button></div>';
+    if (!d) return skel(72) + skel(320);
+    if (!d.keySet) return '<div class="bc-wait calm"><p>Brand desk এখনো যুক্ত হয়নি<small>Mac-এর চাবি বসানো হয়নি। নিয়ম পেজের একদম নিচে বসান।</small></p><span class="bc-sp"></span><button class="bc-btn" type="button" data-bc="sec" data-id="rules">নিয়ম</button></div>';
+    if (!d.online) return '<div class="bc-wait calm"><p>Mac-এর সাথে এখন যোগ নেই<small>পোস্টগুলো লাইনে অপেক্ষা করছে; Mac ফিরলে একে একে যাবে।' + (d.seen ? ' শেষ দেখা: ' + dDate(new Date(d.seen)) + ', ' + dTime(new Date(d.seen)) : '') + '</small></p></div>';
+    if (d.error) return '<div class="bc-call"><span>' + esc(d.error) + '</span></div>';
+    return '';
+  }
+  function gate(keys, h) {
+    var o = offline(); if (o) return o;
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (C.err[k] && !C.d[k]) return '<div class="bc-call"><span>' + esc(C.err[k]) + '</span><span class="bc-sp"></span><button class="bc-btn" type="button" data-bc="retry-get" data-id="' + k + '">আবার চেষ্টা</button></div>';
+      if (!C.d[k]) return skel(h || 140) + skel(220);
+    }
+    return '';
+  }
+  function headHtml(title, sub, extra) {
+    var busy = Object.keys(C.busy).some(function (k) { return k.indexOf('g_') === 0 && C.busy[k]; });
+    return '<div class="bc-head"><h1>' + title + '</h1>' + (sub ? '<span class="bc-sub">' + sub + '</span>' : '') + '<span class="bc-sp"></span>' + (extra || '') +
+      '<button class="bc-btn ghost" type="button" data-bc="reload"' + (busy ? ' disabled' : '') + '>' + (busy ? '<span class="bc-spin"></span>' : svg('reload')) + 'নতুন করে আনুন</button></div>';
   }
   // ---------- the week as stations
   function weekStart(off) { var d = new Date(); d.setHours(0, 0, 0, 0); var wd = (d.getDay() + 6) % 7; d.setDate(d.getDate() - wd + 7 * off); return d; }
   function stations() {
-    var k = (C.data && C.data.cockpit) || {}, out = [];
+    var k = (C.d.cockpit && C.d.cockpit.cockpit) || {}, out = [];
     (k.posts || []).forEach(function (p) {
       var s = String(p.state || '').toUpperCase();
       out.push({ key: 'p' + p.id, net: netOf(p.platform), at: p.at, st: s === 'PUBLISHED' ? 'go' : s === 'ERROR' ? 'x' : 'q', text: strip(p.content), acc: p.account, url: p.url, src: 'postiz', raw: p });
@@ -58306,25 +58570,32 @@ body.bc-live #side,body.bc-live #navBackdrop{display:none!important}
     });
     return out.filter(function (s) { return s.at && !isNaN(new Date(s.at)); });
   }
+  function nets() { var k = (C.d.cockpit && C.d.cockpit.cockpit) || {}; return (k.networks || (C.d.drafts && C.d.drafts.networks) || []).filter(function (n) { return !n.disabled; }); }
   function lines() {
-    var k = (C.data && C.data.cockpit) || {}, seen = {}, out = [];
-    (k.networks || []).forEach(function (n) { var p = netOf(n.platform); if (!seen[p] && !n.disabled) { seen[p] = 1; out.push({ net: p, acc: n.name }); } });
+    var seen = {}, out = [];
+    nets().forEach(function (n) { var p = netOf(n.platform); if (!seen[p]) { seen[p] = 1; out.push({ net: p, acc: n.name }); } });
     stations().forEach(function (s) { if (!seen[s.net]) { seen[s.net] = 1; out.push({ net: s.net, acc: '' }); } });
     var order = ['linkedin', 'facebook', 'instagram', 'youtube', 'tiktok', 'x', 'threads', 'bluesky', 'telegram'];
     return out.sort(function (a, b) { return (order.indexOf(a.net) + 99) % 99 - (order.indexOf(b.net) + 99) % 99; });
   }
-  function stLabel(s) { return s.st === 'go' ? 'গেছে' : s.st === 'x' ? (s.ask ? 'দেরি হয়েছে — আপনি ঠিক করবেন' : 'আটকে গেছে') : 'লাইনে আছে'; }
+  function stLabel(s) { return s.st === 'go' ? 'গেছে' : s.st === 'x' ? (s.ask ? 'দেরি হয়েছে, আপনি ঠিক করবেন' : 'আটকে গেছে') : 'লাইনে আছে'; }
+  function findSt(key) { return stations().filter(function (s) { return s.key === key; })[0]; }
+  function stActs(s) {
+    var a = '';
+    if (s.src === 'postiz' && s.st === 'x') a += btn('আবার পাঠান', 'data-bc="resend" data-id="' + esc(s.key) + '"', 'red sm', 'rs' + s.key);
+    if (s.src === 'pacer' && s.st === 'x') a += btn('এখন পাঠান', 'data-bc="decide" data-act="send" data-id="' + esc(s.id) + '"', 'dark sm', 'dc' + s.id) + btn('বাদ দিন', 'data-bc="decide" data-act="drop" data-id="' + esc(s.id) + '"', 'sm', 'dd' + s.id);
+    if (s.url && /^https?:/.test(s.url)) a += '<a class="bc-btn ghost sm" href="' + esc(s.url) + '" target="_blank" rel="noopener">খুলুন</a>';
+    return a;
+  }
   function mapHtml() {
     var w0 = weekStart(C.wk), w1 = new Date(w0); w1.setDate(w0.getDate() + 7);
     var now = new Date(), all = stations(), ls = lines();
     var days = '<div class="bc-days"><span></span>';
-    for (var i = 0; i < 7; i++) { var d = new Date(w0); d.setDate(w0.getDate() + i); var t = d.toDateString() === now.toDateString(); days += '<span class="' + (t ? 't' : '') + '">' + DAY[d.getDay()] + '<small>' + bn(d.getDate()) + '</small></span>'; }
+    for (var i = 0; i < 7; i++) { var d = new Date(w0); d.setDate(w0.getDate() + i); days += '<span class="' + (d.toDateString() === now.toDateString() ? 't' : '') + '">' + DAY[d.getDay()] + '<small>' + bn(d.getDate()) + '</small></span>'; }
     days += '</div>';
-    var nowPct = (now - w0) / (w1 - w0);
+    var nowPct = (now - w0) / (w1 - w0), RANK = { go: 0, q: 1, x: 2 };
     var rows = ls.map(function (l) {
-      var mine = all.filter(function (s) { var t = new Date(s.at); return s.net === l.net && t >= w0 && t < w1; });
-      // stations close together merge into one that shows the worst state and how many (a stuck post is never hidden)
-      var RANK = { go: 0, q: 1, x: 2 }, groups = [];
+      var mine = all.filter(function (s) { var t = new Date(s.at); return s.net === l.net && t >= w0 && t < w1; }), groups = [];
       mine.map(function (s) { return { s: s, f: (new Date(s.at) - w0) / (w1 - w0) * 100 }; }).sort(function (p, q) { return p.f - q.f; }).forEach(function (o) {
         var g = groups[groups.length - 1]; if (g && o.f - g.f < 1.5) { g.n++; if (RANK[o.s.st] > RANK[g.s.st]) g.s = o.s; } else groups.push({ s: o.s, f: o.f, n: 1 });
       });
@@ -58337,30 +58608,26 @@ body.bc-live #side,body.bc-live #navBackdrop{display:none!important}
     if (!ls.length) rows = '<div class="bc-empty-line">কোনো network যুক্ত নেই। account যুক্ত হলে এখানে তার লাইন আসবে; সংযোগ পেজে দেখুন।</div>';
     var inWeek = all.filter(function (s) { var t = new Date(s.at); return t >= w0 && t < w1; }).length;
     return '<div class="bc-h2"><h2>কোন লাইনে কী গেল</h2><span>' + dDate(w0) + ' – ' + dDate(new Date(w1 - 864e5)) + '</span><span class="bc-sp"></span>' +
-      '<div class="bc-pills"><button type="button" data-bc="wk" data-id="-1" aria-label="আগের সপ্তাহ"' + (C.wk === -1 ? ' class="on"' : '') + '>আগের</button><button type="button" data-bc="wk" data-id="0"' + (C.wk === 0 ? ' class="on"' : '') + '>এই সপ্তাহ</button><button type="button" data-bc="wk" data-id="1"' + (C.wk === 1 ? ' class="on"' : '') + '>পরের</button></div></div>' +
+      '<div class="bc-pills"><button type="button" data-bc="wk" data-id="-1"' + (C.wk === -1 ? ' class="on"' : '') + '>আগের</button><button type="button" data-bc="wk" data-id="0"' + (C.wk === 0 ? ' class="on"' : '') + '>এই সপ্তাহ</button><button type="button" data-bc="wk" data-id="1"' + (C.wk === 1 ? ' class="on"' : '') + '>পরের</button></div></div>' +
       '<div class="bc-scroll"><div class="bc-map" id="bc_map">' + days + rows + nowLine + '</div></div>' +
       '<div class="bc-key"><span><i></i>গেছে</span><span><i class="q"></i>লাইনে আছে</span><span><i class="x"></i>আটকে গেছে</span>' + (inWeek ? '' : '<span>· এই সপ্তাহে এখনো কোনো পোস্ট নেই</span>') + '</div>' + pickHtml();
   }
-  function findSt(key) { return stations().filter(function (s) { return s.key === key; })[0]; }
   function pickHtml() {
     var s = C.pick && findSt(C.pick); if (!s) return '';
-    var t = new Date(s.at), acts = '';
-    if (s.src === 'pacer' && s.st === 'x') acts = '<button class="bc-btn dark" type="button" data-bd="send" data-id="' + esc(s.id) + '">এখন পাঠান</button><button class="bc-btn" type="button" data-bd="drop" data-id="' + esc(s.id) + '">বাদ দিন</button>';
-    if (s.url && /^https?:/.test(s.url)) acts += '<a class="bc-btn" href="' + esc(s.url) + '" target="_blank" rel="noopener">খুলুন</a>';
-    if (s.src === 'postiz' && s.st === 'x') acts = '<button class="bc-btn red" type="button" data-bc="retry" data-id="' + esc(s.key) + '">আবার পাঠান</button>' + acts;
+    var t = new Date(s.at);
     return '<div class="bc-pick" style="--c:' + netCol(s.net) + '"><s></s><div><div class="m">' + esc(netName(s.net)) + (s.acc ? ' · <span data-noi18n="1">' + esc(s.acc) + '</span>' : '') + ' · ' + DAY[t.getDay()] + ' ' + dDate(t) + ', ' + dTime(t) + ' · <b>' + stLabel(s) + '</b></div>' +
-      '<p data-noi18n="1">' + esc(s.text || '(লেখা নেই)') + '</p>' + (s.result && s.st === 'x' ? '<div class="m" data-noi18n="1">' + esc(String(s.result).slice(0, 200)) + '</div>' : '') + '</div><div class="a">' + acts + '<button class="bc-btn" type="button" data-bc="unpick" aria-label="বন্ধ করুন">বন্ধ</button></div></div>';
+      '<p data-noi18n="1">' + esc(s.text || '(লেখা নেই)') + '</p>' + (s.result && s.st === 'x' ? '<div class="m" data-noi18n="1">' + esc(String(s.result).slice(0, 200)) + '</div>' : '') + '</div><div class="a">' + stActs(s) + '<button class="bc-btn sm" type="button" data-bc="unpick">বন্ধ</button></div></div>';
   }
   // ---------- numbers
+  function waitingList() { return (C.d.drafts && C.d.drafts.waiting) || []; }
   function counts() {
-    var k = (C.data && C.data.cockpit) || {}, all = stations(), w0 = weekStart(0), w1 = new Date(w0); w1.setDate(w0.getDate() + 7);
-    var wk = all.filter(function (s) { var t = new Date(s.at); return t >= w0 && t < w1; });
-    var h = k.health || {}, down = Object.keys(h).filter(function (x) { return !h[x]; });
-    return { waiting: k.waiting || 0, stuck: all.filter(function (s) { return s.st === 'x'; }), gone: wk.filter(function (s) { return s.st === 'go'; }).length, queued: all.filter(function (s) { return s.st === 'q'; }).length,
-      ideas: k.ideas || 0, listen: k.listen || {}, down: down, health: h };
+    var k = (C.d.cockpit && C.d.cockpit.cockpit) || {}, all = stations(), w0 = weekStart(0), w1 = new Date(w0); w1.setDate(w0.getDate() + 7);
+    var wk = all.filter(function (s) { var t = new Date(s.at); return t >= w0 && t < w1; }), h = k.health || {};
+    return { waiting: C.d.drafts ? waitingList().length : (k.waiting || 0), stuck: all.filter(function (s) { return s.st === 'x'; }), gone: wk.filter(function (s) { return s.st === 'go'; }).length,
+      queued: all.filter(function (s) { return s.st === 'q'; }).length, ideas: k.ideas || 0, listen: k.listen || {}, down: Object.keys(h).filter(function (x) { return !h[x]; }), health: h };
   }
   function railHtml() {
-    var n = C.data && C.data.cockpit ? counts() : null;
+    var n = C.d.cockpit && C.d.cockpit.cockpit ? counts() : null;
     return '<nav class="bc-rail" aria-label="Brand cockpit"><div class="bc-me"><b>Rahman Najir</b><span>Brand cockpit</span></div>' + SECS.map(function (s, i) {
       var badge = '';
       if (n && s[0] === 'posts' && (n.waiting || n.stuck.length)) badge = '<em class="' + (n.stuck.length && !n.waiting ? 'x' : '') + '">' + bn(n.waiting + n.stuck.length) + '</em>';
@@ -58371,60 +58638,347 @@ body.bc-live #side,body.bc-live #navBackdrop{display:none!important}
       '<div class="bc-health" data-bc="sec" data-id="map" role="button" tabindex="0">' + healthLine() + '</div></nav>';
   }
   function healthLine() {
-    var d = C.data; if (!d) return '<span class="bc-dot" style="background:#C9CDD4"></span>দেখছি…';
+    var d = C.d.cockpit; if (!d) return '<span class="bc-dot" style="background:#C9CDD4"></span>দেখছি…';
     if (!d.online) return '<span class="bc-dot off"></span>Mac-এর সাথে যোগ নেই';
     var n = d.cockpit ? counts() : { down: [] };
     return '<span class="bc-dot' + (n.down.length ? ' off' : '') + '"></span>' + (n.down.length ? bn(n.down.length) + 'টা টুল বন্ধ' : 'সব টুল চলছে');
   }
-  function headHtml(title, sub) {
-    return '<div class="bc-head"><h1>' + title + '</h1>' + (sub ? '<span class="bc-sub">' + sub + '</span>' : '') + '<span class="bc-sp"></span>' +
-      '<button class="bc-btn" type="button" data-bc="reload"' + (C.busy ? ' disabled' : '') + '>' + svg('reload') + (C.busy ? 'আনছি…' : 'নতুন করে আনুন') + '</button></div>';
+  // ---------- drafts: grouped by idea, one ticket per network
+  var LANG = { bn: 'বাংলা', en: 'English', ko: '한국어' };
+  function topicName(key) { var t = ((C.d.drafts && C.d.drafts.topics) || []).filter(function (x) { return x.key === key; })[0]; return t ? (t.label_bn || t.label_en) : String(key || '').replace(/_/g, ' '); }
+  function accountsFor(x) { return nets().filter(function (n) { var p = String(n.platform || '').toLowerCase(); return p.indexOf(x.platform) === 0 || (x.platform === 'youtube' && /youtube/.test(p)) || (x.platform === 'instagram' && /instagram/.test(p)); }); }
+  function accSel(x, mine) { var a = C.acc[x.id]; if (!a) { a = C.acc[x.id] = {}; if (mine.length === 1) a[mine[0].id] = 1; } return mine.filter(function (n) { return a[n.id]; }); }
+  function groups() {
+    var g = {}, order = [];
+    waitingList().forEach(function (x) { var k = x.idea_id != null ? 'i' + x.idea_id : 'd' + x.id; if (!g[k]) { g[k] = { key: k, title: x.title_working || untag(x.hook) || 'Draft', topic: x.topic, list: [] }; order.push(k); } g[k].list.push(x); });
+    return order.map(function (k) { return g[k]; });
   }
-  function offline() {
-    var d = C.data;
-    if (C.err) return '<div class="bc-call"><span>' + esc(C.err) + '</span><span class="bc-sp"></span><button class="bc-btn" type="button" data-bc="reload">আবার চেষ্টা</button></div>';
-    if (!d) return '<div class="bc-skel" style="height:72px;margin-bottom:22px"></div><div class="bc-skel" style="height:330px"></div>';
-    if (!d.keySet) return '<div class="bc-wait calm"><p>Brand desk এখনো যুক্ত হয়নি<small>Mac-এর চাবি বসানো হয়নি। নিয়ম অংশের একদম নিচে বসান।</small></p></div>';
-    if (!d.online) return '<div class="bc-wait calm"><p>Mac-এর সাথে এখন যোগ নেই<small>পোস্টগুলো লাইনে অপেক্ষা করছে; Mac ফিরলে একে একে যাবে।' + (d.seen ? ' শেষ দেখা: ' + dDate(new Date(d.seen)) + ', ' + dTime(new Date(d.seen)) : '') + '</small></p></div>';
-    if (d.error) return '<div class="bc-call"><span>' + esc(d.error) + '</span></div>';
+  function flagsHtml(x) {
+    return (x.legal_flags || []).map(function (f) { return '<div class="bc-flag"><span class="bc-tag ' + (f.severity === 'block' ? 'x' : 'w') + '">' + (f.severity === 'block' ? 'পোস্ট আটকাবে' : 'দেখে নিন') + '</span><span data-noi18n="1">' + esc(f.reason || '') + (f.match ? ' (“' + esc(f.match) + '”)' : '') + '</span></div>'; }).join('');
+  }
+  function ticket(x, compact) {
+    var mine = accountsFor(x), sel = accSel(x, mine), id = x.id, body = v('e' + id, x.body || '');
+    var acc = mine.length === 1 ? '<span class="acc">যাবে: <span data-noi18n="1">' + esc(mine[0].name || '') + '</span></span>' : !mine.length ? '<span class="bc-tag w">account যুক্ত নেই, নিজে পোস্ট করুন</span>' : '';
+    var h = '<div class="bc-tk" id="bc_tk_' + id + '"><div class="bc-tk-h">' + lb(x.platform, LANG[x.lang] || x.lang || '') + acc + '</div>';
+    if (compact) {
+      h += '<p class="bc-tk-p" data-noi18n="1">' + esc(body) + '</p>' + ((x.legal_flags || []).some(function (f) { return f.severity === 'block'; }) ? '<div class="bc-flag"><span class="bc-tag x">পোস্ট আটকাবে</span><span>বদলে নিতে হবে</span></div>' : '') +
+        '<div class="bc-row">' + (mine.length ? btn('অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark sm', 'ap' + id) : '') + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', 'sm', 'rj' + id) +
+        '<button type="button" class="bc-btn ghost sm" data-bc="edit" data-id="' + id + '">বদলান</button></div></div>';
+      return h;
+    }
+    h += ta('e' + id, '', x.body || '', ' rows="7"') + flagsHtml(x);
+    if ((x.title_options || []).length) h += '<div class="bc-titles"><b>শিরোনাম:</b> <span data-noi18n="1">' + x.title_options.map(esc).join(' · ') + '</span></div>';
+    if (mine.length > 1) h += '<div class="bc-lbl">কোন account-এ যাবে</div><div class="bc-ncs">' + mine.map(function (n) { return '<button type="button" class="bc-nc' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" aria-pressed="' + (C.acc[id][n.id] ? 'true' : 'false') + '" data-noi18n="1">' + esc(n.name || netName(n.platform)) + '</button>'; }).join('') + '</div>';
+    h += '<div class="bc-row">' + (mine.length ? btn('অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : '') + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
+      '<span class="bc-sp"></span><label class="bc-sub" for="bci_a' + id + '">সময়</label>' + inp('a' + id, '', ' title="খালি রাখলে পরের ফাঁকা সময়ে যাবে"', 'datetime-local') +
+      '<button type="button" class="bc-btn ghost" data-bc="more" data-id="' + id + '" aria-expanded="' + (C.open[id] ? 'true' : 'false') + '">' + (C.open[id] ? 'কম' : 'আরও') + '</button></div>';
+    if (C.open[id]) {
+      var c = C.cards[id];
+      h += '<div class="bc-more"><div class="bc-row" style="margin-top:0"><button type="button" class="bc-btn sm" data-bc="copy" data-id="' + id + '">' + svg('copy') + 'লেখা কপি</button>' +
+        btn(c && c.state === 'making' ? 'ছবি বানাচ্ছি…' : 'ছবি বানান', 'data-bc="cards" data-id="' + id + '"', 'sm', '', c && c.state === 'making') + '</div>' +
+        '<div class="bc-lbl">নিজে পোস্ট করলে (যেমন Facebook profile), লিংক দিয়ে রেখে দিন</div><div class="bc-row" style="margin-top:0">' + inp('u' + id, 'https://… (না দিলেও চলে)', ' style="flex:1;min-width:200px"') + btn('নিজে পোস্ট করেছি', 'data-bc="manual" data-id="' + id + '"', 'sm', 'mn' + id) + '</div>' + cardsHtml(id) + '</div>';
+    }
+    return h + '</div>';
+  }
+  function cardsHtml(id) {
+    var c = C.cards[id]; if (!c) return '';
+    if (c.state === 'failed') return '<div class="bc-flag"><span class="bc-tag x">হয়নি</span><span>' + esc(c.error || 'ছবি বানানো গেল না।') + '</span></div>';
+    var pics = c.pictures || []; if (!pics.length) return c.state === 'making' ? '<div class="bc-note"><span class="bc-spin" style="display:inline-block;vertical-align:-2px;margin-right:6px"></span>ছবি আঁকা হচ্ছে, প্রায় এক মিনিট…</div>' : '';
+    return '<div class="bc-pics">' + pics.map(function (p) { return '<a href="' + p.src + '" download="draft' + id + '-' + esc(p.name) + '" title="Save ' + esc(p.name) + '"><img alt="' + esc(p.name) + '" src="' + p.src + '"></a>'; }).join('') + '</div><div class="bc-note">ছবিতে চাপলে নেমে যাবে।</div>';
+  }
+  function draftsHtml(compact) {
+    var gs = groups();
+    if (!gs.length) return '<div class="bc-clear"><b>সব পরিষ্কার</b><p>কোনো draft আপনার অপেক্ষায় নেই। আইডিয়া থেকে AI দিয়ে নতুন draft লেখান।</p><button class="bc-btn" type="button" data-bc="sec" data-id="ideas">আইডিয়া খুলুন</button></div>';
+    return gs.map(function (g) {
+      var ready = g.list.filter(function (x) { return accSel(x, accountsFor(x)).length; }).length;
+      return '<section class="bc-grp"><div class="bc-grp-h"><h3 data-noi18n="1">' + esc(g.title) + '</h3>' + (g.topic ? '<span class="bc-tag">' + esc(topicName(g.topic)) + '</span>' : '') +
+        (!compact && ready > 1 ? btn('এই আইডিয়ার সব অনুমোদন দিন (' + bn(ready) + ')', 'data-bc="approveall" data-id="' + g.key + '"', 'sm', 'aa' + g.key) : '') + '</div>' +
+        g.list.map(function (x) { return ticket(x, compact); }).join('') + '</section>';
+    }).join('');
+  }
+  function jobsBar() {
+    var jobs = (C.d.drafts && C.d.drafts.jobs) || {}, ks = Object.keys(jobs).sort(); if (!ks.length) return '';
+    var j = jobs[ks[ks.length - 1]];
+    if (j.state === 'writing') return '<div class="bc-jobs"><span class="bc-spin"></span>AI draft লিখছে… এক-দুই মিনিট লাগে। হয়ে গেলে পোস্ট পেজে অপেক্ষায় আসবে।</div>';
+    if (j.state === 'failed' || j.error) return '<div class="bc-jobs bad">draft লেখা হয়নি: <span data-noi18n="1">' + esc(j.error || '') + '</span></div>';
     return '';
   }
-  function homeHtml() {
+  // ---------- pages
+  function homeHtml(narrow) {
     var now = new Date(), h = headHtml('আজ, ' + DAY[now.getDay()] + ' ' + dDate(now), '');
-    var o = offline(); if (o || !C.data.cockpit) return h + o;
-    var n = counts(), k = C.data.cockpit;
-    var tot = n.waiting + n.stuck.length;
-    h += '<div class="bc-wait' + (tot ? '' : ' calm') + '"><b>' + bn(tot) + '</b><p>' + (tot ? (n.waiting ? bn(n.waiting) + 'টা draft আপনার অনুমোদনের অপেক্ষায়' : '') + (n.waiting && n.stuck.length ? '<br>' : '') + (n.stuck.length ? bn(n.stuck.length) + 'টা পোস্ট আটকে গেছে' : '') + '<small>অনুমোদন দিলে একে একে যায়, প্রতি network-এ ২০ মিনিট পর পর।</small>' : 'আপনার জন্য কিছু অপেক্ষায় নেই<small>নতুন draft লিখতে আইডিয়া অংশে যান।</small>') + '</p><span class="bc-sp"></span>' +
-      (n.waiting ? '<button class="bc-btn amber" type="button" data-bc="todrafts">দেখুন</button>' : '<button class="bc-btn" type="button" data-bc="sec" data-id="ideas">আইডিয়া</button>') + '</div>';
+    var o = offline(); if (o || !C.d.cockpit.cockpit) return h + o;
+    var n = counts(), k = C.d.cockpit.cockpit, tot = n.waiting + n.stuck.length;
+    h += '<div class="bc-wait' + (tot ? '' : ' calm') + '"><b>' + bn(tot) + '</b><p>' + (tot ? (n.waiting ? bn(n.waiting) + 'টা draft আপনার অনুমোদনের অপেক্ষায়' : '') + (n.waiting && n.stuck.length ? '<br>' : '') + (n.stuck.length ? bn(n.stuck.length) + 'টা পোস্ট আটকে গেছে' : '') + '<small>অনুমোদন দিলে একে একে যায়, প্রতি network-এ ২০ মিনিট পর পর।</small>' : 'আপনার জন্য কিছু অপেক্ষায় নেই<small>নতুন draft লিখতে আইডিয়া পেজে যান।</small>') + '</p><span class="bc-sp"></span>' +
+      (n.waiting ? '<button class="bc-btn amber" type="button" data-bc="todrafts">দেখুন</button>' : n.stuck.length ? '<button class="bc-btn amber" type="button" data-bc="ptab" data-id="stuck">দেখুন</button>' : '<button class="bc-btn" type="button" data-bc="sec" data-id="ideas">আইডিয়া</button>') + '</div>';
+    if (narrow) h += sideDrafts();
     h += mapHtml();
-    n.stuck.slice(0, 3).forEach(function (s) { var t = new Date(s.at); h += '<div class="bc-call"><span><b>' + esc(netName(s.net)) + '</b> · ' + DAY[t.getDay()] + ' ' + dDate(t) + '-এর পোস্ট ' + (s.ask ? 'দেরি হয়ে গেছে' : 'আটকে গেছে') + '</span><span class="bc-sp"></span>' + (s.src === 'postiz' ? '<button class="bc-btn red" type="button" data-bc="retry" data-id="' + esc(s.key) + '">আবার পাঠান</button>' : '') + '<button class="bc-btn' + (s.src === 'postiz' ? '' : ' red') + '" type="button" data-bc="st" data-id="' + esc(s.key) + '">দেখুন</button></div>'; });
-    h += resTiles(n);
+    n.stuck.slice(0, 3).forEach(function (s) { var t = new Date(s.at); h += '<div class="bc-call"><span><b>' + esc(netName(s.net)) + '</b> · ' + DAY[t.getDay()] + ' ' + dDate(t) + '-এর পোস্ট ' + (s.ask ? 'দেরি হয়ে গেছে' : 'আটকে গেছে') + '</span><span class="bc-sp"></span>' + stActs(s) + '</div>'; });
+    h += '<div class="bc-res"><button type="button" data-bc="sec" data-id="results"><span>এ সপ্তাহে গেছে</span><b>' + bn(n.gone) + '</b><small>লাইনে আছে ' + bn(n.queued) + '</small></button>' +
+      '<button type="button" data-bc="sec" data-id="listen"><span>মানুষের প্রশ্ন</span><b>' + bnN(n.listen.questions) + '</b><small>YouTube comment থেকে</small></button>' +
+      '<button type="button" data-bc="sec" data-id="people"><span>সম্ভাব্য লিড</span><b>' + bnN(n.listen.leads) + '</b><small>Leads-এ পাঠানো যায়</small></button>' +
+      '<button type="button" data-bc="sec" data-id="ideas"><span>আইডিয়া ব্যাংকে</span><b>' + bnN(n.ideas) + '</b><small>draft লেখার জন্য তৈরি</small></button></div>' +
+      '<div class="bc-note">ক্লিক আর ভিজিট এখনো যুক্ত হয়নি: rmabidur.com-এর Umami আর LinkedIn-এর সংখ্যা পরের ধাপে আসবে।</div>';
     var tasks = k.tasks || [], calls = k.calls || [];
     h += '<div class="bc-two"><div><div class="bc-h2"><h2>আজকের কাজ</h2><span>আপনার নোট থেকে</span></div>' + (tasks.length ? tasks.map(function (t) {
       var due = t.due ? new Date(t.due * 1000) : null, late = due && due < now;
       return '<div class="bc-it"><s style="background:' + (late ? 'var(--bc-alert)' : due ? 'var(--bc-wait)' : 'var(--bc-rule)') + '"></s><p data-noi18n="1">' + esc(t.title) + '</p><small>' + (due ? dDate(due) : '') + '</small></div>';
     }).join('') : '<div class="bc-it"><p class="bc-sub">খোলা কোনো কাজ নেই। ফোনে journal-এ বললে এখানে আসবে।</p></div>') + '</div>' +
-      '<div><div class="bc-h2"><h2>শেষ কল ও নোট</h2><span>৭ দিন</span></div>' + (calls.length ? calls.map(function (c) { var t = new Date(c.at); return '<div class="bc-it"><s></s><p data-noi18n="1">' + esc(strip(c.text).slice(0, 140)) + '</p><small>' + dDate(t) + '</small></div>'; }).join('') :
+      '<div><div class="bc-h2"><h2>শেষ কল ও নোট</h2><span>৭ দিন</span></div>' + (calls.length ? calls.map(function (c) { return '<div class="bc-it"><s></s><p data-noi18n="1">' + esc(untag(strip(c.text)).slice(0, 140)) + '</p><small>' + ago(c.at) + '</small></div>'; }).join('') :
       '<div class="bc-it"><p class="bc-sub">এ সপ্তাহে কোনো কল রেকর্ড হয়নি।</p></div>') + '</div></div>';
     return h;
   }
-  function resTiles(n) {
-    return '<div class="bc-res"><button type="button" data-bc="sec" data-id="results"><span>এ সপ্তাহে গেছে</span><b>' + bn(n.gone) + '</b><small>লাইনে আছে ' + bn(n.queued) + '</small></button>' +
-      '<button type="button" data-bc="sec" data-id="listen"><span>মানুষের প্রশ্ন</span><b>' + bn(n.listen.questions || 0) + '</b><small>YouTube comment থেকে</small></button>' +
-      '<button type="button" data-bc="sec" data-id="listen"><span>সম্ভাব্য লিড</span><b>' + bn(n.listen.leads || 0) + '</b><small>Leads-এ পাঠানো যায়</small></button>' +
-      '<button type="button" data-bc="sec" data-id="ideas"><span>আইডিয়া ব্যাংকে</span><b>' + bn(n.ideas) + '</b><small>draft লেখার জন্য তৈরি</small></button></div>' +
-      '<div class="bc-gap">ক্লিক আর ভিজিট এখনো যুক্ত হয়নি: rmabidur.com-এর Umami আর LinkedIn-এর সংখ্যা পরের ধাপে আসবে।</div>';
+  function sideDrafts() {
+    var h = '<div class="bc-h2" id="bc_sidehd"><h2>আপনার অপেক্ষায়</h2><span>draft · অনুমোদন দিন বা বাদ দিন</span></div>';
+    if (!ready()) return h + '<div class="bc-note">Mac যুক্ত হলে এখানে আসবে।</div>';
+    if (!C.d.drafts) return h + (C.err.drafts ? '<div class="bc-note">' + esc(C.err.drafts) + '</div>' : skel(90) + skel(90));
+    return h + '<div id="bc_side_drafts">' + draftsHtml(true) + '</div>';
   }
-  function resultsHtml() {
-    var h = headHtml('ফলাফল', 'যা গেছে, যা ফিরেছে'); var o = offline(); if (o || !C.data.cockpit) return h + o;
-    var n = counts(), all = stations(), by = {};
-    all.forEach(function (s) { var b = by[s.net] || (by[s.net] = { go: 0, q: 0, x: 0 }); b[s.st]++; });
-    h += resTiles(n).replace('<div class="bc-res">', '<div class="bc-res" style="margin-top:0">');
-    h += '<div class="bc-h2" style="margin-top:28px"><h2>network অনুযায়ী</h2><span>গত ৭ দিন ও সামনের ৭ দিন</span></div><table class="bc-tbl"><thead><tr><th>Network</th><th style="text-align:right">গেছে</th><th style="text-align:right">লাইনে</th><th style="text-align:right">আটকে</th></tr></thead><tbody>' +
-      lines().map(function (l) { var b = by[l.net] || { go: 0, q: 0, x: 0 }; return '<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:' + netCol(l.net) + ';margin-right:8px"></span>' + esc(netName(l.net)) + '</td><td class="n">' + bn(b.go) + '</td><td class="n">' + bn(b.q) + '</td><td class="n"' + (b.x ? ' style="color:var(--bc-alert-ink)"' : '') + '>' + bn(b.x) + '</td></tr>'; }).join('') + '</tbody></table>';
+  function deps(kind) {
+    var list = stations().filter(function (s) { return s.st === kind; }).sort(function (a, b) { return kind === 'q' ? new Date(a.at) - new Date(b.at) : new Date(b.at) - new Date(a.at); });
+    if (!list.length) return '<div class="bc-clear"><b>' + (kind === 'q' ? 'লাইনে এখন কিছু নেই' : kind === 'go' ? 'গত ৭ দিনে কিছু যায়নি' : 'কিছু আটকে নেই') + '</b><p>' + (kind === 'q' ? 'draft অনুমোদন দিলে বা নতুন পোস্ট লিখলে এখানে সময় ধরে দেখাবে।' : kind === 'go' ? 'পোস্ট গেলে এখানে দিন ধরে জমা থাকবে, লিংক সহ।' : 'কোনো পোস্ট আটকে গেলে এখানে আসবে, আবার পাঠানোর বোতাম সহ।') + '</p></div>';
+    var today = new Date().toDateString(), last = '', h = '';
+    list.forEach(function (s) {
+      var t = new Date(s.at), dk = t.toDateString();
+      if (dk !== last) { last = dk; h += '<div class="bc-day' + (dk === today ? ' t' : '') + '">' + (dk === today ? 'আজ' : DAY[t.getDay()]) + ' · ' + dDate(t) + '</div>'; }
+      var open = C.dep === s.key;
+      h += '<div class="bc-dep' + (open ? ' open' : '') + '" data-bc="dep" data-id="' + esc(s.key) + '" role="button" tabindex="0" aria-expanded="' + open + '"><span class="tm">' + dTime(t) + '</span>' + lb(s.net) +
+        '<p data-noi18n="1">' + esc(s.text || '(লেখা নেই)') + (open ? '<span class="m">' + (s.acc ? '<span data-noi18n="1">' + esc(s.acc) + '</span> · ' : '') + stLabel(s) + (s.result && s.st === 'x' ? ' · <span data-noi18n="1">' + esc(String(s.result).slice(0, 200)) + '</span>' : '') + '</span>' : '') + '</p>' +
+        '<span class="a">' + (s.st === 'x' ? stActs(s) : open ? stActs(s) : '<span class="bc-stt ' + s.st + '">' + stLabel(s) + '</span>') + '</span></div>';
+    });
     return h;
   }
-  // ---------- the Connections map: what each tool does and where its output goes (live up/down from the Mac)
+  function postsHtml() {
+    var g = gate(['cockpit', 'drafts']); if (g) return headHtml('পোস্ট', '') + g;
+    var all = stations(), nW = waitingList().length, nQ = all.filter(function (s) { return s.st === 'q'; }).length, nG = all.filter(function (s) { return s.st === 'go'; }).length, nX = all.filter(function (s) { return s.st === 'x'; }).length;
+    var tab = C.ptab || (nW ? 'wait' : nX ? 'stuck' : 'next');
+    var T = [['wait', 'অপেক্ষায়', nW, 'w'], ['next', 'সামনে', nQ, ''], ['gone', 'গেছে', nG, ''], ['stuck', 'আটকে', nX, 'x']];
+    var h = headHtml('পোস্ট', 'যা অপেক্ষায়, যা যাবে, যা গেছে') + '<div class="bc-pills big" role="tablist" style="margin-bottom:22px">' + T.map(function (t) {
+      return '<button type="button" role="tab" aria-selected="' + (tab === t[0]) + '" data-bc="ptab" data-id="' + t[0] + '"' + (tab === t[0] ? ' class="on"' : '') + '>' + t[1] + (t[2] ? '<em class="' + (t[2] ? t[3] : '') + '">' + bn(t[2]) + '</em>' : '') + '</button>';
+    }).join('') + '</div>';
+    if (tab === 'wait') h += jobsBar() + draftsHtml(false);
+    else h += deps(tab === 'next' ? 'q' : tab === 'gone' ? 'go' : 'x');
+    return h;
+  }
+  function composerHtml() {
+    if (!ready()) return '';
+    var ns = nets(), pick = C.v.cnets || {}, text = v('ctext'), len = text.length;
+    var h = '<div class="bc-h2"><h2>নতুন পোস্ট</h2><span>এক লেখা, যত লাইনে চান</span></div>';
+    if (!ns.length) return h + '<div class="bc-note">কোনো account যুক্ত নেই। Postiz-এ account যুক্ত হলে এখানে আসবে।</div>';
+    h += '<div class="bc-ncs">' + ns.map(function (n) { var p = netOf(n.platform); return '<button type="button" class="bc-nc' + (pick[n.id] ? ' on' : '') + '" style="--c:' + netCol(p) + '" data-bc="cnet" data-id="' + esc(n.id) + '" aria-pressed="' + (pick[n.id] ? 'true' : 'false') + '" title="' + esc(n.name || '') + '">' + esc(netName(p)) + '</button>'; }).join('') + '</div>';
+    h += '<div style="margin-top:12px">' + ta('ctext', 'কী বলতে চান? প্রথম লাইনটাই সবাই আগে দেখে।', '', ' rows="8"') + '</div><div id="bc_meters">' + metersHtml() + '</div>';
+    var l = C.cmpLint;
+    if (l) h += (l.hits || []).length ? '<div style="margin-top:8px">' + l.hits.map(function (x) { return '<div class="bc-flag"><span class="bc-tag ' + (x.severity === 'block' ? 'x' : 'w') + '">' + (x.severity === 'block' ? 'পোস্ট আটকাবে' : 'দেখে নিন') + '</span><span data-noi18n="1">' + esc(x.reason || '') + (x.match ? ' (“' + esc(x.match) + '”)' : '') + '</span></div>'; }).join('') + '</div>' : '<div class="bc-note">দাবি যাচাই: কোনো সমস্যা পাওয়া যায়নি।</div>';
+    h += '<label class="bc-lbl" for="bci_cat">কখন যাবে</label><div class="bc-row" style="margin-top:0">' + inp('cat', '', '', 'datetime-local') + '<label class="bc-chk"><input type="checkbox" data-bcin="curg" id="bci_curg"' + (C.v.curg ? ' checked' : '') + '>আগে পাঠান</label></div><div class="bc-note">খালি রাখলে লাইনে পরের ফাঁকা সময়ে যাবে।</div>';
+    h += '<div class="bc-row" style="margin-top:14px">' + btn(svg('send') + 'লাইনে দিন', 'data-bc="cpost"', 'dark', 'cpost', !len || !Object.keys(pick).some(function (k) { return pick[k]; })) + btn('দাবি যাচাই', 'data-bc="clint"', 'ghost', 'clint', !len) + '</div>';
+    return h;
+  }
+  function metersHtml() {
+    var ns = nets(), pick = C.v.cnets || {}, len = v('ctext').length, seen = {};
+    return ns.filter(function (n) { return pick[n.id]; }).map(function (n) {
+      var p = netOf(n.platform); if (seen[p]) return ''; seen[p] = 1;
+      var lim = LIMIT[p] || 5000, over = len > lim;
+      return '<div class="bc-mt' + (over ? ' over' : '') + '" style="--c:' + netCol(p) + '"><span>' + esc(netName(p)) + '</span><u><i style="width:' + Math.min(100, len / lim * 100).toFixed(1) + '%"></i></u><span>' + bn(len) + ' / ' + bn(lim) + '</span></div>';
+    }).join('');
+  }
+  var PLATS = ['linkedin', 'facebook', 'instagram', 'youtube', 'threads', 'tiktok'];
+  var AUD = { bd_seller: 'বাংলাদেশি বিক্রেতা', bd_buyer: 'বাংলাদেশি ক্রেতা', supplier: 'সরবরাহকারী', customer: 'ক্রেতা', brand: 'ব্র্যান্ড' };
+  function ideasHtml() {
+    var g = gate(['drafts', 'memos', 'board']); if (g) return headHtml('আইডিয়া', '') + g;
+    var bank = C.d.drafts.ideas || [], memos = (C.d.memos && C.d.memos.ideas) || [], cols = (C.d.board && C.d.board.board && C.d.board.board.columns) || [];
+    var onBoard = cols.reduce(function (a, c) { return a + (c.cards || []).length; }, 0), wait = waitingList();
+    var h = headHtml('আইডিয়া', 'ভাবনা থেকে পোস্ট, এক লাইনে');
+    h += '<div class="bc-cap">' + ta('cap', 'একটা ভাবনা লিখে রাখুন: গল্প, শিক্ষা, আজ যা দেখলেন। Enter চাপলে জমা থাকবে।', '', ' rows="2"') +
+      '<div class="bc-row"><span class="bc-sub">AI কোন network-এর জন্য লিখবে (৪টা পর্যন্ত):</span>' + PLATS.map(function (p) { return '<button type="button" class="bc-pl' + (C.plats[p] ? ' on' : '') + '" style="--c:' + netCol(p) + '" data-bc="plat" data-id="' + p + '" aria-pressed="' + (C.plats[p] ? 'true' : 'false') + '">' + esc(netName(p)) + '</button>'; }).join('') +
+      '<span class="bc-sp"></span>' + btn('জমা রাখুন', 'data-bc="capsave"', 'ghost', 'capsave') + btn('AI দিয়ে draft লিখুন', 'data-bc="capwrite"', 'dark', 'write') + '</div></div>';
+    h += jobsBar();
+    h += '<div class="bc-spine" style="--n:4">' +
+      '<button type="button" data-bc="jump" data-id="bc_inbox"><i></i><b>' + bn(memos.length) + '</b><span>ধরা হয়েছে</span><small>journal আর এখানে লেখা ভাবনা</small></button>' +
+      '<button type="button" data-bc="jump" data-id="bc_bank"><i></i><b>' + bn(bank.length) + '</b><span>ব্যাংকে</span><small>শোনা থেকে আসা ও বাছাই করা আইডিয়া</small></button>' +
+      '<button type="button" data-bc="jump" data-id="bc_board"><i></i><b>' + bn(onBoard) + '</b><span>বোর্ডে</span><small>স্ক্রিপ্ট থেকে প্রকাশ পর্যন্ত</small></button>' +
+      '<button type="button" data-bc="sec" data-id="posts"><i class="q"></i><b>' + bn(wait.length) + '</b><span>draft অপেক্ষায়</span><small>অনুমোদন দিলে লাইনে যায়</small></button></div>';
+    // inbox (Memos)
+    h += '<div class="bc-block" id="bc_inbox" style="margin-top:0"><div class="bc-h2"><h2>ধরা হয়েছে</h2><span>এখনো বাছাই হয়নি</span></div>' + (memos.length ? memos.map(function (m) {
+      var t = untag(m.content), first = t.split(/[.\n।]/)[0] || t;
+      return '<div class="bc-li"><div class="c"><b data-noi18n="1">' + esc(t.slice(0, 180)) + '</b><small>' + ago(m.at) + ((m.tags || []).length ? ' · <span data-noi18n="1">#' + m.tags.map(esc).join(' #') + '</span>' : '') + '</small></div><div class="a">' +
+        btn('বোর্ডে তুলুন', 'data-bc="toboard" data-id="' + esc(m.id) + '"', 'sm ghost', 'tb' + m.id) + btn('draft লিখুন', 'data-bc="writetext" data-id="' + esc(m.id) + '"', 'sm', 'write') + '</div></div>';
+    }).join('') : '<div class="bc-li"><div class="c"><small>খালি। উপরে লিখে রাখুন, বা ফোনে journal bot-কে বলুন “#idea …”।</small></div></div>') + '</div>';
+    // bank by topic
+    var waitBy = {}; wait.forEach(function (x) { if (x.idea_id != null) waitBy[x.idea_id] = (waitBy[x.idea_id] || 0) + 1; });
+    var byT = {}, tOrder = [], loose = [];
+    bank.forEach(function (i) { if (!i.topic && /^#/.test(String(i.title_working || '').trim())) { loose.push(i); return; } var k = i.topic || 'other'; if (!byT[k]) { byT[k] = []; tOrder.push(k); } byT[k].push(i); });
+    var SH = ['#16181D', '#454A55', '#6B717C', '#8A909B', '#B4B9C1', '#D5D8DD', '#5C626E'];
+    var tk = ((C.d.drafts.topics) || []).map(function (t) { return t.key; });
+    function idea(i, mute) {
+      return '<div class="bc-li' + (mute ? ' mute' : '') + '"><div class="c"><b data-noi18n="1">' + (mute ? 'journal থেকে · ' : '') + esc(i.title_working) + '</b><small>' + [AUD[i.audience] || (i.audience || ''), i.is_example ? 'নমুনা' : '', waitBy[i.id] ? bn(waitBy[i.id]) + 'টা draft অপেক্ষায়' : ''].filter(Boolean).join(' · ') + '</small></div><div class="a">' +
+        (waitBy[i.id] ? '<button type="button" class="bc-btn sm ghost" data-bc="ptab" data-id="wait">draft দেখুন</button>' : '') + btn('draft লিখুন', 'data-bc="writeidea" data-id="' + i.id + '"', 'sm', 'write') + '</div></div>';
+    }
+    h += '<div class="bc-block" id="bc_bank"><div class="bc-h2"><h2>আইডিয়া ব্যাংক</h2><span>বিষয় ধরে</span></div>' + (tOrder.length ? '' : '<div class="bc-note">ব্যাংক খালি। শোনা পেজে “প্রশ্ন থেকে আইডিয়া” চাপলে এখানে আসবে।</div>') + tOrder.map(function (k) {
+      var ci = tk.indexOf(k); return '<div class="bc-topic" style="--c:' + SH[(ci < 0 ? 6 : ci) % 7] + '"><s></s><h3>' + esc(topicName(k)) + '</h3><span class="bc-sub">' + bn(byT[k].length) + '</span></div>' + byT[k].map(function (i) { return idea(i); }).join('');
+    }).join('') + (loose.length ? '<button type="button" class="bc-fold' + (C.fold.loose ? ' on' : '') + '" data-bc="fold" data-id="loose" aria-expanded="' + !!C.fold.loose + '">' + svg('right') + 'journal থেকে আসা, শিরোনাম ছাড়া (' + bn(loose.length) + ')</button>' + (C.fold.loose ? loose.map(function (i) { return idea(i, true); }).join('') : '') : '') + '</div>';
+    // board as a line of steps
+    var STEP = { Idea: 'আইডিয়া', Script: 'স্ক্রিপ্ট', Record: 'রেকর্ড', Edit: 'এডিট', Scheduled: 'সময় ঠিক', Published: 'প্রকাশিত', Repurposed: 'অন্য রূপে' };
+    h += '<div class="bc-block" id="bc_board"><div class="bc-h2"><h2>বোর্ড</h2><span>একটা কার্ড এক স্টেশন থেকে পরের স্টেশনে যায়</span></div><div class="bc-steps">' + cols.map(function (c, i) {
+      var nx = cols[i + 1];
+      return '<div class="bc-step"><h4><i></i><span>' + esc(STEP[c.title] || c.title) + '</span><em>' + bn((c.cards || []).length) + '</em></h4>' +
+        (i === 0 ? '<div class="bc-card-new">' + inp('card', 'নতুন কার্ড…', ' aria-label="নতুন কার্ডের শিরোনাম"') + '<button type="button" class="bc-btn sm" data-bc="cardadd" aria-label="যোগ করুন"' + (C.busy.cardadd ? ' disabled' : '') + '>' + svg('plus') + '</button></div>' : '') +
+        ((c.cards || []).length ? c.cards.map(function (k) {
+          return '<div class="bc-card"><b data-noi18n="1">' + esc(k.title) + '</b>' + (k.description ? '<p data-noi18n="1">' + esc(k.description) + '</p>' : '') + '<div class="a">' +
+            (nx ? btn(esc(STEP[nx.title] || nx.title) + svg('right'), 'data-bc="move" data-id="' + k.id + '" data-col="' + nx.id + '"', 'sm ghost', 'mv' + k.id) : btn(svg('check') + 'শেষ', 'data-bc="done" data-id="' + k.id + '"', 'sm ghost', 'dn' + k.id)) + '</div></div>';
+        }).join('') : '<div class="bc-empty">খালি</div>') + '</div>';
+    }).join('') + '</div></div>';
+    return h;
+  }
+  function secs(ms) { var n = Number(ms); if (!isFinite(n) || !n) return ''; n = Math.round(n / 1000); return bn(Math.floor(n / 60) + ':' + ('0' + (n % 60)).slice(-2)); }
+  var SHW = { fetching: 'ভিডিও পড়ছি…', making: 'shorts বানাচ্ছি…', done: 'shorts তৈরি', failed: 'shorts হয়নি' };
+  function mediaHtml() {
+    var h = headHtml('মিডিয়া', 'আপনার ভিডিও আর ছবির তাক');
+    var o = offline(); if (o) return h + o;
+    h += '<form class="bc-search" data-bc-form="vfind" role="search">' + svg('search') + '<input id="bci_vq" data-bcin="vq" data-noi18n="1" placeholder="মানে দিয়ে খুঁজুন: দোকানে কথা বলছি, প্রিন্টারের কাছ থেকে…" value="' + esc(C.vq || '') + '" aria-label="ভিডিও খুঁজুন">' + btn('খুঁজুন', 'data-bc="vfind"', 'dark', 'g_videos') + '</form>';
+    h += '<div class="bc-ex">' + ['দোকানে কথা বলছি', 'পণ্যের ক্লোজআপ', 'প্রিন্টার চলছে', 'বাক্স খোলা'].map(function (q) { return '<button type="button" class="bc-pl" style="--c:#16181D" data-bc="vex" data-id="' + esc(q) + '">' + esc(q) + '</button>'; }).join('') + (C.vq ? '<button type="button" class="bc-btn ghost sm" data-bc="vall">সব নতুনগুলো</button>' : '') + '</div>';
+    var g = gate(['videos']); if (g) return h + g;
+    var list = C.d.videos.videos || [], jobs = (C.d.shorts && C.d.shorts.jobs) || {}, hl = ((C.d.cockpit && C.d.cockpit.cockpit) || {}).health || {};
+    if (!list.length) {
+      if (C.vq) return h + '<div class="bc-clear"><b>“' + esc(C.vq) + '”-এর মতো কিছু পাওয়া যায়নি</b><p>অন্য কথায় খুঁজে দেখুন, বা সব নতুন ভিডিও দেখুন।</p></div>';
+      return h + '<div class="bc-h2" style="margin-top:6px"><h2>এখনো কোনো ভিডিও নেই</h2><span>যেভাবে এখানে আসে</span></div><div class="bc-spine" style="--n:3;margin-top:18px">' +
+        '<div><i></i><span>ফোনে তুলুন</span><small>Immich app-এ Brand album-এ রাখুন</small></div><div><i></i><span>বা PC-তে রাখুন</span><small>G:\\Brand-upload ফোল্ডারে ফাইল দিলেই ওঠে</small></div><div><i class="q"></i><span>এখানে আসে</span><small>তারপর shorts বা আইডিয়া বানানো যায়</small></div></div>' +
+        (hl.immich_key === false ? '<div class="bc-call"><span>Immich-এর চাবি বসানো নেই, তাই লাইব্রেরি পড়া যাচ্ছে না।</span></div>' : '');
+    }
+    return h + '<div class="bc-vg">' + list.map(function (x) {
+      var j = jobs[x.id];
+      return '<div class="bc-v"><div class="th">' + (x.thumb ? '<img alt="" loading="lazy" src="' + esc(x.thumb) + '">' : '') + (x.duration ? '<span class="du">' + secs(x.duration) + '</span>' : '') +
+        (j ? '<span class="sj">' + (j.state === 'fetching' || j.state === 'making' ? '<span class="bc-spin"></span>' : '') + esc(SHW[j.state] || j.state) + '</span>' : '') + '</div>' +
+        '<b data-noi18n="1" title="' + esc(x.name) + '">' + esc(x.name) + '</b><small>' + (x.at ? ago(x.at) : '') + '</small><div class="bc-row">' +
+        (j && (j.state === 'fetching' || j.state === 'making') ? '' : btn('Shorts বানান', 'data-bc="vshorts" data-id="' + esc(x.id) + '"', 'sm', 'vs' + x.id)) + btn('আইডিয়া বানান', 'data-bc="vcard" data-id="' + esc(x.name) + '"', 'sm ghost', 'vc' + x.name) + '</div>' +
+        (j && j.error ? '<div class="bc-note" data-noi18n="1">' + esc(j.error) + '</div>' : '') + '</div>';
+    }).join('') + '</div>';
+  }
+  var INT = { question: ['প্রশ্ন', '#16181D'], price: ['দাম', '#454A55'], wholesale_interest: ['পাইকারি', '#11663A'], authenticity: ['আসল কিনা', '#6B717C'], problem: ['সমস্যা', '#A8260F'], complaint: ['অভিযোগ', '#E0301E'], praise: ['প্রশংসা', '#B4B9C1'], other: ['অন্যান্য', '#D5D8DD'] };
+  var LK = { retail_buyer: 'খুচরা ক্রেতা', wholesale_buyer: 'পাইকারি ক্রেতা', supplier: 'সরবরাহকারী', reseller: 'রিসেলার' };
+  function isLead(c) { return c.lead_kind && c.lead_kind !== 'none'; }
+  function bizSel(id, list) { return '<select class="bc-in" id="bci_' + id + '" data-bcin="' + id + '" aria-label="কোন ব্যবসার Leads-এ">' + list.map(function (b) { return '<option value="' + esc(b.id) + '"' + (v(id) === b.id ? ' selected' : '') + '>' + esc(b.name) + '</option>'; }).join('') + '</select>'; }
+  function commentHtml(c, biz) {
+    var lead = isLead(c), I = INT[c.intent] || [c.intent || '', '#8A909B'], open = C.lopen[c.id];
+    return '<div class="bc-cm' + (open ? ' open' : '') + '"><div class="h"><b data-noi18n="1">' + esc(c.author_name || '') + '</b>' + (c.channel_title ? '<span data-noi18n="1">' + esc(c.channel_title) + '</span>' : '<span>পেস্ট করা</span>') +
+      '<span class="bc-tag">' + esc(I[0]) + '</span>' + (lead ? '<span class="bc-tag lead">' + esc(LK[c.lead_kind] || String(c.lead_kind).replace(/_/g, ' ')) + '</span>' : '') + (c.likes ? '<span>' + bnN(c.likes) + ' লাইক</span>' : '') + '</div>' +
+      (c.summary ? '<p class="s" data-noi18n="1">' + esc(c.summary) + '</p>' : '') + '<p class="t" data-noi18n="1" data-bc="lopen" data-id="' + c.id + '">' + esc(c.text || '') + '</p>' +
+      '<div class="a">' + (lead && biz.length ? (c.handed_at ? '<span class="bc-tag lead">Leads-এ আছে</span>' : bizSel('lb' + c.id, biz) + btn('Leads-এ পাঠান', 'data-bc="lhand" data-id="' + c.id + '"', 'sm dark', 'lh' + c.id)) : '') +
+      (c.platform === 'youtube_ext' && c.source_ref ? '<a class="bc-btn ghost sm" href="https://youtu.be/' + esc(c.source_ref) + '" target="_blank" rel="noopener">ভিডিও</a>' : '') + '</div></div>';
+  }
+  function listenHtml() {
+    var lj = (C.d.listen && C.d.listen.jobs) || {}, lk = Object.keys(lj).sort(), last = lk.length ? lj[lk[lk.length - 1]] : null;
+    var h = headHtml('শোনা', 'বাজার যা জিজ্ঞেস করছে', btn('YouTube এখন পড়ুন', 'data-bc="lpull"', '', 'lpull', last && last.state === 'reading') + '<button type="button" class="bc-btn" data-bc="lpaste" aria-expanded="' + C.paste + '">comment পেস্ট</button>' + btn('প্রশ্ন থেকে আইডিয়া', 'data-bc="lideas"', 'dark', 'lideas'));
+    var g = gate(['listen']); if (g) return h + g;
+    var d = C.d.listen, all = d.comments || [], biz = d.businesses || [], counts = (d.counts || []).slice().sort(function (a, b) { return b.n - a.n; }), tot = counts.reduce(function (a, c) { return a + c.n; }, 0);
+    if (last) h += last.state === 'reading' ? '<div class="bc-jobs"><span class="bc-spin"></span>comment পড়ছি আর বাছাই করছি…</div>' : last.state === 'done' ? '<div class="bc-note" style="margin:-8px 0 16px">শেষ পড়া: ' + bn(last.added || 0) + 'টা নতুন, ' + bn(last.labelled || 0) + 'টা বাছাই</div>' : '<div class="bc-jobs bad">পড়া যায়নি: <span data-noi18n="1">' + esc(last.error || '') + '</span></div>';
+    if (C.paste) h += '<div class="bc-paste"><div class="bc-lbl" style="margin-top:0">Facebook বা LinkedIn পোস্টের নিচের comment কপি করে এখানে দিন</div>' + ta('paste', 'comment গুলো এখানে…', '', ' rows="5"') + '<div class="bc-row">' + inp('psrc', 'পোস্টের লিংক (না দিলেও চলে)', ' style="flex:1;min-width:200px"') + btn('বাছাই করুন', 'data-bc="lpastego"', 'dark', 'lpastego') + '</div></div>';
+    var nLead = all.filter(isLead).length;
+    h += '<div class="bc-h2"><h2>মানুষ কী নিয়ে লিখছে</h2><span>' + bnN(tot) + 'টা comment, বাছাই করা</span></div>';
+    h += '<div class="bc-sbar' + (C.lf !== 'all' && C.lf !== 'leads' ? ' f' : '') + '">' + counts.map(function (c) { var I = INT[c.intent] || [c.intent, '#8A909B'], pc = c.n / (tot || 1) * 100, light = /B4B9C1|D5D8DD/.test(I[1]);
+      return '<button type="button" data-bc="lf" data-id="' + esc(c.intent) + '" class="' + (C.lf === c.intent ? 'on' : '') + '" style="flex:' + c.n + ' 1 0;--c:' + I[1] + ';--t:' + (light ? '#16181D' : '#fff') + '" title="' + esc(I[0] + ': ' + c.n) + '" aria-label="' + esc(I[0] + ' ' + c.n) + '">' + (pc > 7 ? esc(I[0]) + ' ' + bn(Math.round(pc)) + '%' : '') + '</button>'; }).join('') + '</div>';
+    h += '<div class="bc-leg"><button type="button" data-bc="lf" data-id="all"' + (C.lf === 'all' ? ' class="on"' : '') + '>সব</button><button type="button" data-bc="lf" data-id="leads"' + (C.lf === 'leads' ? ' class="on"' : '') + '><i style="--c:#11663A"></i>লিড <b>' + bn(nLead) + '</b></button>' +
+      counts.map(function (c) { var I = INT[c.intent] || [c.intent, '#8A909B']; return '<button type="button" data-bc="lf" data-id="' + esc(c.intent) + '"' + (C.lf === c.intent ? ' class="on"' : '') + '><i style="--c:' + I[1] + '"></i>' + esc(I[0]) + ' <b>' + bnN(c.n) + '</b></button>'; }).join('') + '</div>';
+    var cl = (d.clusters || []).slice().sort(function (a, b) { return b.mention_count - a.mention_count; }), mx = cl.length ? cl[0].mention_count : 1;
+    if (cl.length) h += '<div class="bc-block"><div class="bc-h2"><h2>সবচেয়ে বেশি যা জিজ্ঞেস করে</h2><span>“প্রশ্ন থেকে আইডিয়া” এগুলোকে আইডিয়া বানায়</span></div>' + cl.map(function (k) {
+      return '<div class="bc-rk"><span data-noi18n="1">' + esc(k.label) + '<small title="' + esc(k.summary || '') + '">' + esc(k.summary || '') + '</small></span><u><i style="width:' + (k.mention_count / mx * 100).toFixed(1) + '%"></i></u><b>' + bn(k.mention_count) + '</b></div>'; }).join('') + '</div>';
+    var list = all.filter(function (c) { return C.lf === 'all' || (C.lf === 'leads' ? isLead(c) : c.intent === C.lf); });
+    h += '<div class="bc-block"><div class="bc-h2"><h2>comment</h2><span>শেষ ' + bn(all.length) + 'টার মধ্যে ' + bn(list.length) + 'টা দেখাচ্ছে</span></div>' + (list.length ? list.slice(0, 60).map(function (c) { return commentHtml(c, biz); }).join('') : '<div class="bc-note">এই ভাগে এখনো কিছু নেই।</div>') + '</div>';
+    var ch = d.channels || [];
+    h += '<div class="bc-block"><div class="bc-h2"><h2>যেসব channel শুনি</h2><span>' + bn(ch.filter(function (c) { return c.active; }).length) + 'টা চালু</span></div>' + ch.map(function (c) {
+      return '<div class="bc-li' + (c.active ? '' : ' mute') + '"><div class="c"><b data-noi18n="1">' + esc(c.title) + '</b><small>' + (c.subscribers ? bnN(c.subscribers) + ' subscriber' : '') + (c.is_suggestion ? ' · AI-এর বাছাই' : '') + (c.last_pulled ? ' · শেষ পড়া ' + ago(c.last_pulled) : '') + '</small></div><div class="a">' +
+        btn(c.active ? 'শোনা বন্ধ' : 'আবার শুনুন', 'data-bc="lch" data-id="' + esc(c.id) + '" data-on="' + (c.active ? '0' : '1') + '"', 'sm ghost', 'ch' + c.id) + '</div></div>';
+    }).join('') + '</div>';
+    return h;
+  }
+  function peopleHtml() {
+    var h = headHtml('মানুষ', 'যারা আপনার কাছে এসেছে');
+    var g = gate(['listen', 'people']); if (g) return h + g;
+    var leads = (C.d.listen.comments || []).filter(isLead), open = leads.filter(function (c) { return !c.handed_at; }), biz = C.d.listen.businesses || C.d.people.businesses || [];
+    h += '<div class="bc-h2"><h2>শোনা থেকে পাওয়া সম্ভাব্য ক্রেতা</h2><span>' + bn(open.length) + 'টা পাঠানো বাকি · ' + bn(leads.length - open.length) + 'টা Leads-এ</span></div>';
+    h += open.length ? open.slice(0, 40).map(function (c) { return commentHtml(c, biz); }).join('') : '<div class="bc-clear"><b>সব পাঠানো হয়ে গেছে</b><p>শোনা পেজ নতুন comment পড়লে নতুন ক্রেতা এখানে আসবে।</p></div>';
+    var ppl = C.d.people.people || [];
+    if (ppl.length) h += '<div class="bc-block"><div class="bc-h2"><h2>যোগাযোগের খাতা</h2><span>' + bn(ppl.length) + ' জন</span></div>' + ppl.map(function (x) {
+      return '<div class="bc-li"><div class="c"><b data-noi18n="1">' + esc(x.name) + '</b><small data-noi18n="1">' + esc([x.job, x.email, x.phone, x.source].filter(Boolean).join(' · ')) + '</small></div><div class="a">' + (biz.length ? bizSel('pb' + x.id, biz) + btn('Leads-এ', 'data-bc="ptolead" data-id="' + esc(x.id) + '"', 'sm', 'pl' + x.id) : '') + '</div></div>';
+    }).join('') + '</div>';
+    else if (C.d.people.parked) h += '<div class="bc-note" style="margin-top:22px">আলাদা যোগাযোগের খাতা (Twenty) বন্ধ রাখা আছে; মানুষ সরাসরি ব্যবসার Leads-এ যায়, ডানের ফর্ম দিয়ে।</div>';
+    return h;
+  }
+  function personForm() {
+    if (!ready() || !C.d.listen) return '';
+    var biz = C.d.listen.businesses || [];
+    if (!biz.length) return '<div class="bc-note">Leads নেওয়ার মতো কোনো ব্যবসা নেই।</div>';
+    return '<div class="bc-h2"><h2>কেউ যোগাযোগ করেছে</h2><span>সরাসরি Leads-এ যাবে</span></div>' +
+      '<div class="bc-pills" style="margin-bottom:6px"><button type="button" data-bc="nk" data-id="customer"' + (C.nk === 'customer' ? ' class="on"' : '') + '>ক্রেতা</button><button type="button" data-bc="nk" data-id="supplier"' + (C.nk === 'supplier' ? ' class="on"' : '') + '>সরবরাহকারী</button></div>' +
+      '<label class="bc-lbl" for="bci_np_name">নাম</label>' + inp('np_name', 'যেমন: Glow Shop Dhaka', ' style="width:100%"') +
+      '<label class="bc-lbl" for="bci_np_phone">ফোন</label>' + inp('np_phone', '01…', ' style="width:100%" inputmode="tel"') +
+      '<label class="bc-lbl" for="bci_np_mail">ই-মেইল</label>' + inp('np_mail', 'না দিলেও চলে', ' style="width:100%" inputmode="email"') +
+      '<label class="bc-lbl" for="bci_np_want">কী চান</label>' + inp('np_want', 'যেমন: ৫০টা sunscreen-এর দাম', ' style="width:100%"') +
+      '<label class="bc-lbl" for="bci_np_src">কোথা থেকে এলেন</label>' + inp('np_src', 'যেমন: LinkedIn পোস্টের comment', ' style="width:100%"') +
+      '<label class="bc-lbl" for="bci_np_biz">কোন ব্যবসার Leads-এ</label>' + bizSel('np_biz', biz).replace('class="bc-in"', 'class="bc-in" style="width:100%"') +
+      '<div class="bc-row" style="margin-top:16px">' + btn('Leads-এ যোগ করুন', 'data-bc="npadd"', 'dark', 'npadd') + '</div>';
+  }
+  function resultsHtml() {
+    var h = headHtml('ফলাফল', 'যা গেছে, যা ফিরেছে'); var g = gate(['cockpit']); if (g) return h + g;
+    var n = counts(), all = stations(), L = n.listen;
+    h += '<div class="bc-fig"><div><span>এ সপ্তাহে গেছে</span><b>' + bn(n.gone) + '</b></div><div><span>লাইনে আছে</span><b>' + bn(n.queued) + '</b></div><div><span>আটকে</span><b class="' + (n.stuck.length ? 'x' : '') + '">' + bn(n.stuck.length) + '</b></div>' +
+      '<div><span>বাছাই করা comment</span><b>' + bnN(L.total) + '</b></div><div><span>প্রশ্ন</span><b>' + bnN(L.questions) + '</b></div><div><span>সম্ভাব্য লিড</span><b>' + bnN(L.leads) + '</b></div></div>';
+    // 15 days: 7 back, today, 7 ahead
+    var d0 = new Date(); d0.setHours(0, 0, 0, 0); d0.setDate(d0.getDate() - 7);
+    var days = []; for (var i = 0; i < 15; i++) { var d = new Date(d0); d.setDate(d0.getDate() + i); days.push({ d: d, go: 0, q: 0, x: 0 }); }
+    all.forEach(function (s) { var t = new Date(s.at); t.setHours(0, 0, 0, 0); var ix = Math.round((t - d0) / 864e5); if (ix >= 0 && ix < 15) days[ix][s.st]++; });
+    var mx = Math.max(3, Math.max.apply(null, days.map(function (x) { return x.go + x.q + x.x; })));
+    var today = new Date().toDateString();
+    h += '<div class="bc-h2"><h2>দিন ধরে</h2><span>গত ৭ দিন, আজ, সামনের ৭ দিন</span></div><div class="bc-chart">' + days.map(function (x) {
+      var tot = x.go + x.q + x.x, seg = function (k) { return x[k] ? '<i class="' + (k === 'go' ? '' : k) + '" style="height:' + (x[k] / mx * 100).toFixed(1) + '%"></i>' : ''; };
+      return '<div class="c' + (x.d.toDateString() === today ? ' t' : '') + '" title="' + esc(dDate(x.d) + ': ' + tot) + '">' + seg('go') + seg('q') + seg('x') + (tot ? '<b style="bottom:calc(' + (tot / mx * 100).toFixed(1) + '% + 4px)">' + bn(tot) + '</b>' : '') + '</div>';
+    }).join('') + '</div><div class="bc-cl">' + days.map(function (x) { var t = x.d.toDateString() === today; return '<span class="' + (t ? 't' : '') + '">' + (t ? 'আজ' : DAY[x.d.getDay()]) + '<br>' + bn(x.d.getDate()) + '</span>'; }).join('') + '</div>' +
+      '<div class="bc-key"><span><i class="sq"></i>গেছে</span><span><i class="sq q"></i>লাইনে</span><span><i class="sq x"></i>আটকে</span></div>';
+    var by = {}; all.forEach(function (s) { var b = by[s.net] || (by[s.net] = { go: 0, q: 0, x: 0 }); b[s.st]++; });
+    var top = Math.max(1, Math.max.apply(null, lines().map(function (l) { var b = by[l.net] || { go: 0, q: 0, x: 0 }; return b.go + b.q + b.x; })));
+    h += '<div class="bc-block"><div class="bc-h2"><h2>লাইন ধরে</h2><span>একই ১৫ দিনে</span></div>' + lines().map(function (l) {
+      var b = by[l.net] || { go: 0, q: 0, x: 0 }, w = function (k) { return b[k] ? '<i class="' + (k === 'go' ? '' : k) + '" style="width:' + (b[k] / top * 100).toFixed(1) + '%"></i>' : ''; };
+      return '<div class="bc-nb" style="--c:' + netCol(l.net) + '">' + lb(l.net) + '<u>' + w('go') + w('q') + w('x') + '</u><small>গেছে ' + bn(b.go) + ' · লাইনে ' + bn(b.q) + (b.x ? ' · <span style="color:var(--bc-alert-ink)">আটকে ' + bn(b.x) + '</span>' : '') + '</small></div>';
+    }).join('') + '</div>';
+    h += '<div class="bc-note" style="margin-top:20px">ক্লিক, ভিজিট আর কে কী কিনল এখনো যুক্ত হয়নি: rmabidur.com-এর Umami আর LinkedIn-এর সংখ্যা পরের ধাপে আসবে।</div>';
+    return h;
+  }
+  var TSH = ['#16181D', '#454A55', '#6B717C', '#8A909B', '#B4B9C1', '#D5D8DD'];
+  function rulesHtml() {
+    var h = headHtml('নিয়ম', 'কোন লাইনে কী, কত বার');
+    var d0 = C.d.cockpit;
+    if (d0 && !d0.keySet) return h + setupHtml(false);
+    var g = gate(['settings']); if (g) return h + g;
+    var d = C.d.settings, topics = d.topics || [], W = d.weights || {}, st = d.settings || {}, level = st.cadence_level || 'start', cad = (d.cadence || []).filter(function (c) { return c.level === level; });
+    var pn = st.public_name || {};
+    h += '<div class="bc-who"><b data-noi18n="1">' + esc(pn.en || '') + '</b><span data-noi18n="1">' + esc(st.positioning_en || '') + '</span><span data-noi18n="1">' + esc(st.positioning_bn || '') + '</span><span class="k" data-noi18n="1">' + esc([pn.bn, pn.ko].filter(Boolean).join(' · ')) + '</span></div>';
+    var cmax = Math.max.apply(null, [7].concat(cad.map(function (c) { return c.per_week_max || 0; })));
+    h += '<div class="bc-h2"><h2>কত বার পোস্ট</h2><span class="bc-sp"></span><div class="bc-pills"><button type="button" data-bc="level" data-id="start"' + (level === 'start' ? ' class="on"' : '') + '>শুরু · সপ্তাহে ~৬ ঘণ্টা</button><button type="button" data-bc="level" data-id="scale"' + (level === 'scale' ? ' class="on"' : '') + '>বাড়ানো · ~১০ ঘণ্টা</button></div></div>' +
+      cad.map(function (c) { var p = netOf(c.platform); return '<div class="bc-cad" style="--c:' + netCol(p) + '">' + lb(p) + '<span data-noi18n="1">' + esc(String(c.format || '').replace(/_/g, ' ')) + '</span><u><i style="left:' + (c.per_week_min / cmax * 100).toFixed(1) + '%;width:' + Math.max(1.5, (c.per_week_max - c.per_week_min) / cmax * 100).toFixed(1) + '%"></i></u><b>সপ্তাহে ' + bn(c.per_week_min) + (c.per_week_max !== c.per_week_min ? '–' + bn(c.per_week_max) : '') + '</b></div>'; }).join('') +
+      '<div class="bc-note">প্রশ্ন আর অর্ডার নিয়মিত আসতে থাকলে “বাড়ানো”-তে যান।</div>';
+    var plats = Object.keys(W).sort();
+    h += '<div class="bc-block"><div class="bc-h2"><h2>প্রতি লাইনে কোন বিষয় কতটা</h2><span>মোট ১০০ হতে হবে</span></div><div class="bc-leg" style="margin-bottom:6px">' + topics.map(function (t, i) { return '<span style="display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--bc-ink-2);padding:2px 8px"><i style="--c:' + TSH[i % 6] + ';width:11px;height:11px;border-radius:3px;background:var(--c)"></i>' + esc(t.label_bn || t.label_en) + '</span>'; }).join('') + '</div>' +
+      plats.map(function (p) {
+        var cur = C.rw[p] || W[p] || {}, sum = 0; topics.forEach(function (t) { sum += Number(cur[t.key] || 0); });
+        var dirty = !!C.rw[p], open = C.open['w' + p];
+        return '<div class="bc-mix"><div class="bc-mix-h">' + lb(p) + '<span class="bc-sp"></span><span class="bc-sum' + (sum === 100 ? '' : ' bad') + '">' + bn(sum) + ' / ১০০</span>' +
+          (open ? (dirty ? btn('রাখুন', 'data-bc="wsave" data-id="' + p + '"', 'dark sm', 'ws' + p, sum !== 100) + '<button type="button" class="bc-btn ghost sm" data-bc="wundo" data-id="' + p + '">বাতিল</button>' : '<button type="button" class="bc-btn ghost sm" data-bc="wopen" data-id="' + p + '">বন্ধ</button>') : '<button type="button" class="bc-btn ghost sm" data-bc="wopen" data-id="' + p + '">বদলান</button>') + '</div>' +
+          '<div class="bc-mixbar">' + topics.map(function (t, i) { var n = Number(cur[t.key] || 0); return n ? '<i style="flex:' + n + ' 1 0;--c:' + TSH[i % 6] + ';--t:' + (i > 3 ? '#16181D' : '#fff') + '" title="' + esc((t.label_bn || t.label_en) + ' ' + n + '%') + '">' + (n >= 10 ? bn(n) + '%' : '') + '</i>' : ''; }).join('') + '</div>' +
+          (open ? '<div class="bc-stps">' + topics.map(function (t, i) { var n = Number(cur[t.key] || 0); return '<div class="bc-stp" style="--c:' + TSH[i % 6] + '"><s></s><span>' + esc(t.label_bn || t.label_en) + '</span><button type="button" data-bc="wstep" data-id="' + p + '" data-t="' + esc(t.key) + '" data-d="-5" aria-label="৫ কমান">' + svg('minus') + '</button><b>' + bn(n) + '</b><button type="button" data-bc="wstep" data-id="' + p + '" data-t="' + esc(t.key) + '" data-d="5" aria-label="৫ বাড়ান">' + svg('plus') + '</button></div>'; }).join('') + '</div>' : '') + '</div>';
+      }).join('') + '</div>';
+    var con = d.connectors || [];
+    h += '<div class="bc-block"><div class="bc-h2"><h2>যুক্ত হওয়ার পথ</h2><span>অনানুষ্ঠানিক পথ বন্ধ দিয়ে শুরু হয়, Mac থেকে একটা একটা করে খোলা হয়</span></div>' + con.map(function (c) {
+      var stt = c.kill_switch ? ['থামানো', 'x'] : c.enabled ? ['চালু', 'lead'] : ['বন্ধ', ''];
+      return '<div class="bc-con"><b data-noi18n="1">' + esc(netName(c.platform)) + ' · ' + esc(c.key) + '</b><span class="bc-tag ' + stt[1] + '">' + stt[0] + '</span><small data-noi18n="1">' + (c.official ? 'অফিসিয়াল' : 'অনানুষ্ঠানিক') + ' · ঝুঁকি ' + esc(c.risk || '') + (c.note ? ' · ' + esc(c.note) : '') + '</small></div>';
+    }).join('') + '</div>';
+    return h + setupHtml(true);
+  }
+  function setupHtml(fold) {
+    var set = C.d.cockpit && C.d.cockpit.keySet;
+    var body = '<div class="bc-note" style="margin-top:0">Mac-এর bridge চাবিটা এখানে দিন (G:\\bendar-brand\\bridge\\.env-এর BRIDGE_KEY লাইন)। একবার রাখলে আর দেখা যায় না।</div><div class="bc-row">' +
+      '<input class="bc-in" id="bci_bkey" data-bcin="bkey" type="password" autocomplete="off" data-noi18n="1" style="flex:1;min-width:220px" placeholder="' + (set ? 'বসানো আছে; বদলাতে নতুনটা দিন' : 'চাবি') + '">' + btn('রাখুন', 'data-bc="setup"', 'dark', 'setup') + '</div>';
+    if (!fold) return '<div class="bc-wait calm" style="display:block"><p style="margin-bottom:10px">Brand desk যুক্ত করুন</p>' + body + '</div>';
+    return '<div class="bc-block"><button type="button" class="bc-fold' + (C.fold.key ? ' on' : '') + '" data-bc="fold" data-id="key" aria-expanded="' + !!C.fold.key + '">' + svg('right') + 'Mac-এর চাবি ' + (set ? '(বসানো আছে)' : '(বসানো নেই)') + '</button>' + (C.fold.key ? '<div style="margin-top:8px">' + body + '</div>' : '') + '</div>';
+  }
+  // ---------- the Connections map
   var NODES = [
     { id: 'phone', col: 0, t: 'ফোন (Immich app)', d: 'ছবি আর ভিডিও তোলেন, Brand album-এ রাখেন', to: ['immich'] },
     { id: 'pcfolder', col: 0, t: 'PC ফোল্ডার', d: 'G:\\Brand-upload-এ ফাইল রাখলেই উঠে যায়', to: ['immich'] },
@@ -58433,7 +58987,7 @@ body.bc-live #side,body.bc-live #navBackdrop{display:none!important}
     { id: 'immich', col: 1, t: 'Immich', d: 'আপনার মিডিয়া লাইব্রেরি, শুধু Brand album ব্যবহার হয়', to: ['hub'], h: 'immich' },
     { id: 'memos', col: 1, t: 'Memos', d: 'journal আর কলের নোট', to: ['hub'], h: 'memos' },
     { id: 'kanboard', col: 1, t: 'Kanboard', d: 'কাজের তালিকা আর আইডিয়া বোর্ড', to: ['hub'], h: 'kanboard' },
-    { id: 'listen', col: 1, t: 'Listen', d: 'comment বাছাই: প্রশ্ন, দাম, লিড', to: ['core'], h: 'core' },
+    { id: 'listen', col: 1, t: 'Listen', d: 'comment বাছাই: প্রশ্ন, দাম, লিড', to: ['core', 'leads'], h: 'core' },
     { id: 'hub', col: 2, t: 'Bridge · Mac mini', d: 'সব টুলের একটাই দরজা; ককপিট শুধু এর সাথে কথা বলে', to: ['cockpit', 'postiz', 'core', 'ai', 'render', 'shorts'], hub: 1 },
     { id: 'core', col: 2, t: 'Brand database', d: 'আইডিয়া, draft, নিয়ম, claim check', to: ['ai', 'hub'], h: 'core' },
     { id: 'ai', col: 2, t: 'AI (ChatGPT plan)', d: 'আইডিয়া থেকে প্রতি network-এর draft লেখে', to: ['core'], h: 'ai' },
@@ -58443,177 +58997,257 @@ body.bc-live #side,body.bc-live #navBackdrop{display:none!important}
     { id: 'pacer', col: 3, t: 'Pacer (লাইন)', d: 'প্রতি network-এ একটা করে পোস্ট, ২০ মিনিট পর পর', to: ['postiz'], h: 'pacer' },
     { id: 'postiz', col: 3, t: 'Postiz', d: 'network-এ আসলে পোস্ট করে', to: ['networks'], h: 'postiz' },
     { id: 'networks', col: 3, t: 'Networks', d: '', to: [] },
-    { id: 'leads', col: 3, t: 'ERP Leads', d: 'Listen-এর লিড Costareen / Oliareen-এর Leads-এ যায়', to: [] }
+    { id: 'leads', col: 3, t: 'ERP Leads', d: 'শোনা আর মানুষ পেজের লিড Costareen / Oliareen-এর Leads-এ যায়', to: [] }
   ];
-  NODES.forEach(function (n) { if (n.id === 'listen') n.to.push('leads'); });
   var COLS = ['যেখান থেকে আসে', 'যেখানে জমা থাকে', 'যা কাজ করে', 'যেখানে যায়'];
+  function nodeName(x) { var m = NODES.filter(function (y) { return y.id === x; })[0]; return m ? m.t : x; }
   function mapPageHtml() {
     var h = headHtml('সংযোগ', 'কোন টুল কীসের সাথে জোড়া, এখনকার অবস্থা সহ');
-    var d = C.data, k = (d && d.cockpit) || {}, hl = k.health || {};
-    var nets = lines().map(function (l) { return netName(l.net); }).join(', ');
+    var d = C.d.cockpit, k = (d && d.cockpit) || {}, hl = k.health || {}, ns = lines().map(function (l) { return netName(l.net); }).join(', ');
     h += '<div class="bc-net" id="bc_net"><svg class="wires" id="bc_wires"></svg>' + COLS.map(function (c, ci) {
       return '<div class="bc-col"><h3>' + c + '</h3>' + NODES.filter(function (n) { return n.col === ci; }).map(function (n) {
-        var st = n.h ? (d && d.cockpit ? (hl[n.h] ? '<span class="bc-dot" title="চলছে"></span>' : '<span class="bc-dot off" title="বন্ধ"></span>') : '') : '';
-        var desc = n.id === 'networks' ? (nets || 'এখনো কিছু যুক্ত নেই') : n.d;
-        var to = n.to.map(function (x) { var m = NODES.filter(function (y) { return y.id === x; })[0]; return m ? m.t : x; }).join(', ');
-        return '<button type="button" class="bc-node' + (n.hub ? ' hub' : '') + (C.node === n.id ? ' lit' : '') + '" style="--lc:' + ['#C13584', '#F2A900', '#0A66C2', '#14803F'][ci] + '" data-bc="node" data-id="' + n.id + '"><b>' + esc(n.t) + st + '</b><span>' + esc(desc) + '</span>' + (to ? '<span class="to">পাঠায়: ' + esc(to) + '</span>' : '') + '</button>';
+        var st = n.h && d && d.cockpit ? (hl[n.h] ? '<span class="bc-dot" title="চলছে"></span>' : '<span class="bc-dot off" title="বন্ধ"></span>') : '';
+        var to = n.to.map(nodeName).join(', ');
+        return '<button type="button" class="bc-node' + (n.hub ? ' hub' : '') + (C.node === n.id ? ' lit' : '') + '" style="--lc:' + ['#C13584', '#F2A900', '#0A66C2', '#14803F'][ci] + '" data-bc="node" data-id="' + n.id + '"><b>' + esc(n.t) + st + '</b><span>' + esc(n.id === 'networks' ? (ns || 'এখনো কিছু যুক্ত নেই') : n.d) + '</span>' + (to ? '<span class="to">পাঠায়: ' + esc(to) + '</span>' : '') + '</button>';
       }).join('') + '</div>';
     }).join('') + '</div>';
     var sel = NODES.filter(function (n) { return n.id === C.node; })[0];
-    h += '<div class="bc-why" id="bc_why">' + (sel ? whyHtml(sel) : '<b>একটা বাক্সে চাপুন</b><p>সেটা কোথা থেকে কী পায় আর কোথায় পাঠায়, তার তারগুলো জ্বলে উঠবে। সবুজ বিন্দু = চলছে, লাল = বন্ধ।</p>') + '</div>';
-    if (d && !d.online) h += '<div class="bc-gap">Mac-এর সাথে এখন যোগ নেই, তাই কোনো টুলের অবস্থা দেখানো যাচ্ছে না।</div>';
+    h += '<div class="bc-why" id="bc_why">' + (sel ? whyHtml(sel) : '<b>একটা বাক্সে চাপুন</b><p>সেটা কোথা থেকে কী পায় আর কোথায় পাঠায়, তার তারগুলো জ্বলে উঠবে। সবুজ বিন্দু মানে চলছে, লাল মানে বন্ধ।</p>') + '</div>';
+    if (d && !d.online) h += '<div class="bc-note">Mac-এর সাথে এখন যোগ নেই, তাই কোনো টুলের অবস্থা দেখানো যাচ্ছে না।</div>';
     return h;
   }
   function whyHtml(n) {
-    var from = NODES.filter(function (x) { return x.to.indexOf(n.id) >= 0; }).map(function (x) { return x.t; });
-    var to = n.to.map(function (x) { var m = NODES.filter(function (y) { return y.id === x; })[0]; return m ? m.t : x; });
+    var from = NODES.filter(function (x) { return x.to.indexOf(n.id) >= 0; }).map(function (x) { return x.t; }), to = n.to.map(nodeName);
     return '<b>' + esc(n.t) + '</b><p>' + esc(n.id === 'networks' ? 'Postiz যেসব account-এ পোস্ট করে।' : n.d) + '</p><p>' + (from.length ? 'পায়: ' + esc(from.join(', ')) + '. ' : '') + (to.length ? 'পাঠায়: ' + esc(to.join(', ')) + '.' : '') + '</p>';
   }
   function wires() {
     var box = el('bc_net'), sv = el('bc_wires'); if (!box || !sv) return;
     var r0 = box.getBoundingClientRect(), p = '';
-    function rc(id) { var e = box.querySelector('.bc-node[data-id="' + id + '"]'); if (!e) return null; var r = e.getBoundingClientRect(); return { l: r.left - r0.left, r: r.right - r0.left, t: r.top - r0.top, b: r.bottom - r0.top, cy: r.top - r0.top + r.height / 2, cx: r.left - r0.left + r.width / 2 }; }
+    function rc(id) { var e = box.querySelector('.bc-node[data-id="' + id + '"]'); if (!e) return null; var r = e.getBoundingClientRect(); return { l: r.left - r0.left, r: r.right - r0.left, cy: r.top - r0.top + r.height / 2, cx: r.left - r0.left + r.width / 2 }; }
     NODES.forEach(function (n) {
       var a = rc(n.id); if (!a) return;
       n.to.forEach(function (x) {
         var b = rc(x); if (!b) return;
-        var lit = C.node && (C.node === n.id || C.node === x);
-        var d;
-        if (Math.abs(a.cx - b.cx) < 20) { var sx = a.l, ex = b.l, mx = Math.min(sx, ex) - 18; d = 'M' + sx + ' ' + a.cy + ' C' + mx + ' ' + a.cy + ' ' + mx + ' ' + b.cy + ' ' + ex + ' ' + b.cy; }
+        var lit = C.node && (C.node === n.id || C.node === x), d;
+        if (Math.abs(a.cx - b.cx) < 20) { var mx = Math.min(a.l, b.l) - 18; d = 'M' + a.l + ' ' + a.cy + ' C' + mx + ' ' + a.cy + ' ' + mx + ' ' + b.cy + ' ' + b.l + ' ' + b.cy; }
         else { var fw = b.cx > a.cx, s1 = fw ? a.r : a.l, e1 = fw ? b.l : b.r, m = (s1 + e1) / 2; d = 'M' + s1 + ' ' + a.cy + ' C' + m + ' ' + a.cy + ' ' + m + ' ' + b.cy + ' ' + e1 + ' ' + b.cy; }
-        p += '<path d="' + d + '"' + (lit ? ' class="lit"' : '') + '/>';
+        p += '<path d="' + d + '"' + (lit ? ' class="lit" marker-end="url(#bc_arl)"' : ' marker-end="url(#bc_ar)"') + '/>';
       });
     });
-    sv.innerHTML = '<defs><marker id="bc_ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#8A909B"/></marker><marker id="bc_arl" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#16181D"/></marker></defs>' + p.replace(/<path d="([^"]+)" class="lit"\/>/g, '<path d="$1" class="lit" marker-end="url(#bc_arl)"/>').replace(/<path d="([^"]+)"\/>/g, '<path d="$1" marker-end="url(#bc_ar)"/>');
+    sv.innerHTML = '<defs><marker id="bc_ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#8A909B"/></marker><marker id="bc_arl" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#16181D"/></marker></defs>' + p;
     box.classList.toggle('lit', !!C.node);
   }
   addEventListener('resize', function () { if (on() && C.sec === 'map') wires(); });
-  // ---------- layout: our shell; the older sections live in .bc-old and are shown for their section
-  var BUSY = false;
-  function oldTabBtn(tab) {
-    var v = el('view'); if (!v) return null;
-    if (tab === 'rules') return v.querySelector('[data-bd7="tab"]');
-    if (tab === 'listen') return v.querySelector('[data-bd11="tab"]');
-    return v.querySelector('.bd-tabs [data-bd="tab"][data-id="' + tab + '"]');
+  // ---------- the shell: our own root beside #view (the older desk keeps rendering, hidden, inside #view)
+  function root() {
+    var r = el('bc_root'); if (r) return r;
+    var vw = el('view'); if (!vw || !vw.parentNode) return null;
+    r = document.createElement('div'); r.id = 'bc_root'; r.className = 'bc-root'; vw.parentNode.insertBefore(r, vw.nextSibling); return r;
   }
-  function oldTabNow() {
-    var v = el('view'), t = v && v.querySelector('.bd-tabs .bd-chip.on'); if (!t) return '';
-    return t.getAttribute('data-bd7') ? 'rules' : t.getAttribute('data-bd11') ? 'listen' : t.getAttribute('data-id');
+  function narrowNow() { var vw = el('view'), p = vw && vw.parentNode; return !!(p && p.clientWidth && p.clientWidth < 760); }
+  function sideHtml(narrow) {
+    if (C.sec === 'home') return narrow ? '' : sideDrafts();
+    if (C.sec === 'posts') return composerHtml();
+    if (C.sec === 'people') return personForm();
+    return '';
   }
-  function wantOld() { var o = secOld(C.sec); return o || 'today'; }
-  function syncOld() {
-    // make the older desk show the tab this section needs (it repaints, the observer re-lays out)
-    var want = wantOld(); if (oldTabNow() === want) return false;
-    var b = oldTabBtn(want); if (!b) return false;
-    setTimeout(function () { b.click(); }, 0); return true;
-  }
-  function draw() {
-    if (!on()) return;
-    var v = el('view'); if (!v) return;
-    var shell = v.querySelector(':scope > .bc');
-    if (!shell) return wrap();
-    var main = el('bc_mainin'), side = el('bc_side'), old = el('bc_old');
-    var rail = shell.querySelector('.bc-rail'); if (rail) rail.outerHTML = railHtml();
-    var own = !secOld(C.sec);
-    if (main) main.innerHTML = C.sec === 'home' ? homeHtml() : C.sec === 'results' ? resultsHtml() : C.sec === 'map' ? mapPageHtml() : headHtml((SECS.filter(function (s) { return s[0] === C.sec; })[0] || [])[1] || '', '');
-    if (old) old.classList.toggle('show', !own);
-    var dr = el('bd8_today'); if (dr) dr.classList.toggle('bc-cmp', C.sec === 'home');
-    shell.classList.toggle('noside', C.sec !== 'home');
-    if (side) {
-      if (C.sec === 'home') {
-        var hd = '<div class="bc-h2"><h2>আপনার অপেক্ষায়</h2><span>draft · অনুমোদন দিন বা বাদ দিন</span></div>';
-        if (!el('bc_sidehd')) side.insertAdjacentHTML('afterbegin', '<div id="bc_sidehd">' + hd + '</div>');
-        var narrow = shell.getBoundingClientRect().width < 760, wb = main && main.querySelector('.bc-wait');
-        if (narrow && wb) { var sh = el('bc_sidehd'); wb.insertAdjacentElement('afterend', sh); if (dr) sh.insertAdjacentElement('afterend', dr); }
-        else { var sh2 = el('bc_sidehd'); if (sh2 && sh2.parentNode !== side) side.insertBefore(sh2, side.firstChild); if (dr && dr.parentNode !== side) side.appendChild(dr); }
-      } else if (dr && old && dr.parentNode !== old) { var tabs = old.querySelector('.bd-tabs'); if (tabs) tabs.insertAdjacentElement('afterend', dr); else old.appendChild(dr); }
+  function mainHtml(narrow) {
+    switch (C.sec) {
+      case 'posts': return postsHtml(); case 'ideas': return ideasHtml(); case 'media': return mediaHtml(); case 'listen': return listenHtml();
+      case 'people': return peopleHtml(); case 'results': return resultsHtml(); case 'rules': return rulesHtml(); case 'map': return mapPageHtml();
+      default: return homeHtml(narrow);
     }
-    if (C.sec === 'map') requestAnimationFrame(wires);
-    if (C.sec === 'home') requestAnimationFrame(function () { var sc = shell.querySelector('.bc-scroll'), nw = sc && sc.querySelector('.bc-now'); if (sc && nw && sc.scrollWidth > sc.clientWidth && !sc.dataset.moved) { sc.scrollLeft = nw.offsetLeft - sc.clientWidth / 2; sc.dataset.moved = 1; } });
-    watchDrafts();
   }
-  // the drafts (older brand-8 markup) get Bangla words, Approve as the main button, one account picked when there is only one,
-  // and in the side column a short form with an Edit toggle
-  var LBL = { approve: 'অনুমোদন দিন', reject: 'বাদ দিন', copy: 'লেখা কপি', cards: 'ছবি বানান', manual: 'নিজে পোস্ট করেছি' };
-  var OPEN = {}, WATCHED = typeof WeakSet === 'function' ? new WeakSet() : null;
-  function tidyDrafts() {
-    var box = el('bd8_today'); if (!box) return;
-    [].forEach.call(box.querySelectorAll('.bd8-draft'), function (d) {
-      var ap = d.querySelector('[data-bd8="approve"]'), id = ap && ap.getAttribute('data-id'); if (!id) return;
-      [].forEach.call(d.querySelectorAll('[data-bd8]'), function (x) { var w = x.getAttribute('data-bd8'); if (LBL[w] && !x.querySelector('.wd-spin') && x.textContent.trim() !== LBL[w]) x.textContent = LBL[w]; });
-      var u = d.querySelector('input[id^="bd8_url_"]'); if (u) u.placeholder = 'পোস্টের লিংক (না দিলেও চলে)';
-      var chips = d.querySelectorAll('[data-bd8="net"]'); if (chips.length === 1 && !d.querySelector('[data-bd8="net"].on') && !d.dataset.auto) { d.dataset.auto = 1; chips[0].click(); }
-      d.classList.toggle('open', !!OPEN[id]);
-      if (!d.querySelector('.bc-edit')) { var row = ap.parentNode; row.insertAdjacentHTML('beforeend', '<button type="button" class="bc-edit" data-bc="edit" data-id="' + id + '">' + (OPEN[id] ? 'ছোট করুন' : 'বদলান') + '</button>'); }
-    });
-  }
-  function watchDrafts() {
-    var box = el('bd8_today'); if (!box) return; tidyDrafts();
-    if (WATCHED && !WATCHED.has(box)) { WATCHED.add(box); try { new MutationObserver(function () { tidyDrafts(); }).observe(box, { childList: true }); } catch (e) {} }
-  }
-  function wrap() {
-    if (BUSY || !on()) return; var v = el('view'); if (!v) return;
-    if (v.querySelector(':scope > .bc')) return;
-    if (!v.firstChild) return;
-    BUSY = true;
+  var DRAWING = false;
+  function draw() {
+    if (!on() || DRAWING) return;
+    var r = root(); if (!r) return;
+    DRAWING = true;
     try {
-      fonts();
-      var kids = [].slice.call(v.childNodes);
-      v.classList.add('bc-on');
-      var shell = document.createElement('div'); shell.className = 'bc'; shell.innerHTML = railHtml() + '<main class="bc-main"><div id="bc_mainin"></div><div class="bc-old" id="bc_old"></div></main><aside class="bc-side" id="bc_side" aria-label="আপনার অপেক্ষায়"></aside>';
-      var old = shell.querySelector('#bc_old'); kids.forEach(function (k) { old.appendChild(k); });
-      v.appendChild(shell);
-      if (!C.data) load();
-      draw();
-      syncOld();
-      document.body.classList.add('bc-live');
-    } finally { BUSY = false; }
+      need();
+      var ae = document.activeElement, fid = ae && ae.id && r.contains(ae) ? ae.id : '', ss = null, se = null;
+      try { if (fid && ae.selectionStart != null) { ss = ae.selectionStart; se = ae.selectionEnd; } } catch (e) {}
+      var narrow = narrowNow(), side = sideHtml(narrow);
+      r.innerHTML = '<div class="bc' + (side ? '' : ' noside') + '">' + railHtml() + '<main class="bc-main">' + mainHtml(narrow) + '</main>' + (side ? '<aside class="bc-side" aria-label="' + (C.sec === 'posts' ? 'নতুন পোস্ট' : C.sec === 'people' ? 'Leads-এ যোগ' : 'আপনার অপেক্ষায়') + '">' + side + '</aside>' : '') + '</div>';
+      if (fid) { var nf = el(fid); if (nf) { try { nf.focus({ preventScroll: true }); if (ss != null) nf.setSelectionRange(ss, se); } catch (e) {} } }
+      if (C.sec === 'map') requestAnimationFrame(wires);
+      if (C.sec === 'home') requestAnimationFrame(function () { var sc = r.querySelector('.bc-scroll'), nw = sc && sc.querySelector('.bc-now'); if (sc && nw && sc.scrollWidth > sc.clientWidth && !C.moved) { sc.scrollLeft = nw.offsetLeft - sc.clientWidth / 2; C.moved = 1; } });
+    } finally { DRAWING = false; }
   }
-  function unwrapClass() { var v = el('view'); if (v && !on()) v.classList.remove('bc-on'); document.body.classList.toggle('bc-live', on() && !!(v && v.querySelector(':scope > .bc'))); }
+  function sync() {
+    var live = on();
+    document.body.classList.toggle('bc-live', live);
+    if (!live) return;
+    var r = root(); if (!r) return;
+    if (!r.firstChild) { fonts(); if (!C.d.cockpit) get('cockpit'); draw(); }
+    else if (C.t && Date.now() - C.t > 120000 && !C.busy.g_cockpit) get('cockpit', true);
+  }
   var rp = repaint;
-  repaint = function () { var r = rp.apply(this, arguments); unwrapClass(); if (on()) wrap(); return r; };
-  try { new MutationObserver(function () { unwrapClass(); if (on()) wrap(); }).observe(el('view') || document.body, { childList: true }); } catch (e) {}
-  // ---------- tooltip on stations (the signature: the whole line lights, the post is named)
+  repaint = function () { var x = rp.apply(this, arguments); sync(); return x; };
+  try { new MutationObserver(function () { sync(); }).observe(el('view') || document.body, { childList: true }); } catch (e) {}
+  setTimeout(sync, 0);
+  // ---------- tooltip on stations: the whole line lights, the post is named
   var tip = null;
-  function tipShow(btn) {
-    var s = findSt(btn.getAttribute('data-id')); if (!s) return;
+  function tipShow(b) {
+    var s = findSt(b.getAttribute('data-id')); if (!s) return;
     if (!tip) { tip = document.createElement('div'); tip.className = 'bc-tip'; tip.setAttribute('role', 'tooltip'); document.body.appendChild(tip); }
     var t = new Date(s.at);
     tip.innerHTML = '<small>' + esc(netName(s.net)) + ' · ' + DAY[t.getDay()] + ' ' + dDate(t) + ', ' + dTime(t) + ' · ' + stLabel(s) + '</small><span data-noi18n="1">' + esc((s.text || '').slice(0, 120)) + '</span>';
-    var r = btn.getBoundingClientRect(); tip.style.left = Math.max(8, Math.min(innerWidth - 310, r.left - 20)) + 'px'; tip.style.top = (r.bottom + 8) + 'px'; tip.classList.add('on');
-    var m = el('bc_map'), ln = btn.closest('.bc-ln'); if (m && ln) { m.classList.add('lit'); ln.classList.add('lit'); }
+    var r = b.getBoundingClientRect(); tip.style.left = Math.max(8, Math.min(innerWidth - 310, r.left - 20)) + 'px'; tip.style.top = (r.bottom + 8) + 'px'; tip.classList.add('on');
+    var m = el('bc_map'), ln = b.closest('.bc-ln'); if (m && ln) { m.classList.add('lit'); ln.classList.add('lit'); }
   }
   function tipHide() { if (tip) tip.classList.remove('on'); var m = el('bc_map'); if (m) { m.classList.remove('lit'); [].forEach.call(m.querySelectorAll('.bc-ln.lit'), function (x) { x.classList.remove('lit'); }); } }
   document.addEventListener('mouseover', function (e) { var b = e.target.closest && e.target.closest('.bc-st'); if (b) tipShow(b); });
   document.addEventListener('mouseout', function (e) { var b = e.target.closest && e.target.closest('.bc-st'); if (b) tipHide(); });
   document.addEventListener('focusin', function (e) { var b = e.target.closest && e.target.closest('.bc-st'); if (b) tipShow(b); });
   document.addEventListener('focusout', function (e) { var b = e.target.closest && e.target.closest('.bc-st'); if (b) tipHide(); });
+  // ---------- inputs keep their text in the state, so a redraw never loses what he typed
+  document.addEventListener('input', function (e) {
+    var x = e.target; if (!on() || !x.getAttribute) return; var k = x.getAttribute('data-bcin'); if (!k) return;
+    C.v[k] = x.type === 'checkbox' ? x.checked : x.value;
+    if (k === 'ctext') { var m = el('bc_meters'); if (m) m.innerHTML = metersHtml(); var pb = document.querySelector('[data-bc="cpost"]'), lb2 = document.querySelector('[data-bc="clint"]'); var pk = C.v.cnets || {}; if (pb) pb.disabled = !x.value || !Object.keys(pk).some(function (q) { return pk[q]; }); if (lb2) lb2.disabled = !x.value; C.cmpLint = null; }
+    if (k === 'vq') C.vq = x.value;
+  });
+  document.addEventListener('change', function (e) { var x = e.target; if (on() && x.getAttribute && x.getAttribute('data-bcin')) C.v[x.getAttribute('data-bcin')] = x.type === 'checkbox' ? x.checked : x.value; });
+  document.addEventListener('keydown', function (e) {
+    if (!on()) return;
+    var t = e.target;
+    if (e.key === 'Enter' && !e.shiftKey && t.id === 'bci_cap') { e.preventDefault(); saveCap(); return; }
+    if (e.key === 'Enter' && t.id === 'bci_card') { e.preventDefault(); addCard(); return; }
+    if ((e.key === 'Enter' || e.key === ' ') && t.closest && t.closest('.bc-health,.bc-dep') && t === t.closest('.bc-health,.bc-dep')) { e.preventDefault(); t.click(); return; }
+    if (e.key === 'Escape' && (C.pick || C.dep)) { C.pick = ''; C.dep = ''; draw(); }
+  });
+  document.addEventListener('submit', function (e) { var f = e.target; if (on() && f.getAttribute && f.getAttribute('data-bc-form') === 'vfind') { e.preventDefault(); findVids(); } });
+  function findVids() { C.d.videos = null; C.err.videos = ''; get('videos'); draw(); }
+  function saveCap() {
+    var t = String(v('cap')).trim(); if (!t) return toast('আগে লিখুন।', true);
+    act('capsave', 'erpBrandDeskIdea', { content: t }, function (r) { C.d.memos = r; C.v.cap = ''; toast('জমা রাখা হলো।'); });
+  }
+  function addCard() {
+    var t = String(v('card')).trim(); if (!t) return;
+    var col = C.d.board && C.d.board.board && C.d.board.board.columns[0];
+    act('cardadd', 'erpBrandDeskCard', { title: t, column: col ? col.id : null }, function (r) { C.d.board = r; C.v.card = ''; });
+  }
+  function platsPicked() { return PLATS.filter(function (p) { return C.plats[p]; }); }
+  function write(args) {
+    var pl = platsPicked(); if (!pl.length) return toast('অন্তত একটা network বেছে নিন।', true);
+    args.platforms = pl;
+    act('write', 'erpBrandDeskMakeDrafts', args, function (r) { C.d.drafts = r; poll('drafts'); toast('AI লিখছে। এক-দুই মিনিটে পোস্ট পেজে অপেক্ষায় আসবে।'); });
+  }
+  function findDraft(id) { return waitingList().filter(function (w) { return String(w.id) === String(id); })[0]; }
+  function approve(id, done, bad) {
+    var x = findDraft(id); if (!x) { if (bad) bad(); return; }
+    var sel = accSel(x, accountsFor(x));
+    if (!sel.length) { if (bad) bad(); if (C.sec !== 'posts') { C.sec = 'posts'; C.ptab = 'wait'; draw(); } return toast('কোন account-এ যাবে, বেছে নিন।', true); }
+    var at = v('a' + id);
+    act('ap' + id, 'erpBrandDeskDraftDecide', { id: Number(id), action: 'approve', networks: sel.map(function (n) { return { id: n.id, platform: n.platform }; }), body: v('e' + id, x.body || ''), at: at ? new Date(at).toISOString() : null },
+      function (r) { C.d.drafts = r; delete C.v['e' + id]; delete C.v['a' + id]; if (!done) toast('অনুমোদন হলো, লাইনে দেওয়া হলো।'); get('cockpit', true); if (done) done(); }, bad);
+  }
   document.addEventListener('click', function (e) {
     if (!on()) return;
-    var t = e.target.closest && e.target.closest('[data-bc]');
-    if (!t) { if (e.target.closest && e.target.closest('[data-bd="send"],[data-bd="drop"]')) { C.pick = ''; setTimeout(function () { C.data = null; load(); }, 1500); } return; }
-    var what = t.getAttribute('data-bc'), id = t.getAttribute('data-id');
-    if (what === 'sec') { C.sec = id; C.pick = ''; try { localStorage.setItem('bc_sec', id); } catch (e2) {} if (!syncOld()) draw(); else draw(); scrollTo({ top: 0 }); }
-    else if (what === 'reload') { C.data = null; draw(); load(); var rb = el('view') && el('view').querySelector('[data-bd="reload"]'); if (rb) rb.click(); }
-    else if (what === 'wk') { C.wk = Number(id); C.pick = ''; draw(); }
-    else if (what === 'st') { tipHide(); C.pick = C.pick === id ? '' : id; var s = findSt(id); if (s) { var w0 = weekStart(0), t0 = new Date(s.at); C.wk = Math.floor((t0 - w0) / (7 * 864e5)); } draw(); var pk = el('view').querySelector('.bc-pick'); if (pk && pk.scrollIntoView) pk.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
-    else if (what === 'unpick') { C.pick = ''; draw(); }
-    else if (what === 'go') { document.body.classList.remove('bc-live'); if (typeof go === 'function') go(id); }
-    else if (what === 'edit') { OPEN[id] = !OPEN[id]; tidyDrafts(); t.textContent = OPEN[id] ? 'ছোট করুন' : 'বদলান'; }
-    else if (what === 'retry') {
+    var t = e.target.closest && e.target.closest('[data-bc]'); if (!t || !el('bc_root') || !el('bc_root').contains(t)) return;
+    var w = t.getAttribute('data-bc'), id = t.getAttribute('data-id');
+    if (w === 'sec') { C.sec = id; C.pick = ''; C.dep = ''; try { localStorage.setItem('bc_sec', id); } catch (e2) {} draw(); scrollTo({ top: 0 }); }
+    else if (w === 'reload') { var ks = NEED[C.sec] || []; ['cockpit'].concat(ks).forEach(function (k) { if (k !== 'cockpit') { C.d[k] = null; C.err[k] = ''; } }); C.err.cockpit = ''; get('cockpit', true); draw(); }
+    else if (w === 'retry-get') { C.err[id] = ''; get(id, true); draw(); }
+    else if (w === 'go') { document.body.classList.remove('bc-live'); if (typeof go === 'function') go(id); }
+    else if (w === 'wk') { C.wk = Number(id); C.pick = ''; draw(); }
+    else if (w === 'st') { tipHide(); C.pick = C.pick === id ? '' : id; var s = findSt(id); if (s) { C.wk = Math.floor((new Date(s.at) - weekStart(0)) / (7 * 864e5)); } draw(); var pk = el('bc_root').querySelector('.bc-pick'); if (pk && pk.scrollIntoView) pk.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+    else if (w === 'unpick') { C.pick = ''; draw(); }
+    else if (w === 'dep') { if (e.target.closest('button,a') && e.target.closest('button,a') !== t) return; C.dep = C.dep === id ? '' : id; draw(); }
+    else if (w === 'ptab') { C.sec = 'posts'; C.ptab = id; try { localStorage.setItem('bc_sec', 'posts'); } catch (e3) {} draw(); scrollTo({ top: 0 }); }
+    else if (w === 'todrafts') { var fd = el('bc_root').querySelector('#bc_sidehd'); var tk = el('bc_root').querySelector('.bc-side .bc-tk, #bc_side_drafts .bc-tk'); if (tk) { tk.scrollIntoView({ behavior: 'smooth', block: 'center' }); tk.classList.remove('bc-flash'); void tk.offsetWidth; tk.classList.add('bc-flash'); var fa = tk.querySelector('[data-bc="approve"]'); if (fa) setTimeout(function () { fa.focus({ preventScroll: true }); }, 400); } else if (fd) fd.scrollIntoView({ behavior: 'smooth' }); }
+    else if (w === 'resend') {
       var rs = findSt(id); if (!rs || !rs.raw || !rs.raw.integration) return toast('এই পোস্টটা আবার পাঠানো যাচ্ছে না।', true);
-      t.disabled = true; t.textContent = 'পাঠাচ্ছি…';
-      srv('erpBrandDeskPost', [{ networks: [{ id: rs.raw.integration, platform: rs.raw.platform }], content: rs.text, at: null, urgent: true }], function () { toast('আবার লাইনে দেওয়া হলো, আগে যাবে।'); C.pick = ''; C.data = null; load(); },
-        function (e3) { t.disabled = false; t.textContent = 'আবার পাঠান'; toast(esc((e3 && e3.message) || e3), true, 9000); });
+      act('rs' + id, 'erpBrandDeskPost', { networks: [{ id: rs.raw.integration, platform: rs.raw.platform }], content: rs.text, at: null, urgent: true }, function () { toast('আবার লাইনে দেওয়া হলো, আগে যাবে।'); C.pick = ''; get('cockpit', true); });
     }
-    else if (what === 'todrafts') { var fd = el('bd8_today') && el('bd8_today').querySelector('.bd8-draft'); if (fd) { fd.scrollIntoView({ behavior: 'smooth', block: 'center' }); fd.classList.remove('bc-flash'); void fd.offsetWidth; fd.classList.add('bc-flash'); var fa = fd.querySelector('[data-bd8="approve"]'); if (fa) setTimeout(function () { fa.focus({ preventScroll: true }); }, 400); } }
-    else if (what === 'node') { C.node = C.node === id ? '' : id; [].forEach.call(document.querySelectorAll('.bc-node'), function (x) { x.classList.toggle('lit', x.getAttribute('data-id') === C.node); }); var n = NODES.filter(function (x) { return x.id === C.node; })[0]; var w = el('bc_why'); if (w) w.innerHTML = n ? whyHtml(n) : '<b>একটা বাক্সে চাপুন</b><p>তারগুলো জ্বলে উঠবে।</p>'; wires(); }
+    else if (w === 'decide') { var a = t.getAttribute('data-act'); act((a === 'send' ? 'dc' : 'dd') + id, 'erpBrandDeskDecide', { id: id, action: a }, function () { toast(a === 'send' ? 'এখনই পাঠানো হচ্ছে।' : 'বাদ দেওয়া হলো।'); C.pick = ''; get('cockpit', true); }); }
+    // drafts
+    else if (w === 'approve') approve(id);
+    else if (w === 'approveall') {
+      var g = groups().filter(function (x) { return x.key === id; })[0]; if (!g) return;
+      var ids = g.list.filter(function (x) { return accSel(x, accountsFor(x)).length; }).map(function (x) { return x.id; }), n = 0;
+      C.busy['aa' + id] = 1; draw();
+      var fin = function () { C.busy['aa' + id] = 0; if (n) toast(bn(n) + 'টা অনুমোদন হলো, লাইনে দেওয়া হলো।'); draw(); };
+      (function next() { if (!ids.length) return fin(); approve(ids.shift(), function () { n++; next(); }, fin); })();
+    }
+    else if (w === 'reject') act('rj' + id, 'erpBrandDeskDraftDecide', { id: Number(id), action: 'reject' }, function (r) { C.d.drafts = r; toast('বাদ দেওয়া হলো।'); get('cockpit', true); });
+    else if (w === 'edit') { C.sec = 'posts'; C.ptab = 'wait'; C.open = C.open || {}; draw(); setTimeout(function () { var b = el('bci_e' + id); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.focus({ preventScroll: true }); } }, 60); }
+    else if (w === 'acc') { var n2 = t.getAttribute('data-n'); C.acc[id] = C.acc[id] || {}; C.acc[id][n2] = !C.acc[id][n2]; draw(); }
+    else if (w === 'more') { C.open[id] = !C.open[id]; draw(); }
+    else if (w === 'copy') { var x = findDraft(id), txt = v('e' + id, x ? x.body : ''); try { navigator.clipboard.writeText(txt).then(function () { toast('কপি হলো। পোস্ট করে “নিজে পোস্ট করেছি” চাপুন।'); }, function () { toast('কপি করা গেল না; লেখাটা বেছে নিজে কপি করুন।', true); }); } catch (e4) { toast('কপি করা গেল না।', true); } }
+    else if (w === 'manual') { var xm = findDraft(id); act('mn' + id, 'erpBrandDeskDraftDecide', { id: Number(id), action: 'manual', body: v('e' + id, xm ? xm.body : ''), url: String(v('u' + id)).trim() }, function (r) { C.d.drafts = r; toast('নিজে পোস্ট করা হিসেবে রাখা হলো।'); }); }
+    else if (w === 'cards') {
+      var cid = Number(id); C.cards[cid] = { state: 'making', pictures: [] }; draw();
+      srv('erpBrandDeskMakeCards', [{ draft_id: cid }], function () { setTimeout(function () { loadCards(cid); }, 15000); }, function (e5) { C.cards[cid] = { state: 'failed', error: (e5 && e5.message) || String(e5) }; draw(); });
+    }
+    // composer
+    else if (w === 'cnet') { var cn = C.v.cnets = C.v.cnets || {}; cn[id] = !cn[id]; draw(); }
+    else if (w === 'clint') act('clint', 'erpBrandDeskLint', { text: v('ctext') }, function (r) { C.cmpLint = r; });
+    else if (w === 'cpost') {
+      var pk2 = C.v.cnets || {}, ns = nets().filter(function (n) { return pk2[n.id]; }).map(function (n) { return { id: n.id, platform: n.platform }; }), at2 = v('cat');
+      act('cpost', 'erpBrandDeskPost', { networks: ns, content: v('ctext'), at: at2 ? new Date(at2).toISOString() : null, urgent: !!C.v.curg }, function (r) { toast(bn(r.queued || 0) + 'টা লাইনে দেওয়া হলো।'); C.v.ctext = ''; C.v.cat = ''; C.v.curg = false; C.v.cnets = {}; C.cmpLint = null; C.ptab = 'next'; get('cockpit', true); });
+    }
+    // ideas
+    else if (w === 'plat') { if (!C.plats[id] && platsPicked().length >= 4) return toast('একবারে ৪টা network পর্যন্ত।', true); C.plats[id] = !C.plats[id]; draw(); }
+    else if (w === 'capsave') saveCap();
+    else if (w === 'capwrite') { var ct = String(v('cap')).trim(); if (!ct) return toast('আগে ভাবনাটা লিখুন।', true); write({ text: ct.slice(0, 2000) }); C.v.cap = ''; }
+    else if (w === 'writeidea') write({ idea_id: Number(id) });
+    else if (w === 'writetext') { var m = ((C.d.memos && C.d.memos.ideas) || []).filter(function (q) { return q.id === id; })[0]; if (m) write({ text: untag(m.content).slice(0, 2000) }); }
+    else if (w === 'toboard') act('tb' + id, 'erpBrandDeskIdeaToBoard', { id: id }, function (r) { C.d.memos = r; C.d.board = null; toast('বোর্ডে উঠল, আইডিয়া স্টেশনে।'); });
+    else if (w === 'jump') { var j = el(id); if (j) j.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    else if (w === 'fold') { C.fold[id] = !C.fold[id]; draw(); }
+    else if (w === 'cardadd') addCard();
+    else if (w === 'move') act('mv' + id, 'erpBrandDeskMove', { id: id, column: t.getAttribute('data-col') }, function (r) { C.d.board = r; });
+    else if (w === 'done') act('dn' + id, 'erpBrandDeskDone', { id: id }, function (r) { C.d.board = r; toast('কার্ড শেষ।'); });
+    // media
+    else if (w === 'vfind') { e.preventDefault(); findVids(); }
+    else if (w === 'vex') { C.vq = id; C.v.vq = id; findVids(); }
+    else if (w === 'vall') { C.vq = ''; C.v.vq = ''; findVids(); }
+    else if (w === 'vshorts') act('vs' + id, 'erpBrandDeskMakeShorts', { id: id }, function (r) { C.d.shorts = r; poll('shorts'); toast('Mac shorts বানাচ্ছে; হয়ে গেলে মিডিয়াতে আসবে।'); });
+    else if (w === 'vcard') act('vc' + id, 'erpBrandDeskCard', { title: 'Video: ' + id, description: 'Footage in Immich: ' + id, tags: ['video'] }, function (r) { C.d.board = r; toast('আইডিয়া বোর্ডে উঠল।'); });
+    // listen
+    else if (w === 'lf') { C.lf = id; draw(); }
+    else if (w === 'lopen') { C.lopen[id] = !C.lopen[id]; draw(); }
+    else if (w === 'lpaste') { C.paste = !C.paste; draw(); if (C.paste) setTimeout(function () { var p = el('bci_paste'); if (p) p.focus(); }, 30); }
+    else if (w === 'lpull') act('lpull', 'erpBrandDeskListenPull', {}, function (r) { C.d.listen = r; poll('listen'); toast('YouTube পড়া শুরু হলো।'); });
+    else if (w === 'lideas') act('lideas', 'erpBrandDeskListenIdeas', {}, function (r) { C.d.listen = r; C.d.drafts = null; toast(r.made ? bn(r.made) + 'টা নতুন আইডিয়া ব্যাংকে গেল।' : 'নতুন আইডিয়া হয়নি।'); });
+    else if (w === 'lpastego') act('lpastego', 'erpBrandDeskListenPaste', { text: v('paste'), source: String(v('psrc')).trim() }, function (r) { C.d.listen = r; C.v.paste = ''; C.v.psrc = ''; C.paste = false; poll('listen'); toast('comment বাছাই হচ্ছে।'); });
+    else if (w === 'lch') act('ch' + id, 'erpBrandDeskListenChannel', { id: id, active: t.getAttribute('data-on') === '1' }, function (r) { C.d.listen = r; });
+    else if (w === 'lhand') {
+      var biz = (C.d.listen && C.d.listen.businesses) || [], bz = v('lb' + id, biz[0] && biz[0].id);
+      act('lh' + id, 'erpBrandDeskListenToLead', { id: Number(id), business: bz }, function (r) { toast(r.added ? 'Leads-এ গেল।' : 'আগে থেকেই Leads-এ আছে।'); (C.d.listen.comments || []).forEach(function (c) { if (String(c.id) === String(id)) c.handed_at = new Date().toISOString(); }); });
+    }
+    // people
+    else if (w === 'nk') { C.nk = id; draw(); }
+    else if (w === 'npadd') {
+      var bl = (C.d.listen && C.d.listen.businesses) || [];
+      act('npadd', 'erpBrandDeskAddLead', { business: v('np_biz', bl[0] && bl[0].id), kind: C.nk, name: v('np_name'), phone: v('np_phone'), email: String(v('np_mail')).trim(), want: v('np_want'), source: v('np_src') },
+        function (r) { toast(r.added ? 'Leads-এ যোগ হলো।' : 'এই মানুষটা আগে থেকেই Leads-এ আছেন।'); ['np_name', 'np_phone', 'np_mail', 'np_want', 'np_src'].forEach(function (k) { C.v[k] = ''; }); });
+    }
+    else if (w === 'ptolead') { var b2 = (C.d.people && C.d.people.businesses) || []; act('pl' + id, 'erpBrandDeskToLeads', { id: id, business: v('pb' + id, b2[0] && b2[0].id) }, function (r) { toast(r.added ? 'Leads-এ গেল।' : 'আগে থেকেই Leads-এ আছে।'); }); }
+    // rules
+    else if (w === 'level') act('level', 'erpBrandDeskCadence', { level: id }, function (r) { C.d.settings = r; toast(id === 'scale' ? '“বাড়ানো” চালু হলো।' : '“শুরু” চালু হলো।'); });
+    else if (w === 'wopen') { C.open['w' + id] = !C.open['w' + id]; draw(); }
+    else if (w === 'wundo') { delete C.rw[id]; C.open['w' + id] = false; draw(); }
+    else if (w === 'wstep') {
+      var W0 = (C.d.settings.weights || {})[id] || {}, cur = C.rw[id] || (C.rw[id] = JSON.parse(JSON.stringify(W0))), tk2 = t.getAttribute('data-t');
+      cur[tk2] = Math.max(0, Math.min(100, Number(cur[tk2] || 0) + Number(t.getAttribute('data-d')))); draw();
+    }
+    else if (w === 'wsave') { var ws = {}; (C.d.settings.topics || []).forEach(function (q) { ws[q.key] = Number((C.rw[id] || {})[q.key] || 0); }); act('ws' + id, 'erpBrandDeskWeights', { platform: id, weights: ws }, function (r) { C.d.settings = r; delete C.rw[id]; C.open['w' + id] = false; toast(netName(id) + '-এর ভাগ রাখা হলো।'); }); }
+    else if (w === 'setup') { var key = String(v('bkey')).trim(); if (!key) return toast('আগে চাবি দিন।', true); act('setup', 'erpBrandDeskSetup', { key: key }, function () { C.v.bkey = ''; toast('চাবি রাখা হলো।'); get('cockpit', true); }); }
+    // connections
+    else if (w === 'node') { C.node = C.node === id ? '' : id; [].forEach.call(document.querySelectorAll('.bc-node'), function (x) { x.classList.toggle('lit', x.getAttribute('data-id') === C.node); }); var nd = NODES.filter(function (x) { return x.id === C.node; })[0], wy = el('bc_why'); if (wy) wy.innerHTML = nd ? whyHtml(nd) : '<b>একটা বাক্সে চাপুন</b><p>তারগুলো জ্বলে উঠবে।</p>'; wires(); }
   });
-  document.addEventListener('keydown', function (e) { if (on() && e.key === 'Escape' && C.pick) { C.pick = ''; draw(); } var h = e.target.closest && e.target.closest('.bc-health'); if (h && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); h.click(); } });
-  // drafts approved / rejected in the side column change the count: read the cockpit again shortly after
-  document.addEventListener('click', function (e) { if (on() && e.target.closest && e.target.closest('[data-bd8="approve"],[data-bd8="reject"],[data-bd8="manual"]')) setTimeout(function () { C.data = null; load(); }, 2500); });
+  function loadCards(id) {
+    srv('erpBrandDeskCards', [{ draft_id: id }], function (r) {
+      var j = r.job || {}; C.cards[id] = { state: j.state === 'making' ? 'making' : j.state === 'failed' ? 'failed' : 'done', error: j.error, pictures: r.pictures || [], hits: r.hits || [] };
+      draw(); if (C.cards[id].state === 'making') setTimeout(function () { loadCards(id); }, 10000);
+    }, function (e) { C.cards[id] = { state: 'failed', error: (e && e.message) || String(e) }; draw(); });
+  }
 })();
 </script>
+
 
 </body>
 </html>

@@ -322,6 +322,20 @@ export async function erpBrandDeskToLeads(ctx, payload) {
   return { added: r.added, business: target };
 }
 
+// brand-13 (13 Nov 2026): Twenty is parked, so the People page adds a person straight to one business's Leads
+export async function erpBrandDeskAddLead(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, target = str(p.business), name = str(p.name);
+  if (!(await leadTargets(ctx)).some((b) => b.id === target)) throw new Error('Pick one of your businesses.');
+  if (!name) throw new Error('Write the name.');
+  if (p.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(str(p.email))) throw new Error('That e-mail does not look right.');
+  const r = await addLead({ ...ctx, biz: target, memo: {} }, {
+    kind: str(p.kind) === 'supplier' ? 'supplier' : 'customer', name: name.slice(0, 120), email: str(p.email).slice(0, 200), phone: str(p.phone).slice(0, 40),
+    want: str(p.want).slice(0, 300), note: 'From the brand desk' + (str(p.source) ? ' - came from: ' + str(p.source).slice(0, 300) : ''),
+  });
+  return { added: r.added, business: target };
+}
+
 export async function erpBrandDeskVideos(ctx, payload) {
   await gate(ctx);
   const q = str(payload && payload.q).slice(0, 200);
@@ -362,4 +376,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
