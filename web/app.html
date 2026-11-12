@@ -58122,7 +58122,7 @@ body.bc-live #side,body.bc-live #navBackdrop{display:none!important}
 .bc-lb i::after{content:"";position:absolute;left:4px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:#fff;border:3px solid var(--c);box-sizing:border-box}
 .bc-lb small{font:500 12.5px "Hind Siliguri","Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-3)}
 .bc-tag{display:inline-block;font:600 12px "Hind Siliguri","Pretendard Variable",Pretendard,system-ui,sans-serif;background:var(--bc-shelf);color:var(--bc-ink-2);border-radius:6px;padding:2px 8px;white-space:nowrap}
-.bc-tag.lead{background:#E6F4EC;color:#11663A}
+.bc-tag.lead{background:var(--bc-ink);color:#fff}
 .bc-tag.x{background:#FDECEA;color:var(--bc-alert-ink)}
 .bc-tag.w{background:#FFF4D6;color:#7A5200}
 /* network chips (pick where a post goes) */
@@ -58175,7 +58175,7 @@ select.bc-in{padding-right:28px}
 .bc-dep .m{display:block;font-size:12.5px;color:var(--bc-ink-3);margin-top:6px;white-space:normal}
 .bc-stt{font:700 12.5px "Hind Siliguri","Pretendard Variable",Pretendard,system-ui,sans-serif;padding:3px 10px;border-radius:999px;background:var(--bc-shelf);color:var(--bc-ink-2);white-space:nowrap}
 .bc-stt.x{background:#FDECEA;color:var(--bc-alert-ink)}
-.bc-stt.go{background:#E6F4EC;color:#11663A}
+.bc-stt.go{background:var(--bc-shelf);color:var(--bc-ink)}
 .bc-clear{padding:34px 0;text-align:left}
 .bc-clear b{display:block;font:700 18px "Hind Siliguri","Pretendard Variable",Pretendard,system-ui,sans-serif}
 .bc-clear p{margin:4px 0 14px;color:var(--bc-ink-3);font-size:14px}
@@ -58218,7 +58218,7 @@ select.bc-in{padding-right:28px}
 .bc-fold svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;transition:transform .15s ease-out}
 .bc-fold.on svg{transform:rotate(90deg)}
 .bc-jobs{display:flex;align-items:center;gap:10px;background:var(--bc-shelf);border-radius:12px;padding:10px 14px;font-size:14px;margin-bottom:18px}
-.bc-jobs.done{background:#E6F4EC;color:#11663A}
+.bc-jobs.done{background:var(--bc-shelf);color:var(--bc-ink)}
 .bc-jobs.bad{background:#FDECEA;color:var(--bc-alert-ink)}
 /* board as a line of steps */
 .bc-steps{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:0;overflow-x:auto;padding-bottom:10px}
@@ -58344,7 +58344,8 @@ select.bc-in{padding-right:28px}
 .bc-days span small{display:block;font-weight:500;font-size:11.5px}
 .bc-days .t{color:var(--bc-ink);font-weight:800}
 .bc-ln{display:grid;grid-template-columns:var(--lab) 1fr;align-items:center;height:46px;border-bottom:1px solid var(--bc-rule);transition:opacity .18s ease-out}
-.bc-ln.empty{opacity:.42}
+.bc-ln.empty label{opacity:.5}
+.bc-ln.empty .bc-track::before{opacity:.45}
 .bc-ln label{font:600 13.5px "Pretendard Variable",Pretendard,"Hind Siliguri",system-ui,system-ui,sans-serif;display:flex;gap:8px;align-items:center;color:var(--bc-ink-2);min-width:0;line-height:1.2}
 .bc-ln label>span{display:flex;flex-direction:column;min-width:0}
 .bc-ln label s{width:12px;height:12px;border-radius:3px;flex:none;background:var(--c)}
@@ -58430,6 +58431,38 @@ select.bc-in{padding-right:28px}
 .bc-pv-f{margin-top:10px;padding-top:8px;border-top:1px dashed var(--bc-rule);font-size:12.5px;color:var(--bc-ink-3)}
 @container bc (max-width:1139px){.bc-desk{grid-template-columns:minmax(260px,320px) minmax(0,1fr)}}
 @container bc (max-width:759px){.bc-desk{display:block;border-radius:12px}.bc-dl{max-height:none;border-right:0;background:#fff}.bc-dt .bc-ta{min-height:200px}}
+.bc a:not(.bc-btn){color:var(--bc-ink);text-underline-offset:3px}
+.bc-line{display:flex;flex-wrap:wrap;gap:6px 8px;margin-top:22px}
+.bc-line button{all:unset;cursor:pointer;font:14px "Hind Siliguri","Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-2);padding:7px 12px;border-radius:999px;background:var(--bc-shelf);transition:background .15s ease-out}
+.bc-line button:hover{background:#E4E6EA;color:var(--bc-ink)}
+.bc-line b{font:800 15px "Pretendard Variable",Pretendard,"Hind Siliguri",system-ui,sans-serif;color:var(--bc-ink);margin-left:2px}
+.bc-lede{font:16px/1.6 "Hind Siliguri","Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-2);margin:0 0 28px;max-width:70ch}
+.bc-lede b{color:var(--bc-ink);font-weight:700}
+.bc-lede b.x{color:var(--bc-alert-ink)}
+.bc-rl-days{display:grid;grid-template-columns:var(--lab,118px) repeat(15,minmax(0,1fr));font-size:11.5px;color:var(--bc-ink-3);text-align:center;padding-bottom:4px;border-bottom:1px solid var(--bc-rule)}
+.bc-rl-days span.t{color:var(--bc-ink);font-weight:800}
+.bc-rl label i{max-width:none}
+.bc-rl .bc-st{cursor:default}
+.bc-rl .bc-st:hover{transform:translateX(-50%);box-shadow:none}
+.bc-dots{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.bc-dots i{width:14px;height:14px;border-radius:50%;box-sizing:border-box;border:3px solid var(--c);background:#fff}
+.bc-dots i.q{background:var(--c);box-shadow:inset 0 0 0 2px #fff}
+.bc-cad{grid-template-columns:150px 170px minmax(0,1fr) 70px!important}
+.bc-tlg{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 0 4px}
+.bc-tlg span{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--bc-ink-2)}
+.bc-tlg i{font:700 11.5px "Pretendard Variable",Pretendard,system-ui,sans-serif;font-style:normal;width:20px;height:20px;border-radius:5px;background:var(--c);color:var(--t);display:grid;place-items:center}
+.bc-lnk{all:unset;cursor:pointer;color:var(--bc-ink-2);text-decoration:underline;text-underline-offset:3px}
+.bc-raw{display:block;margin-top:4px;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--bc-ink-3);overflow-wrap:anywhere}
+.bc-con{grid-template-columns:minmax(0,1fr) auto}
+.bc-sheet{position:fixed;left:8px;right:8px;bottom:calc(68px + env(safe-area-inset-bottom));z-index:31;background:#fff;border:1px solid var(--bc-rule);border-radius:16px;box-shadow:0 10px 30px rgba(22,24,29,.18);padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.bc-sheet button{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;height:46px;padding:0 12px;border-radius:10px;font:600 14.5px "Hind Siliguri","Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-2);cursor:pointer;position:relative}
+.bc-sheet button.on{background:var(--bc-ink);color:#fff}
+.bc-sheet button svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.bc-sheet button em{margin-left:auto;font:700 11px "Pretendard Variable",Pretendard,system-ui,sans-serif;font-style:normal;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--bc-wait);color:var(--bc-ink);display:grid;place-items:center}
+.bc-sheet button em.x{background:var(--bc-alert);color:#fff}
+.bc-steps{grid-auto-columns:minmax(160px,1fr)!important}
+.bc-row select.bc-in{max-width:100%}
+@container bc (max-width:759px){.bc-cad{grid-template-columns:minmax(0,1fr) auto!important}.bc-cad .bc-dots{grid-column:1/-1}.bc-rl-days{display:none}.bc-rl .bc-track{min-width:0}.bc-line button{font-size:13px}}
 @container bc (min-width:1500px){.bc{grid-template-columns:224px minmax(0,1fr) 400px}.bc.noside{grid-template-columns:224px minmax(0,1fr)}}
 @container bc (max-width:1139px){
   .bc{grid-template-columns:200px minmax(0,1fr)}
@@ -58657,17 +58690,6 @@ select.bc-in{padding-right:28px}
     return { waiting: C.d.drafts ? waitingList().length : (k.waiting || 0), stuck: all.filter(function (s) { return s.st === 'x'; }), gone: wk.filter(function (s) { return s.st === 'go'; }).length,
       queued: all.filter(function (s) { return s.st === 'q'; }).length, ideas: k.ideas || 0, listen: k.listen || {}, down: Object.keys(h).filter(function (x) { return !h[x]; }), health: h };
   }
-  function railHtml() {
-    var n = C.d.cockpit && C.d.cockpit.cockpit ? counts() : null;
-    return '<nav class="bc-rail" aria-label="Brand cockpit"><div class="bc-me"><b>Rahman Najir</b><span>Brand cockpit</span></div>' + SECS.map(function (s, i) {
-      var badge = '';
-      if (n && s[0] === 'posts' && (n.waiting || n.stuck.length)) badge = '<em class="' + (n.stuck.length && !n.waiting ? 'x' : '') + '">' + bn(n.waiting + n.stuck.length) + '</em>';
-      if (n && s[0] === 'listen' && n.listen.leads) badge = '<em>' + bn(n.listen.leads) + '</em>';
-      if (n && s[0] === 'map' && n.down.length) badge = '<em class="x">' + bn(n.down.length) + '</em>';
-      return (i === 6 ? '<hr>' : '') + '<button type="button" data-bc="sec" data-id="' + s[0] + '"' + (C.sec === s[0] ? ' class="on" aria-current="page"' : '') + '>' + svg(s[0]) + '<span>' + s[1] + '</span>' + badge + '</button>';
-    }).join('') + '<hr class="bc-x"><button type="button" class="bc-x" data-bc="go" data-id="settings">' + svg('rules') + '<span>ERP সেটিংস</span></button><button type="button" class="bc-x" data-bc="go" data-id="apps">' + svg('map') + '<span>অ্যাপস</span></button>' +
-      '<div class="bc-health" data-bc="sec" data-id="map" role="button" tabindex="0">' + healthLine() + '</div></nav>';
-  }
   function healthLine() {
     var d = C.d.cockpit; if (!d) return '<span class="bc-dot" style="background:#C9CDD4"></span>দেখছি…';
     if (!d.online) return '<span class="bc-dot off"></span>Mac-এর সাথে যোগ নেই';
@@ -58707,7 +58729,7 @@ select.bc-in{padding-right:28px}
     if ((x.title_options || []).length) h += '<div class="bc-titles"><b>শিরোনাম:</b> <span data-noi18n="1">' + x.title_options.map(esc).join(' · ') + '</span></div>';
     if (mine.length > 1) h += '<div class="bc-lbl">কোন account-এ যাবে</div><div class="bc-ncs">' + mine.map(function (n) { return '<button type="button" class="bc-nc' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" aria-pressed="' + (C.acc[id][n.id] ? 'true' : 'false') + '" data-noi18n="1">' + esc(n.name || netName(n.platform)) + '</button>'; }).join('') + '</div>';
     h += '<div class="bc-row">' + (mine.length ? btn('অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : '') + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
-      '<span class="bc-sp"></span><label class="bc-sub" for="bci_a' + id + '">সময়</label>' + inp('a' + id, '', ' title="খালি রাখলে পরের ফাঁকা সময়ে যাবে"', 'datetime-local') +
+      '<span class="bc-sp"></span>' + whenHtml('a' + id) +
       '<button type="button" class="bc-btn ghost" data-bc="more" data-id="' + id + '" aria-expanded="' + (C.open[id] ? 'true' : 'false') + '">' + (C.open[id] ? 'কম' : 'আরও') + '</button></div>';
     if (C.open[id]) {
       var c = C.cards[id];
@@ -58729,7 +58751,7 @@ select.bc-in{padding-right:28px}
     return gs.map(function (g) {
       var ready = g.list.filter(function (x) { return !x._old && accSel(x, accountsFor(x)).length; }).length;
       return '<section class="bc-grp"><div class="bc-grp-h"><h3 data-noi18n="1">' + esc(g.title) + '</h3>' + (g.topic ? '<span class="bc-tag">' + esc(topicName(g.topic)) + '</span>' : '') +
-        (!compact && ready > 1 ? btn('এই আইডিয়ার সব অনুমোদন দিন (' + bn(ready) + ')', 'data-bc="approveall" data-id="' + g.key + '"', 'sm', 'aa' + g.key) : '') + '</div>' +
+        (ready > 1 ? btn('এই আইডিয়ার সব অনুমোদন দিন (' + bn(ready) + ')', 'data-bc="approveall" data-id="' + g.key + '"', 'sm', 'aa' + g.key) : '') + '</div>' +
         g.list.map(function (x) { return ticket(x, compact); }).join('') + '</section>';
     }).join('');
   }
@@ -58768,11 +58790,11 @@ select.bc-in{padding-right:28px}
     var h = '<div class="bc-dt-h">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sub">' + acc + '</span><span class="bc-sp"></span>' + (x._old ? '<span class="bc-tag">একই আইডিয়ার নতুন সংস্করণও আছে</span>' : '') + '</div>';
     if (g) h += '<div class="bc-dt-i" data-noi18n="1">' + esc(g.title) + '</div>';
     h += ta('e' + id, '', x.body || '', ' rows="12"') + '<div class="bc-cnt">' + bn(String(body).length) + ' অক্ষর</div>' + flagsHtml(x);
-    if ((x.title_options || []).length) h += '<div class="bc-titles"><b>শিরোনাম (ভিডিও বা লেখার মাথায়):</b> <span data-noi18n="1">' + x.title_options.map(esc).join(' · ') + '</span></div>';
+    if ((x.title_options || []).length) h += '<div class="bc-lbl">শিরোনামের প্রস্তাব (চাপলে কপি হয়)</div><div class="bc-ncs">' + x.title_options.map(function (t) { return '<button type="button" class="bc-pl" style="--c:#16181D" data-bc="tcopy" data-t="' + esc(t) + '" data-noi18n="1">' + esc(t) + '</button>'; }).join('') + '</div>';
     if (mine.length > 1) h += '<div class="bc-lbl">কোন account-এ যাবে</div><div class="bc-ncs">' + mine.map(function (n) { return '<button type="button" class="bc-nc' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" aria-pressed="' + (C.acc[id][n.id] ? 'true' : 'false') + '" data-noi18n="1">' + esc(n.name || netName(n.platform)) + '</button>'; }).join('') + '</div>';
     h += '<div class="bc-lbl">যেমন দেখাবে</div><div id="bc_pv">' + previewHtml(x.platform, body, mine[0] && mine[0].name) + '</div>';
     h += '<div class="bc-dt-a">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : btn(svg('copy') + 'লেখা কপি', 'data-bc="copy" data-id="' + id + '"', 'dark', '')) + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
-      '<span class="bc-sp"></span><label class="bc-sub" for="bci_a' + id + '">কখন</label>' + inp('a' + id, '', ' title="খালি রাখলে পরের ফাঁকা সময়ে যাবে"', 'datetime-local') + '</div>';
+      '</div><div class="bc-row">' + whenHtml('a' + id) + '</div>';
     var c = C.cards[id];
     h += '<div class="bc-more"><div class="bc-row" style="margin-top:0">' + (mine.length ? '<button type="button" class="bc-btn sm" data-bc="copy" data-id="' + id + '">' + svg('copy') + 'লেখা কপি</button>' : '') +
       btn(c && c.state === 'making' ? 'ছবি বানাচ্ছি…' : 'carousel আর quote ছবি বানান', 'data-bc="cards" data-id="' + id + '"', 'sm', '', c && c.state === 'making') + '</div>' +
@@ -58791,29 +58813,6 @@ select.bc-in{padding-right:28px}
     return '';
   }
   // ---------- pages
-  function homeHtml(narrow) {
-    var now = new Date(), h = headHtml('আজ, ' + DAY[now.getDay()] + ' ' + dDate(now), '');
-    var o = offline(); if (o || !C.d.cockpit.cockpit) return h + o;
-    var n = counts(), k = C.d.cockpit.cockpit, tot = n.waiting + n.stuck.length;
-    h += '<div class="bc-wait' + (tot ? '' : ' calm') + '"><b>' + bn(tot) + '</b><p>' + (tot ? (n.waiting ? bn(n.waiting) + 'টা draft আপনার অনুমোদনের অপেক্ষায়' : '') + (n.waiting && n.stuck.length ? '<br>' : '') + (n.stuck.length ? bn(n.stuck.length) + 'টা পোস্ট আটকে গেছে' : '') + '<small>অনুমোদন দিলে একে একে যায়, প্রতি network-এ ২০ মিনিট পর পর।</small>' : 'আপনার জন্য কিছু অপেক্ষায় নেই<small>নতুন draft লিখতে আইডিয়া পেজে যান।</small>') + '</p><span class="bc-sp"></span>' +
-      (n.waiting ? '<button class="bc-btn amber" type="button" data-bc="todrafts">দেখুন</button>' : n.stuck.length ? '<button class="bc-btn amber" type="button" data-bc="ptab" data-id="stuck">দেখুন</button>' : '<button class="bc-btn" type="button" data-bc="sec" data-id="ideas">আইডিয়া</button>') + '</div>';
-    if (narrow) h += sideDrafts();
-    h += mapHtml();
-    n.stuck.slice(0, 3).forEach(function (s) { var t = new Date(s.at); h += '<div class="bc-call"><span><b>' + esc(netName(s.net)) + '</b> · ' + DAY[t.getDay()] + ' ' + dDate(t) + '-এর পোস্ট ' + (s.ask ? 'দেরি হয়ে গেছে' : 'আটকে গেছে') + '</span><span class="bc-sp"></span>' + stActs(s) + '</div>'; });
-    h += '<div class="bc-res"><button type="button" data-bc="sec" data-id="results"><span>এ সপ্তাহে গেছে</span><b>' + bn(n.gone) + '</b><small>লাইনে আছে ' + bn(n.queued) + '</small></button>' +
-      '<button type="button" data-bc="sec" data-id="listen"><span>মানুষের প্রশ্ন</span><b>' + bnN(n.listen.questions) + '</b><small>YouTube comment থেকে</small></button>' +
-      '<button type="button" data-bc="sec" data-id="people"><span>সম্ভাব্য লিড</span><b>' + bnN(n.listen.leads) + '</b><small>Leads-এ পাঠানো যায়</small></button>' +
-      '<button type="button" data-bc="sec" data-id="ideas"><span>আইডিয়া ব্যাংকে</span><b>' + bnN(n.ideas) + '</b><small>draft লেখার জন্য তৈরি</small></button></div>' +
-      '<div class="bc-note">ক্লিক আর ভিজিট এখনো যুক্ত হয়নি: rmabidur.com-এর Umami আর LinkedIn-এর সংখ্যা পরের ধাপে আসবে।</div>';
-    var tasks = k.tasks || [], calls = k.calls || [];
-    h += '<div class="bc-two"><div><div class="bc-h2"><h2>আজকের কাজ</h2><span>আপনার নোট থেকে</span></div>' + (tasks.length ? tasks.map(function (t) {
-      var due = t.due ? new Date(t.due * 1000) : null, late = due && due < now;
-      return '<div class="bc-it"><s style="background:' + (late ? 'var(--bc-alert)' : due ? 'var(--bc-wait)' : 'var(--bc-rule)') + '"></s><p data-noi18n="1">' + esc(t.title) + '</p><small>' + (due ? dDate(due) : '') + '</small></div>';
-    }).join('') : '<div class="bc-it"><p class="bc-sub">খোলা কোনো কাজ নেই। ফোনে journal-এ বললে এখানে আসবে।</p></div>') + '</div>' +
-      '<div><div class="bc-h2"><h2>শেষ কল ও নোট</h2><span>৭ দিন</span></div>' + (calls.length ? calls.map(function (c) { return '<div class="bc-it"><s></s><p data-noi18n="1">' + esc(untag(strip(c.text)).slice(0, 140)) + '</p><small>' + ago(c.at) + '</small></div>'; }).join('') :
-      '<div class="bc-it"><p class="bc-sub">এ সপ্তাহে কোনো কল রেকর্ড হয়নি।</p></div>') + '</div></div>';
-    return h;
-  }
   function sideDrafts() {
     var h = '<div class="bc-h2" id="bc_sidehd"><h2>আপনার অপেক্ষায়</h2><span>draft · অনুমোদন দিন বা বাদ দিন</span></div>';
     if (!ready()) return h + '<div class="bc-note">Mac যুক্ত হলে এখানে আসবে।</div>';
@@ -58861,8 +58860,8 @@ select.bc-in{padding-right:28px}
     h += '<div style="margin-top:12px">' + ta('ctext', 'কী বলতে চান? প্রথম লাইনটাই সবাই আগে দেখে।', '', ' rows="8"') + '</div><div id="bc_meters">' + metersHtml() + '</div>';
     var l = C.cmpLint;
     if (l) h += (l.hits || []).length ? '<div style="margin-top:8px">' + l.hits.map(function (x) { return '<div class="bc-flag"><span class="bc-tag ' + (x.severity === 'block' ? 'x' : 'w') + '">' + (x.severity === 'block' ? 'পোস্ট আটকাবে' : 'দেখে নিন') + '</span><span data-noi18n="1">' + esc(x.reason || '') + (x.match ? ' (“' + esc(x.match) + '”)' : '') + '</span></div>'; }).join('') + '</div>' : '<div class="bc-note">দাবি যাচাই: কোনো সমস্যা পাওয়া যায়নি।</div>';
-    h += '<label class="bc-lbl" for="bci_cat">কখন যাবে</label><div class="bc-row" style="margin-top:0">' + inp('cat', '', '', 'datetime-local') + '<label class="bc-chk"><input type="checkbox" data-bcin="curg" id="bci_curg"' + (C.v.curg ? ' checked' : '') + '>আগে পাঠান</label></div><div class="bc-note">খালি রাখলে লাইনে পরের ফাঁকা সময়ে যাবে।</div>';
-    h += '<div class="bc-row" style="margin-top:14px">' + btn(svg('send') + 'লাইনে দিন', 'data-bc="cpost"', 'dark', 'cpost', !len || !Object.keys(pick).some(function (k) { return pick[k]; })) + btn('দাবি যাচাই', 'data-bc="clint"', 'ghost', 'clint', !len) + '</div>';
+    h += '<div class="bc-lbl">কখন যাবে</div><div class="bc-row" style="margin-top:0">' + whenHtml('cat') + '</div><div class="bc-row"><label class="bc-chk"><input type="checkbox" data-bcin="curg" id="bci_curg"' + (C.v.curg ? ' checked' : '') + '>লাইনে অপেক্ষার পোস্টগুলোর আগে পাঠান</label></div>';
+    h += '<div class="bc-row" style="margin-top:14px">' + btn(svg('send') + 'লাইনে দিন', 'data-bc="cpost"', 'dark', 'cpost', !len || !Object.keys(pick).some(function (k) { return pick[k]; })) + '<span class="bc-sub">পাঠানোর আগে দাবি যাচাই নিজে থেকেই চলে</span>' + '</div>';
     return h;
   }
   function metersHtml() {
@@ -58874,14 +58873,14 @@ select.bc-in{padding-right:28px}
     }).join('');
   }
   var PLATS = ['linkedin', 'facebook', 'instagram', 'youtube', 'threads', 'tiktok'];
-  var AUD = { bd_seller: 'বাংলাদেশি বিক্রেতা', bd_buyer: 'বাংলাদেশি ক্রেতা', global_buyer: 'বিদেশি ক্রেতা', mixed: 'সবার জন্য', retail_buyer: 'খুচরা ক্রেতা', supplier: 'সরবরাহকারী', customer: 'ক্রেতা', brand: 'ব্র্যান্ড' };
+  var AUD = { kr_supplier: 'কোরিয়ান সরবরাহকারী', global_brand: 'বিদেশি ব্র্যান্ড', bd_seller: 'বাংলাদেশি বিক্রেতা', bd_buyer: 'বাংলাদেশি ক্রেতা', global_buyer: 'বিদেশি ক্রেতা', mixed: 'সবার জন্য', retail_buyer: 'খুচরা ক্রেতা', supplier: 'সরবরাহকারী', customer: 'ক্রেতা', brand: 'ব্র্যান্ড' };
   function ideasHtml() {
     var g = gate(['drafts', 'memos', 'board']); if (g) return headHtml('আইডিয়া', '') + g;
     var bank = C.d.drafts.ideas || [], memos = (C.d.memos && C.d.memos.ideas) || [], cols = (C.d.board && C.d.board.board && C.d.board.board.columns) || [];
     var onBoard = cols.reduce(function (a, c) { return a + (c.cards || []).length; }, 0), wait = waitingList();
     var h = headHtml('আইডিয়া', 'ভাবনা থেকে পোস্ট, এক লাইনে');
     h += '<div class="bc-cap">' + ta('cap', 'একটা ভাবনা লিখে রাখুন: গল্প, শিক্ষা, আজ যা দেখলেন। Enter চাপলে জমা থাকবে।', '', ' rows="2"') +
-      '<div class="bc-row"><span class="bc-sub">AI কোন network-এর জন্য লিখবে (৪টা পর্যন্ত):</span>' + PLATS.map(function (p) { return '<button type="button" class="bc-pl' + (C.plats[p] ? ' on' : '') + '" style="--c:' + netCol(p) + '" data-bc="plat" data-id="' + p + '" aria-pressed="' + (C.plats[p] ? 'true' : 'false') + '">' + esc(netName(p)) + '</button>'; }).join('') +
+      '<div class="bc-row"><span class="bc-sub">AI কোন network-এর জন্য লিখবে (৪টা পর্যন্ত):</span>' + draftPlats().map(function (p) { return '<button type="button" class="bc-pl' + (C.plats[p] ? ' on' : '') + '" style="--c:' + netCol(p) + '" data-bc="plat" data-id="' + p + '" aria-pressed="' + (C.plats[p] ? 'true' : 'false') + '">' + esc(netName(p)) + '</button>'; }).join('') +
       '<span class="bc-sp"></span>' + btn('জমা রাখুন', 'data-bc="capsave"', 'ghost', 'capsave') + btn('AI দিয়ে draft লিখুন', 'data-bc="capwrite"', 'dark', 'write') + '</div></div>';
     h += jobsBar();
     h += '<div class="bc-spine" style="--n:4">' +
@@ -58906,60 +58905,30 @@ select.bc-in{padding-right:28px}
         (waitBy[i.id] ? '<button type="button" class="bc-btn sm ghost" data-bc="ptab" data-id="wait">draft দেখুন</button>' : '') + btn('draft লিখুন', 'data-bc="writeidea" data-id="' + i.id + '"', 'sm', 'write') + '</div></div>';
     }
     h += '<div class="bc-block" id="bc_bank"><div class="bc-h2"><h2>আইডিয়া ব্যাংক</h2><span>বিষয় ধরে</span></div>' + (tOrder.length ? '' : '<div class="bc-note">ব্যাংক খালি। শোনা পেজে “প্রশ্ন থেকে আইডিয়া” চাপলে এখানে আসবে।</div>') + tOrder.map(function (k) {
-      var ci = tk.indexOf(k); return '<div class="bc-topic" style="--c:' + SH[(ci < 0 ? 6 : ci) % 7] + '"><s></s><h3>' + esc(topicName(k)) + '</h3><span class="bc-sub">' + bn(byT[k].length) + '</span></div>' + byT[k].map(function (i) { return idea(i); }).join('');
+      var ci = tk.indexOf(k); return '<div class="bc-topic" style="--c:' + SH[(ci < 0 ? 6 : ci) % 7] + '"><s></s><h3>' + esc(topicName(k)) + '</h3><span class="bc-sub">' + bn(byT[k].length) + '</span></div>' + byT[k].slice(0, C.fold['t' + k] ? 999 : 5).map(function (i) { return idea(i); }).join('') +
+        (byT[k].length > 5 ? '<button type="button" class="bc-fold' + (C.fold['t' + k] ? ' on' : '') + '" data-bc="fold" data-id="t' + esc(k) + '" style="margin-top:6px">' + svg('right') + (C.fold['t' + k] ? 'কম দেখান' : 'আরও ' + bn(byT[k].length - 5) + 'টা') + '</button>' : '');
     }).join('') + (loose.length ? '<button type="button" class="bc-fold' + (C.fold.loose ? ' on' : '') + '" data-bc="fold" data-id="loose" aria-expanded="' + !!C.fold.loose + '">' + svg('right') + 'journal থেকে আসা, শিরোনাম ছাড়া (' + bn(loose.length) + ')</button>' + (C.fold.loose ? loose.map(function (i) { return idea(i, true); }).join('') : '') : '') + '</div>';
     // board as a line of steps
     var STEP = { Idea: 'আইডিয়া', Script: 'স্ক্রিপ্ট', Record: 'রেকর্ড', Edit: 'এডিট', Scheduled: 'সময় ঠিক', Published: 'প্রকাশিত', Repurposed: 'অন্য রূপে' };
     h += '<div class="bc-block" id="bc_board"><div class="bc-h2"><h2>বোর্ড</h2><span>একটা কার্ড এক স্টেশন থেকে পরের স্টেশনে যায়</span></div><div class="bc-steps">' + cols.map(function (c, i) {
       var nx = cols[i + 1];
-      return '<div class="bc-step"><h4><i></i><span>' + esc(STEP[c.title] || c.title) + '</span><em>' + bn((c.cards || []).length) + '</em></h4>' +
+      return '<div class="bc-step"><h4><i></i><span>' + esc(STEP[c.title] || c.title) + ((c.cards || []).length ? ' · ' + bn(c.cards.length) : '') + '</span></h4>' +
         (i === 0 ? '<div class="bc-card-new">' + inp('card', 'নতুন কার্ড…', ' aria-label="নতুন কার্ডের শিরোনাম"') + '<button type="button" class="bc-btn sm" data-bc="cardadd" aria-label="যোগ করুন"' + (C.busy.cardadd ? ' disabled' : '') + '>' + svg('plus') + '</button></div>' : '') +
         ((c.cards || []).length ? c.cards.map(function (k) {
           return '<div class="bc-card"><b data-noi18n="1">' + esc(k.title) + '</b>' + (k.description ? '<p data-noi18n="1">' + esc(k.description) + '</p>' : '') + '<div class="a">' +
             (nx ? btn(esc(STEP[nx.title] || nx.title) + svg('right'), 'data-bc="move" data-id="' + k.id + '" data-col="' + nx.id + '"', 'sm ghost', 'mv' + k.id) : btn(svg('check') + 'শেষ', 'data-bc="done" data-id="' + k.id + '"', 'sm ghost', 'dn' + k.id)) + '</div></div>';
-        }).join('') : '<div class="bc-empty">খালি</div>') + '</div>';
+        }).join('') : '') + '</div>';
     }).join('') + '</div></div>';
     return h;
   }
   function secs(ms) { var n = Number(ms); if (!isFinite(n) || !n) return ''; n = Math.round(n / 1000); return bn(Math.floor(n / 60) + ':' + ('0' + (n % 60)).slice(-2)); }
   var SHW = { fetching: 'ভিডিও পড়ছি…', making: 'shorts বানাচ্ছি…', done: 'shorts তৈরি', failed: 'shorts হয়নি' };
-  function mediaHtml() {
-    var h = headHtml('মিডিয়া', 'আপনার ভিডিও আর ছবির তাক');
-    var o = offline(); if (o) return h + o;
-    h += '<form class="bc-search" data-bc-form="vfind" role="search">' + svg('search') + '<input id="bci_vq" data-bcin="vq" data-noi18n="1" placeholder="মানে দিয়ে খুঁজুন: দোকানে কথা বলছি, প্রিন্টারের কাছ থেকে…" value="' + esc(C.vq || '') + '" aria-label="ভিডিও খুঁজুন">' + btn('খুঁজুন', 'data-bc="vfind"', 'dark', 'g_videos') + '</form>';
-    h += '<div class="bc-ex">' + ['দোকানে কথা বলছি', 'পণ্যের ক্লোজআপ', 'প্রিন্টার চলছে', 'বাক্স খোলা'].map(function (q) { return '<button type="button" class="bc-pl" style="--c:#16181D" data-bc="vex" data-id="' + esc(q) + '">' + esc(q) + '</button>'; }).join('') + (C.vq ? '<button type="button" class="bc-btn ghost sm" data-bc="vall">সব নতুনগুলো</button>' : '') + '</div>';
-    var g = gate(['videos']); if (g) return h + g;
-    var list = C.d.videos.videos || [], jobs = (C.d.shorts && C.d.shorts.jobs) || {}, hl = ((C.d.cockpit && C.d.cockpit.cockpit) || {}).health || {};
-    if (!list.length) {
-      if (C.vq) return h + '<div class="bc-clear"><b>“' + esc(C.vq) + '”-এর মতো কিছু পাওয়া যায়নি</b><p>অন্য কথায় খুঁজে দেখুন, বা সব নতুন ভিডিও দেখুন।</p></div>';
-      return h + '<div class="bc-h2" style="margin-top:6px"><h2>এখনো কোনো ভিডিও নেই</h2><span>যেভাবে এখানে আসে</span></div><div class="bc-spine" style="--n:3;margin-top:18px">' +
-        '<div><i></i><span>ফোনে তুলুন</span><small>Immich app-এ Brand album-এ রাখুন</small></div><div><i></i><span>বা PC-তে রাখুন</span><small>G:\\Brand-upload ফোল্ডারে ফাইল দিলেই ওঠে</small></div><div><i class="q"></i><span>এখানে আসে</span><small>তারপর shorts বা আইডিয়া বানানো যায়</small></div></div>' +
-        (hl.immich_key === false ? '<div class="bc-call"><span>Immich-এর চাবি বসানো নেই, তাই লাইব্রেরি পড়া যাচ্ছে না।</span></div>' : '');
-    }
-    return h + '<div class="bc-vg">' + list.map(function (x) {
-      var j = jobs[x.id];
-      return '<div class="bc-v"><div class="th">' + (x.thumb ? '<img alt="" loading="lazy" src="' + esc(x.thumb) + '">' : '') + (x.duration ? '<span class="du">' + secs(x.duration) + '</span>' : '') +
-        (j ? '<span class="sj">' + (j.state === 'fetching' || j.state === 'making' ? '<span class="bc-spin"></span>' : '') + esc(SHW[j.state] || j.state) + '</span>' : '') + '</div>' +
-        '<b data-noi18n="1" title="' + esc(x.name) + '">' + esc(x.name) + '</b><small>' + (x.at ? ago(x.at) : '') + '</small><div class="bc-row">' +
-        (j && (j.state === 'fetching' || j.state === 'making') ? '' : btn('Shorts বানান', 'data-bc="vshorts" data-id="' + esc(x.id) + '"', 'sm', 'vs' + x.id)) + btn('আইডিয়া বানান', 'data-bc="vcard" data-id="' + esc(x.name) + '"', 'sm ghost', 'vc' + x.name) + '</div>' +
-        (j && j.error ? '<div class="bc-note" data-noi18n="1">' + esc(j.error) + '</div>' : '') + '</div>';
-    }).join('') + '</div>';
-  }
-  var INT = { question: ['প্রশ্ন', '#16181D'], price: ['দাম', '#454A55'], wholesale_interest: ['পাইকারি', '#11663A'], authenticity: ['আসল কিনা', '#6B717C'], problem: ['সমস্যা', '#A8260F'], complaint: ['অভিযোগ', '#E0301E'], praise: ['প্রশংসা', '#B4B9C1'], other: ['অন্যান্য', '#D5D8DD'] };
+  var INT = { question: ['প্রশ্ন', '#16181D'], wholesale_interest: ['পাইকারি', '#2A2E36'], price: ['দাম', '#3E434C'], authenticity: ['আসল কিনা', '#565C67'], problem: ['সমস্যা', '#737985'], complaint: ['অভিযোগ', '#E0301E'], praise: ['প্রশংসা', '#B4B9C1'], other: ['অন্যান্য', '#D5D8DD'] };
   var LK = { retail_buyer: 'খুচরা ক্রেতা', wholesale_buyer: 'পাইকারি ক্রেতা', supplier: 'সরবরাহকারী', reseller: 'রিসেলার' };
-  function isLead(c) { return c.lead_kind && c.lead_kind !== 'none'; }
   function defBiz(list) { var o = list.filter(function (b) { return /oliareen|beauty/i.test(b.name); })[0]; return (o || list[0] || {}).id || ''; }
   function leadTarget(list) { var cur = v('ltarget'); if (!list.some(function (b) { return b.id === cur; })) { cur = defBiz(list); C.v.ltarget = cur; } return cur; }
   function targetBar(list) { if (!list.length) return ''; leadTarget(list); return '<div class="bc-row" style="margin:0 0 6px"><label class="bc-sub" for="bci_ltarget">লিড যাবে এই ব্যবসার Leads-এ:</label>' + bizSel('ltarget', list) + '</div>'; }
   function bizSel(id, list) { return '<select class="bc-in" id="bci_' + id + '" data-bcin="' + id + '" aria-label="কোন ব্যবসার Leads-এ">' + list.map(function (b) { return '<option value="' + esc(b.id) + '"' + (v(id) === b.id ? ' selected' : '') + '>' + esc(b.name) + '</option>'; }).join('') + '</select>'; }
-  function commentHtml(c, biz) {
-    var lead = isLead(c), I = INT[c.intent] || [c.intent || '', '#8A909B'], open = C.lopen[c.id];
-    return '<div class="bc-cm' + (open ? ' open' : '') + '"><div class="h"><b data-noi18n="1">' + esc(c.author_name || '') + '</b>' + (c.channel_title ? '<span data-noi18n="1">' + esc(c.channel_title) + '</span>' : '<span>পেস্ট করা</span>') +
-      '<span class="bc-tag">' + esc(I[0]) + '</span>' + (lead ? '<span class="bc-tag lead">' + esc(LK[c.lead_kind] || String(c.lead_kind).replace(/_/g, ' ')) + '</span>' : '') + (c.likes ? '<span>' + bnN(c.likes) + ' লাইক</span>' : '') + '</div>' +
-      (c.summary ? '<p class="s" data-noi18n="1">' + esc(c.summary) + '</p>' : '') + '<p class="t" data-noi18n="1" data-bc="lopen" data-id="' + c.id + '">' + esc(c.text || '') + '</p>' +
-      '<div class="a">' + (lead && biz.length ? (c.handed_at ? '<span class="bc-tag lead">Leads-এ আছে</span>' : btn('Leads-এ পাঠান', 'data-bc="lhand" data-id="' + c.id + '"', 'sm dark', 'lh' + c.id)) : '') +
-      (c.platform === 'youtube_ext' && c.source_ref ? '<a class="bc-btn ghost sm" href="https://youtu.be/' + esc(c.source_ref) + '" target="_blank" rel="noopener">ভিডিও</a>' : '') + '</div></div>';
-  }
   function listenHtml() {
     var lj = (C.d.listen && C.d.listen.jobs) || {}, lk = Object.keys(lj).sort(), last = lk.length ? lj[lk[lk.length - 1]] : null;
     var h = headHtml('শোনা', 'বাজার যা জিজ্ঞেস করছে', btn('YouTube এখন পড়ুন', 'data-bc="lpull"', '', 'lpull', last && last.state === 'reading') + '<button type="button" class="bc-btn" data-bc="lpaste" aria-expanded="' + C.paste + '">comment পেস্ট</button>' + btn('প্রশ্ন থেকে আইডিয়া', 'data-bc="lideas"', 'dark', 'lideas'));
@@ -58968,16 +58937,16 @@ select.bc-in{padding-right:28px}
     if (last) h += last.state === 'reading' ? '<div class="bc-jobs"><span class="bc-spin"></span>comment পড়ছি আর বাছাই করছি…</div>' : last.state === 'done' ? '<div class="bc-note" style="margin:-8px 0 16px">শেষ পড়া: ' + bn(last.added || 0) + 'টা নতুন, ' + bn(last.labelled || 0) + 'টা বাছাই</div>' : '<div class="bc-jobs bad">পড়া যায়নি: <span data-noi18n="1">' + esc(last.error || '') + '</span></div>';
     if (C.paste) h += '<div class="bc-paste"><div class="bc-lbl" style="margin-top:0">Facebook বা LinkedIn পোস্টের নিচের comment কপি করে এখানে দিন</div>' + ta('paste', 'comment গুলো এখানে…', '', ' rows="5"') + '<div class="bc-row">' + inp('psrc', 'পোস্টের লিংক (না দিলেও চলে)', ' style="flex:1;min-width:200px"') + btn('বাছাই করুন', 'data-bc="lpastego"', 'dark', 'lpastego') + '</div></div>';
     var nLead = all.filter(isLead).length;
-    h += '<div class="bc-h2"><h2>মানুষ কী নিয়ে লিখছে</h2><span>' + bnN(tot) + 'টা comment, বাছাই করা</span></div>';
+    h += '<div class="bc-h2"><h2>মানুষ কী নিয়ে লিখছে</h2><span>এ পর্যন্ত ' + bnN(tot) + 'টা comment বাছাই হয়েছে; নিচের তালিকায় শেষ ' + bn(all.length) + 'টা</span></div>';
     h += '<div class="bc-sbar' + (C.lf !== 'all' && C.lf !== 'leads' ? ' f' : '') + '">' + counts.map(function (c) { var I = INT[c.intent] || [c.intent, '#8A909B'], pc = c.n / (tot || 1) * 100, light = /B4B9C1|D5D8DD/.test(I[1]);
       return '<button type="button" data-bc="lf" data-id="' + esc(c.intent) + '" class="' + (C.lf === c.intent ? 'on' : '') + '" style="flex:' + c.n + ' 1 0;--c:' + I[1] + ';--t:' + (light ? '#16181D' : '#fff') + '" title="' + esc(I[0] + ': ' + c.n) + '" aria-label="' + esc(I[0] + ' ' + c.n) + '">' + (pc > 7 ? esc(I[0]) + ' ' + bn(Math.round(pc)) + '%' : '') + '</button>'; }).join('') + '</div>';
-    h += '<div class="bc-leg"><button type="button" data-bc="lf" data-id="all"' + (C.lf === 'all' ? ' class="on"' : '') + '>সব</button><button type="button" data-bc="lf" data-id="leads"' + (C.lf === 'leads' ? ' class="on"' : '') + '><i style="--c:#11663A"></i>লিড <b>' + bn(nLead) + '</b></button>' +
+    h += '<div class="bc-leg"><button type="button" data-bc="lf" data-id="all"' + (C.lf === 'all' ? ' class="on"' : '') + '>সব</button><button type="button" data-bc="lf" data-id="leads"' + (C.lf === 'leads' ? ' class="on"' : '') + '><i style="--c:#16181D"></i>ব্যবসায়ী লিড <b>' + bn(nLead) + '</b></button>' +
       counts.map(function (c) { var I = INT[c.intent] || [c.intent, '#8A909B']; return '<button type="button" data-bc="lf" data-id="' + esc(c.intent) + '"' + (C.lf === c.intent ? ' class="on"' : '') + '><i style="--c:' + I[1] + '"></i>' + esc(I[0]) + ' <b>' + bnN(c.n) + '</b></button>'; }).join('') + '</div>';
     var cl = (d.clusters || []).slice().sort(function (a, b) { return b.mention_count - a.mention_count; }), mx = cl.length ? cl[0].mention_count : 1;
     if (cl.length) h += '<div class="bc-block"><div class="bc-h2"><h2>সবচেয়ে বেশি যা জিজ্ঞেস করে</h2><span>“প্রশ্ন থেকে আইডিয়া” এগুলোকে আইডিয়া বানায়</span></div>' + cl.map(function (k) {
       return '<div class="bc-rk"><span data-noi18n="1">' + esc(k.label) + '<small title="' + esc(k.summary || '') + '">' + esc(k.summary || '') + '</small></span><u><i style="width:' + (k.mention_count / mx * 100).toFixed(1) + '%"></i></u><b>' + bn(k.mention_count) + '</b></div>'; }).join('') + '</div>';
     var list = all.filter(function (c) { return C.lf === 'all' || (C.lf === 'leads' ? isLead(c) : c.intent === C.lf); });
-    h += '<div class="bc-block"><div class="bc-h2"><h2>comment</h2><span>শেষ ' + bn(all.length) + 'টার মধ্যে ' + bn(list.length) + 'টা দেখাচ্ছে</span></div>' + targetBar(biz) + (list.length ? list.slice(0, 60).map(function (c) { return commentHtml(c, biz); }).join('') : '<div class="bc-note">এই ভাগে এখনো কিছু নেই।</div>') + '</div>';
+    h += '<div class="bc-block"><div class="bc-h2"><h2>comment</h2><span>শেষ ' + bn(all.length) + 'টার মধ্যে ' + bn(list.length) + 'টা দেখাচ্ছে</span></div>' + (list.some(isLead) ? targetBar(biz) : '') + (list.length ? list.slice(0, 60).map(function (c) { return commentHtml(c, biz); }).join('') : '<div class="bc-note">এই ভাগে এখনো কিছু নেই।</div>') + '</div>';
     var ch = d.channels || [];
     h += '<div class="bc-block"><div class="bc-h2"><h2>যেসব channel শুনি</h2><span>' + bn(ch.filter(function (c) { return c.active; }).length) + 'টা চালু</span></div>' + ch.map(function (c) {
       return '<div class="bc-li' + (c.active ? '' : ' mute') + '"><div class="c"><b data-noi18n="1">' + esc(c.title) + '</b><small>' + (c.subscribers ? bnN(c.subscribers) + ' subscriber' : '') + (c.is_suggestion ? ' · AI-এর বাছাই' : '') + (c.last_pulled ? ' · শেষ পড়া ' + ago(c.last_pulled) : '') + '</small></div><div class="a">' +
@@ -58989,8 +58958,10 @@ select.bc-in{padding-right:28px}
     var h = headHtml('মানুষ', 'যারা আপনার কাছে এসেছে');
     var g = gate(['listen', 'people']); if (g) return h + g;
     var leads = (C.d.listen.comments || []).filter(isLead), open = leads.filter(function (c) { return !c.handed_at; }), biz = C.d.listen.businesses || C.d.people.businesses || [];
-    h += '<div class="bc-h2"><h2>শোনা থেকে পাওয়া সম্ভাব্য ক্রেতা</h2><span>' + bn(open.length) + 'টা পাঠানো বাকি · ' + bn(leads.length - open.length) + 'টা Leads-এ</span></div>' + targetBar(biz);
-    h += open.length ? open.slice(0, 40).map(function (c) { return commentHtml(c, biz); }).join('') : '<div class="bc-clear"><b>সব পাঠানো হয়ে গেছে</b><p>শোনা পেজ নতুন comment পড়লে নতুন ক্রেতা এখানে আসবে।</p></div>';
+    h += '<div class="bc-h2"><h2>শোনা থেকে পাওয়া ব্যবসায়ী লিড</h2><span>দোকান, পেজ, পাইকার বা সরবরাহকারী · ' + bn(open.length) + 'টা পাঠানো বাকি · ' + bn(leads.length - open.length) + 'টা Leads-এ</span></div>' + (open.length ? targetBar(biz) : '');
+    var shoppers = (C.d.listen.comments || []).filter(function (c) { return c.lead_kind === 'retail_buyer'; }).length;
+    h += open.length ? open.slice(0, 40).map(function (c) { return commentHtml(c, biz, true); }).join('') : leads.length ? '<div class="bc-clear"><b>সব পাঠানো হয়ে গেছে</b><p>শোনা পেজ নতুন comment পড়লে নতুন লিড এখানে আসবে।</p></div>' :
+      '<div class="bc-clear"><b>এখনো কোনো ব্যবসায়ী লিড পাওয়া যায়নি</b><p>শোনা পেজের ' + bn(shoppers) + 'টা comment এক-একজন সাধারণ ক্রেতার, দোকান বা পাইকারের নয়। সেগুলো Leads-এ না পাঠিয়ে আইডিয়ার কাজে লাগান। কোনো দোকান বা সরবরাহকারী নিজে যোগাযোগ করলে ডানের ফর্মে লিখুন।</p><button class="bc-btn" type="button" data-bc="sec" data-id="listen">শোনা খুলুন</button></div>';
     var ppl = C.d.people.people || [];
     if (ppl.length) h += '<div class="bc-block"><div class="bc-h2"><h2>যোগাযোগের খাতা</h2><span>' + bn(ppl.length) + ' জন</span></div>' + ppl.map(function (x) {
       return '<div class="bc-li"><div class="c"><b data-noi18n="1">' + esc(x.name) + '</b><small data-noi18n="1">' + esc([x.job, x.email, x.phone, x.source].filter(Boolean).join(' · ')) + '</small></div><div class="a">' + (biz.length ? bizSel('pb' + x.id, biz) + btn('Leads-এ', 'data-bc="ptolead" data-id="' + esc(x.id) + '"', 'sm', 'pl' + x.id) : '') + '</div></div>';
@@ -58998,74 +58969,169 @@ select.bc-in{padding-right:28px}
     else if (C.d.people.parked) h += '<div class="bc-note" style="margin-top:22px">আলাদা যোগাযোগের খাতা (Twenty) বন্ধ রাখা আছে; মানুষ সরাসরি ব্যবসার Leads-এ যায়, ডানের ফর্ম দিয়ে।</div>';
     return h;
   }
+  var TSH = ['#16181D', '#454A55', '#6B717C', '#8A909B', '#B4B9C1', '#D5D8DD'];
+  function homeHtml(narrow) {
+    var now = new Date(), h = headHtml('আজ, ' + DAY[now.getDay()] + ' ' + dDate(now), '');
+    var o = offline(); if (o || !C.d.cockpit.cockpit) return h + o;
+    var n = counts(), k = C.d.cockpit.cockpit;
+    h += '<div class="bc-wait' + (n.waiting ? '' : ' calm') + '"><b>' + bn(n.waiting) + '</b><p>' + (n.waiting ? 'টা draft আপনার অনুমোদনের অপেক্ষায়<small>অনুমোদন দিলে লাইনে যায়: প্রতি network-এ একটা করে, ২০ মিনিট পর পর।</small>' : 'টা draft অপেক্ষায়, সব পরিষ্কার<small>নতুন draft লিখতে আইডিয়া পেজে যান।</small>') + '</p><span class="bc-sp"></span>' +
+      (n.waiting ? '<button class="bc-btn amber" type="button" data-bc="' + (narrow ? 'todrafts' : 'ptab') + '" data-id="wait">' + (narrow ? 'দেখুন' : 'অনুমোদন দিতে যান') + '</button>' : '<button class="bc-btn" type="button" data-bc="sec" data-id="ideas">আইডিয়া</button>') + '</div>';
+    n.stuck.filter(function (s) { return s.key !== C.pick; }).slice(0, 3).forEach(function (s) { var t = new Date(s.at); h += '<div class="bc-call" style="margin:-10px 0 22px"><span><b>' + esc(netName(s.net)) + '</b> · ' + DAY[t.getDay()] + ' ' + dDate(t) + '-এর পোস্ট ' + (s.ask ? 'দেরি হয়ে গেছে' : 'আটকে গেছে') + '</span><span class="bc-sp"></span>' + stActs(s) + '<button class="bc-btn ghost sm" type="button" data-bc="st" data-id="' + esc(s.key) + '">লেখাটা দেখুন</button></div>'; });
+    if (narrow) h += sideDrafts();
+    h += mapHtml();
+    h += '<div class="bc-line"><button type="button" data-bc="sec" data-id="results">এ সপ্তাহে গেছে <b>' + bn(n.gone) + '</b>, লাইনে <b>' + bn(n.queued) + '</b></button>' +
+      '<button type="button" data-bc="sec" data-id="listen">মানুষের প্রশ্ন <b>' + bnN(n.listen.questions) + '</b></button>' +
+      '<button type="button" data-bc="sec" data-id="people">ব্যবসায়ী লিড <b>' + bnN(n.listen.leads) + '</b></button>' +
+      '<button type="button" data-bc="sec" data-id="ideas">আইডিয়া ব্যাংকে <b>' + bnN(n.ideas) + '</b></button></div>' +
+      '<div class="bc-note">ক্লিক আর ভিজিট এখনো যুক্ত হয়নি: rmabidur.com-এর Umami আর LinkedIn-এর সংখ্যা পরের ধাপে আসবে।</div>';
+    var calls = k.calls || [];
+    if (calls.length) h += '<div class="bc-block"><div class="bc-h2"><h2>শেষ কল ও নোট</h2><span>journal bot থেকে, ৭ দিন · পোস্টের কাঁচামাল</span></div>' + calls.map(function (c, i) {
+      return '<div class="bc-li"><div class="c"><b data-noi18n="1">' + esc(untag(strip(c.text)).slice(0, 160)) + '</b><small>' + ago(c.at) + '</small></div><div class="a">' + btn('আইডিয়া বানান', 'data-bc="callidea" data-id="' + i + '"', 'sm ghost', 'ci' + i) + '</div></div>';
+    }).join('') + '</div>';
+    return h;
+  }
+  function railHtml() {
+    var n = C.d.cockpit && C.d.cockpit.cockpit ? counts() : null, narrow = narrowNow();
+    function badge(id) {
+      if (!n) return '';
+      if (id === 'posts' && (n.waiting || n.stuck.length)) return '<em class="' + (n.stuck.length && !n.waiting ? 'x' : '') + '">' + bn(n.waiting + n.stuck.length) + '</em>';
+      if (id === 'people' && n.listen.leads) return '<em>' + bn(n.listen.leads) + '</em>';
+      if (id === 'map' && n.down.length) return '<em class="x">' + bn(n.down.length) + '</em>';
+      return '';
+    }
+    function b(s) { return '<button type="button" data-bc="sec" data-id="' + s[0] + '"' + (C.sec === s[0] ? ' class="on" aria-current="page"' : '') + '>' + svg(s[0]) + '<span>' + s[1] + '</span>' + badge(s[0]) + '</button>'; }
+    if (narrow) {
+      var MAIN = ['home', 'posts', 'ideas', 'listen'], rest = SECS.filter(function (s) { return MAIN.indexOf(s[0]) < 0; }), inRest = rest.some(function (s) { return s[0] === C.sec; });
+      return (C.railMore ? '<div class="bc-sheet" role="menu">' + rest.map(b).join('') + '<button type="button" data-bc="go" data-id="settings">' + svg('rules') + '<span>ERP সেটিংস</span></button><button type="button" data-bc="go" data-id="apps">' + svg('map') + '<span>অ্যাপস</span></button></div>' : '') +
+        '<nav class="bc-rail" aria-label="Brand cockpit">' + SECS.filter(function (s) { return MAIN.indexOf(s[0]) >= 0; }).map(b).join('') +
+        '<button type="button" data-bc="railmore" aria-expanded="' + !!C.railMore + '"' + (inRest || C.railMore ? ' class="on"' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>আরও</span>' + (n && (n.down.length || n.listen.leads) ? '<em class="' + (n.down.length ? 'x' : '') + '">' + bn(n.down.length + (n.listen.leads || 0)) + '</em>' : '') + '</button></nav>';
+    }
+    return '<nav class="bc-rail" aria-label="Brand cockpit"><div class="bc-me"><b>Rahman Najir</b><span>Brand cockpit</span></div>' + SECS.map(function (s, i) { return (i === 6 ? '<hr>' : '') + b(s); }).join('') +
+      '<hr class="bc-x"><button type="button" class="bc-x" data-bc="go" data-id="settings">' + svg('rules') + '<span>ERP সেটিংস</span></button><button type="button" class="bc-x" data-bc="go" data-id="apps">' + svg('map') + '<span>অ্যাপস</span></button>' +
+      '<div class="bc-health" data-bc="sec" data-id="map" role="button" tabindex="0">' + healthLine() + '</div></nav>';
+  }
+  function mediaHtml() {
+    var h = headHtml('মিডিয়া', 'আপনার ভিডিও আর ছবির তাক');
+    var o = offline(); if (o) return h + o;
+    var search = '<form class="bc-search" data-bc-form="vfind" role="search">' + svg('search') + '<input id="bci_vq" data-bcin="vq" data-noi18n="1" placeholder="মানে দিয়ে খুঁজুন: দোকানে কথা বলছি, প্রিন্টারের কাছ থেকে…" value="' + esc(C.vq || '') + '" aria-label="ভিডিও খুঁজুন">' + btn('খুঁজুন', 'data-bc="vfind"', 'dark', 'g_videos') + '</form>' +
+      '<div class="bc-ex">' + ['দোকানে কথা বলছি', 'পণ্যের ক্লোজআপ', 'প্রিন্টার চলছে', 'বাক্স খোলা'].map(function (q) { return '<button type="button" class="bc-pl" style="--c:#16181D" data-bc="vex" data-id="' + esc(q) + '">' + esc(q) + '</button>'; }).join('') + (C.vq ? '<button type="button" class="bc-btn ghost sm" data-bc="vall">সব নতুনগুলো</button>' : '') + '</div>';
+    var g = gate(['videos']); if (g) return h + g;
+    var list = C.d.videos.videos || [], jobs = (C.d.shorts && C.d.shorts.jobs) || {}, hl = ((C.d.cockpit && C.d.cockpit.cockpit) || {}).health || {};
+    if (!list.length) {
+      if (C.vq) return h + search + '<div class="bc-clear"><b>“' + esc(C.vq) + '”-এর মতো কিছু পাওয়া যায়নি</b><p>অন্য কথায় খুঁজে দেখুন, বা সব নতুন ভিডিও দেখুন।</p></div>';
+      var st = hl.immich === false ? '<span class="bc-tag x">Immich বন্ধ</span> Mac-এ Immich চলছে না, তাই ভিডিও পড়া যাচ্ছে না।' : hl.immich_key === false ? '<span class="bc-tag x">চাবি নেই</span> Immich চলছে, কিন্তু তার চাবি বসানো নেই।' : '<span class="bc-dot" style="display:inline-block;vertical-align:1px;margin-right:6px"></span>Immich চলছে, Brand album এখনো খালি।';
+      return h + '<div class="bc-h2" style="margin-top:6px"><h2>এখনো কোনো ভিডিও নেই</h2><span>যেভাবে এখানে আসে</span></div><div class="bc-spine" style="--n:3;margin-top:18px">' +
+        '<div><i></i><span>ফোনে তুলুন</span><small>Immich app-এ Brand album-এ রাখুন</small></div><div><i></i><span>বা PC-তে রাখুন</span><small>G:\\Brand-upload ফোল্ডারে ফাইল দিলেই ওঠে</small></div><div><i class="q"></i><span>এখানে আসে</span><small>তারপর shorts বা আইডিয়া বানানো যায়, মানে দিয়ে খোঁজাও যায়</small></div></div>' +
+        '<div class="bc-note" style="font-size:14px;color:var(--bc-ink-2)">' + st + '</div>';
+    }
+    return h + search + '<div class="bc-vg">' + list.map(function (x) {
+      var j = jobs[x.id];
+      return '<div class="bc-v"><div class="th">' + (x.thumb ? '<img alt="" loading="lazy" src="' + esc(x.thumb) + '">' : '') + (x.duration ? '<span class="du">' + secs(x.duration) + '</span>' : '') +
+        (j ? '<span class="sj">' + (j.state === 'fetching' || j.state === 'making' ? '<span class="bc-spin"></span>' : '') + esc(SHW[j.state] || j.state) + '</span>' : '') + '</div>' +
+        '<b data-noi18n="1" title="' + esc(x.name) + '">' + esc(x.name) + '</b><small>' + (x.at ? ago(x.at) : '') + '</small><div class="bc-row">' +
+        (j && (j.state === 'fetching' || j.state === 'making') ? '' : btn('Shorts বানান', 'data-bc="vshorts" data-id="' + esc(x.id) + '"', 'sm', 'vs' + x.id)) + btn('আইডিয়া বানান', 'data-bc="vcard" data-id="' + esc(x.name) + '"', 'sm ghost', 'vc' + x.name) + '</div>' +
+        (j && j.error ? '<div class="bc-note" data-noi18n="1">' + esc(j.error) + '</div>' : '') + '</div>';
+    }).join('') + '</div>';
+  }
+  function isLead(c) { return !!c.lead_kind && c.lead_kind !== 'none' && c.lead_kind !== 'retail_buyer'; }
+  function commentHtml(c, biz, forPeople) {
+    var lead = isLead(c), I = INT[c.intent] || [c.intent || '', '#8A909B'];
+    return '<div class="bc-cm' + (C.lopen[c.id] ? ' open' : '') + '"><div class="h"><b data-noi18n="1">' + esc(c.author_name || '') + '</b>' + (c.channel_title ? '<span data-noi18n="1">' + esc(c.channel_title) + '</span>' : '<span>পেস্ট করা</span>') +
+      '<span class="bc-tag">' + esc(I[0]) + '</span>' + (lead ? '<span class="bc-tag lead">' + esc(LK[c.lead_kind] || String(c.lead_kind).replace(/_/g, ' ')) + '</span>' : '') + (c.likes ? '<span>' + bnN(c.likes) + ' লাইক</span>' : '') + '</div>' +
+      (c.summary ? '<p class="s" data-noi18n="1">' + esc(c.summary) + '</p>' : '') + '<p class="t" data-noi18n="1" data-bc="lopen" data-id="' + c.id + '" title="চাপলে পুরোটা">' + esc(c.text || '') + '</p>' +
+      '<div class="a">' + (lead && biz.length ? (c.handed_at ? '<span class="bc-tag lead">Leads-এ আছে</span>' : btn('Leads-এ পাঠান', 'data-bc="lhand" data-id="' + c.id + '"', 'sm dark', 'lh' + c.id)) : '') +
+      (forPeople ? '' : btn('আইডিয়া বানান', 'data-bc="lidea" data-id="' + c.id + '"', 'sm ghost', 'li' + c.id)) +
+      (c.platform === 'youtube_ext' && c.source_ref ? '<a class="bc-btn ghost sm" href="https://youtu.be/' + esc(c.source_ref) + '" target="_blank" rel="noopener">ভিডিও</a>' : '') + '</div></div>';
+  }
   function personForm() {
     if (!ready() || !C.d.listen) return '';
     var biz = C.d.listen.businesses || [];
     if (!biz.length) return '<div class="bc-note">Leads নেওয়ার মতো কোনো ব্যবসা নেই।</div>';
+    leadTarget(biz);
     return '<div class="bc-h2"><h2>কেউ যোগাযোগ করেছে</h2><span>সরাসরি Leads-এ যাবে</span></div>' +
-      '<div class="bc-pills" style="margin-bottom:6px"><button type="button" data-bc="nk" data-id="customer"' + (C.nk === 'customer' ? ' class="on"' : '') + '>ক্রেতা</button><button type="button" data-bc="nk" data-id="supplier"' + (C.nk === 'supplier' ? ' class="on"' : '') + '>সরবরাহকারী</button></div>' +
+      '<div class="bc-pills" style="margin-bottom:6px"><button type="button" data-bc="nk" data-id="customer"' + (C.nk === 'customer' ? ' class="on"' : '') + '>ক্রেতা (দোকান, পেজ)</button><button type="button" data-bc="nk" data-id="supplier"' + (C.nk === 'supplier' ? ' class="on"' : '') + '>সরবরাহকারী</button></div>' +
       '<label class="bc-lbl" for="bci_np_name">নাম</label>' + inp('np_name', 'যেমন: Glow Shop Dhaka', ' style="width:100%"') +
       '<label class="bc-lbl" for="bci_np_phone">ফোন</label>' + inp('np_phone', '01…', ' style="width:100%" inputmode="tel"') +
       '<label class="bc-lbl" for="bci_np_mail">ই-মেইল</label>' + inp('np_mail', 'না দিলেও চলে', ' style="width:100%" inputmode="email"') +
       '<label class="bc-lbl" for="bci_np_want">কী চান</label>' + inp('np_want', 'যেমন: ৫০টা sunscreen-এর দাম', ' style="width:100%"') +
       '<label class="bc-lbl" for="bci_np_src">কোথা থেকে এলেন</label>' + inp('np_src', 'যেমন: LinkedIn পোস্টের comment', ' style="width:100%"') +
-      '<label class="bc-lbl" for="bci_np_biz">কোন ব্যবসার Leads-এ</label>' + bizSel('np_biz', biz).replace('class="bc-in"', 'class="bc-in" style="width:100%"') +
+      '<label class="bc-lbl" for="bci_ltarget">কোন ব্যবসার Leads-এ</label>' + bizSel('ltarget', biz).replace('class="bc-in"', 'class="bc-in" style="width:100%"') +
       '<div class="bc-row" style="margin-top:16px">' + btn('Leads-এ যোগ করুন', 'data-bc="npadd"', 'dark', 'npadd') + '</div>';
   }
   function resultsHtml() {
     var h = headHtml('ফলাফল', 'যা গেছে, যা ফিরেছে'); var g = gate(['cockpit']); if (g) return h + g;
     var n = counts(), all = stations(), L = n.listen;
-    h += '<div class="bc-fig"><div><span>এ সপ্তাহে গেছে</span><b>' + bn(n.gone) + '</b></div><div><span>লাইনে আছে</span><b>' + bn(n.queued) + '</b></div><div><span>আটকে</span><b class="' + (n.stuck.length ? 'x' : '') + '">' + bn(n.stuck.length) + '</b></div>' +
-      '<div><span>বাছাই করা comment</span><b>' + bnN(L.total) + '</b></div><div><span>প্রশ্ন</span><b>' + bnN(L.questions) + '</b></div><div><span>সম্ভাব্য লিড</span><b>' + bnN(L.leads) + '</b></div></div>';
-    // 15 days: 7 back, today, 7 ahead
+    h += '<p class="bc-lede">এ সপ্তাহে <b>' + bn(n.gone) + 'টা</b> পোস্ট গেছে, <b>' + bn(n.queued) + 'টা</b> লাইনে আছে' + (n.stuck.length ? ', <b class="x">' + bn(n.stuck.length) + 'টা আটকে</b>' : '') + '। শোনা পেজে <b>' + bnN(L.questions) + 'টা</b> প্রশ্ন জমেছে' + (L.leads ? ', <b>' + bnN(L.leads) + 'টা</b> ব্যবসায়ী লিড' : ', ব্যবসায়ী লিড এখনো নেই') + '।</p>';
     var d0 = new Date(); d0.setHours(0, 0, 0, 0); d0.setDate(d0.getDate() - 7);
     var days = []; for (var i = 0; i < 15; i++) { var d = new Date(d0); d.setDate(d0.getDate() + i); days.push({ d: d, go: 0, q: 0, x: 0 }); }
-    all.forEach(function (s) { var t = new Date(s.at); t.setHours(0, 0, 0, 0); var ix = Math.round((t - d0) / 864e5); if (ix >= 0 && ix < 15) days[ix][s.st]++; });
-    var mx = Math.max(3, Math.max.apply(null, days.map(function (x) { return x.go + x.q + x.x; })));
-    var today = new Date().toDateString();
+    function dayIx(s) { var t = new Date(s.at); t.setHours(0, 0, 0, 0); return Math.round((t - d0) / 864e5); }
+    all.forEach(function (s) { var ix = dayIx(s); if (ix >= 0 && ix < 15) days[ix][s.st]++; });
+    var mx = Math.max(3, Math.max.apply(null, days.map(function (x) { return x.go + x.q + x.x; }))), today = new Date().toDateString();
     h += '<div class="bc-h2"><h2>দিন ধরে</h2><span>গত ৭ দিন, আজ, সামনের ৭ দিন</span></div><div class="bc-chart">' + days.map(function (x) {
       var tot = x.go + x.q + x.x, seg = function (k) { return x[k] ? '<i class="' + (k === 'go' ? '' : k) + '" style="height:' + (x[k] / mx * 100).toFixed(1) + '%"></i>' : ''; };
       return '<div class="c' + (x.d.toDateString() === today ? ' t' : '') + '" title="' + esc(dDate(x.d) + ': ' + tot) + '">' + seg('go') + seg('q') + seg('x') + (tot ? '<b style="bottom:calc(' + (tot / mx * 100).toFixed(1) + '% + 4px)">' + bn(tot) + '</b>' : '') + '</div>';
     }).join('') + '</div><div class="bc-cl">' + days.map(function (x) { var t = x.d.toDateString() === today; return '<span class="' + (t ? 't' : '') + '">' + (t ? 'আজ' : DAY[x.d.getDay()]) + '<br>' + bn(x.d.getDate()) + '</span>'; }).join('') + '</div>' +
       '<div class="bc-key"><span><i class="sq"></i>গেছে</span><span><i class="sq q"></i>লাইনে</span><span><i class="sq x"></i>আটকে</span></div>';
-    var by = {}; all.forEach(function (s) { var b = by[s.net] || (by[s.net] = { go: 0, q: 0, x: 0 }); b[s.st]++; });
-    var top = Math.max(1, Math.max.apply(null, lines().map(function (l) { var b = by[l.net] || { go: 0, q: 0, x: 0 }; return b.go + b.q + b.x; })));
-    h += '<div class="bc-block"><div class="bc-h2"><h2>লাইন ধরে</h2><span>একই ১৫ দিনে</span></div>' + lines().map(function (l) {
-      var b = by[l.net] || { go: 0, q: 0, x: 0 }, w = function (k) { return b[k] ? '<i class="' + (k === 'go' ? '' : k) + '" style="width:' + (b[k] / top * 100).toFixed(1) + '%"></i>' : ''; };
-      return '<div class="bc-nb" style="--c:' + netCol(l.net) + '">' + lb(l.net) + '<u>' + w('go') + w('q') + w('x') + '</u><small>গেছে ' + bn(b.go) + ' · লাইনে ' + bn(b.q) + (b.x ? ' · <span style="color:var(--bc-alert-ink)">আটকে ' + bn(b.x) + '</span>' : '') + '</small></div>';
+    // each network as its line over the same 15 days, stations on the days it carried a post
+    var RANK = { go: 0, q: 1, x: 2 }, tpc = (7.5 / 15 * 100);
+    h += '<div class="bc-block"><div class="bc-h2"><h2>লাইন ধরে</h2><span>একই ১৫ দিন, প্রতিটা স্টেশন এক দিনের পোস্ট</span></div><div class="bc-rl-days"><span></span>' + days.map(function (x) { return '<span class="' + (x.d.toDateString() === today ? 't' : '') + '">' + bn(x.d.getDate()) + '</span>'; }).join('') + '</div>' + lines().map(function (l) {
+      var per = {}, tot = { go: 0, q: 0, x: 0 };
+      all.forEach(function (s) { if (s.net !== l.net) return; var ix = dayIx(s); if (ix < 0 || ix > 14) return; var p = per[ix] || (per[ix] = { n: 0, st: 'go' }); p.n++; tot[s.st]++; if (RANK[s.st] > RANK[p.st]) p.st = s.st; });
+      var st = Object.keys(per).map(function (ix) { var p = per[ix]; return '<span class="bc-st ' + (p.st === 'go' ? '' : p.st) + '" style="left:' + ((Number(ix) + .5) / 15 * 100).toFixed(2) + '%">' + (p.n > 1 ? '<span class="n">' + bn(p.n) + '</span>' : '') + '</span>'; }).join('');
+      var any = tot.go + tot.q + tot.x;
+      return '<div class="bc-ln bc-rl' + (any ? '' : ' empty') + '" style="--c:' + netCol(l.net) + '"><label><s></s><span>' + esc(netName(l.net)) + '<i>' + (any ? 'গেছে ' + bn(tot.go) + (tot.q ? ' · লাইনে ' + bn(tot.q) : '') + (tot.x ? ' · আটকে ' + bn(tot.x) : '') : 'এই ১৫ দিনে কিছু নেই') + '</i></span></label><div class="bc-track"><span class="fut" style="left:' + tpc.toFixed(2) + '%"></span>' + st + '</div></div>';
     }).join('') + '</div>';
     h += '<div class="bc-note" style="margin-top:20px">ক্লিক, ভিজিট আর কে কী কিনল এখনো যুক্ত হয়নি: rmabidur.com-এর Umami আর LinkedIn-এর সংখ্যা পরের ধাপে আসবে।</div>';
     return h;
   }
-  var TSH = ['#16181D', '#454A55', '#6B717C', '#8A909B', '#B4B9C1', '#D5D8DD'];
+  var RISK = { low: 'কম', medium: 'মাঝারি', high: 'বেশি' };
   function rulesHtml() {
     var h = headHtml('নিয়ম', 'কোন লাইনে কী, কত বার');
     var d0 = C.d.cockpit;
     if (d0 && !d0.keySet) return h + setupHtml(false);
     var g = gate(['settings']); if (g) return h + g;
     var d = C.d.settings, topics = d.topics || [], W = d.weights || {}, st = d.settings || {}, level = st.cadence_level || 'start', cad = (d.cadence || []).filter(function (c) { return c.level === level; });
-    var pn = st.public_name || {};
+    var pn = st.public_name || {}, conn = lines().map(function (l) { return l.net; });
     h += '<div class="bc-who"><b data-noi18n="1">' + esc(pn.en || '') + '</b><span data-noi18n="1">' + esc(st.positioning_en || '') + '</span><span data-noi18n="1">' + esc(st.positioning_bn || '') + '</span><span class="k" data-noi18n="1">' + esc([pn.bn, pn.ko].filter(Boolean).join(' · ')) + '</span></div>';
-    var cmax = Math.max.apply(null, [7].concat(cad.map(function (c) { return c.per_week_max || 0; })));
-    h += '<div class="bc-h2"><h2>কত বার পোস্ট</h2><span class="bc-sp"></span><div class="bc-pills"><button type="button" data-bc="level" data-id="start"' + (level === 'start' ? ' class="on"' : '') + '>শুরু · সপ্তাহে ~৬ ঘণ্টা</button><button type="button" data-bc="level" data-id="scale"' + (level === 'scale' ? ' class="on"' : '') + '>বাড়ানো · ~১০ ঘণ্টা</button></div></div>' +
-      cad.map(function (c) { var p = netOf(c.platform); return '<div class="bc-cad" style="--c:' + netCol(p) + '">' + lb(p) + '<span data-noi18n="1">' + esc(String(c.format || '').replace(/_/g, ' ')) + '</span><u><i style="left:' + (c.per_week_min / cmax * 100).toFixed(1) + '%;width:' + Math.max(1.5, (c.per_week_max - c.per_week_min) / cmax * 100).toFixed(1) + '%"></i></u><b>সপ্তাহে ' + bn(c.per_week_min) + (c.per_week_max !== c.per_week_min ? '–' + bn(c.per_week_max) : '') + '</b></div>'; }).join('') +
+    // the timetable: each line's week as stations (filled = at least, ring = up to)
+    var withCad = {}; cad.forEach(function (c) { withCad[netOf(c.platform)] = 1; });
+    h += '<div class="bc-h2"><h2>কত বার পোস্ট</h2><span>প্রতি সপ্তাহে; ভরা স্টেশন = অন্তত, ফাঁপা = যত পর্যন্ত</span><span class="bc-sp"></span><div class="bc-pills"><button type="button" data-bc="level" data-id="start"' + (level === 'start' ? ' class="on"' : '') + '>শুরু · সপ্তাহে ~৬ ঘণ্টা</button><button type="button" data-bc="level" data-id="scale"' + (level === 'scale' ? ' class="on"' : '') + '>বাড়ানো · ~১০ ঘণ্টা</button></div></div>' +
+      cad.map(function (c) {
+        var p = netOf(c.platform), dots = '';
+        for (var i = 0; i < c.per_week_max; i++) dots += '<i class="' + (i < c.per_week_min ? 'q' : '') + '"></i>';
+        return '<div class="bc-cad" style="--c:' + netCol(p) + '">' + lb(p) + '<span data-noi18n="1">' + esc(FMT[c.format] || String(c.format || '').replace(/_/g, ' ')) + (conn.indexOf(p) < 0 ? ' · <span class="bc-tag w">account নেই</span>' : '') + '</span><span class="bc-dots">' + dots + '</span><b>' + bn(c.per_week_min) + (c.per_week_max !== c.per_week_min ? '–' + bn(c.per_week_max) : '') + 'টা</b></div>';
+      }).join('') +
+      conn.filter(function (p) { return !withCad[p]; }).map(function (p) { return '<div class="bc-cad" style="--c:' + netCol(p) + '">' + lb(p) + '<span>নিয়ম নেই</span><span class="bc-dots"></span><b class="bc-sub">যখন দেবেন</b></div>'; }).join('') +
       '<div class="bc-note">প্রশ্ন আর অর্ডার নিয়মিত আসতে থাকলে “বাড়ানো”-তে যান।</div>';
     var plats = Object.keys(W).sort();
-    h += '<div class="bc-block"><div class="bc-h2"><h2>প্রতি লাইনে কোন বিষয় কতটা</h2><span>মোট ১০০ হতে হবে</span></div><div class="bc-leg" style="margin-bottom:6px">' + topics.map(function (t, i) { return '<span style="display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--bc-ink-2);padding:2px 8px"><i style="--c:' + TSH[i % 6] + ';width:11px;height:11px;border-radius:3px;background:var(--c)"></i>' + esc(t.label_bn || t.label_en) + '</span>'; }).join('') + '</div>' +
+    h += '<div class="bc-block"><div class="bc-h2"><h2>প্রতি লাইনে কোন বিষয় কতটা</h2><span>মোট ১০০ হতে হবে · AI draft লেখার সময় এই ভাগ মানে</span></div><div class="bc-tlg">' + topics.map(function (t, i) { return '<span style="--c:' + TSH[i % 6] + ';--t:' + (i > 3 ? '#16181D' : '#fff') + '"><i>' + bn(i + 1) + '</i>' + esc(t.label_bn || t.label_en) + '</span>'; }).join('') + '</div>' +
       plats.map(function (p) {
         var cur = C.rw[p] || W[p] || {}, sum = 0; topics.forEach(function (t) { sum += Number(cur[t.key] || 0); });
         var dirty = !!C.rw[p], open = C.open['w' + p];
-        return '<div class="bc-mix"><div class="bc-mix-h">' + lb(p) + '<span class="bc-sp"></span><span class="bc-sum' + (sum === 100 ? '' : ' bad') + '">' + bn(sum) + ' / ১০০</span>' +
+        return '<div class="bc-mix"><div class="bc-mix-h">' + lb(p) + (conn.indexOf(netOf(p)) < 0 ? '<span class="bc-tag w">account নেই</span>' : '') + '<span class="bc-sp"></span><span class="bc-sum' + (sum === 100 ? '' : ' bad') + '">' + bn(sum) + ' / ১০০</span>' +
           (open ? (dirty ? btn('রাখুন', 'data-bc="wsave" data-id="' + p + '"', 'dark sm', 'ws' + p, sum !== 100) + '<button type="button" class="bc-btn ghost sm" data-bc="wundo" data-id="' + p + '">বাতিল</button>' : '<button type="button" class="bc-btn ghost sm" data-bc="wopen" data-id="' + p + '">বন্ধ</button>') : '<button type="button" class="bc-btn ghost sm" data-bc="wopen" data-id="' + p + '">বদলান</button>') + '</div>' +
-          '<div class="bc-mixbar">' + topics.map(function (t, i) { var n = Number(cur[t.key] || 0); return n ? '<i style="flex:' + n + ' 1 0;--c:' + TSH[i % 6] + ';--t:' + (i > 3 ? '#16181D' : '#fff') + '" title="' + esc((t.label_bn || t.label_en) + ' ' + n + '%') + '">' + (n >= 10 ? bn(n) + '%' : '') + '</i>' : ''; }).join('') + '</div>' +
-          (open ? '<div class="bc-stps">' + topics.map(function (t, i) { var n = Number(cur[t.key] || 0); return '<div class="bc-stp" style="--c:' + TSH[i % 6] + '"><s></s><span>' + esc(t.label_bn || t.label_en) + '</span><button type="button" data-bc="wstep" data-id="' + p + '" data-t="' + esc(t.key) + '" data-d="-5" aria-label="৫ কমান">' + svg('minus') + '</button><b>' + bn(n) + '</b><button type="button" data-bc="wstep" data-id="' + p + '" data-t="' + esc(t.key) + '" data-d="5" aria-label="৫ বাড়ান">' + svg('plus') + '</button></div>'; }).join('') + '</div>' : '') + '</div>';
+          '<div class="bc-mixbar">' + topics.map(function (t, i) { var nn = Number(cur[t.key] || 0); return nn ? '<i style="flex:' + nn + ' 1 0;--c:' + TSH[i % 6] + ';--t:' + (i > 3 ? '#16181D' : '#fff') + '" title="' + esc((t.label_bn || t.label_en) + ' ' + nn + '%') + '">' + (nn >= 10 ? bn(i + 1) + ' · ' + bn(nn) + '%' : bn(i + 1)) + '</i>' : ''; }).join('') + '</div>' +
+          (open ? '<div class="bc-stps">' + topics.map(function (t, i) { var nn = Number(cur[t.key] || 0); return '<div class="bc-stp" style="--c:' + TSH[i % 6] + '"><s></s><span>' + bn(i + 1) + '. ' + esc(t.label_bn || t.label_en) + '</span><button type="button" data-bc="wstep" data-id="' + p + '" data-t="' + esc(t.key) + '" data-d="-5" aria-label="৫ কমান">' + svg('minus') + '</button><b>' + bn(nn) + '</b><button type="button" data-bc="wstep" data-id="' + p + '" data-t="' + esc(t.key) + '" data-d="5" aria-label="৫ বাড়ান">' + svg('plus') + '</button></div>'; }).join('') + '</div>' : '') + '</div>';
       }).join('') + '</div>';
     var con = d.connectors || [];
-    h += '<div class="bc-block"><div class="bc-h2"><h2>যুক্ত হওয়ার পথ</h2><span>অনানুষ্ঠানিক পথ বন্ধ দিয়ে শুরু হয়, Mac থেকে একটা একটা করে খোলা হয়</span></div>' + con.map(function (c) {
-      var stt = c.kill_switch ? ['থামানো', 'x'] : c.enabled ? ['চালু', 'lead'] : ['বন্ধ', ''];
-      return '<div class="bc-con"><b data-noi18n="1">' + esc(netName(c.platform)) + ' · ' + esc(c.key) + '</b><span class="bc-tag ' + stt[1] + '">' + stt[0] + '</span><small data-noi18n="1">' + (c.official ? 'অফিসিয়াল' : 'অনানুষ্ঠানিক') + ' · ঝুঁকি ' + esc(c.risk || '') + (c.note ? ' · ' + esc(c.note) : '') + '</small></div>';
+    h += '<div class="bc-block"><div class="bc-h2"><h2>পোস্ট যাওয়ার পথ</h2><span>অনানুষ্ঠানিক পথ বন্ধ দিয়ে শুরু হয়; Mac থেকে একটা একটা করে খোলা হয়</span></div>' + con.map(function (c, i) {
+      var stt = c.kill_switch ? ['থামানো', 'x'] : c.enabled ? ['চালু', 'lead'] : ['বন্ধ', ''], op = C.open['c' + i];
+      return '<div class="bc-con"><b>' + esc(netName(c.platform)) + ' · ' + (c.official ? 'অফিসিয়াল পথ' : 'অনানুষ্ঠানিক পথ') + '</b><span class="bc-tag ' + stt[1] + '">' + stt[0] + '</span><small>' + (c.official ? 'network-এর নিজের অনুমোদিত উপায়ে পোস্ট হয়' : 'network-এর অনুমতি ছাড়া চলে, তাই account আটকানোর ঝুঁকি আছে') + ' · ঝুঁকি ' + (RISK[c.risk] || esc(c.risk || '')) +
+        ' · <button type="button" class="bc-lnk" data-bc="copen" data-id="' + i + '" aria-expanded="' + !!op + '">' + (op ? 'বিস্তারিত লুকান' : 'বিস্তারিত') + '</button>' + (op ? '<span class="bc-raw" data-noi18n="1">' + esc(c.key) + (c.note ? ' · ' + esc(c.note) : '') + '</span>' : '') + '</small></div>';
     }).join('') + '</div>';
     return h + setupHtml(true);
+  }
+  var FMT = { post: 'লেখা পোস্ট', post_or_reel: 'পোস্ট বা reel', long: 'লম্বা ভিডিও', short: 'ছোট ভিডিও', carousel: 'carousel', reel: 'reel', video: 'ভিডিও', thread: 'thread', story: 'story' };
+  // when a draft or post goes: by default the next free slot of its line; or a day and a time picked in Bangla
+  function ymd(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function whenHtml(key) {
+    var val = v(key);
+    if (!val) return '<span class="bc-sub">যাবে লাইনের পরের ফাঁকা সময়ে</span><button type="button" class="bc-btn ghost sm" data-bc="topen" data-id="' + key + '">সময় ঠিক করুন</button>';
+    var d0 = new Date(); d0.setHours(0, 0, 0, 0); var cur = new Date(val), days = '', times = '';
+    for (var i = 0; i < 14; i++) { var d = new Date(d0); d.setDate(d0.getDate() + i); var ds = ymd(d); days += '<option value="' + ds + '"' + (ymd(cur) === ds ? ' selected' : '') + '>' + (i === 0 ? 'আজ' : i === 1 ? 'কাল' : DAY[d.getDay()]) + ', ' + dDate(d) + '</option>'; }
+    var ct = ('0' + cur.getHours()).slice(-2) + ':' + ('0' + cur.getMinutes()).slice(-2);
+    for (var m = 0; m < 1440; m += 30) { var tv = ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + m % 60).slice(-2), tt = new Date(d0); tt.setHours(Math.floor(m / 60), m % 60); times += '<option value="' + tv + '"' + (ct === tv ? ' selected' : '') + '>' + dTime(tt) + '</option>'; }
+    return '<select class="bc-in" data-bcwhen="' + key + '" data-part="d" aria-label="দিন">' + days + '</select><select class="bc-in" data-bcwhen="' + key + '" data-part="t" aria-label="সময়">' + times + '</select><button type="button" class="bc-btn ghost sm" data-bc="tclear" data-id="' + key + '">পরের ফাঁকা সময়ে দিন</button>';
   }
   function setupHtml(fold) {
     var set = C.d.cockpit && C.d.cockpit.keySet;
@@ -59104,7 +59170,7 @@ select.bc-in{padding-right:28px}
       return '<div class="bc-col"><h3>' + c + '</h3>' + NODES.filter(function (n) { return n.col === ci; }).map(function (n) {
         var st = n.h && d && d.cockpit ? (hl[n.h] ? '<span class="bc-dot" title="চলছে"></span>' : '<span class="bc-dot off" title="বন্ধ"></span>') : '';
         var to = n.to.map(nodeName).join(', ');
-        return '<button type="button" class="bc-node' + (n.hub ? ' hub' : '') + (C.node === n.id ? ' lit' : '') + '" style="--lc:' + ['#C13584', '#F2A900', '#0A66C2', '#14803F'][ci] + '" data-bc="node" data-id="' + n.id + '"><b>' + esc(n.t) + st + '</b><span>' + esc(n.id === 'networks' ? (ns || 'এখনো কিছু যুক্ত নেই') : n.d) + '</span>' + (to ? '<span class="to">পাঠায়: ' + esc(to) + '</span>' : '') + '</button>';
+        return '<button type="button" class="bc-node' + (n.hub ? ' hub' : '') + (C.node === n.id ? ' lit' : '') + '" style="--lc:#16181D" data-bc="node" data-id="' + n.id + '"><b>' + esc(n.t) + st + '</b><span>' + esc(n.id === 'networks' ? (ns || 'এখনো কিছু যুক্ত নেই') : n.d) + '</span>' + (to ? '<span class="to">পাঠায়: ' + esc(to) + '</span>' : '') + '</button>';
       }).join('') + '</div>';
     }).join('') + '</div>';
     var sel = NODES.filter(function (n) { return n.id === C.node; })[0];
@@ -59205,6 +59271,10 @@ select.bc-in{padding-right:28px}
     if (k === 'vq') C.vq = x.value;
     if (/^e\d+$/.test(k)) { var dx = findDraft(k.slice(1)), pv = el('bc_pv'), cn = x.parentNode && x.parentNode.querySelector('.bc-cnt'); if (dx && pv) { var mn = accountsFor(dx); pv.innerHTML = previewHtml(dx.platform, x.value, mn[0] && mn[0].name); } if (cn) cn.textContent = bn(x.value.length) + ' অক্ষর'; }
   });
+  document.addEventListener('change', function (e) {
+    var wk = e.target && e.target.getAttribute && e.target.getAttribute('data-bcwhen');
+    if (wk && on()) { var cur = String(v(wk) || ''), dp = cur.slice(0, 10), tp = cur.slice(11, 16); if (e.target.getAttribute('data-part') === 'd') dp = e.target.value; else tp = e.target.value; C.v[wk] = dp + 'T' + tp; return; }
+  });
   document.addEventListener('change', function (e) { var x = e.target; if (on() && x.getAttribute && x.getAttribute('data-bcin')) C.v[x.getAttribute('data-bcin')] = x.type === 'checkbox' ? x.checked : x.value; });
   document.addEventListener('keydown', function (e) {
     if (!on()) return;
@@ -59230,7 +59300,8 @@ select.bc-in{padding-right:28px}
     var col = C.d.board && C.d.board.board && C.d.board.board.columns[0];
     act('cardadd', 'erpBrandDeskCard', { title: t, column: col ? col.id : null }, function (r) { C.d.board = r; C.v.card = ''; });
   }
-  function platsPicked() { return PLATS.filter(function (p) { return C.plats[p]; }); }
+  function draftPlats() { var c = lines().map(function (l) { return l.net; }); var o = PLATS.filter(function (p) { return c.indexOf(p) >= 0; }); return o.length ? o : PLATS; }
+  function platsPicked() { var ok = draftPlats(); return PLATS.filter(function (p) { return C.plats[p] && ok.indexOf(p) >= 0; }); }
   function write(args) {
     var pl = platsPicked(); if (!pl.length) return toast('অন্তত একটা network বেছে নিন।', true);
     args.platforms = pl;
@@ -59249,6 +59320,14 @@ select.bc-in{padding-right:28px}
     if (!on()) return;
     var t = e.target.closest && e.target.closest('[data-bc]'); if (!t || !el('bc_root') || !el('bc_root').contains(t)) return;
     var w = t.getAttribute('data-bc'), id = t.getAttribute('data-id');
+    if (w === 'sec' || w === 'go') C.railMore = false;
+    if (w === 'railmore') { C.railMore = !C.railMore; draw(); return; }
+    if (w === 'topen') { var tm = new Date(); tm.setDate(tm.getDate() + 1); tm.setHours(10, 0, 0, 0); C.v[id] = ymd(tm) + 'T10:00'; draw(); return; }
+    if (w === 'tclear') { delete C.v[id]; draw(); return; }
+    if (w === 'copen') { C.open['c' + id] = !C.open['c' + id]; draw(); return; }
+    if (w === 'tcopy') { var tt = t.getAttribute('data-t'); try { navigator.clipboard.writeText(tt).then(function () { toast('শিরোনাম কপি হলো।'); }); } catch (e9) {} return; }
+    if (w === 'callidea') { var cl = ((C.d.cockpit && C.d.cockpit.cockpit && C.d.cockpit.cockpit.calls) || [])[Number(id)]; if (cl) act('ci' + id, 'erpBrandDeskIdea', { content: '#idea #fromcall ' + untag(strip(cl.text)).slice(0, 2000) }, function (r) { C.d.memos = r; toast('আইডিয়া পেজে “ধরা হয়েছে”-তে গেল।'); }); return; }
+    if (w === 'lidea') { var lc = ((C.d.listen && C.d.listen.comments) || []).filter(function (q) { return String(q.id) === String(id); })[0]; if (lc) act('li' + id, 'erpBrandDeskIdea', { content: '#idea #listen ' + (lc.summary || '') + '\n' + String(lc.text || '').slice(0, 1500) + '\n— ' + (lc.author_name || '') + (lc.channel_title ? ' (' + lc.channel_title + ')' : '') }, function (r) { C.d.memos = r; toast('আইডিয়া পেজে “ধরা হয়েছে”-তে গেল।'); }); return; }
     if (w === 'sec') { C.sec = id; C.pick = ''; C.dep = ''; try { localStorage.setItem('bc_sec', id); } catch (e2) {} draw(); scrollTo({ top: 0 }); }
     else if (w === 'reload') { var ks = NEED[C.sec] || []; ['cockpit'].concat(ks).forEach(function (k) { if (k !== 'cockpit') { C.d[k] = null; C.err[k] = ''; } }); C.err.cockpit = ''; get('cockpit', true); draw(); }
     else if (w === 'retry-get') { C.err[id] = ''; get(id, true); draw(); }
