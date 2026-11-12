@@ -58786,8 +58786,9 @@ select.bc-in{padding-right:28px}
     (k.items || []).forEach(function (i) {
       out.push({ key: 'q' + i.id, net: netOf(i.platform), at: i.at, st: i.state === 'waiting' ? 'q' : 'x', text: strip(i.content), src: 'pacer', id: i.id, ask: i.state === 'ask', urgent: i.urgent, result: i.result });
     });
-    return out.filter(function (s) { return s.at && !isNaN(new Date(s.at)); });
+    return out.filter(function (s) { return s.at && !isNaN(new Date(s.at)) && !HID[s.key]; });
   }
+  var HID = {}; try { HID = JSON.parse(localStorage.getItem('bc_hidden') || '{}') || {}; } catch (e) { HID = {}; }
   function nets() { var k = (C.d.cockpit && C.d.cockpit.cockpit) || {}; return (k.networks || (C.d.drafts && C.d.drafts.networks) || []).filter(function (n) { return !n.disabled; }); }
   function lines() {
     var seen = {}, out = [];
@@ -58800,7 +58801,8 @@ select.bc-in{padding-right:28px}
   function findSt(key) { return stations().filter(function (s) { return s.key === key; })[0]; }
   function stActs(s) {
     var a = '';
-    if (s.src === 'postiz' && s.st === 'x') a += btn('আবার পাঠান', 'data-bc="resend" data-id="' + esc(s.key) + '"', 'red sm', 'rs' + s.key);
+    if (s.src === 'postiz' && s.st === 'x' && needMedia(s.net)) a += '<span class="bc-sub">' + esc(netName(s.net)) + '-এ ভিডিও ছাড়া পোস্ট যায় না, তাই আবার পাঠিয়ে লাভ নেই</span>' + btn('সরিয়ে রাখুন', 'data-bc="hidest" data-id="' + esc(s.key) + '"', 'sm');
+    else if (s.src === 'postiz' && s.st === 'x') a += btn('আবার পাঠান', 'data-bc="resend" data-id="' + esc(s.key) + '"', 'red sm', 'rs' + s.key);
     if (s.src === 'pacer' && s.st === 'x') a += btn('এখন পাঠান', 'data-bc="decide" data-act="send" data-id="' + esc(s.id) + '"', 'dark sm', 'dc' + s.id) + btn('বাদ দিন', 'data-bc="decide" data-act="drop" data-id="' + esc(s.id) + '"', 'sm', 'dd' + s.id);
     if (s.url && /^https?:/.test(s.url)) a += '<a class="bc-btn ghost sm" href="' + esc(s.url) + '" target="_blank" rel="noopener">খুলুন</a>';
     return a;
@@ -58821,7 +58823,7 @@ select.bc-in{padding-right:28px}
       var futL = Math.max(0, Math.min(1, nowPct)) * 100;
       return '<div class="bc-ln' + (mine.length ? '' : ' bcidle') + '" data-net="' + esc(l.net) + '" style="--c:' + netCol(l.net) + '"><label><s></s><span>' + esc(netName(l.net)) + '<i data-noi18n="1">' + esc(l.acc || '') + '</i></span></label>' +
         '<div class="bc-track">' + (futL < 100 ? '<span class="fut" style="left:' + futL.toFixed(2) + '%"></span>' : '') +
-        (C.wk === 0 && waitBy[l.net] ? '<button type="button" class="bc-st wt" style="left:' + futL.toFixed(2) + '%" data-bc="ptab" data-id="wait" aria-label="' + esc(netName(l.net) + ': ' + waitBy[l.net] + 'টা draft আপনার অনুমোদনের অপেক্ষায়') + '" title="' + esc(netName(l.net) + ': ' + bn(waitBy[l.net]) + 'টা draft অপেক্ষায়') + '"><span class="n">' + bn(waitBy[l.net]) + '</span></button>' : '') +
+        (C.wk === 0 && waitBy[l.net] ? '<button type="button" class="bc-st wt" style="left:' + Math.min(99, futL + 1.4).toFixed(2) + '%" data-bc="ptab" data-id="wait" aria-label="' + esc(netName(l.net) + ': ' + waitBy[l.net] + 'টা draft আপনার অনুমোদনের অপেক্ষায়') + '" title="' + esc(netName(l.net) + ': ' + bn(waitBy[l.net]) + 'টা draft অপেক্ষায়') + '"><span class="n">' + bn(waitBy[l.net]) + '</span></button>' : '') +
         groups.map(function (g) { var s = g.s; return '<button type="button" class="bc-st ' + (s.st === 'go' ? '' : s.st) + (C.pick === s.key ? ' sel' : '') + '" style="left:' + g.f.toFixed(2) + '%" data-bc="st" data-id="' + esc(s.key) + '" aria-label="' + esc(netName(s.net) + ', ' + stLabel(s) + (g.n > 1 ? ', ' + g.n + 'টা পোস্ট' : '')) + '">' + (g.n > 1 ? '<span class="n">' + bn(g.n) + '</span>' : '') + '</button>'; }).join('') + '</div></div>';
     }).join('');
     var nowLine = nowPct > 0 && nowPct < 1 ? '<span class="bc-now" style="left:calc(var(--lab) + (100% - var(--lab)) * ' + nowPct.toFixed(4) + ')"></span>' : '';
@@ -59650,6 +59652,7 @@ select.bc-in{padding-right:28px}
       })();
       return;
     }
+    if (w === 'hidest') { HID[id] = 1; try { localStorage.setItem('bc_hidden', JSON.stringify(HID)); } catch (e8) {} C.pick = ''; toast('সরিয়ে রাখা হলো। এটা শুধু এই ককপিটে লুকানো; Postiz-এ পোস্টটা আগের মতোই আছে।'); draw(); return; }
     if (w === 'railmore') { C.railMore = !C.railMore; draw(); return; }
     if (w === 'topen') { var tm = new Date(); tm.setDate(tm.getDate() + 1); tm.setHours(10, 0, 0, 0); C.v[id] = ymd(tm) + 'T10:00'; draw(); return; }
     if (w === 'tclear') { delete C.v[id]; draw(); return; }
