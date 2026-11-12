@@ -58349,8 +58349,8 @@ select.bc-in{padding-right:28px}
 .bc-days span small{display:block;font-weight:500;font-size:11.5px}
 .bc-days .t{color:var(--bc-ink);font-weight:800}
 .bc-ln{display:grid;grid-template-columns:var(--lab) 1fr;align-items:center;height:46px;border-bottom:1px solid var(--bc-rule);transition:opacity .18s ease-out}
-.bc-ln.none label{opacity:.5}
-.bc-ln.none .bc-track::before{opacity:.45}
+.bc-ln.bcidle label{opacity:.5}
+.bc-ln.bcidle .bc-track::before{opacity:.45}
 .bc-ln label{font:600 13.5px "Pretendard Variable",Pretendard,"Hind Siliguri",system-ui,system-ui,sans-serif;display:flex;gap:8px;align-items:center;color:var(--bc-ink-2);min-width:0;line-height:1.2}
 .bc-ln label>span{display:flex;flex-direction:column;min-width:0}
 .bc-ln label s{width:12px;height:12px;border-radius:3px;flex:none;background:var(--c)}
@@ -58789,7 +58789,7 @@ select.bc-in{padding-right:28px}
         var g = groups[groups.length - 1]; if (g && o.f - g.f < 1.5) { g.n++; if (RANK[o.s.st] > RANK[g.s.st]) g.s = o.s; } else groups.push({ s: o.s, f: o.f, n: 1 });
       });
       var futL = Math.max(0, Math.min(1, nowPct)) * 100;
-      return '<div class="bc-ln' + (mine.length ? '' : ' none') + '" data-net="' + esc(l.net) + '" style="--c:' + netCol(l.net) + '"><label><s></s><span>' + esc(netName(l.net)) + '<i data-noi18n="1">' + esc(l.acc || '') + '</i></span></label>' +
+      return '<div class="bc-ln' + (mine.length ? '' : ' bcidle') + '" data-net="' + esc(l.net) + '" style="--c:' + netCol(l.net) + '"><label><s></s><span>' + esc(netName(l.net)) + '<i data-noi18n="1">' + esc(l.acc || '') + '</i></span></label>' +
         '<div class="bc-track">' + (futL < 100 ? '<span class="fut" style="left:' + futL.toFixed(2) + '%"></span>' : '') +
         groups.map(function (g) { var s = g.s; return '<button type="button" class="bc-st ' + (s.st === 'go' ? '' : s.st) + (C.pick === s.key ? ' sel' : '') + '" style="left:' + g.f.toFixed(2) + '%" data-bc="st" data-id="' + esc(s.key) + '" aria-label="' + esc(netName(s.net) + ', ' + stLabel(s) + (g.n > 1 ? ', ' + g.n + 'টা পোস্ট' : '')) + '">' + (g.n > 1 ? '<span class="n">' + bn(g.n) + '</span>' : '') + '</button>'; }).join('') + '</div></div>';
     }).join('');
@@ -59336,7 +59336,7 @@ select.bc-in{padding-right:28px}
       all.forEach(function (s) { if (s.net !== l.net) return; var ix = dayIx(s); if (ix < 0 || ix > 14) return; var p = per[ix] || (per[ix] = { n: 0, st: 'go' }); p.n++; tot[s.st]++; if (RANK[s.st] > RANK[p.st]) p.st = s.st; });
       var st = Object.keys(per).map(function (ix) { var p = per[ix]; return '<span class="bc-st ' + (p.st === 'go' ? '' : p.st) + '" style="left:' + ((Number(ix) + .5) / 15 * 100).toFixed(2) + '%">' + (p.n > 1 ? '<span class="n">' + bn(p.n) + '</span>' : '') + '</span>'; }).join('');
       var any = tot.go + tot.q + tot.x;
-      return '<div class="bc-ln bc-rl' + (any ? '' : ' none') + '" style="--c:' + netCol(l.net) + '"><label><s></s><span>' + esc(netName(l.net)) + '<i>' + (any ? 'গেছে ' + bn(tot.go) + (tot.q ? ' · লাইনে ' + bn(tot.q) : '') + (tot.x ? ' · আটকে ' + bn(tot.x) : '') : 'এই ১৫ দিনে কিছু নেই') + '</i></span></label><div class="bc-track"><span class="fut" style="left:' + tpc.toFixed(2) + '%"></span>' + st + '</div></div>';
+      return '<div class="bc-ln bc-rl' + (any ? '' : ' bcidle') + '" style="--c:' + netCol(l.net) + '"><label><s></s><span>' + esc(netName(l.net)) + '<i>' + (any ? 'গেছে ' + bn(tot.go) + (tot.q ? ' · লাইনে ' + bn(tot.q) : '') + (tot.x ? ' · আটকে ' + bn(tot.x) : '') : 'এই ১৫ দিনে কিছু নেই') + '</i></span></label><div class="bc-track"><span class="fut" style="left:' + tpc.toFixed(2) + '%"></span>' + st + '</div></div>';
     }).join('') + '</div>';
     h += '<div class="bc-note" style="margin-top:20px">ক্লিক, ভিজিট আর কে কী কিনল এখনো যুক্ত হয়নি: rmabidur.com-এর Umami আর LinkedIn-এর সংখ্যা পরের ধাপে আসবে।</div>';
     return h;
