@@ -60,7 +60,8 @@ r = await asB((ctx) => { ctx.now = tue; return fac.factoryTick(ctx); });
 check('Tuesday: nothing is planned', (await sql`select count(*)::int n from ad_factory_weeks`)[0].n === 0, r);
 r = await asB((ctx) => { ctx.now = mon11; return fac.factoryTick(ctx); });
 const wk = (await sql`select * from ad_factory_weeks where business_id = ${FIX.B}`)[0];
-const items = await sql`select * from ad_factory_items where week_id = ${wk && wk.id} order by created_at`;
+// same order as the picture pump (created_at, id): rows made in one transaction share created_at
+const items = await sql`select * from ad_factory_items where week_id = ${wk && wk.id} order by created_at, id`;
 check('Monday 11:00: the week 2026-W46 is planned and ready', /planned 2026-W46/.test(r) && wk && wk.week === '2026-W46' && wk.status === 'ready', { r, wk });
 const uniq = new Set([...push.result.rising, ...push.result.advertise, ...push.result.clear].map((x) => String(x.sku).toLowerCase())).size;
 const nProd = Math.min(2, uniq), nItems = 2 * nProd;
