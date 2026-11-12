@@ -58038,6 +58038,9 @@ document.addEventListener('click', function (e) {
      channels), people (Listen buyers + add straight to Leads: erpBrandDeskAddLead), results (15-day chart, per line), rules
      (timetable, topic mix steppers, connectors, bridge key), connections. -->
 <style>
+/* the ERP has short global class names (.c .t .n .av .ph .none ...); inside the cockpit they fall back to browser defaults, so only this block styles them */
+.bc .c,.bc .a,.bc .m,.bc .t,.bc .q,.bc .go,.bc .side,.bc .none,.bc .wide,.bc .n,.bc .h,.bc .s,.bc .l,.bc .k,.bc .w,.bc .av,.bc .ph{all:revert}
+
 /* Pretendard (Latin + figures), self-hosted: the page CSP allows fonts only from this site and Google Fonts */
 @font-face{font-family:"Pretendard Variable";font-style:normal;font-weight:45 920;font-display:swap;src:url("fonts/PretendardStdVariable.woff2") format("woff2-variations"),url("fonts/PretendardStdVariable.woff2") format("woff2")}
 /* the cockpit lives in its own root beside #view, so the older desk (hidden in #view) can never wipe it */
@@ -58346,8 +58349,8 @@ select.bc-in{padding-right:28px}
 .bc-days span small{display:block;font-weight:500;font-size:11.5px}
 .bc-days .t{color:var(--bc-ink);font-weight:800}
 .bc-ln{display:grid;grid-template-columns:var(--lab) 1fr;align-items:center;height:46px;border-bottom:1px solid var(--bc-rule);transition:opacity .18s ease-out}
-.bc-ln.empty label{opacity:.5}
-.bc-ln.empty .bc-track::before{opacity:.45}
+.bc-ln.none label{opacity:.5}
+.bc-ln.none .bc-track::before{opacity:.45}
 .bc-ln label{font:600 13.5px "Pretendard Variable",Pretendard,"Hind Siliguri",system-ui,system-ui,sans-serif;display:flex;gap:8px;align-items:center;color:var(--bc-ink-2);min-width:0;line-height:1.2}
 .bc-ln label>span{display:flex;flex-direction:column;min-width:0}
 .bc-ln label s{width:12px;height:12px;border-radius:3px;flex:none;background:var(--c)}
@@ -58474,7 +58477,7 @@ select.bc-in{padding-right:28px}
 .ph-slot.old{opacity:.62}
 .ph-slot.old:hover,.ph-slot.old:focus-within{opacity:1}
 .ph-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;min-height:24px}
-.ph{background:#fff;border:1px solid #DADDE1;border-radius:20px;overflow:hidden;box-shadow:0 1px 2px rgba(22,24,29,.06),0 10px 28px rgba(22,24,29,.07);font:15px/1.38 Helvetica,Arial,"Hind Siliguri",system-ui,sans-serif;color:#050505;position:relative}
+.bc .ph{background:#fff;border:1px solid #DADDE1;border-radius:20px;overflow:hidden;box-shadow:0 1px 2px rgba(22,24,29,.06),0 10px 28px rgba(22,24,29,.07);font:15px/1.38 Helvetica,Arial,"Hind Siliguri",system-ui,sans-serif;color:#050505;position:relative}
 .ph svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .ph header{display:flex;gap:10px;align-items:center;padding:12px 14px 8px}
 .ph header>div{flex:1;min-width:0}
@@ -58786,7 +58789,7 @@ select.bc-in{padding-right:28px}
         var g = groups[groups.length - 1]; if (g && o.f - g.f < 1.5) { g.n++; if (RANK[o.s.st] > RANK[g.s.st]) g.s = o.s; } else groups.push({ s: o.s, f: o.f, n: 1 });
       });
       var futL = Math.max(0, Math.min(1, nowPct)) * 100;
-      return '<div class="bc-ln' + (mine.length ? '' : ' empty') + '" data-net="' + esc(l.net) + '" style="--c:' + netCol(l.net) + '"><label><s></s><span>' + esc(netName(l.net)) + '<i data-noi18n="1">' + esc(l.acc || '') + '</i></span></label>' +
+      return '<div class="bc-ln' + (mine.length ? '' : ' none') + '" data-net="' + esc(l.net) + '" style="--c:' + netCol(l.net) + '"><label><s></s><span>' + esc(netName(l.net)) + '<i data-noi18n="1">' + esc(l.acc || '') + '</i></span></label>' +
         '<div class="bc-track">' + (futL < 100 ? '<span class="fut" style="left:' + futL.toFixed(2) + '%"></span>' : '') +
         groups.map(function (g) { var s = g.s; return '<button type="button" class="bc-st ' + (s.st === 'go' ? '' : s.st) + (C.pick === s.key ? ' sel' : '') + '" style="left:' + g.f.toFixed(2) + '%" data-bc="st" data-id="' + esc(s.key) + '" aria-label="' + esc(netName(s.net) + ', ' + stLabel(s) + (g.n > 1 ? ', ' + g.n + 'টা পোস্ট' : '')) + '">' + (g.n > 1 ? '<span class="n">' + bn(g.n) + '</span>' : '') + '</button>'; }).join('') + '</div></div>';
     }).join('');
@@ -59333,7 +59336,7 @@ select.bc-in{padding-right:28px}
       all.forEach(function (s) { if (s.net !== l.net) return; var ix = dayIx(s); if (ix < 0 || ix > 14) return; var p = per[ix] || (per[ix] = { n: 0, st: 'go' }); p.n++; tot[s.st]++; if (RANK[s.st] > RANK[p.st]) p.st = s.st; });
       var st = Object.keys(per).map(function (ix) { var p = per[ix]; return '<span class="bc-st ' + (p.st === 'go' ? '' : p.st) + '" style="left:' + ((Number(ix) + .5) / 15 * 100).toFixed(2) + '%">' + (p.n > 1 ? '<span class="n">' + bn(p.n) + '</span>' : '') + '</span>'; }).join('');
       var any = tot.go + tot.q + tot.x;
-      return '<div class="bc-ln bc-rl' + (any ? '' : ' empty') + '" style="--c:' + netCol(l.net) + '"><label><s></s><span>' + esc(netName(l.net)) + '<i>' + (any ? 'গেছে ' + bn(tot.go) + (tot.q ? ' · লাইনে ' + bn(tot.q) : '') + (tot.x ? ' · আটকে ' + bn(tot.x) : '') : 'এই ১৫ দিনে কিছু নেই') + '</i></span></label><div class="bc-track"><span class="fut" style="left:' + tpc.toFixed(2) + '%"></span>' + st + '</div></div>';
+      return '<div class="bc-ln bc-rl' + (any ? '' : ' none') + '" style="--c:' + netCol(l.net) + '"><label><s></s><span>' + esc(netName(l.net)) + '<i>' + (any ? 'গেছে ' + bn(tot.go) + (tot.q ? ' · লাইনে ' + bn(tot.q) : '') + (tot.x ? ' · আটকে ' + bn(tot.x) : '') : 'এই ১৫ দিনে কিছু নেই') + '</i></span></label><div class="bc-track"><span class="fut" style="left:' + tpc.toFixed(2) + '%"></span>' + st + '</div></div>';
     }).join('') + '</div>';
     h += '<div class="bc-note" style="margin-top:20px">ক্লিক, ভিজিট আর কে কী কিনল এখনো যুক্ত হয়নি: rmabidur.com-এর Umami আর LinkedIn-এর সংখ্যা পরের ধাপে আসবে।</div>';
     return h;
