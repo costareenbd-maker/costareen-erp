@@ -25,6 +25,7 @@ import { factoryPhoto, SCENE_KEYS } from './socialmake.js';
 import { erpSocialSave, erpSocialAct } from './social.js';
 import { erpAdsPlan, erpAdsAct } from './ads.js';
 import { tasteText } from './taste.js';
+import { bizText, productText } from './bizctx.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const DEF = { on: false, hour: 10, products: 4, budget: 200, days: 5 };
@@ -107,9 +108,9 @@ async function choose(ctx, n) {
 }
 async function anglesFor(ctx, p, shop) {
   const facts = 'Product: ' + p.name + '. Price: ৳' + Math.round(num(p.kind === 'clear' && p.offer ? p.offer : p.sell)) + (p.kind === 'clear' && p.offer ? ' (offer; was ৳' + Math.round(num(p.sell)) + ')' : '') +
-    '. Why this week: ' + str(p.why) + '. (In stock - never say how many.)';
+    '. Why this week: ' + str(p.why) + '. (In stock - never say how many.)' + await (async () => { const t = await productText(ctx, p.sku); return t ? '\nAbout the product (from its own page): ' + t : ''; })();
   const r = await ai(ctx, { purpose: 'ad-factory', json: true, temperature: 0.85, maxTokens: 1400,
-    system: (await tasteText(ctx, 'photo') ? (await tasteText(ctx, 'photo')) + '\n\n' : '') + 'You are the ad maker of ' + shop + ', a shop in Bangladesh. For one product you plan TWO clearly different ad ideas (different angle, not just a different call to action): ' +
+    system: (await tasteText(ctx, 'photo') ? (await tasteText(ctx, 'photo')) + '\n\n' : '') + 'You are the ad maker of ' + shop + '.\n' + (await bizText(ctx)) + '\n\nFor one product you plan TWO clearly different ad ideas (different angle, not just a different call to action): ' +
       'e.g. demo of use, price and value, comparison, unboxing, a customer\'s problem it solves, the maker\'s result. Each gets a hook (the first line that stops the scroll), the post text and ' +
       'a minimal, human-looking photo direction. Plain warm words like a real shop owner, no hype words, at most one emoji, the price in taka, one clear action (inbox / WhatsApp / order). ' +
       'Never invent specs, discounts or deadlines.',

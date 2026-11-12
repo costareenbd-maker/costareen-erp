@@ -9,6 +9,7 @@ import { num, formatDate } from '../lib/time.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { erpCatalog } from './catalog.js';
 import { bookCostMap, bookKey } from './dashboard.js';
+import { bizText } from './bizctx.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const DEFAULTS = { coverDays: 30, slowDays: 60, marginFloor: 15, lowCover: 14, keepMargin: 10, minValue: 2000 };
@@ -119,7 +120,7 @@ export async function erpAdDraft(ctx, payload) {
   if (str(p.why)) facts.push('Why we chose it: ' + str(p.why));
   if (str(p.notes)) facts.push('Owner notes: ' + str(p.notes).slice(0, 400));
   const lang = str(p.lang) === 'bn' ? 'Write in Bangla (Bengali script), product names and numbers as given.' : str(p.lang) === 'mix' ? 'Write in Banglish (Bangla in Latin letters) as Dhaka shops do, product names as given.' : 'Write in simple English.';
-  const sys = 'You write short social-media copy for a small 3D-printing supplies shop in Bangladesh. Only use the facts given; never invent specs, prices, discounts or deadlines (say "this week" if none). No emojis except at most two. ' + lang + ' Output only the copy, no preamble.';
+  const sys = 'You write short social-media copy for this business.\n' + (await bizText(ctx)) + '\n\nOnly use the facts given; never invent specs, prices, discounts or deadlines (say "this week" if none). No emojis except at most two. ' + lang + ' Output only the copy, no preamble.';
   const user = 'Write ' + CHANNELS[channel] + '.\nFacts:\n' + facts.join('\n');
   // ai-1: the writer chosen under Settings > AI brain (ChatGPT, Claude, Gemini ...), the strongest model
   const r = await ai(ctx, { purpose: 'ad-draft', system: sys, messages: [{ role: 'user', content: [{ type: 'text', text: user }] }], temperature: 0.7 });

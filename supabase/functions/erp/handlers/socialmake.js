@@ -17,6 +17,7 @@
 // ~free; each is written to ai_work. The day's AI allowance (300 a day per business) counts them too.
 
 import { tasteText } from './taste.js';
+import { bizText, productText, hookList, HOOK_KEYS } from './bizctx.js';
 import { getConfig, setConfig, getSecret, setSecret, saveFile, fileUrl, readFile } from '../lib/ext.js';
 import { formatDate, num } from '../lib/time.js';
 import { roleAtLeast } from '../allow.js';
@@ -436,16 +437,19 @@ export async function erpSocialScript(ctx, payload) {
   let facts = ['Shop: ' + shop];
   let x = null;
   if (str(p.sku)) { x = await productWithPhoto(ctx, p.sku); facts.push('Product: ' + x.name, 'Price: BDT ' + Math.round(x.sell), x.stock > 0 ? 'In stock: ' + x.stock : 'Not in stock', x.brand ? 'Brand: ' + x.brand : '', x.cat ? 'Category: ' + x.cat : ''); }
+  if (x) { const pt = await productText(ctx, x.sku); if (pt) facts.push('About the product (from its own page): ' + pt); }
   if (str(p.notes)) facts.push('Owner notes: ' + str(p.notes).slice(0, 500));
   const shape = t === 'reasons' ? '{"hookType": "", "hook": "", "reasons": ["", "", ""], "cta": "", "voice": ""}' : t === 'reveal' ? '{"hookType": "", "hook": "", "tease": "", "after": "", "cta": "", "voice": ""}' : t === 'showcase' ? '{"hookType": "", "hook": "", "caption": "", "cta": "", "voice": ""}' : '{"hookType": "", "hook": "", "lines": ["", "", ""], "cta": "", "voice": ""}';
   // not the hook used last time for this product
   let lastHook = '';
   if (str(p.sku)) { try { const r0 = (await ctx.tx`select coalesce(meta #>> '{script,hookType}', '') as h from social_assets where business_id = ${ctx.biz} and kind = 'video' and sku = ${str(p.sku)} order by created_at desc limit 1`)[0]; lastHook = str(r0 && r0.h); } catch (_) { /* fine */ } }
-  const hooks = HOOKS.filter((h) => h[0] !== lastHook);
-  const hookLine = 'Choose ONE hook type from this list and name it in hookType: ' + hooks.map((h) => h[0] + ' = ' + h[1]).join('; ') + '.';
+  // reel-ctx-1: 22 hook shapes (youtube-agent-skill, MIT) instead of 10 3D-printing examples; skip the last one and any asked
+  const skipHooks = [lastHook].concat(Array.isArray(p.skipHooks) ? p.skipHooks.map(str) : []).filter(Boolean);
+  const hookLine = 'Choose ONE hook type from this list and name it in hookType: ' + hookList(skipHooks) + '.';
   const extra = [await tasteText(ctx, 'video'), await rulesText(ctx), await learnText(ctx), await styleText(ctx, p.style)].filter(Boolean).join('\n');
   const langLine = lang === 'bn' ? 'All text and the voice in Bangla written in BENGALI SCRIPT (never Bangla in Latin letters); only brand and product names stay in Latin letters.' : lang === 'mix' ? 'Text in Banglish (Bangla in Latin letters), product names as given; the voice in natural spoken Bangla (Bengali script).' : 'All in simple English.';
-  const sys = 'You write 12-20 second vertical product reels for a small 3D-printing supplies shop in Bangladesh. Only the facts given; never invent prices, specs, discounts or deadlines. Each text line fits on a phone screen: at most 7 words. The hook is the first 2 seconds and decides everything: ' + hookLine + ' Never start with the product name or "welcome". The voice-over is 35-55 words, spoken naturally like a friend, says the price once, ends with how to order (inbox / website). ' + langLine + '\n' + extra + '\nAlso give "broll": 2-4 English words for a stock clip that fits the hook (e.g. "3d printer printing closeup"), or "" if none. Return JSON only: ' + shape.replace('{', '{"broll": "", ');
+  const biz = await bizText(ctx);
+  const sys = 'You write 12-20 second vertical product reels for ' + shop + '. Who the business is and who buys from it:\n' + biz + '\n\nOnly the facts given; never invent prices, specs, discounts or deadlines. Each text line fits on a phone screen: at most 7 words. The hook is the first 2 seconds and decides everything: ' + hookLine + ' Never start with the product name or "welcome". The voice-over is 35-55 words, spoken naturally like a friend, says the price once, ends with how to order (inbox / website). ' + langLine + '\n' + extra + '\nAlso give "broll": 2-4 English words for a stock clip that fits the hook that matches this business and product (e.g. "hands applying cream closeup" for skincare), or "" if none. Return JSON only: ' + shape.replace('{', '{"broll": "", ');
   await allowance(ctx, 1);
   let j = {};
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -456,7 +460,7 @@ export async function erpSocialScript(ctx, payload) {
     const v = str(j.voice), bengali = (v.match(/[\u0980-\u09FF]/g) || []).length, latin = (v.match(/[A-Za-z]/g) || []).length;
     if (bengali >= latin) break;
   }
-  const script = { broll: str(j.broll).slice(0, 60), hookType: HOOKS.some((h) => h[0] === str(j.hookType)) ? str(j.hookType) : '', hook: str(j.hook).slice(0, 80), cta: str(j.cta).slice(0, 80), voice: str(j.voice).slice(0, 600), lines: (Array.isArray(j.lines) ? j.lines : Array.isArray(j.reasons) ? j.reasons : []).map((s) => str(s).slice(0, 80)).filter(Boolean).slice(0, 4), tease: str(j.tease).slice(0, 80), after: str(j.after).slice(0, 80), caption: str(j.caption).slice(0, 120) };
+  const script = { broll: str(j.broll).slice(0, 60), hookType: HOOK_KEYS.includes(str(j.hookType)) || HOOKS.some((h) => h[0] === str(j.hookType)) ? str(j.hookType) : '', hook: str(j.hook).slice(0, 80), cta: str(j.cta).slice(0, 80), voice: str(j.voice).slice(0, 600), lines: (Array.isArray(j.lines) ? j.lines : Array.isArray(j.reasons) ? j.reasons : []).map((s) => str(s).slice(0, 80)).filter(Boolean).slice(0, 4), tease: str(j.tease).slice(0, 80), after: str(j.after).slice(0, 80), caption: str(j.caption).slice(0, 120) };
   return { script, template: t, lang, product: x ? { sku: x.sku, name: x.name, sell: x.sell } : null };
 }
 
@@ -619,7 +623,7 @@ async function adDailyMake(ctx, s) {
   let plan = {};
   try {
     const r = await ai(ctx, { purpose: 'ad-daily', json: true, temperature: 0.8, maxTokens: 900,
-      system: (await tasteText(ctx, 'photo') ? (await tasteText(ctx, 'photo')) + '\n\n' : '') + 'You are the ad maker of ' + shop + ', a shop in Bangladesh. You plan ONE minimal, human-looking ad photo for a product and write its post. ' +
+      system: (await tasteText(ctx, 'photo') ? (await tasteText(ctx, 'photo')) + '\n\n' : '') + 'You are the ad maker of ' + shop + '.\n' + (await bizText(ctx)) + '\n\nYou plan ONE minimal, human-looking ad photo for a product and write its post. ' +
         'The picture must look like a real person photographed it - never AI-looking, never busy. The post sounds like a real shop owner talking to a customer: plain, warm, specific, ' +
         'no hype words, no "unleash/elevate/game-changer", at most one emoji, the price in taka, one clear action (inbox / WhatsApp / order).',
       messages: [{ role: 'user', content: [{ type: 'text', text: 'Product: ' + x.name + (x.brand ? ' (' + x.brand + ')' : '') + (x.cat ? ', ' + x.cat : '') + '. Price: ৳' + Math.round(x.sell) + '. (In stock - never state how many.)\n' +

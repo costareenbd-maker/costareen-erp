@@ -77,11 +77,16 @@ check('a product with no photo cannot be placed in a scene', !r.ok && /no photo/
 script = (body) => [{ text: JSON.stringify({ hookType: 'question', hook: 'Prints keep failing?', lines: ['Smooth 1.75 mm', 'Dries fast', 'Fits every printer'], cta: 'Inbox us to order', voice: 'Black PLA from Costareen, sixteen hundred taka a roll. Inbox us to order today.' }) }];
 r = await sales('erpSocialScript', [{ template: 'spin', sku: PLA, lang: 'en' }]);
 check('the script: hook type, hook, three lines, closing line, voice-over; the product named back', r.ok && r.result.script.hookType === 'question' && r.result.script.hook === 'Prints keep failing?' && r.result.script.lines.length === 3 && /sixteen hundred/.test(r.result.script.voice) && r.result.product.sku === PLA, r);
-let lastSys = '';
-script = (body) => { lastSys = body.systemInstruction.parts[0].text; return [{ text: JSON.stringify({ hookType: 'number', hook: '3 reasons', lines: ['a', 'b', 'c'], cta: 'x', voice: 'y' }) }]; };
+let lastSys = '', lastUser = '';
+script = (body) => { lastSys = body.systemInstruction.parts[0].text; lastUser = body.contents[0].parts[0].text; return [{ text: JSON.stringify({ hookType: 'number', hook: '3 reasons', lines: ['a', 'b', 'c'], cta: 'x', voice: 'y' }) }]; };
 await sql`insert into social_assets (business_id, kind, template, sku, title, file, status, meta) values (${FIX.B}, 'video', 'spin', ${PLA}, 't', 'social/x.mp4', 'ready', ${sql.json({ script: { hookType: 'question' } })})`;
 r = await sales('erpSocialScript', [{ template: 'spin', sku: PLA, lang: 'en' }]);
-check('the writer rotates the hook: the one used last time for this product is left out of the choice', r.ok && !/question = /.test(lastSys) && /negative = /.test(lastSys) && /curiosity = /.test(lastSys), lastSys.slice(lastSys.indexOf('Choose ONE'), lastSys.indexOf('Choose ONE') + 160));
+check('the writer rotates the hook: the one used last time for this product is left out of the choice', r.ok && !/question = /.test(lastSys) && /mistake = /.test(lastSys) && /comparison = /.test(lastSys), lastSys.slice(lastSys.indexOf('Choose ONE'), lastSys.indexOf('Choose ONE') + 160));
+// reel-ctx-1: the writer is told about THIS business, not 'a 3D-printing shop', and gets the product's own page text
+await sql`insert into product_ai (business_id, sku, description) values (${FIX.B}, ${PLA}, 'Matte black PLA, prints at 200-220 C, low smell.') on conflict (business_id, sku) do update set description = excluded.description`;
+r = await sales('erpSocialScript', [{ template: 'spin', sku: PLA, lang: 'en' }]);
+check('reel-ctx-1: no fixed 3D-printing shop line; the business block and the product page text reach the writer', r.ok && !/3D-printing supplies shop/.test(lastSys) && /# This business/.test(lastSys) && /Write for THIS business/.test(lastSys), lastSys.slice(0, 300));
+check('reel-ctx-1: the product page text reaches the writer', /Matte black PLA, prints at 200-220 C/.test(lastUser), lastUser.slice(0, 300));
 script = (body) => [{ text: JSON.stringify({ hookType: 'question', hook: 'Prints keep failing?', lines: ['Smooth 1.75 mm', 'Dries fast', 'Fits every printer'], cta: 'Inbox us to order', voice: 'Black PLA from Costareen, sixteen hundred taka a roll. Inbox us to order today.' }) }];
 r = await sales('erpSocialScript', [{ template: 'spin', sku: PLA, lang: 'en' }]);
 const sc = r.result.script;
