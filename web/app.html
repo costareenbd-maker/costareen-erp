@@ -58463,6 +58463,103 @@ select.bc-in{padding-right:28px}
 .bc-steps{grid-auto-columns:minmax(160px,1fr)!important}
 .bc-row select.bc-in{max-width:100%}
 @container bc (max-width:759px){.bc-cad{grid-template-columns:minmax(0,1fr) auto!important}.bc-cad .bc-dots{grid-column:1/-1}.bc-rl-days{display:none}.bc-rl .bc-track{min-width:0}.bc-line button{font-size:13px}}
+/* phone cards: each network's own post UI, phone width, wrapping into rows */
+.ph-grp{margin-bottom:38px}
+.ph-grp-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-bottom:12px;margin-bottom:18px;border-bottom:2px solid var(--bc-ink)}
+.ph-grp-h h3{margin:0;font:700 17px/1.35 "Pretendard Variable",Pretendard,"Hind Siliguri",system-ui,sans-serif}
+.ph-wall{display:flex;flex-wrap:wrap;gap:28px 24px;align-items:flex-start}
+.ph-slot{width:340px;max-width:100%;flex:none}
+.ph-slot.old{opacity:.62}
+.ph-slot.old:hover,.ph-slot.old:focus-within{opacity:1}
+.ph-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;min-height:24px}
+.ph{background:#fff;border:1px solid #DADDE1;border-radius:20px;overflow:hidden;box-shadow:0 1px 2px rgba(22,24,29,.06),0 10px 28px rgba(22,24,29,.07);font:15px/1.38 Helvetica,Arial,"Hind Siliguri",system-ui,sans-serif;color:#050505;position:relative}
+.ph svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ph header{display:flex;gap:10px;align-items:center;padding:12px 14px 8px}
+.ph header>div{flex:1;min-width:0}
+.ph header b{display:block;font-weight:700;font-size:15px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ph header b em{font-style:normal;font-weight:400;color:#666}
+.ph header small{display:flex;align-items:center;gap:4px;font-size:12.5px;color:#65676B;line-height:1.3}
+.ph header small svg{width:12px;height:12px}
+.ph .av{border-radius:50%;object-fit:cover;flex:none;background:#E4E6EB;display:block}
+.ph .ph-ini{display:grid;place-items:center;font:700 15px Helvetica,Arial,sans-serif;color:#fff;background:#16181D}
+.ph-tx{padding:2px 14px 12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.ph-tx mark,.ph-cap mark,.ph-ov mark{background:#FDECEA;color:var(--bc-alert-ink);text-decoration:line-through;text-decoration-color:#E0301E88}
+.ph-more{all:unset;cursor:pointer;font-weight:600;color:#65676B}
+.ph-more:hover{text-decoration:underline}
+.ph-empty{color:#8A909B}
+.ph-ed{display:block;width:calc(100% - 20px);margin:0 10px 10px;box-sizing:border-box;border:2px solid #16181D;border-radius:10px;padding:8px 10px;font:15px/1.4 Helvetica,Arial,"Hind Siliguri",system-ui,sans-serif;color:#050505;resize:vertical;background:#fff;caret-color:#16181D}
+.ph-ed:focus{outline:none;box-shadow:0 0 0 3px #16181D1A}
+.ph-media{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:repeating-linear-gradient(135deg,#F2F3F5 0 10px,#ECEEF1 10px 20px);color:#5C626E;font:13px/1.35 "Hind Siliguri",system-ui,sans-serif;text-align:center;padding:18px}
+.ph-media svg{width:26px;height:26px}
+.ph-media.sq{aspect-ratio:1/1}
+.ph-media.wide{aspect-ratio:16/9}
+.ph-warn{background:#FFF4D6;color:#7A5200;font:600 12.5px "Hind Siliguri",system-ui,sans-serif;padding:7px 14px}
+/* facebook */
+.ph-fb .ph-cnt{display:flex;align-items:center;gap:6px;padding:0 14px 8px;font-size:13px;color:#65676B}
+.ph-fb .rx{display:inline-flex}
+.ph-fb .rx i{width:17px;height:17px;border-radius:50%;border:2px solid #fff;margin-right:-5px;background:#1877F2}
+.ph-fb .rx i.h{background:#F33E58}
+.ph-fb footer{display:flex;border-top:1px solid #E4E6EB;margin:0 10px;padding:4px 0}
+.ph-fb footer span{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;height:36px;font-size:14px;font-weight:600;color:#65676B}
+/* linkedin */
+.ph-li{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,"Hind Siliguri",sans-serif;color:rgba(0,0,0,.9)}
+.ph-li header small{color:rgba(0,0,0,.6)}
+.ph-li .ph-tx{font-size:14px}
+.ph-li .ph-more{color:rgba(0,0,0,.6)}
+.ph-li footer{display:flex;border-top:1px solid #E8E8E8;margin:4px 8px 0;padding:2px 0}
+.ph-li footer span{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0;font-size:11.5px;font-weight:600;color:rgba(0,0,0,.6)}
+/* instagram */
+.ph-ig header{padding:10px 12px}
+.ph-ig header b{font-size:14px}
+.ph-ig .ph-ic{display:flex;gap:14px;padding:10px 12px 4px}
+.ph-ig .ph-ic svg{width:22px;height:22px}
+.ph-ig .ph-cap{padding:2px 12px 14px;font-size:14px}
+.ph-ig .ph-cap .ph-tx{display:inline;padding:0}
+/* tiktok */
+.ph-tt{background:#000;border-color:#000;color:#fff}
+.ph-tt .ph-vid{position:relative;aspect-ratio:9/16;max-height:600px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:radial-gradient(circle at 50% 38%,#2A2E36,#000 70%);color:#C9CDD4;font:13px "Hind Siliguri",system-ui,sans-serif}
+.ph-tt .ph-vid>svg{width:44px;height:44px;fill:#ffffff30;stroke:none}
+.ph-tt .ph-rail{position:absolute;right:10px;bottom:120px;display:flex;flex-direction:column;align-items:center;gap:14px;color:#fff;font:600 11.5px Helvetica,Arial,sans-serif}
+.ph-tt .ph-rail span{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ph-tt .ph-rail svg{width:28px;height:28px;fill:#fff;stroke:none}
+.ph-tt .ph-rail .av{border:2px solid #fff}
+.ph-tt .ph-ov{position:absolute;left:0;right:60px;bottom:0;padding:14px 12px 16px;text-align:left;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.55))}
+.ph-tt .ph-ov b{font-size:15px}
+.ph-tt .ph-ov .ph-tx{padding:4px 0 6px;font-size:13.5px;color:#fff}
+.ph-tt .ph-ov .ph-more{color:#fff}
+.ph-tt .ph-ov small{display:flex;gap:5px;align-items:center;font-size:12px;color:#fff}
+.ph-tt .ph-ov small svg{width:13px;height:13px}
+.ph-tt .ph-ed{background:#111;color:#fff;border-color:#fff;width:100%;margin:4px 0}
+/* youtube */
+.ph-yt .ph-yh{display:flex;gap:10px;padding:12px 12px 6px}
+.ph-yt .ph-yh b{display:block;font-size:14.5px;line-height:1.3}
+.ph-yt .ph-yh small{font-size:12px;color:#606060}
+.ph-yt .ph-desc{margin:4px 12px 14px;background:#F2F2F2;border-radius:10px}
+.ph-yt .ph-desc .ph-tx{padding:10px 12px;font-size:13.5px}
+/* x, threads, bluesky, telegram */
+.ph-gen .ph-tx{padding-left:64px;margin-top:-8px}
+.ph-gen footer{display:flex;justify-content:space-around;padding:4px 14px 12px 64px;color:#5C626E}
+.ph-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:var(--bc-ink-3)}
+.ph-meta .over{color:var(--bc-alert-ink);font-weight:700}
+.ph-act{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.ph-act [data-bc="more"] svg{transform:rotate(90deg)}
+.ph-act [data-bc="more"][aria-expanded="true"] svg{transform:rotate(-90deg)}
+.ph-when{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.ph-when select.bc-in{height:32px;font-size:13px;padding:0 8px}
+.ph-slot .bc-more{margin-top:10px}
+/* composer */
+.cm{display:grid;grid-template-columns:minmax(320px,520px) minmax(0,1fr);gap:34px;align-items:start}
+.cm-ed{position:sticky;top:12px}
+.cm-tabs{display:flex;gap:0;margin:18px 0 0;border-bottom:1px solid var(--bc-rule);overflow-x:auto;scrollbar-width:none}
+.cm-tabs button{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:9px 14px 9px;font:600 14px "Pretendard Variable",Pretendard,"Hind Siliguri",system-ui,sans-serif;color:var(--bc-ink-3);border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap;position:relative}
+.cm-tabs button i{position:absolute;left:14px;right:14px;bottom:-3px;height:3px;background:var(--c);opacity:.35;border-radius:2px}
+.cm-tabs button small{font:500 11.5px "Hind Siliguri",system-ui,sans-serif;color:var(--bc-ink-3)}
+.cm-tabs button.on{color:var(--bc-ink);border-bottom-color:var(--bc-ink)}
+.cm-tabs button.on i{opacity:0}
+.cm-pane{padding-top:14px}
+.cm-shared{min-height:120px;max-height:260px;overflow:auto;border:1px dashed var(--bc-rule);border-radius:12px;padding:11px 13px;white-space:pre-wrap;font:15px/1.55 "Hind Siliguri",system-ui,sans-serif;color:var(--bc-ink-2);background:#FAFAFB}
+@container bc (max-width:1139px){.cm{grid-template-columns:1fr}.cm-ed{position:static}}
+@container bc (max-width:759px){.ph-slot{width:100%}.ph-wall{gap:24px}}
 @container bc (min-width:1500px){.bc{grid-template-columns:224px minmax(0,1fr) 400px}.bc.noside{grid-template-columns:224px minmax(0,1fr)}}
 @container bc (max-width:1139px){
   .bc{grid-template-columns:200px minmax(0,1fr)}
@@ -58522,7 +58619,7 @@ select.bc-in{padding-right:28px}
 (function () {
   try { ['erpBrandDeskCockpit', 'erpBrandDeskDrafts', 'erpBrandDeskListen', 'erpBrandDeskDraftDecide', 'erpBrandDeskMakeDrafts', 'erpBrandDeskSettings', 'erpBrandDeskBoard', 'erpBrandDeskIdeas', 'erpBrandDeskPeople', 'erpBrandDeskPost', 'erpBrandDeskLint', 'erpBrandDeskCards', 'erpBrandDeskMakeCards'].forEach(function (n) { SRV_SLOW[n] = 45000; });
     SRV_SLOW.erpBrandDeskVideos = 60000; SRV_SLOW.erpBrandDeskListenPull = 90000; SRV_SLOW.erpBrandDeskListenIdeas = 90000; SRV_SLOW.erpBrandDeskListenPaste = 90000; } catch (e) {}
-  var C = { sec: 'home', wk: 0, pick: '', node: '', ptab: '', dep: '', d: {}, busy: {}, err: {}, v: {}, acc: {}, open: {}, cards: {}, plats: { linkedin: 1, facebook: 1 }, lf: 'all', lopen: {}, fold: {}, rw: {}, nk: 'customer', paste: false, t: 0 };
+  var C = { exp: {}, edit: {}, sec: 'home', wk: 0, pick: '', node: '', ptab: '', dep: '', d: {}, busy: {}, err: {}, v: {}, acc: {}, open: {}, cards: {}, plats: { linkedin: 1, facebook: 1 }, lf: 'all', lopen: {}, fold: {}, rw: {}, nk: 'customer', paste: false, t: 0 };
   try { var s0 = localStorage.getItem('bc_sec'); if (s0) C.sec = s0; } catch (e) {}
   var NET = {
     linkedin: ['LinkedIn', '#0A66C2'], facebook: ['Facebook', '#1877F2'], instagram: ['Instagram', '#C13584'], 'instagram-standalone': ['Instagram', '#C13584'],
@@ -58805,6 +58902,116 @@ select.bc-in{padding-right:28px}
     var o = deskOrder(), i = -1; o.forEach(function (d, k) { if (String(d.id) === String(fromId)) i = k; });
     var n = o[i + 1] || o[i - 1]; C.dsel = n ? n.id : '';
   }
+  // ---------- phone cards: every draft shown the way that network's phone app shows a post (the owner's own photo and
+  // name from Postiz, the "See more" fold where that app cuts, the part over the network's limit marked in red)
+  var PHFOLD = { facebook: 250, linkedin: 140, instagram: 125, tiktok: 150, youtube: 100, threads: 500, x: 280, bluesky: 300, telegram: 600 };
+  var PI = {
+    like: '<path d="M7 11v9H4v-9zM7 11l4-7c1.3 0 2 .9 2 2v4h5.2a2 2 0 0 1 2 2.3l-1.1 6A2 2 0 0 1 17.1 20H7"/>',
+    comment: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+    share: '<path d="M14 5l7 7-7 7v-4c-5 0-8 1.5-10 5 .5-5.5 3.5-9.5 10-10z"/>',
+    send: '<path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/>', repost: '<path d="M4 9h13l-3-3M20 15H7l3 3"/>',
+    heart: '<path d="M12 20s-7-4.4-9-9a4.6 4.6 0 0 1 9-2 4.6 4.6 0 0 1 9 2c-2 4.6-9 9-9 9z"/>', save: '<path d="M6 3h12v18l-6-4-6 4z"/>',
+    globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.8 3.5 5.8 3.5 9s-1 6.2-3.5 9c-2.5-2.8-3.5-5.8-3.5-9S9.5 5.8 12 3z"/>',
+    dots: '<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>', music: '<path d="M9 18V5l11-2v13M9 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3zM20 16a3 3 0 1 1-3-3 3 3 0 0 1 3 3z"/>',
+    media: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>', play: '<path d="M8 5l11 7-11 7z"/>'
+  };
+  function pi(k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + PI[k] + '</svg>'; }
+  function netAcc(platform) { var p = netOf(platform); return nets().filter(function (n) { return netOf(n.platform) === p; })[0] || null; }
+  function avatar(acc, size) {
+    var nm = (acc && acc.name) || 'Rahman Najir';
+    return acc && acc.picture ? '<img class="av" alt="" width="' + size + '" height="' + size + '" src="' + esc(acc.picture) + '" data-fallback="' + esc(nm.charAt(0)) + '">' : '<span class="av ph-ini" style="width:' + size + 'px;height:' + size + 'px">' + esc(nm.charAt(0)) + '</span>';
+  }
+  function handle(acc) { return String((acc && acc.name) || 'rahmannajir').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
+  function foldText(net, text, key) {
+    var p = netOf(net), f = PHFOLD[p] || 250, lim = LIMIT[p] || 5000, t = String(text || ''), open = C.exp[key];
+    var MORE = { facebook: 'See more', linkedin: '…more', instagram: 'more', tiktok: 'more', youtube: '…more' };
+    if (!t) return '<span class="ph-empty">(লেখা নেই)</span>';
+    if (!open && t.length > f) { var head = t.slice(0, f).replace(/\s+\S*$/, ''); return esc(head) + (p === 'facebook' ? '… ' : ' ') + '<button type="button" class="ph-more" data-bc="exp" data-id="' + key + '">' + (MORE[p] || '…more') + '</button>'; }
+    return esc(t.slice(0, lim)) + (t.length > lim ? '<mark title="এই অংশ ' + esc(netName(p)) + '-এর সীমার বাইরে, কেটে যাবে">' + esc(t.slice(lim)) + '</mark>' : '') + (t.length > f ? ' <button type="button" class="ph-more" data-bc="exp" data-id="' + key + '">কম</button>' : '');
+  }
+  function bodyBlock(net, text, key, editKey) {
+    if (editKey) return '<textarea class="ph-ed" id="bci_' + editKey + '" data-bcin="' + editKey + '" data-noi18n="1" rows="' + Math.min(18, Math.max(5, Math.ceil(String(text).length / 38))) + '">' + esc(text) + '</textarea>';
+    return '<div class="ph-tx" data-noi18n="1">' + foldText(net, text, key) + '</div>';
+  }
+  function needMedia(p) { return p === 'tiktok' || p === 'instagram' || p === 'youtube'; }
+  function phoneCard(net, acc, text, key, o) {
+    o = o || {}; var p = netOf(net), nm = esc((acc && acc.name) || 'Rahman Najir'), ed = o.edit;
+    var body = bodyBlock(p, text, key, ed), noAcc = !acc ? '<div class="ph-warn">এই network-এর account যুক্ত নেই, তাই এটা নিজে পোস্ট করতে হবে</div>' : '';
+    var mediaSlot = '<div class="ph-media">' + pi('media') + '<span>' + (needMedia(p) ? 'এই network-এ ছবি বা ভিডিও ছাড়া পোস্ট যায় না' : 'ছবি নেই (শুধু লেখা যাবে)') + '</span></div>';
+    if (p === 'facebook') return '<article class="ph ph-fb">' + noAcc + '<header>' + avatar(acc, 40) + '<div><b data-noi18n="1">' + nm + '</b><small>এখন · ' + pi('globe') + '</small></div>' + pi('dots') + '</header>' + body +
+      '<div class="ph-cnt"><span class="rx"><i class="l"></i><i class="h"></i></span>০<span class="bc-sp"></span>০ comment</div><footer>' + '<span>' + pi('like') + 'Like</span><span>' + pi('comment') + 'Comment</span><span>' + pi('share') + 'Share</span></footer></article>';
+    if (p === 'linkedin') return '<article class="ph ph-li">' + noAcc + '<header>' + avatar(acc, 44) + '<div><b data-noi18n="1">' + nm + ' <em>• You</em></b><small data-noi18n="1">Founder · K-beauty sourcing, Seoul ↔ Dhaka</small><small>এখন • ' + pi('globe') + '</small></div>' + pi('dots') + '</header>' + body +
+      '<footer><span>' + pi('like') + 'Like</span><span>' + pi('comment') + 'Comment</span><span>' + pi('repost') + 'Repost</span><span>' + pi('send') + 'Send</span></footer></article>';
+    if (p === 'instagram') return '<article class="ph ph-ig">' + noAcc + '<header>' + avatar(acc, 32) + '<b data-noi18n="1">' + esc(handle(acc)) + '</b><span class="bc-sp"></span>' + pi('dots') + '</header>' + mediaSlot.replace('ph-media', 'ph-media sq') +
+      '<div class="ph-ic">' + pi('heart') + pi('comment') + pi('send') + '<span class="bc-sp"></span>' + pi('save') + '</div><div class="ph-cap"><b data-noi18n="1">' + esc(handle(acc)) + '</b> ' + body + '</div></article>';
+    if (p === 'tiktok') return '<article class="ph ph-tt">' + noAcc + '<div class="ph-vid">' + pi('play') + '<span>ভিডিও লাগবে</span><div class="ph-rail">' + avatar(acc, 38) + '<span>' + pi('heart') + '০</span><span>' + pi('comment') + '০</span><span>' + pi('save') + '০</span><span>' + pi('share') + '০</span></div>' +
+      '<div class="ph-ov"><b data-noi18n="1">@' + esc(handle(acc)) + '</b>' + body + '<small>' + pi('music') + 'original sound</small></div></div></article>';
+    if (p === 'youtube') return '<article class="ph ph-yt">' + noAcc + '<div class="ph-media wide">' + pi('play') + '<span>ভিডিও লাগবে</span></div><div class="ph-yh">' + avatar(acc, 36) + '<div><b data-noi18n="1">' + esc(o.title || String(text).split('\n')[0].slice(0, 90)) + '</b><small data-noi18n="1">' + nm + ' · ০ views · এখন</small></div></div>' +
+      '<div class="ph-desc">' + body + '</div></article>';
+    return '<article class="ph ph-gen" style="--c:' + netCol(p) + '">' + noAcc + '<header>' + avatar(acc, 40) + '<div><b data-noi18n="1">' + nm + '</b><small data-noi18n="1">@' + esc(handle(acc)) + ' · এখন · ' + esc(netName(p)) + '</small></div></header>' + body +
+      '<footer><span>' + pi('comment') + '</span><span>' + pi('repost') + '</span><span>' + pi('heart') + '</span><span>' + pi('share') + '</span></footer></article>';
+  }
+  // a draft on the wall: its phone card, then what he can do with it
+  function draftCard(x) {
+    var mine = accountsFor(x), sel = accSel(x, mine), id = x.id, body = v('e' + id, x.body || ''), editing = C.edit[id], block = (x.legal_flags || []).some(function (f) { return f.severity === 'block'; }), lim = LIMIT[netOf(x.platform)] || 5000;
+    var h = '<div class="ph-slot' + (x._old ? ' old' : '') + '" id="bc_tk_' + id + '"><div class="ph-top">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sp"></span>' + (x._old ? '<span class="bc-tag">পুরনো সংস্করণ</span>' : '') + (block ? '<span class="bc-tag x">আটকাবে</span>' : '') + '</div>' +
+      phoneCard(x.platform, mine[0] || null, body, 'd' + id, { edit: editing ? 'e' + id : '', title: (x.title_options || [])[0] });
+    h += '<div class="ph-meta"><span id="bc_cnt_' + id + '" class="' + (body.length > lim ? 'over' : '') + '">' + bn(body.length) + ' / ' + bn(lim) + ' অক্ষর</span>' + (mine.length > 1 ? '<span class="bc-sp"></span>' + mine.map(function (n) { return '<button type="button" class="bc-nc' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" data-noi18n="1">' + esc(n.name || '') + '</button>'; }).join('') : '') + '</div>' + flagsHtml(x);
+    if ((x.title_options || []).length && (editing || netOf(x.platform) === 'youtube')) h += '<div class="bc-ncs" style="margin-top:8px">' + x.title_options.map(function (t) { return '<button type="button" class="bc-pl" style="--c:#16181D" data-bc="tcopy" data-t="' + esc(t) + '" title="চাপলে কপি হবে" data-noi18n="1">' + esc(t) + '</button>'; }).join('') + '</div>';
+    h += '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : btn(svg('copy') + 'লেখা কপি', 'data-bc="copy" data-id="' + id + '"', 'dark', '')) + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
+      '<button type="button" class="bc-btn ghost" data-bc="pedit" data-id="' + id + '" aria-pressed="' + !!editing + '">' + (editing ? 'দেখা হয়ে গেলে বন্ধ' : 'লেখা বদলান') + '</button><button type="button" class="bc-btn ghost" data-bc="more" data-id="' + id + '" aria-expanded="' + !!C.open[id] + '" aria-label="আরও">' + svg('right') + '</button></div>';
+    h += '<div class="ph-when">' + whenHtml('a' + id) + '</div>';
+    if (C.open[id]) {
+      var c = C.cards[id];
+      h += '<div class="bc-more">' + (mine.length ? '<button type="button" class="bc-btn sm" data-bc="copy" data-id="' + id + '">' + svg('copy') + 'লেখা কপি</button> ' : '') + btn(c && c.state === 'making' ? 'ছবি বানাচ্ছি…' : 'carousel আর quote ছবি বানান', 'data-bc="cards" data-id="' + id + '"', 'sm', '', c && c.state === 'making') +
+        '<div class="bc-lbl">নিজে পোস্ট করলে, লিংক দিয়ে রেখে দিন</div><div class="bc-row" style="margin-top:0">' + inp('u' + id, 'https://… (না দিলেও চলে)', ' style="flex:1;min-width:150px"') + btn('নিজে পোস্ট করেছি', 'data-bc="manual" data-id="' + id + '"', 'sm', 'mn' + id) + '</div>' + cardsHtml(id) + '</div>';
+    }
+    return h + '</div>';
+  }
+  function wallHtml() {
+    var gs = groups();
+    if (!gs.length) return draftsHtml(false);
+    return gs.map(function (g) {
+      var fresh = g.list.filter(function (d) { return !d._old && accSel(d, accountsFor(d)).length; }).length, olds = g.list.filter(function (d) { return d._old; }).length;
+      return '<section class="ph-grp"><div class="ph-grp-h"><h3 data-noi18n="1">' + esc(g.title) + '</h3>' + (g.topic ? '<span class="bc-tag">' + esc(topicName(g.topic)) + '</span>' : '') + '<span class="bc-sp"></span>' +
+        (fresh > 1 ? btn('এই আইডিয়ার সব নতুন অনুমোদন দিন (' + bn(fresh) + ')', 'data-bc="approveall" data-id="' + g.key + '"', 'sm', 'aa' + g.key) : '') + (olds ? btn('পুরনো সংস্করণ বাদ দিন (' + bn(olds) + ')', 'data-bc="dropold" data-id="' + g.key + '"', 'sm ghost', 'do' + g.key) : '') + '</div>' +
+        '<div class="ph-wall">' + g.list.map(draftCard).join('') + '</div></section>';
+    }).join('');
+  }
+  // ---------- the composer: one shared text, or a text of its own for any network; previews of every chosen network
+  function cmpState() { var s0 = C.cmp || (C.cmp = { inc: {}, own: {}, tab: 'common' }); return s0; }
+  function cmpText(n) { var s0 = cmpState(); return s0.own[n.id] ? v('cn_' + n.id) : v('cc'); }
+  function cmpWall() {
+    var s0 = cmpState(), inc = nets().filter(function (n) { return s0.inc[n.id]; });
+    if (!inc.length) return '<div class="bc-clear" style="padding:20px 0"><b>কোথায় যাবে, বেছে নিন</b><p>উপরে network-এ চাপুন; প্রতিটার ফোনে কেমন দেখাবে এখানে আসবে।</p></div>';
+    return '<div class="ph-wall">' + inc.map(function (n) { var t = cmpText(n), lim = LIMIT[netOf(n.platform)] || 5000; return '<div class="ph-slot"><div class="ph-top">' + lb(n.platform, s0.own[n.id] ? 'আলাদা লেখা' : 'সাধারণ লেখা') + '</div>' + phoneCard(n.platform, n, t, 'c' + n.id) + '<div class="ph-meta"><span class="' + (t.length > lim ? 'over' : '') + '">' + bn(t.length) + ' / ' + bn(lim) + ' অক্ষর</span></div></div>'; }).join('') + '</div>';
+  }
+  function cmpReady() { var s0 = cmpState(), inc = nets().filter(function (n) { return s0.inc[n.id]; }); return inc.length && inc.every(function (n) { return String(cmpText(n)).trim(); }); }
+  function cmpHtml() {
+    if (!ready()) return offline();
+    var s0 = cmpState(), ns = nets(), inc = ns.filter(function (n) { return s0.inc[n.id]; });
+    if (!ns.length) return '<div class="bc-note">কোনো account যুক্ত নেই। Postiz-এ account যুক্ত হলে এখানে আসবে।</div>';
+    if (s0.tab !== 'common' && !s0.inc[s0.tab]) s0.tab = 'common';
+    var h = '<div class="cm"><div class="cm-ed"><div class="bc-lbl" style="margin-top:0">কোথায় যাবে</div><div class="bc-ncs">' + ns.map(function (n) { var p = netOf(n.platform); return '<button type="button" class="bc-nc' + (s0.inc[n.id] ? ' on' : '') + '" style="--c:' + netCol(p) + '" data-bc="cinc" data-id="' + esc(n.id) + '" aria-pressed="' + !!s0.inc[n.id] + '">' + esc(netName(p)) + '</button>'; }).join('') + '</div>';
+    if (inc.length) {
+      var nShared = inc.filter(function (n) { return !s0.own[n.id]; }).length;
+      h += '<div class="cm-tabs" role="tablist"><button type="button" role="tab" data-bc="ctab" data-id="common" class="' + (s0.tab === 'common' ? 'on' : '') + '">সাধারণ লেখা<small>' + bn(nShared) + 'টা network</small></button>' + inc.map(function (n) {
+        var p = netOf(n.platform); return '<button type="button" role="tab" data-bc="ctab" data-id="' + esc(n.id) + '" class="' + (s0.tab === n.id ? 'on' : '') + '" style="--c:' + netCol(p) + '"><i></i>' + esc(netName(p)) + '<small>' + (s0.own[n.id] ? 'আলাদা' : 'সাধারণ') + '</small></button>';
+      }).join('') + '</div>';
+      if (s0.tab === 'common') h += '<div class="cm-pane">' + ta('cc', 'যে লেখা সবখানে যাবে… প্রথম লাইনটাই সবাই আগে দেখে।', '', ' rows="10"') + '<div class="bc-note">যেসব network-এ “সাধারণ” লেখা আছে, সবগুলোতে এটা যাবে। কোনোটার জন্য আলাদা লিখতে উপরে তার tab-এ যান।</div></div>';
+      else {
+        var n0 = ns.filter(function (n) { return n.id === s0.tab; })[0], p0 = netOf(n0.platform);
+        h += '<div class="cm-pane"><div class="bc-pills" style="margin-bottom:10px"><button type="button" data-bc="cown" data-id="' + esc(n0.id) + '" data-on="0"' + (!s0.own[n0.id] ? ' class="on"' : '') + '>সাধারণ লেখাই যাবে</button><button type="button" data-bc="cown" data-id="' + esc(n0.id) + '" data-on="1"' + (s0.own[n0.id] ? ' class="on"' : '') + '>' + esc(netName(p0)) + '-এর জন্য আলাদা লেখা</button></div>' +
+          (s0.own[n0.id] ? ta('cn_' + n0.id, netName(p0) + '-এর জন্য লেখা…', '', ' rows="10"') : '<div class="cm-shared" data-noi18n="1">' + (esc(v('cc')) || '<span class="bc-sub">সাধারণ লেখা এখনো খালি</span>') + '</div>') +
+          '<div class="bc-note">' + esc(netName(p0)) + '-এ সর্বোচ্চ ' + bn(LIMIT[p0] || 5000) + ' অক্ষর; ফোনে প্রথম ~' + bn(PHFOLD[p0] || 250) + ' অক্ষর দেখা যায়।' + (needMedia(p0) ? ' এখানে ছবি বা ভিডিও লাগে, যা এখনো এখান থেকে দেওয়া যায় না।' : '') + '</div></div>';
+      }
+    }
+    h += '<div class="bc-lbl">কখন যাবে</div><div class="bc-row" style="margin-top:0">' + whenHtml('cat') + '</div><div class="bc-row"><label class="bc-chk"><input type="checkbox" data-bcin="curg" id="bci_curg"' + (C.v.curg ? ' checked' : '') + '>লাইনে অপেক্ষার পোস্টগুলোর আগে পাঠান</label></div>' +
+      '<div class="bc-row" style="margin-top:16px">' + btn(svg('send') + 'লাইনে দিন', 'data-bc="cpost"', 'dark', 'cpost', !cmpReady()) + '<span class="bc-sub">পাঠানোর আগে দাবি যাচাই নিজে থেকে চলে</span></div>' +
+      '<div class="bc-note">ছবি আর ভিডিও যোগ করার ব্যবস্থা এখনো নেই: মিডিয়া পেজের ক্লিপ থেকে বেছে নেওয়া পরের ধাপে আসবে।</div></div>' +
+      '<div class="cm-pv"><div class="bc-lbl" style="margin-top:0">ফোনে যেমন দেখাবে</div><div id="bc_cpv">' + cmpWall() + '</div></div></div>';
+    return h;
+  }
   function jobsBar() {
     var jobs = (C.d.drafts && C.d.drafts.jobs) || {}, ks = Object.keys(jobs).sort(); if (!ks.length) return '';
     var j = jobs[ks[ks.length - 1]];
@@ -58846,8 +59053,8 @@ select.bc-in{padding-right:28px}
     var h = headHtml('পোস্ট', 'যা অপেক্ষায়, যা যাবে, যা গেছে', '<button type="button" class="bc-btn' + (tab === 'new' ? ' dark' : '') + '" data-bc="ptab" data-id="new">' + svg('plus') + 'নতুন পোস্ট</button>') + '<div class="bc-pills big" role="tablist" style="margin-bottom:22px">' + T.map(function (t) {
       return '<button type="button" role="tab" aria-selected="' + (tab === t[0]) + '" data-bc="ptab" data-id="' + t[0] + '"' + (tab === t[0] ? ' class="on"' : '') + '>' + t[1] + (t[2] ? '<em class="' + (t[2] ? t[3] : '') + '">' + bn(t[2]) + '</em>' : '') + '</button>';
     }).join('') + '</div>';
-    if (tab === 'wait') h += jobsBar() + deskHtml();
-    else if (tab === 'new') h += '<div class="bc-desk one"><div class="bc-dt">' + composerHtml() + '</div></div>';
+    if (tab === 'wait') h += jobsBar() + wallHtml();
+    else if (tab === 'new') h += cmpHtml();
     else h += deps(tab === 'next' ? 'q' : tab === 'gone' ? 'go' : 'x');
     return h;
   }
@@ -59269,6 +59476,8 @@ select.bc-in{padding-right:28px}
     C.v[k] = x.type === 'checkbox' ? x.checked : x.value;
     if (k === 'ctext') { var m = el('bc_meters'); if (m) m.innerHTML = metersHtml(); var pb = document.querySelector('[data-bc="cpost"]'), lb2 = document.querySelector('[data-bc="clint"]'); var pk = C.v.cnets || {}; if (pb) pb.disabled = !x.value || !Object.keys(pk).some(function (q) { return pk[q]; }); if (lb2) lb2.disabled = !x.value; C.cmpLint = null; }
     if (k === 'vq') C.vq = x.value;
+    if (k === 'cc' || k.indexOf('cn_') === 0) { var cw = el('bc_cpv'); if (cw) cw.innerHTML = cmpWall(); var pb2 = document.querySelector('#bc_root [data-bc="cpost"]'); if (pb2) pb2.disabled = !cmpReady(); }
+    if (/^e\d+$/.test(k)) { var cid2 = k.slice(1), dd = findDraft(cid2), cc2 = el('bc_cnt_' + cid2); if (dd && cc2) { var lm = LIMIT[netOf(dd.platform)] || 5000; cc2.textContent = bn(x.value.length) + ' / ' + bn(lm) + ' অক্ষর'; cc2.className = x.value.length > lm ? 'over' : ''; } }
     if (/^e\d+$/.test(k)) { var dx = findDraft(k.slice(1)), pv = el('bc_pv'), cn = x.parentNode && x.parentNode.querySelector('.bc-cnt'); if (dx && pv) { var mn = accountsFor(dx); pv.innerHTML = previewHtml(dx.platform, x.value, mn[0] && mn[0].name); } if (cn) cn.textContent = bn(x.value.length) + ' অক্ষর'; }
   });
   document.addEventListener('change', function (e) {
@@ -59289,6 +59498,7 @@ select.bc-in{padding-right:28px}
       if (!typing && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); var o = deskOrder(), i = -1; o.forEach(function (d, k) { if (String(d.id) === String(C.dsel)) i = k; }); var n = o[i + (e.key === 'ArrowDown' ? 1 : -1)]; if (n) { C.dsel = n.id; draw(); var r0 = el('bc_root').querySelector('.bc-dr.on'); if (r0) r0.focus(); } }
     }
   });
+  document.addEventListener('error', function (e) { var im = e.target; if (im && im.tagName === 'IMG' && im.classList.contains('av') && im.getAttribute('data-fallback') != null) { var sp = document.createElement('span'); sp.className = 'av ph-ini'; sp.style.width = im.width + 'px'; sp.style.height = im.height + 'px'; sp.textContent = im.getAttribute('data-fallback'); im.replaceWith(sp); } }, true);
   document.addEventListener('submit', function (e) { var f = e.target; if (on() && f.getAttribute && f.getAttribute('data-bc-form') === 'vfind') { e.preventDefault(); findVids(); } });
   function findVids() { C.d.videos = null; C.err.videos = ''; get('videos'); draw(); }
   function saveCap() {
@@ -59321,6 +59531,23 @@ select.bc-in{padding-right:28px}
     var t = e.target.closest && e.target.closest('[data-bc]'); if (!t || !el('bc_root') || !el('bc_root').contains(t)) return;
     var w = t.getAttribute('data-bc'), id = t.getAttribute('data-id');
     if (w === 'sec' || w === 'go') C.railMore = false;
+    if (w === 'exp') { C.exp[id] = !C.exp[id]; draw(); return; }
+    if (w === 'pedit') { C.edit[id] = !C.edit[id]; draw(); if (C.edit[id]) setTimeout(function () { var b = el('bci_e' + id); if (b) b.focus({ preventScroll: true }); }, 30); return; }
+    if (w === 'cinc') { var cs = cmpState(); cs.inc[id] = !cs.inc[id]; if (cs.inc[id] && cs.tab === 'common' && !v('cc')) cs.tab = 'common'; draw(); return; }
+    if (w === 'ctab') { cmpState().tab = id; draw(); return; }
+    if (w === 'cown') { var co = cmpState(), onn = t.getAttribute('data-on') === '1'; co.own[id] = onn; if (onn && !v('cn_' + id)) C.v['cn_' + id] = v('cc'); draw(); return; }
+    if (w === 'cpost') {
+      var cs2 = cmpState(), inc = nets().filter(function (n) { return cs2.inc[n.id]; }), byText = {}, order = [];
+      inc.forEach(function (n) { var tx = String(cmpText(n)).trim(); if (!byText[tx]) { byText[tx] = []; order.push(tx); } byText[tx].push({ id: n.id, platform: n.platform }); });
+      var at2 = v('cat'), sent = 0; if (!order.length) return;
+      C.busy.cpost = 1; draw();
+      (function nx() {
+        if (!order.length) { C.busy.cpost = 0; toast(bn(sent) + 'টা network-এ লাইনে দেওয়া হলো।'); C.v.cc = ''; C.v.cat = ''; C.v.curg = false; C.cmp = null; C.ptab = 'next'; get('cockpit', true); draw(); return; }
+        var tx = order.shift();
+        srv('erpBrandDeskPost', [{ networks: byText[tx], content: tx, at: at2 ? new Date(at2).toISOString() : null, urgent: !!C.v.curg }], function (r) { sent += (r.queued || 0); nx(); }, function (e7) { C.busy.cpost = 0; toast(msg(e7), true, 9000); draw(); });
+      })();
+      return;
+    }
     if (w === 'railmore') { C.railMore = !C.railMore; draw(); return; }
     if (w === 'topen') { var tm = new Date(); tm.setDate(tm.getDate() + 1); tm.setHours(10, 0, 0, 0); C.v[id] = ymd(tm) + 'T10:00'; draw(); return; }
     if (w === 'tclear') { delete C.v[id]; draw(); return; }
