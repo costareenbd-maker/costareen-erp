@@ -58730,7 +58730,7 @@ select.bc-in{padding-right:28px}
   function logo(p, size) {
     p = netOf(p); var L = LOGO[p];
     if (!L) return '<span class="bc-lgo bcdot" style="width:' + size + 'px;height:' + size + 'px;background:' + netCol(p) + '"></span>';
-    return '<svg class="bc-lgo" viewBox="' + L[0] + '" width="' + size + '" height="' + size + '" aria-hidden="true"><path fill="' + (p === 'instagram' ? 'url(#bcIgG)' : netCol(p)) + '"' + (L[2] ? ' fill-rule="evenodd"' : '') + ' d="' + L[1] + '"/></svg>';
+    return '<svg class="bc-lgo" viewBox="' + L[0] + '" width="' + size + '" height="' + size + '" style="width:' + size + 'px;height:' + size + 'px;display:inline-block;flex:none" aria-hidden="true"><path fill="' + (p === 'instagram' ? 'url(#bcIgG)' : netCol(p)) + '"' + (L[2] ? ' fill-rule="evenodd"' : '') + ' d="' + L[1] + '"/></svg>';
   }
   function lb(p, extra) { return '<span class="bc-lb" style="--c:' + netCol(p) + '">' + logo(p, 17) + esc(netName(p)) + (extra ? '<small>' + extra + '</small>' : '') + '</span>'; }
   function btn(label, data, cls, bk, dis) { var b = bk && C.busy[bk]; return '<button type="button" class="bc-btn' + (cls ? ' ' + cls : '') + '" ' + data + (b || dis ? ' disabled' : '') + '>' + (b ? '<span class="bc-spin"></span>' : '') + label + '</button>'; }
