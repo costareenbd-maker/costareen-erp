@@ -59194,6 +59194,7 @@ select.bc-in{padding-right:28px}
           '<div class="bc-note">' + esc(netName(p0)) + '-এ সর্বোচ্চ ' + bn(LIMIT[p0] || 5000) + ' অক্ষর; ফোনে প্রথম ~' + bn(PHFOLD[p0] || 250) + ' অক্ষর দেখা যায়।' + (needMedia(p0) ? ' এখানে ছবি বা ভিডিও লাগে, যা এখনো এখান থেকে দেওয়া যায় না।' : '') + '</div></div>';
       }
     }
+    h += '<div class="bc-lbl">ছবি বা ভিডিও</div>' + mediaChip('c') + '<div class="bc-row" style="margin-top:0">' + mediaButton('c') + '<span class="bc-sub">Brand album থেকে; ভিডিও দিলে TikTok খোলে, খাড়া ভিডিও Reels-এর মতো দেখায়</span></div>' + pickerHtml('c');
     h += '<div class="bc-lbl">কখন যাবে</div><div class="bc-row" style="margin-top:0">' + whenHtml('cat') + '</div><div class="bc-row"><label class="bc-chk"><input type="checkbox" data-bcin="curg" id="bci_curg"' + (C.v.curg ? ' checked' : '') + '>লাইনে অপেক্ষার পোস্টগুলোর আগে পাঠান</label></div>' +
       '<div class="bc-row" style="margin-top:16px">' + btn(svg('send') + 'লাইনে দিন', 'data-bc="cpost"', 'dark', 'cpost', !cmpReady()) + '<span class="bc-sub">পাঠানোর আগে দাবি যাচাই নিজে থেকে চলে</span></div>' +
       '</div>' +
@@ -59249,20 +59250,6 @@ select.bc-in{padding-right:28px}
     if (tab === 'wait') h += jobsBar() + wallHtml();
     else if (tab === 'new') h += cmpHtml();
     else h += deps(tab === 'next' ? 'q' : tab === 'gone' ? 'go' : 'x');
-    return h;
-  }
-  function composerHtml() {
-    if (!ready()) return '';
-    var ns = nets(), pick = C.v.cnets || {}, text = v('ctext'), len = text.length;
-    var h = '<div class="bc-h2"><h2>নতুন পোস্ট</h2><span>এক লেখা, যত লাইনে চান</span></div>';
-    if (!ns.length) return h + '<div class="bc-note">কোনো account যুক্ত নেই। Postiz-এ account যুক্ত হলে এখানে আসবে।</div>';
-    h += '<div class="bc-ncs">' + ns.map(function (n) { var p = netOf(n.platform); return '<button type="button" class="bc-nc' + (pick[n.id] ? ' on' : '') + '" style="--c:' + netCol(p) + '" data-bc="cnet" data-id="' + esc(n.id) + '" aria-pressed="' + (pick[n.id] ? 'true' : 'false') + '" title="' + esc(n.name || '') + '">' + esc(netName(p)) + '</button>'; }).join('') + '</div>';
-    h += '<div style="margin-top:12px">' + ta('ctext', 'কী বলতে চান? প্রথম লাইনটাই সবাই আগে দেখে।', '', ' rows="8"') + '</div><div id="bc_meters">' + metersHtml() + '</div>';
-    var l = C.cmpLint;
-    if (l) h += (l.hits || []).length ? '<div style="margin-top:8px">' + l.hits.map(function (x) { return '<div class="bc-flag"><span class="bc-tag ' + (x.severity === 'block' ? 'x' : 'w') + '">' + (x.severity === 'block' ? 'পোস্ট আটকাবে' : 'দেখে নিন') + '</span><span data-noi18n="1">' + esc(x.reason || '') + (x.match ? ' (“' + esc(x.match) + '”)' : '') + '</span></div>'; }).join('') + '</div>' : '<div class="bc-note">দাবি যাচাই: কোনো সমস্যা পাওয়া যায়নি।</div>';
-    h += '<div class="bc-lbl">ছবি বা ভিডিও</div>' + mediaChip('c') + '<div class="bc-row" style="margin-top:0">' + mediaButton('c') + '<span class="bc-sub">Brand album থেকে; ভিডিও দিলে TikTok খোলে, খাড়া ভিডিও Reels-এর মতো দেখায়</span></div>' + pickerHtml('c');
-    h += '<div class="bc-lbl">কখন যাবে</div><div class="bc-row" style="margin-top:0">' + whenHtml('cat') + '</div><div class="bc-row"><label class="bc-chk"><input type="checkbox" data-bcin="curg" id="bci_curg"' + (C.v.curg ? ' checked' : '') + '>লাইনে অপেক্ষার পোস্টগুলোর আগে পাঠান</label></div>';
-    h += '<div class="bc-row" style="margin-top:14px">' + btn(svg('send') + 'লাইনে দিন', 'data-bc="cpost"', 'dark', 'cpost', !len || !Object.keys(pick).some(function (k) { return pick[k]; })) + '<span class="bc-sub">পাঠানোর আগে দাবি যাচাই নিজে থেকেই চলে</span>' + '</div>';
     return h;
   }
   function metersHtml() {
