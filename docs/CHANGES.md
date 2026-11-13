@@ -4371,3 +4371,26 @@ visits (Umami, LinkedIn), the one-video-everywhere draft rule, English cluster n
   reads YouTube comments under recent videos on it ("people_comments", opinions only). Reddit refuses the Mac (403).
 - Not done: writers' own social accounts (X/LinkedIn have no free reading API); hashtag popularity is not measured
   (no free API), the AI picks from platform rules; video upload from the page (videos go through the Immich app).
+
+## brand-17 (14 Nov 2026): Train (লেখার ধরন) + LinkedIn yellow lane
+Owner: paste any writing he likes; the AI learns only HOW it is written and files it under a style profile (same family
+-> that profile is refined, different -> new profile); one style per network (his choice "খ"); one switch turns all
+styles off and the writer falls back to the basic rules. A scout brings most-reacted posts by itself, max 2 runs a month
+(auto on the 1st). Plus the 13 Nov LinkedIn plan (docs in G:/bendar-brand/docs/LINKEDIN-SAFE-AUTOMATION.md) made live.
+Blueprint: `.impeccable/shape/brand-17-train-linkedin.md`.
+- Bridge (G:/bendar-brand/bridge/bridge.py, tables style_profiles, style_examples, style_creators, li_tasks, drafts.style_id):
+  style_add (one AI call: style rules + match to an existing profile or new + why it gets reactions; then a sample post in
+  his facts), style_for(net) feeds the writer, the editor and the news posts; PROMPT_VERSION brand-17-v6. The writer gets
+  only the rules, never the sample text. Scout: YouTube Data API (BD, last 30 days, by views per subscriber) always;
+  Facebook (apify~facebook-posts-scraper) and LinkedIn (apimaestro~linkedin-profile-posts) for the creators he lists, only
+  when APIFY_TOKEN is in the bridge .env (no-cookies actors, never his login). Scout picks land as "suggested".
+- LinkedIn lane: AI drafts comments / replies / connection notes (≤200) / first messages; he copies and posts by hand.
+  Caps per day (warm-up first 4 weeks: comment 5, connect 8, dm 8; then 10/18/15; connect 80/week; invites stop under 30%
+  acceptance), suggested 3-15 min gap, kill switch (14 days, restarts at warm-up), health line. Reading a post by link and
+  pulling comments on his own posts need Apify.
+- ERP: erpBrandDeskStyles/StyleAdd/StyleSet/StyleCreator/StyleScout, erpBrandDeskLi/LiAdd/LiMark/LiKill/LiPull (owner-only);
+  cockpit pages train + linkedin (switchboard of the lines, style cards, scout + creators; counter board + tickets).
+- Tests: branddesk_test 119 passed.
+- NOT done: Apify token (his hand) so Facebook/LinkedIn scouting and link-reading are off; the YouTube scout mostly finds
+  SEO-style video descriptions (first suggestion "Keyword Nostalgia Promo" is weak; he decides); LinkedIn posts-this-week
+  is not on the health line; drafts do not yet show which style wrote them on the Posts page.
