@@ -43,7 +43,7 @@ async function state(ctx) {
   return { url: str(s.url), seen, online: !!(seen && ctx.now - seen < ONLINE_MS) };
 }
 
-async function bridge(ctx, path, body) {
+async function bridge(ctx, path, body, ms) {
   const st = await state(ctx), key = await getSecret(ctx, 'BRAND_BRIDGE_KEY');
   if (!key) throw new Error('The brand desk is not set up yet: paste the bridge key under Set up.');
   if (!st.online || !st.url) throw new Error('Your PC is off, so the brand desk is closed. It opens again when the PC is on.');
@@ -51,7 +51,7 @@ async function bridge(ctx, path, body) {
   let r;
   try {
     r = await f(st.url + path, { method: body ? 'POST' : 'GET', headers: { 'X-Bridge-Key': key, 'Content-Type': 'application/json' },
-      body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(BRIDGE_MS) });
+      body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(ms || BRIDGE_MS) });
   } catch (_) { throw new Error('Your PC did not answer. If it was just switched on, wait a minute and try again.'); }
   const j = await r.json().catch(() => ({}));
   if (r.status === 401) throw new Error('The PC refused the key: paste the bridge key again under Set up.');
@@ -77,6 +77,29 @@ export async function erpBrandDeskCockpit(ctx) {
   return out;
 }
 
+// brand-13: a photo or video from the Brand album, already uploaded to Postiz by erpBrandDeskAttach
+function mediaRefs(m) {
+  if (m == null) return [];
+  if (!Array.isArray(m)) throw new Error('The picture list is not right.');
+  if (m.length > 10) throw new Error('At most 10 pictures or videos on one post.');
+  return m.map((x) => {
+    const id = str(x && x.id), path = str(x && x.path);
+    if (!/^[A-Za-z0-9_-]{4,64}$/.test(id) || !/^https:\/\/[^\s]{4,490}$/i.test(path)) throw new Error('A picture or video on the post is not right.');
+    return { id, path };
+  });
+}
+export async function erpBrandDeskMedia(ctx, payload) {
+  await gate(ctx);
+  const q = str(payload && payload.q).slice(0, 200);
+  return bridge(ctx, '/media/library' + (q ? '?q=' + encodeURIComponent(q) : ''), undefined, 60000);
+}
+export async function erpBrandDeskAttach(ctx, payload) {
+  await gate(ctx);
+  const id = str(payload && payload.asset_id);
+  if (!/^[0-9a-f-]{20,64}$/i.test(id)) throw new Error('Pick a photo or a video.');
+  return bridge(ctx, '/media/attach', { asset_id: id }, 140000);
+}
+
 export async function erpBrandDeskPost(ctx, payload) {
   await gate(ctx);
   const p = payload || {}, nets = Array.isArray(p.networks) ? p.networks.filter((n) => n && str(n.id) && str(n.platform)) : [];
@@ -89,7 +112,8 @@ export async function erpBrandDeskPost(ctx, payload) {
   const hits = ((await bridge(ctx, '/lint', { text: str(p.content) })).hits) || [];
   const blocks = hits.filter((h) => h && h.severity === 'block');
   if (blocks.length) throw new Error('Not sent - the claim check stopped it: ' + blocks.map((h) => str(h.reason) + (h.match ? ' ("' + str(h.match) + '")' : '')).join(' · '));
-  const r = await bridge(ctx, '/post', { networks: nets.map((n) => ({ id: str(n.id), platform: str(n.platform) })), content: str(p.content), at, urgent: !!p.urgent });
+  const media = mediaRefs(p.media);
+  const r = await bridge(ctx, '/post', { networks: nets.map((n) => ({ id: str(n.id), platform: str(n.platform) })), content: str(p.content), at, urgent: !!p.urgent, media });
   return { queued: (r.queued || []).length, desk: await erpBrandDesk(ctx) };
 }
 
@@ -177,6 +201,8 @@ export async function erpBrandDeskDraftDecide(ctx, payload) {
   if (p.at) { const d = new Date(p.at); if (isNaN(d)) throw new Error('The time is not a date.'); at = d.toISOString(); }
   const out = { id, action, networks: nets, at };
   if (text) out.body = text;
+  const media = mediaRefs(p.media);
+  if (media.length) { out.media = media; out.pictures = false; }
   return bridge(ctx, '/drafts/decide', out);
 }
 
@@ -376,4 +402,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskMedia, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

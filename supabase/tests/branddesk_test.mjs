@@ -12,6 +12,8 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (opts.headers['X-Bridge-Key'] !== KEY) return { status: 401, body: { error: 'wrong key' } };
   if (url.endsWith('/today')) return { body: { pacer: { lines: { linkedin: { waiting: 1 } } }, posts: { posts: [] }, networks: [{ id: 'n1', platform: 'linkedin', name: 'Rahman' }] } };
   if (url.endsWith('/post')) return { body: { queued: ['a', 'b'] } };
+  if (/\/media\/library(\?q=.*)?$/.test(url)) return { body: { items: [{ id: '5d23777f-eda4-40ef-9b8d-8065d7a9a896', type: 'image', name: 'a.jpg', thumb: 'data:image/webp;base64,AAAA' }], q: '' } };
+  if (url.endsWith('/media/attach')) return { body: { id: 'up1abc', path: 'https://social.example.com/uploads/a.jpg', type: 'image', name: 'a.jpg' } };
   // brand-7: the claim check and the settings in the brand core database
   if (/\/listen(\/(pull|paste|ideas|channel|handed))?$/.test(url)) return { body: { comments: [{ id: 9, platform: 'youtube_ext', author_name: 'Test Shop BD', text: 'Wholesale price for 50 pcs?', summary: 'Asks wholesale price', intent: 'wholesale_interest', lead_kind: 'wholesale_buyer', channel_title: 'Some Channel', source_ref: 'abc123' }], counts: [], channels: [], clusters: [], jobs: {}, made: 2 } };
   if (url.endsWith('/cards/make')) return { body: { job: 'c1', draft: 5, state: 'making' } };
@@ -190,6 +192,20 @@ const lead = await sql`select kind, name, email, note from inbox_leads where bus
 check('the person becomes a supplier lead of that business', r.ok && r.result.added && lead.length === 1 && lead[0].kind === 'supplier' && /LinkedIn post/.test(lead[0].note), lead);
 r = await owner('erpBrandDeskToLeads', [{ id: 'p1', business: tgt.id }]);
 check('handing the same person twice adds nothing', r.ok && r.result.added === false, r);
+// brand-13: a photo/video from the Brand album rides on a post
+r = await owner('erpBrandDeskMedia', [{}]);
+check('the Brand album comes from the PC', r.ok && r.result.items[0].type === 'image', r);
+r = await owner('erpBrandDeskAttach', [{ asset_id: '../../etc' }]);
+check('a strange asset id is refused', !r.ok, r);
+r = await owner('erpBrandDeskAttach', [{ asset_id: '5d23777f-eda4-40ef-9b8d-8065d7a9a896' }]);
+check('an asset is sent on to Postiz', r.ok && r.result.id === 'up1abc', r);
+r = await owner('erpBrandDeskPost', [{ networks: [{ id: 'n1', platform: 'linkedin' }], content: 'With a picture', media: [{ id: 'up1abc', path: 'http://not-https/a.jpg' }] }]);
+check('a media link that is not https is refused', !r.ok, r);
+r = await owner('erpBrandDeskPost', [{ networks: [{ id: 'n1', platform: 'linkedin' }], content: 'With a picture', media: [{ id: 'up1abc', path: 'https://social.example.com/uploads/a.jpg', extra: 'x' }] }]);
+const pm = seen.filter((x) => x.url.endsWith('/post')).pop();
+check('the media goes to the PC, cleaned', r.ok && pm.body.media.length === 1 && pm.body.media[0].path.startsWith('https://') && pm.body.media[0].extra === undefined, pm && pm.body);
+r = await mgr('erpBrandDeskAttach', [{ asset_id: '5d23777f-eda4-40ef-9b8d-8065d7a9a896' }]);
+check('a manager cannot attach media', !r.ok, r);
 r = await owner('erpBrandDeskAddLead', [{ business: tgt.id, name: '' }]);
 check('a lead without a name is refused', !r.ok, r);
 r = await owner('erpBrandDeskAddLead', [{ business: B, name: 'Shop X' }]);
