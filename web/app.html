@@ -58679,6 +58679,11 @@ select.bc-in{padding-right:28px}
 .ph-x summary{cursor:pointer;font:600 13.5px "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;color:var(--bc-ink-2);padding:9px 0;list-style-position:inside}
 .ph-x p{margin:0 0 8px;white-space:pre-wrap;font:14px/1.5 "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;color:var(--bc-ink)}
 .ph-x .bc-btn{margin-bottom:10px}
+.ph-x.pl summary em{font-style:normal;color:var(--bc-ink)}
+.pl-r{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;padding:6px 0;border-top:1px solid var(--bc-rule);font-size:13.5px}
+.pl-r b{font:600 12.5px "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;color:var(--bc-ink-3)}
+.pl-r ol,.pl-r ul{margin:0;padding-left:18px}
+.pl-r li{margin:2px 0}
 @container bc (min-width:1500px){.bc{grid-template-columns:224px minmax(0,1fr) 400px}.bc.noside{grid-template-columns:224px minmax(0,1fr)}}
 @container bc (max-width:1139px){
   .bc{grid-template-columns:200px minmax(0,1fr)}
@@ -59146,6 +59151,7 @@ select.bc-in{padding-right:28px}
     var h = '<div class="ph-slot' + (x._old ? ' old' : '') + '" id="bc_tk_' + id + '"><div class="ph-top">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sp"></span>' + (x._old ? '<span class="bc-tag">পুরনো সংস্করণ</span>' : '') + (block ? '<span class="bc-tag x">আটকাবে</span>' : '') + '</div>' +
       phoneCard(x.platform, mine[0] || null, body, 'd' + id, { edit: editing ? 'e' + id : '', title: (x.title_options || [])[0], pic: picOf(id), npic: ((C.cards[id] || {}).pictures || []).length, media: C.media[id] });
     h += '<div class="ph-meta"><span id="bc_cnt_' + id + '" class="' + (body.length > lim ? 'over' : '') + '">' + bn(body.length) + (body.length > lim * .8 ? ' / ' + bn(lim) : '') + ' অক্ষর</span><span>· ' + MODEW[modeOf(netOf(x.platform), C.media[id])] + '</span><span>· ' + (v('a' + id) ? 'যাবে ' + whenWords(v('a' + id)) : 'যাবে পরের ফাঁকা সময়ে') + '</span>' + (mine.length > 1 ? '<span class="bc-sp"></span>' + mine.map(function (n) { return '<button type="button" class="bc-nc bclg' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" data-noi18n="1">' + logo(n.platform, 15) + esc(n.name || '') + '</button>'; }).join('') : '') + '</div>' + flagsHtml(x);
+    if (x.media_plan) h += planHtml(x.media_plan);
     if (x.script) h += '<details class="ph-x"><summary>ক্যামেরায় যা বলবেন</summary><p data-noi18n="1">' + esc(x.script) + '</p><button type="button" class="bc-btn ghost sm" data-bc="tcopy" data-t="' + esc(x.script) + '">' + svg('copy') + 'কপি</button></details>';
     if (x.first_reply) h += '<details class="ph-x"><summary>প্রথম reply (পোস্টের নিচে নিজে দিন)</summary><p data-noi18n="1">' + esc(x.first_reply) + '</p><button type="button" class="bc-btn ghost sm" data-bc="tcopy" data-t="' + esc(x.first_reply) + '">' + svg('copy') + 'কপি</button></details>';
     if ((x.title_options || []).length && (editing || netOf(x.platform) === 'youtube')) h += '<div class="bc-ncs" style="margin-top:8px">' + x.title_options.map(function (t) { return '<button type="button" class="bc-pl" style="--c:#16181D" data-bc="tcopy" data-t="' + esc(t) + '" title="চাপলে কপি হবে" data-noi18n="1">' + esc(t) + '</button>'; }).join('') + '</div>';
@@ -59159,6 +59165,16 @@ select.bc-in{padding-right:28px}
         '<div class="bc-lbl">নিজে পোস্ট করলে, লিংক দিয়ে রেখে দিন</div><div class="bc-row" style="margin-top:0">' + inp('u' + id, 'https://… (না দিলেও চলে)', ' style="flex:1;min-width:150px"') + btn('নিজে পোস্ট করেছি', 'data-bc="manual" data-id="' + id + '"', 'sm', 'mn' + id) + '</div>' + cardsHtml(id) + '</div>';
     }
     return h + '</div>';
+  }
+  // the writer's photo/video plan (from the viral playbook): format, the first 3 seconds, the shots he films himself
+  var FMTW = { text: 'শুধু লেখা', photo: 'ছবি', album: 'ছবির album', carousel: 'carousel', reel: 'Reel', short: 'Short', 'long video': 'লম্বা ভিডিও', document: 'PDF document' };
+  function planHtml(m) {
+    if (!m || typeof m !== 'object') return '';
+    var f = String(m.format || '').toLowerCase(), li = function (a) { return (Array.isArray(a) ? a : a ? [a] : []).map(function (t) { return '<li data-noi18n="1">' + esc(t) + '</li>'; }).join(''); };
+    var row = function (k, v) { return v ? '<div class="pl-r"><b>' + k + '</b><span data-noi18n="1">' + esc(v) + '</span></div>' : ''; };
+    return '<details class="ph-x pl"><summary>ছবি/ভিডিও পরিকল্পনা · <em>' + esc(FMTW[f] || m.format || '') + '</em>' + (m.length ? ' · ' + esc(m.length) : '') + (m.series && !/^none$/i.test(m.series) ? ' · ' + esc(m.series) : '') + '</summary>' +
+      row('কেন', m.why) + row('প্রথম ৩ সেকেন্ড', m.first_3_seconds) + ((m.shots || []).length ? '<div class="pl-r"><b>যা তুলবেন</b><ol>' + li(m.shots) + '</ol></div>' : '') +
+      ((m.on_screen_text || []).length ? '<div class="pl-r"><b>পর্দার লেখা</b><ul>' + li(m.on_screen_text) + '</ul></div>' : '') + row('cover / thumbnail', m.cover) + row('শব্দ', m.sound) + '</details>';
   }
   function picOf(id) { var c = C.cards[id]; return c && c.pictures && c.pictures[0] ? c.pictures[0].src : ''; }
   function wallHtml() {

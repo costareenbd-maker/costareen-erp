@@ -4324,3 +4324,8 @@ visits (Umami, LinkedIn), the one-video-everywhere draft rule, English cluster n
   AI tells, fixes Bangla, and strips any internal rule from the post. Video drafts get a separate on-camera script;
   every draft gets a first reply; leftover tells show as warnings. Draft cards show the script and the reply with copy.
   NOT done: his own best posts as few-shot examples (none collected yet), A/B tests on his page.
+- brand-13 writer v4 (13 Nov): deep research "Viral strategy by platform" (5 research strands + report, sources and
+  confidence marks: G:\bendar-brand\docs\reports\Viral strategy by platform.md, notes in docs/research_notes/). Condensed
+  into core/voice/viral-playbook.md (originality gate, first-frame rule, sends/saves/replies, BD platform sizes, per
+  platform format rules, named series, risks). Every draft now carries a media_plan (format + why, first 3 seconds, shots
+  he films himself, on-screen text, cover/thumbnail, length, sound, series); cards show it under "ছবি/ভিডিও পরিকল্পনা".
