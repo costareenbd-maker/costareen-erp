@@ -79,7 +79,7 @@ check('the post is queued on the PC', r.ok && r.result.queued === 2 && sent.body
 // 4a. brand-7: the claim check stops a blocked post before it is queued; warnings do not stop it
 const before = seen.filter((x) => x.url.endsWith('/post')).length;
 r = await owner('erpBrandDeskPost', [{ networks: [{ id: 'n1', platform: 'linkedin' }], content: 'This serum treats acne fast' }]);
-check('a post the claim check blocks is refused and not queued', !r.ok && /claim check/.test(r.error) && seen.filter((x) => x.url.endsWith('/post')).length === before, r);
+check('a post the claim check blocks is refused and not queued', !r.ok && /দাবি-যাচাই/.test(r.error) && seen.filter((x) => x.url.endsWith('/post')).length === before, r);
 r = await owner('erpBrandDeskPost', [{ networks: [{ id: 'n1', platform: 'linkedin' }], content: 'Sourcing day #a #b #c #d' }]);
 check('a warning alone does not stop the post', r.ok && r.result.queued === 2, r);
 r = await owner('erpBrandDeskLint', [{ text: 'treats acne' }]);
@@ -89,7 +89,7 @@ check('an empty text has nothing to check', r.ok && r.result.hits.length === 0, 
 r = await owner('erpBrandDeskSettings', []);
 check('the rules come from the brand database', r.ok && r.result.weights.linkedin.beauty_wholesale === 100, r);
 r = await owner('erpBrandDeskWeights', [{ platform: 'facebook', weights: { beauty_wholesale: 70, printing_3d: 20 } }]);
-check('a mix that does not add up to 100 is refused', !r.ok && /add up to 90/.test(r.error), r);
+check('a mix that does not add up to 100 is refused', !r.ok && /মিলে ৯০ হলো/.test(r.error), r);
 r = await owner('erpBrandDeskWeights', [{ platform: 'facebook', weights: { beauty_wholesale: 75.5, printing_3d: 24.5 } }]);
 check('shares must be whole numbers', !r.ok, r);
 r = await owner('erpBrandDeskWeights', [{ platform: 'facebook', weights: { 'bad key!': 100 } }]);
@@ -117,12 +117,12 @@ check('drafts are asked for known platforms only, once each', r.ok && mk.body.id
 r = await owner('erpBrandDeskMakeDrafts', [{ text: 'Why I ask for the purchase invoice', topic: 'beauty_proof' }]);
 check('a new idea in words goes with its topic', r.ok && seen.filter((x) => x.url.endsWith('/drafts/make')).pop().body.topic === 'beauty_proof', r);
 r = await owner('erpBrandDeskMakeDrafts', [{ idea_id: 3, platforms: ['facebook'], answers: 'Gangnam shop, a cream with no batch code' }]);
-check('answers without the draft to rewrite are refused', !r.ok && /draft/.test(r.error), r);
+check('answers without the draft to rewrite are refused', !r.ok && /ড্রাফট/.test(r.error), r);
 r = await owner('erpBrandDeskMakeDrafts', [{ idea_id: 3, platforms: ['facebook'], answers: 'Gangnam shop, a cream with no batch code', redo: 15 }]);
 const mk2 = seen.filter((x) => x.url.endsWith('/drafts/make')).pop();
 check('his answers go to the writer with the draft to rewrite', r.ok && mk2.body.redo === 15 && /Gangnam/.test(mk2.body.answers), mk2 && mk2.body);
 r = await owner('erpBrandDeskDraftDecide', [{ id: 5, action: 'approve', networks: [] }]);
-check('approve without an account is refused', !r.ok && /account/.test(r.error), r);
+check('approve without an account is refused', !r.ok && /অ্যাকাউন্ট/.test(r.error), r);
 r = await owner('erpBrandDeskDraftDecide', [{ id: 5, action: 'publish' }]);
 check('only approve or reject', !r.ok, r);
 r = await owner('erpBrandDeskDraftDecide', [{ id: 5, action: 'approve', networks: [{ id: 'n1', platform: 'linkedin' }], body: 'Edited text' }]);
@@ -286,7 +286,7 @@ check('an empty idea is refused', !r.ok, r);
 r = await owner('erpBrandDeskIdeaPost', [{ text: 'Went to Olive Young HQ', platforms: [] }]);
 check('an idea without networks is refused', !r.ok, r);
 r = await owner('erpBrandDeskIdeaPost', [{ text: 'Went to Olive Young HQ', platforms: ['facebook', 'tiktok', 'myspace'], at: '2020-01-01T00:00:00Z' }]);
-check('a time in the past is refused', !r.ok && /future/.test(r.error), r);
+check('a time in the past is refused', !r.ok && /সামনের/.test(r.error), r);
 r = await owner('erpBrandDeskIdeaPost', [{ text: 'Went to Olive Young HQ', platforms: ['facebook', 'tiktok', 'myspace'], media: { id: 'up1abc', path: 'https://social.example.com/uploads/p.jpg', type: 'image', asset: '5d23777f-eda4-40ef-9b8d-8065d7a9a896' }, deep: true }]);
 const ip = seen.filter((x) => x.url.endsWith('/drafts/idea')).pop();
 check('the idea, its photo and the known networks go to the writer', r.ok && ip.body.platforms.join() === 'facebook,tiktok' && ip.body.media.path.startsWith('https://') && ip.body.deep === true, ip && ip.body);
@@ -364,7 +364,7 @@ await sql`update business_config set value = ${JSON.stringify({ url: URL, seen: 
 r = await owner('erpBrandDesk', []);
 check('4 minutes without a check-in: closed', r.ok && r.result.online === false && r.result.today === null, r);
 r = await owner('erpBrandDeskPost', [{ networks: [{ id: 'n1', platform: 'linkedin' }], content: 'Hello' }]);
-check('posting while the PC is off says so', !r.ok && /PC is off/.test(r.error), r);
+check('posting while the PC is off says so', !r.ok && /Mac বন্ধ/.test(r.error), r);
 
 // 6. the other business is untouched
 const other = await sql`select count(*)::int as n from business_config where business_id = ${B2} and key = 'brand_bridge'`;
