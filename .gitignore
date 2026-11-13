@@ -28,3 +28,7 @@ tools/autosync-run.vbs
 web/index.html
 web/index-local.html
 web/index-local-*.html
+
+# local backups and profiling dumps of the page (never commit)
+web/*.bak
+web/*.blocks.json
