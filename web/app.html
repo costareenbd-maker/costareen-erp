@@ -58739,6 +58739,7 @@ select.bc-in{padding-right:28px}
 .pp-none{padding:16px;border:1px dashed var(--bc-rule);border-radius:14px;margin-bottom:8px}
 .pp-none p{margin:4px 0 0;font-size:13.5px;color:var(--bc-ink-3)}
 .pp-form{padding:14px;border:1px solid var(--bc-rule);border-radius:14px;margin-bottom:18px}
+.pp-a a.bc-btn,.pp-a a.bc-btn:visited{color:var(--bc-ink);text-decoration:none}
 @container bc (min-width:1500px){.bc{grid-template-columns:224px minmax(0,1fr) 400px}.bc.noside{grid-template-columns:224px minmax(0,1fr)}}
 @container bc (max-width:1139px){
   .bc{grid-template-columns:200px minmax(0,1fr)}
@@ -59400,6 +59401,9 @@ select.bc-in{padding-right:28px}
   function topicCol(k) { var tk = ((C.d.drafts && C.d.drafts.topics) || []).map(function (t) { return t.key; }), i = tk.indexOf(k); return TCOL[(i < 0 ? 7 : i) % TCOL.length]; }
   function ideaWall(bank, loose, wait) {
     var by = {}; wait.forEach(function (x) { if (x.idea_id == null) return; (by[x.idea_id] = by[x.idea_id] || []).push(x); });
+    var inBank = {}; bank.forEach(function (i) { inBank[i.id] = 1; });
+    var back = []; wait.forEach(function (x) { if (x.idea_id != null && !inBank[x.idea_id]) { inBank[x.idea_id] = 1; back.push({ id: x.idea_id, title_working: x.title_working || 'আইডিয়া ' + x.idea_id, topic: x.topic, audience: '' }); } });
+    bank = back.concat(bank);
     var tops = [], seen = {}; bank.forEach(function (i) { if (i.topic && !seen[i.topic]) { seen[i.topic] = 1; tops.push(i.topic); } });
     var list = bank.filter(function (i) { return !(!i.topic && /^#/.test(String(i.title_working || '').trim())); }).filter(function (i) { return !C.itopic || i.topic === C.itopic; });
     list.sort(function (p1, q1) { return ((by[q1.id] || []).length ? 2 : 0) + (STORYT[q1.topic] ? 1 : 0) - ((by[p1.id] || []).length ? 2 : 0) - (STORYT[p1.topic] ? 1 : 0); });
