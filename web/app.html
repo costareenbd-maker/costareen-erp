@@ -60330,7 +60330,7 @@ select.bc-in{padding-right:28px}
     h += '<div class="rl-g"><section><h4>১. যা পড়বেন <small>প্রায় ' + bn(Math.round(words / 2.3)) + ' সেকেন্ড · ' + bn(sc.length) + 'টা দৃশ্য</small></h4>' +
       '<ol class="rl-sc">' + sc.map(function (x, i) {
         var what = { hook: 'শুরু: আপনার ছবি', number: 'সংখ্যা', bars: 'chart', compare: 'তুলনা', text: 'লেখা', outro: 'শেষ' }[x.type] || '';
-        return '<li><span class="bc-tag">' + what + '</span><textarea class="bc-ta" data-bcin="rls' + id + '_' + i + '" id="bci_rls' + id + '_' + i + '" data-noi18n="1" rows="2" aria-label="দৃশ্য ' + bn(i + 1) + '-এ যা বলবেন">' + esc(v('rls' + id + '_' + i, x.say || '')) + '</textarea></li>';
+        return '<li><span class="bc-tag">' + what + '</span><textarea class="bc-ta" data-bcin="rls' + id + '_' + i + '" id="bci_rls' + id + '_' + i + '" data-noi18n="1" rows="' + Math.min(7, Math.max(2, Math.ceil(String(v('rls' + id + '_' + i, x.say || '')).length / 30))) + '" aria-label="দৃশ্য ' + bn(i + 1) + '-এ যা বলবেন">' + esc(v('rls' + id + '_' + i, x.say || '')) + '</textarea></li>';
       }).join('') + '</ol><div class="lt-a">' + btn('বদল রাখুন', 'data-bc="rledit" data-id="' + id + '"', 'sm', 'rle' + id) +
       '<button type="button" class="bc-btn ghost sm" data-bc="tcopy" data-t="' + esc(sc.map(function (x) { return x.say; }).join('\n\n')) + '">' + svg('copy') + 'পুরোটা কপি</button></div></section>';
     h += '<section><h4>২. শুরুর ছবি <small>প্রথম ৩ সেকেন্ডে আপনি</small></h4>' + (ph ? mediaChip(k) : '<div class="uc-drop">' + mediaButton(k) + '<span class="bc-sub">Brand album থেকে আপনার একটা ছবি। না দিলে শুধু লেখা দিয়ে শুরু হবে।</span></div>') + pickerHtml(k) +
