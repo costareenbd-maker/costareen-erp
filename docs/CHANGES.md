@@ -4441,3 +4441,28 @@ stock photos, at most 1-2 a week, nothing posts without his approval.
 - Tested on the Mac with a real story (dollar rate): script 7 scenes, silent preview 64 s, a 50 s render with a test tone
   as voice, 4 drafts on Saturday's slots; test drafts rejected and the Reel put back to "script". NOT tested with his real
   voice or a real opening photo; no video clip as the opening yet (photo only); scenes cut without transitions.
+
+## brand-21 (14 Nov 2026): which photo goes with which post + impeccable review fixes
+Owner: "I will drop many photos into the album at once; how do you know which goes with which post? Let me change a wrong
+pick; mark used photos with where and when; clear used ones after some days." Blueprint:
+`.impeccable/shape/brand-21-photo-matching.md`.
+- Bridge: media_notes (the AI looks once at every Brand-album picture: one Bangla line, tags, face yes/no, pillars,
+  quality; media_loop every 30 min). media_pick: for a Facebook/Instagram draft whose picture plan is a photo or album,
+  the best UNUSED noted picture is attached with a one-line reason (drafts.media_why, media.auto); a second look puts a
+  "photo-fit" warning on the draft when the words claim what the picture does not show; nothing fits -> no picture and
+  the reason says so. /drafts/repick picks again without the ones already tried. Approving saves the final picture on
+  the draft; media_uses lists every use (network, date, first words). Used pictures move from the Immich album "Brand"
+  to "Brand used" N days after their last use (settings.media_keep_days: 0/30/60/90, default 30).
+- NOT deleting: he asked for automatic deletion; refused by his own standing rule (no data deleted without a backup and
+  his yes). Moving between albums is reversible.
+- Page: draft cards show "AI বেছেছে: …" with অন্য ছবি / নিজে বাছুন; the picker and the album wall show a used mark and
+  count; an opened album picture shows the AI's note and its use record; the keep-days control sits under the album.
+- ERP: erpBrandDeskDraftRepick, erpBrandDeskMediaKeep. Tests 137 passed.
+- impeccable finish review (first pass) applied: Routine shows the timetable first with today marked, status and pillars
+  under it with a real target mark; Reel and LinkedIn text boxes size to their text; 44 px touch targets on the phone for
+  the new controls; slot delete is two-step, editor is one column on desktop; focus survives a redraw for buttons without
+  an id; placeholder and red-banner contrast; network chips are outlined; Bangla number words; প্রোডাক্ট in AI prompts.
+- Tested on the Mac: the album's 2 photos got notes; a test draft about an exhibition got the exhibition photo with a
+  correct reason; asking for another correctly answered "nothing fits". NOT tested: the archive move (no picture is 30
+  days past its use yet), albums with hundreds of photos (the pick reads at most 40 unused candidates), videos (never
+  auto-picked).
