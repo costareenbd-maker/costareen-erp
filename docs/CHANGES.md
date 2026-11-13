@@ -4394,3 +4394,7 @@ Blueprint: `.impeccable/shape/brand-17-train-linkedin.md`.
 - NOT done: Apify token (his hand) so Facebook/LinkedIn scouting and link-reading are off; the YouTube scout mostly finds
   SEO-style video descriptions (first suggestion "Keyword Nostalgia Promo" is weak; he decides); LinkedIn posts-this-week
   is not on the health line; drafts do not yet show which style wrote them on the Posts page.
+
+## brand-18 (14 Nov 2026): AI's questions fold away on draft cards
+Owner: the "লেখাটা জীবন্ত করতে AI জানতে চায়" box under every draft made the wall very long. It is now hidden behind a
+button "AI-এর প্রশ্ন (N)" on each card; it stays open while he has typed an answer or the rewrite is running. Page only.
