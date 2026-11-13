@@ -4305,3 +4305,14 @@ Owner: home was right, every other page was still the old messy look. Impeccable
   global classes (.c .t .n .empty .none ...) leaked in - shielded with `:where(.bc) :is(...){all:revert}`.
 NOT done: picking a photo/video for a post (TikTok/Instagram/YouTube need one; needs a bridge upload to Postiz), clicks and
 visits (Umami, LinkedIn), the one-video-everywhere draft rule, English cluster names (AI data), live release.
+- brand-13 later the same day: real network logos (Bootstrap Icons MIT, Bluesky Simple Icons CC0, inline SVG in each
+  network's colour, Instagram gradient) on badges, map/results lines, chips, composer tabs. Photo/video on a post: Brand
+  album picker (`erpBrandDeskMedia`, bridge `/media/library`), the picked asset is fetched from Immich and uploaded once to
+  Postiz (`erpBrandDeskAttach`, bridge `/media/attach`, Brand album only, 300 MB cap, upload links checked public); posts
+  and approved drafts carry `media` (cleaned to Postiz {id, https path}). Phone cards switch look with media: feed post
+  with the photo/video under the caption, tall video as Reels / TikTok / Shorts with the caption over it, YouTube video
+  page; captions are cut at the line where each app shows "more" (measured at card width, not by letters): Facebook
+  5 lines text-only / 3 with media / 2 on Reels, LinkedIn 3, Instagram 2, TikTok/Reels/Shorts 2. The line counts are
+  from known app behaviour, not freshly researched (Firecrawl was out of credits) - check against his phone.
+  NOT done: YouTube posting (needs title + privacy settings through the pacer), a real video in the Brand album to test the
+  Reels look end to end, posting a draft with media was not run live (it would publish).
