@@ -14,6 +14,8 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (url.endsWith('/post')) return { body: { queued: ['a', 'b'] } };
   if (/\/media\/library(\?q=.*)?$/.test(url)) return { body: { items: [{ id: '5d23777f-eda4-40ef-9b8d-8065d7a9a896', type: 'image', name: 'a.jpg', thumb: 'data:image/webp;base64,AAAA' }], q: '' } };
   if (/\/news(\/(run|make))?$/.test(url)) return { body: { news: [{ id: 4, title: 'Korea cuts cosmetics export fees', region: 'KR', picked: true, state: 'made', analysis: { kind: 'opportunity', facts: [{ text: '5%', n: 1 }] } }], jobs: {}, last_run: null, job: url.endsWith('/run') ? 'n1' : undefined } };
+  if (url.endsWith('/styles/add') || url.endsWith('/styles/set') || url.endsWith('/styles')) return { body: { profiles: [], examples: [], off: false } };
+  if (url.endsWith('/li/add') || url.endsWith('/li/mark') || url.endsWith('/li/kill') || url.endsWith('/li')) return { body: { tasks: [], lane: { caps: {} } } };
   if (url.endsWith('/media/upload')) return { body: { id: 'up9', path: 'https://social.example.com/uploads/p.jpg', type: 'image', asset: '5d23777f-eda4-40ef-9b8d-8065d7a9a896' } };
   if (url.endsWith('/drafts/idea')) return { body: { job: 'i1', waiting: [], ideas: [], jobs: {} } };
   if (url.endsWith('/media/attach')) return { body: { id: 'up1abc', path: 'https://social.example.com/uploads/a.jpg', type: 'image', name: 'a.jpg' } };
@@ -200,6 +202,31 @@ const lead = await sql`select kind, name, email, note from inbox_leads where bus
 check('the person becomes a supplier lead of that business', r.ok && r.result.added && lead.length === 1 && lead[0].kind === 'supplier' && /LinkedIn post/.test(lead[0].note), lead);
 r = await owner('erpBrandDeskToLeads', [{ id: 'p1', business: tgt.id }]);
 check('handing the same person twice adds nothing', r.ok && r.result.added === false, r);
+// brand-17: Train + LinkedIn lane
+r = await owner('erpBrandDeskStyleAdd', [{ text: 'too short' }]);
+check('a too-short style piece is refused', !r.ok, r);
+r = await owner('erpBrandDeskStyleAdd', [{ text: 'x'.repeat(120), reactions: 'many' }]);
+check('a non-number reaction count is refused', !r.ok, r);
+r = await owner('erpBrandDeskStyleAdd', [{ text: 'x'.repeat(120), reactions: '4100', platform: 'facebook', url: 'https://facebook.com/p/1' }]);
+const sa = seen.filter((x) => x.url.endsWith('/styles/add')).pop();
+check('a style piece with its numbers goes to the bridge', r.ok && sa.body.reactions === 4100 && sa.body.platform === 'facebook', sa && sa.body);
+r = await owner('erpBrandDeskStyleSet', [{ id: 3, platform: 'myspace', on: true }]);
+check('a style on an unknown network is refused', !r.ok, r);
+r = await owner('erpBrandDeskStyleSet', [{ off: true }]);
+check('the all-off switch goes through', r.ok, r);
+r = await owner('erpBrandDeskStyleCreator', [{ url: 'https://evil.example.com/x', platform: 'facebook' }]);
+check('a creator link that is not Facebook/LinkedIn is refused', !r.ok, r);
+r = await owner('erpBrandDeskLiAdd', [{ kind: 'like', context: 'x' }]);
+check('an unknown LinkedIn kind is refused', !r.ok, r);
+r = await owner('erpBrandDeskLiAdd', [{ kind: 'comment', url: 'https://evil.example.com/p', context: 'x' }]);
+check('a non-LinkedIn link is refused', !r.ok, r);
+r = await owner('erpBrandDeskLiAdd', [{ kind: 'comment', url: 'https://www.linkedin.com/feed/update/urn:li:activity:1', context: 'Their post text' }]);
+check('a LinkedIn comment request goes to the bridge', r.ok, r);
+r = await owner('erpBrandDeskLiMark', [{ id: 4, state: 'posted-everywhere' }]);
+check('an unknown LinkedIn step is refused', !r.ok, r);
+r = await owner('erpBrandDeskLiKill', [{ on: true }]);
+const lk = seen.filter((x) => x.url.endsWith('/li/kill')).pop();
+check('the LinkedIn kill switch goes to the bridge', r.ok && lk.body.on === true, lk && lk.body);
 // brand-16: the two universal idea cards
 r = await owner('erpBrandDeskUpload', [{ name: 'a.mp4', type: 'video/mp4', data: 'AAAA' }]);
 check('a video upload is refused (videos go through the Immich app)', !r.ok, r);

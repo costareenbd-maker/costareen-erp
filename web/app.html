@@ -8545,7 +8545,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrandDeskCockpit|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrandDeskCockpit|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 // crit8-nav (10 Nov 2026): these calls only read when they are sent without a change (the list form) and write with one.
 // The same rule as the server's ERP_READ_WHEN (allow.js): the list form runs beside other reads, sends no one-time key
 // and drops no caches; the changing form stays a write. erpTool and erpBrainFact always write (every branch changes data).
@@ -58792,6 +58792,124 @@ select.bc-in{padding-right:28px}
 .uc-deep{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--bc-ink-2)}
 .uc-a{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 @container bc (max-width:900px){.uc-g{grid-template-columns:1fr}}
+/* brand-17: Train (লেখার ধরন) - the switchboard of the lines + style cards */
+.tr-sw{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:9px;height:38px;padding:0 14px 0 6px;border-radius:999px;background:var(--bc-shelf);font:600 14px "Hind Siliguri","Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-2);cursor:pointer}
+.tr-sw i{width:38px;height:22px;border-radius:999px;background:#C9CDD3;position:relative;flex:none;transition:background .2s cubic-bezier(.16,1,.3,1)}
+.tr-sw i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(22,24,29,.25);transition:transform .2s cubic-bezier(.16,1,.3,1)}
+.tr-sw.on{color:var(--bc-ink)}.tr-sw.on i{background:var(--bc-ink)}.tr-sw.on i::after{transform:translateX(16px)}
+.tr-sw.sm{height:30px;padding:0 4px;background:none}
+.tr-sw[disabled]{opacity:.5;cursor:default}
+.tr-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--bc-rule);border-radius:16px;overflow:hidden;margin:4px 0 8px;background:var(--bc-ground)}
+.tr-row{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:9px;min-height:58px;padding:10px 14px;border-bottom:1px solid var(--bc-rule);border-right:1px solid var(--bc-rule);cursor:pointer;position:relative;min-width:0;transition:background .15s ease-out}
+.tr-row:hover{background:#FAFAFB}
+.tr-row:nth-child(3n){border-right:0}.tr-row:nth-last-child(-n+3){border-bottom:0}
+.tr-row>i{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.tr-n{font:600 13.5px "Pretendard Variable",Pretendard,"Hind Siliguri",system-ui,sans-serif;color:var(--bc-ink-2)}
+.tr-ride{margin-left:auto;font:600 13.5px "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;color:var(--bc-ink-3);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tr-ride.on{color:var(--bc-ink);background:var(--bc-shelf);padding:4px 10px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--c)}
+.tr-board.off .tr-row>i{background:#C9CDD3}.tr-board.off .tr-ride.on{box-shadow:none;color:var(--bc-ink-3);text-decoration:line-through}
+.tr-offnote{font-size:13.5px;color:var(--bc-ink-2);margin:6px 2px 0}
+.tr-paste{margin-top:26px;border:1px solid var(--bc-rule);border-radius:16px;padding:16px 18px;background:var(--bc-ground)}
+.tr-paste .bc-ta{min-height:150px}
+.tr-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 12px;margin-top:4px}
+.tr-meta .w2{grid-column:span 2}.tr-meta .bc-in{width:100%;box-sizing:border-box}
+.tr-busy{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--bc-ink-2)}
+.tr-empty{font-size:14px;color:var(--bc-ink-2);background:var(--bc-shelf);border-radius:12px;padding:14px 16px;margin:0;max-width:70ch}
+.tr-empty.sm{font-size:13.5px;padding:10px 14px}
+.st-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.st{border:1px solid var(--bc-rule);border-radius:16px;background:var(--bc-ground);padding:16px 18px 12px;min-width:0;display:flex;flex-direction:column}
+.st.sug{background:#FCFCFD;border-style:dashed}
+.st.weak{box-shadow:inset 0 0 0 1.5px var(--bc-wait)}
+.st-h{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.st-nm{min-width:0;flex:1}
+.st-nm h3{margin:0;font:700 19px/1.3 "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;color:var(--bc-ink);text-wrap:balance}
+.st-nm small{font:500 12.5px "Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-3)}
+.st-ex{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
+.st-ex i{width:11px;height:11px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--bc-ink);box-sizing:border-box}
+.st-ex i.f{background:var(--bc-ink)}
+.st-ex span{font-size:12.5px;color:var(--bc-ink-3);margin-left:5px}
+.st-weak{margin:8px 0 0;font-size:13px;color:#7A5A00}
+.st-sum{margin:8px 0 0;font-size:14.5px;line-height:1.6;color:var(--bc-ink-2);max-width:70ch}
+.st-src{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:10px;font-size:13px;color:var(--bc-ink-2)}
+.st-src b{font:600 13px "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--bc-ink)}
+.st-src a{color:var(--bc-ink-2);text-underline-offset:3px}
+.st-why{margin:0;padding-left:18px;font-size:14px;line-height:1.6;color:var(--bc-ink-2)}
+.st-why li+li{margin-top:2px}
+.st-smp{margin:14px 0 0;background:var(--bc-shelf);border-radius:12px;padding:12px 14px}
+.st-smp figcaption{font:600 12.5px "Hind Siliguri",system-ui,sans-serif;color:var(--bc-ink-3);margin-bottom:6px}
+.st-smp blockquote{margin:0;white-space:pre-line;font-size:14.5px;line-height:1.65;color:var(--bc-ink);display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.st-smp.open blockquote{display:block}
+.st-smp .bc-fold{margin-top:6px}
+.st-nets{display:flex;flex-wrap:wrap;gap:6px}
+.st-net{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--bc-rule);font:600 13px "Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-2);cursor:pointer;transition:background .15s ease-out,box-shadow .15s ease-out}
+.st-net:hover{box-shadow:inset 0 0 0 1.5px var(--c)}
+.st-net.on{background:var(--c);color:#fff;box-shadow:none}
+.st-net.on .bc-lgo path{fill:#fff}
+.st-net svg:not(.bc-lgo){width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.4}
+.st-net[disabled]{opacity:.55;cursor:default}
+.st-f{display:flex;align-items:center;gap:6px;margin-top:auto;padding-top:8px;flex-wrap:wrap}
+.st-f .bc-fold{margin-top:0}
+.st-rules{margin:4px 0 4px;padding-left:20px;font:500 13.5px/1.55 "Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-2)}
+.tr-sc{display:flex;align-items:center;gap:14px 22px;flex-wrap:wrap;border:1px solid var(--bc-rule);border-radius:16px;padding:14px 16px}
+.tr-runs{display:flex;align-items:center;gap:5px}
+.tr-runs i{width:15px;height:15px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--bc-ink);box-sizing:border-box}
+.tr-runs i.f{background:var(--bc-ink)}
+.tr-runs span{margin-left:6px;font:600 14px "Hind Siliguri",system-ui,sans-serif}
+.tr-srcs{list-style:none;margin:0;padding:0;display:flex;gap:6px 18px;flex-wrap:wrap;flex:1}
+.tr-srcs li{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--bc-ink-3)}
+.tr-srcs li.on span{color:var(--bc-good)}
+.tr-cr{list-style:none;margin:0 0 8px;padding:0;border:1px solid var(--bc-rule);border-radius:12px}
+.tr-cr li{display:flex;align-items:center;gap:9px;padding:6px 8px 6px 12px;font-size:14px;min-width:0}
+.tr-cr li+li{border-top:1px solid var(--bc-rule)}
+.tr-cr li span[data-noi18n]{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tr-cr li.off span{color:var(--bc-ink-3)}
+.tr-add{display:flex;gap:8px;flex-wrap:wrap}
+.tr-add .bc-in{flex:1;min-width:140px}.tr-add select.bc-in{flex:0 0 auto;min-width:0}
+/* brand-17: LinkedIn lane - counters, kill switch, tickets */
+.bc-btn.redline{background:transparent;color:var(--bc-alert-ink);box-shadow:inset 0 0 0 1.5px var(--bc-alert)}
+.bc-btn.redline:hover{background:#FDECEA}
+.li-stop{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--bc-alert);color:#fff;border-radius:14px;padding:14px 16px;margin:2px 0 14px}
+.li-stop b{display:block;font:700 16px "Hind Siliguri",system-ui,sans-serif}.li-stop span{font-size:13.5px;color:#FFE3DF}
+.li-stop div{flex:1;min-width:200px}
+.li-warm{font-size:13.5px;color:var(--bc-ink-2);margin:0 0 12px;background:var(--bc-shelf);border-radius:10px;padding:9px 12px;max-width:70ch}
+.li-meters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--bc-rule);border-radius:16px;overflow:hidden}
+.li-m{padding:12px 14px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.li-m+.li-m{border-left:1px solid var(--bc-rule)}
+.li-k{font:600 13.5px "Hind Siliguri",system-ui,sans-serif;color:var(--bc-ink-2)}
+.li-m b{font:700 26px/1 "Pretendard Variable",Pretendard,system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--bc-ink)}
+.li-m b small{font-size:15px;font-weight:600;color:var(--bc-ink-3)}
+.li-bar{height:6px;border-radius:999px;background:var(--bc-shelf);overflow:hidden}
+.li-bar i{display:block;height:100%;background:#0A66C2;border-radius:999px;transition:width .4s cubic-bezier(.16,1,.3,1)}
+.li-bar.none{background:repeating-linear-gradient(90deg,var(--bc-rule) 0 6px,transparent 6px 10px)}
+.li-m.near .li-bar i{background:var(--bc-wait)}.li-m.full .li-bar i{background:var(--bc-alert)}
+.li-m.full b{color:var(--bc-alert-ink)}
+.li-m>small{font-size:12.5px;color:var(--bc-ink-3);line-height:1.45}
+.li-health{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:13.5px;color:var(--bc-ink-2);margin:10px 2px 0}
+.li-health b{font-variant-numeric:tabular-nums;color:var(--bc-ink)}
+.li-health .x{color:var(--bc-alert-ink)}
+.li-add{margin-top:24px;border:1px solid var(--bc-rule);border-radius:16px;padding:16px 18px}
+.li-add .bc-pills{margin-bottom:4px}
+.li-f{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:0 12px}
+.li-f .bc-in{width:100%;box-sizing:border-box}
+.lt-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.lt{border:1px solid var(--bc-rule);border-radius:14px;padding:12px 14px;min-width:0;background:var(--bc-ground);border-top:3px solid #0A66C2}
+.lt.done,.lt.accepted,.lt.skipped{border-top-color:var(--bc-rule);background:#FCFCFD}
+.lt.failed{border-top-color:var(--bc-alert)}
+.lt-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px}
+.lt-k{font:600 12.5px "Hind Siliguri",system-ui,sans-serif;background:#E8F1FB;color:#0A4C91;padding:3px 9px;border-radius:999px}
+.lt-h a{font-size:13px;color:var(--bc-ink-2);text-underline-offset:3px}
+.lt-their{margin-top:8px;font-size:13.5px;line-height:1.55;color:var(--bc-ink-2);background:var(--bc-shelf);border-radius:10px;padding:8px 11px;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.lt-their.open{display:block}
+.lt-ed{margin-top:10px;width:100%;box-sizing:border-box}
+.lt-len{text-align:right;font-size:12px;color:var(--bc-ink-3);font-variant-numeric:tabular-nums}.lt-len.x{color:var(--bc-alert-ink);font-weight:700}
+.lt-flag{font-size:13px;color:#7A5A00;margin:6px 0 0}
+.lt-wait{font-size:13px;color:var(--bc-ink-2);margin:6px 0 0}
+.lt-done{font-size:13.5px;color:var(--bc-ink-3);margin:8px 0 0}
+.lt-a{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+@container bc (max-width:900px){.tr-board{grid-template-columns:repeat(2,minmax(0,1fr))}.tr-row:nth-child(3n){border-right:1px solid var(--bc-rule)}.tr-row:nth-child(2n){border-right:0}.tr-row:nth-last-child(-n+3){border-bottom:1px solid var(--bc-rule)}.tr-row:nth-last-child(-n+2){border-bottom:0}
+  .st-g,.lt-g{grid-template-columns:1fr}.li-meters{grid-template-columns:repeat(2,minmax(0,1fr))}.li-m:nth-child(3){border-left:0}.li-m:nth-child(n+3){border-top:1px solid var(--bc-rule)}
+  .tr-meta{grid-template-columns:1fr 1fr}.li-f{grid-template-columns:1fr}}
+@container bc (max-width:520px){.tr-board{grid-template-columns:1fr}.tr-row{border-right:0!important;border-bottom:1px solid var(--bc-rule)!important}.tr-row:last-child{border-bottom:0!important}.tr-meta{grid-template-columns:1fr}.tr-meta .w2{grid-column:auto}}
 @container bc (min-width:1500px){.bc{grid-template-columns:224px minmax(0,1fr) 400px}.bc.noside{grid-template-columns:224px minmax(0,1fr)}}
 @container bc (max-width:1139px){
   .bc{grid-template-columns:200px minmax(0,1fr)}
@@ -58882,6 +59000,8 @@ select.bc-in{padding-right:28px}
     people: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c.8-3.4 3.2-5 6-5s5.2 1.6 6 5M16 5.2a3 3 0 0 1 0 5.6M18 15c1.6.7 2.6 2.4 3 5"/>',
     results: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
     rules: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+    train: '<path d="M4 19c3-1 4-4 5-8l1.5-5.5a1.5 1.5 0 0 1 2.9.8L12 12c-.6 2.6-.2 4.4 1.5 5.2"/><path d="M15 19h5M4 21h16"/>',
+    linkedin: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v6M8 7.2v.1M12 16v-3.2c0-1.6 1-2.6 2.3-2.6S16.5 11 16.5 12.6V16"/>',
     map: '<circle cx="5" cy="6" r="2.2"/><circle cx="19" cy="6" r="2.2"/><circle cx="12" cy="18" r="2.2"/><path d="M7 7l4 9M17 7l-4 9M7.2 6h9.6"/>',
     reload: '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/>', search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
     plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>', right: '<path d="M9 6l6 6-6 6"/>', check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
@@ -58898,8 +59018,8 @@ select.bc-in{padding-right:28px}
   function btn(label, data, cls, bk, dis) { var b = bk && C.busy[bk]; return '<button type="button" class="bc-btn' + (cls ? ' ' + cls : '') + '" ' + data + (b || dis ? ' disabled' : '') + '>' + (b ? '<span class="bc-spin"></span>' : '') + label + '</button>'; }
   function inp(key, ph, extra, type) { return '<input class="bc-in" id="bci_' + key + '" data-bcin="' + key + '" type="' + (type || 'text') + '" data-noi18n="1" placeholder="' + esc(ph || '') + '" value="' + esc(v(key)) + '"' + (extra || '') + '>'; }
   function ta(key, ph, dflt, extra) { return '<textarea class="bc-ta" id="bci_' + key + '" data-bcin="' + key + '" data-noi18n="1" placeholder="' + esc(ph || '') + '"' + (extra || '') + '>' + esc(v(key, dflt)) + '</textarea>'; }
-  var SECS = [['home', 'হোম'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ']];
-  var NEED = { home: ['cockpit', 'drafts', 'settings'], posts: ['cockpit', 'drafts', 'settings'], ideas: ['drafts', 'memos', 'board', 'settings', 'news'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen'], rules: ['settings'], map: ['cockpit'] };
+  var SECS = [['home', 'হোম'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ'], ['train', 'লেখার ধরন'], ['linkedin', 'LinkedIn']];
+  var NEED = { home: ['cockpit', 'drafts', 'settings'], posts: ['cockpit', 'drafts', 'settings'], ideas: ['drafts', 'memos', 'board', 'settings', 'news'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen'], rules: ['settings'], map: ['cockpit'], train: ['styles'], linkedin: ['li'] };
   function on() { return typeof VIEW !== 'undefined' && VIEW === 'branddesk' && typeof ME !== 'undefined' && ME && ME.role === 'owner'; }
   function fonts() {
     if (document.getElementById('bc_font')) return;
@@ -58907,7 +59027,7 @@ select.bc-in{padding-right:28px}
     l.href = 'https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap'; document.head.appendChild(l);
   }
   // ---------- data: one store, one loader per read; bridge reads wait until the cockpit says the Mac is on
-  var CALL = { mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews' };
+  var CALL = { mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', li: 'erpBrandDeskLi' };
   function ready() { var d = C.d.cockpit; return !!(d && d.online && d.keySet); }
   function get(k, force) {
     if (C.busy['g_' + k] || (C.d[k] && !force)) return;
@@ -58922,6 +59042,8 @@ select.bc-in{padding-right:28px}
     var r = C.d[k] || {}, jobs = r.jobs || {}, ks = Object.keys(jobs), run = false;
     if (k === 'drafts') run = ks.some(function (x) { return jobs[x].state === 'writing' || jobs[x].state === 'researching'; });
     if (k === 'listen') run = ks.some(function (x) { return jobs[x].state === 'reading'; });
+    if (k === 'styles') run = ks.some(function (x) { return /^(reading|scouting)$/.test(jobs[x].state); });
+    if (k === 'li') run = ks.some(function (x) { return jobs[x].state === 'reading'; }) || (r.tasks || []).some(function (q) { return q.state === 'drafting'; });
     if (k === 'shorts') run = ks.some(function (x) { return jobs[x].state === 'fetching' || jobs[x].state === 'making'; });
     if (k === 'news') { run = ks.some(function (x) { return /^(reading|picking|writing)$/.test(jobs[x].state); }) || (r.news || []).some(function (n) { return n.state === 'reading'; }); if (run) C.nrun = 1; else if (C.nrun) { C.nrun = 0; get('drafts', true); } }
     clearTimeout(POLL[k]); if (run) POLL[k] = setTimeout(function () { if (on()) get(k, true); }, k === 'drafts' ? 12000 : 20000);
@@ -59905,6 +60027,145 @@ select.bc-in{padding-right:28px}
     r = document.createElement('div'); r.id = 'bc_root'; r.className = 'bc-root'; vw.parentNode.insertBefore(r, vw.nextSibling); return r;
   }
   function narrowNow() { var vw = el('view'), p = vw && vw.parentNode; return !!(p && p.clientWidth && p.clientWidth < 760); }
+  // ---------- brand-17: লেখার ধরন (Train) - a switchboard of the lines: which learned style each network writes in
+  var SNETS = ['facebook', 'linkedin', 'instagram', 'youtube', 'tiktok', 'threads'];
+  function styleOn(net) { var d = C.d.styles; if (!d || d.off) return null; return (d.profiles || []).filter(function (p) { return p.status === 'active' && (p.platforms || []).indexOf(net) >= 0; })[0] || null; }
+  function bigN(n) { n = Number(n || 0); return n >= 1e6 ? bn((n / 1e6).toFixed(n >= 1e7 ? 0 : 1)) + 'M' : n >= 1e3 ? bn(Math.round(n / 1e3)) + 'K' : bn(n); }
+  function stSource(e) {
+    if (!e) return '';
+    var bits = [];
+    if (e.views) bits.push(bigN(e.views) + ' বার দেখা');
+    if (e.reactions) bits.push(bigN(e.reactions) + ' reaction');
+    if (e.shares) bits.push(bigN(e.shares) + ' share');
+    if (e.views && e.followers) bits.push('follower-এর ' + bn(Math.max(1, Math.round(e.views / e.followers))) + ' গুণ');
+    return '<div class="st-src">' + (e.platform ? lb(e.platform) : '') + (e.author ? '<span data-noi18n="1">' + esc(e.author) + '</span>' : '<span>আপনার দেওয়া লেখা</span>') +
+      (bits.length ? '<b>' + bits.join(' · ') + '</b>' : '') + (e.url ? '<a href="' + esc(e.url) + '" target="_blank" rel="noopener">মূল পোস্ট</a>' : '') + '</div>';
+  }
+  function styleCard(p, ex) {
+    var mine = ex.filter(function (e) { return e.profile_id === p.id && e.state === 'done'; }), best = mine.slice().sort(function (a, b) { return (b.views || b.reactions || 0) - (a.views || a.reactions || 0); })[0];
+    var why = (best && best.why_bn) || p.why_bn || [], sug = p.status === 'suggested', rf = !!C.fold['r' + p.id], sf = !!C.fold['s' + p.id];
+    var dots = mine.slice(0, 12).map(function (e) { return '<i class="' + (e.reactions || e.views ? 'f' : '') + '"></i>'; }).join('');
+    var h = '<article class="st' + (p.weak ? ' weak' : '') + (sug ? ' sug' : '') + '" id="bc_st' + p.id + '">' +
+      '<div class="st-h"><div class="st-nm"><h3>' + esc(p.name_bn || p.name) + '</h3><small data-noi18n="1">' + esc(p.name) + '</small></div>' +
+      '<div class="st-ex" title="যত লেখা থেকে শিখেছে">' + dots + '<span>' + bn(p.n_examples || mine.length || 1) + 'টা লেখা থেকে</span></div></div>' +
+      (p.weak ? '<p class="st-weak">অনেক দিন নতুন কিছু মেলেনি; এই ধরন পুরোনো হয়ে যাচ্ছে।</p>' : '') +
+      '<p class="st-sum">' + esc(p.summary_bn || '') + '</p>' + stSource(best);
+    if (why.length) h += '<div class="bc-lbl">কেন মানুষ সাড়া দেয়</div><ul class="st-why">' + why.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul>';
+    if (p.sample_post) h += '<figure class="st-smp' + (sf ? ' open' : '') + '"><figcaption>এই ধরনে আপনার পোস্ট দেখতে যেমন হবে</figcaption><blockquote>' + esc(p.sample_post) + '</blockquote>' +
+      '<button type="button" class="bc-fold' + (sf ? ' on' : '') + '" data-bc="fold" data-id="s' + p.id + '">' + svg('right') + (sf ? 'কম দেখান' : 'পুরোটা পড়ুন') + '</button></figure>';
+    if (!sug) {
+      h += '<div class="bc-lbl">কোন network-এ এই ধরনে লিখবে</div><div class="st-nets">' + SNETS.map(function (n) {
+        var onn = (p.platforms || []).indexOf(n) >= 0;
+        return '<button type="button" class="st-net' + (onn ? ' on' : '') + '" style="--c:' + netCol(n) + '" aria-pressed="' + onn + '" data-bc="stnet" data-id="' + p.id + '" data-p="' + n + '"' + (C.busy['sn' + p.id + n] ? ' disabled' : '') + '>' + logo(n, 15) + esc(netName(n)) + (onn ? svg('check') : '') + '</button>';
+      }).join('') + '</div>';
+    }
+    h += '<div class="st-f"><button type="button" class="bc-fold' + (rf ? ' on' : '') + '" data-bc="fold" data-id="r' + p.id + '">' + svg('right') + 'লেখার নিয়মগুলো (' + bn((p.rules || []).length) + 'টা)</button>' +
+      '<span class="bc-sp"></span>' + (sug ? btn(svg('check') + 'রাখুন', 'data-bc="stkeep" data-id="' + p.id + '"', 'dark sm', 'sk' + p.id) + btn('বাদ দিন', 'data-bc="stret" data-id="' + p.id + '"', 'ghost sm', 'sr' + p.id)
+        : btn('সরিয়ে রাখুন', 'data-bc="stret" data-id="' + p.id + '"', 'ghost sm', 'sr' + p.id)) + '</div>';
+    if (rf) h += '<ol class="st-rules" data-noi18n="1">' + (p.rules || []).map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ol>';
+    return h + '</article>';
+  }
+  function trainHtml() {
+    var g = gate(['styles']); if (g) return headHtml('লেখার ধরন', '') + g;
+    var d = C.d.styles, pr = d.profiles || [], ex = d.examples || [], off = !!d.off, jobs = d.jobs || {}, jk = Object.keys(jobs);
+    var mine = pr.filter(function (p) { return p.status === 'active'; }), sug = pr.filter(function (p) { return p.status === 'suggested'; });
+    var reading = jk.filter(function (k) { return jobs[k].state === 'reading'; }).length, scouting = jk.some(function (k) { return jobs[k].state === 'scouting'; });
+    var failed = jk.filter(function (k) { return jobs[k].state === 'failed' && !C.fold['jx' + k]; }).slice(-1)[0];
+    var sw = '<button type="button" class="tr-sw' + (off ? '' : ' on') + '" role="switch" aria-checked="' + !off + '" data-bc="stoff"' + (C.busy.stoff ? ' disabled' : '') + '><i></i>' + (off ? 'সব ধরন বন্ধ' : 'ধরন চালু') + '</button>';
+    var h = headHtml('লেখার ধরন', 'যে লেখা ভালো লাগে, তার ধরন শিখে আপনার পোস্টে', sw);
+    // the switchboard: one line per network and the style it rides now
+    h += '<div class="tr-board' + (off ? ' off' : '') + '">' + SNETS.map(function (n) {
+      var st = styleOn(n);
+      return '<button type="button" class="tr-row" style="--c:' + netCol(n) + '" data-bc="jump" data-id="' + (st ? 'bc_st' + st.id : 'bc_tpaste') + '"><i></i>' + logo(n, 16) + '<span class="tr-n">' + esc(netName(n)) + '</span>' +
+        '<span class="tr-ride' + (st ? ' on' : '') + '">' + (st ? esc(st.name_bn || st.name) : 'মূল নিয়ম') + '</span></button>';
+    }).join('') + '</div>' + (off ? '<p class="tr-offnote">সব ধরন বন্ধ: এখন সব পোস্ট আগের মূল নিয়মে লেখা হচ্ছে। কিছু মুছে যায়নি; আবার চালু করলে আগের মতো হবে।</p>' : '');
+    if (failed) h += '<div class="bc-call"><span>' + esc(jobs[failed].error || 'ধরন পড়া গেল না।') + '</span><span class="bc-sp"></span><button class="bc-btn ghost sm" type="button" data-bc="fold" data-id="jx' + failed + '">ঠিক আছে</button></div>';
+    // paste box
+    var mf = !!C.fold.tmore;
+    h += '<section class="tr-paste" id="bc_tpaste"><div class="bc-h2"><h2>নতুন লেখা শেখান</h2><span>বিষয় যা-ই হোক; শুধু কীভাবে লেখা, সেটা শিখবে</span></div>' +
+      ta('stx', 'যে লেখাটা ভালো লেগেছে, পুরোটা এখানে পেস্ট করুন। কারো পোস্ট, কোনো লেখকের লেখা, যেকোনো বিষয়।', '', ' rows="7" aria-label="যে লেখা ভালো লেগেছে"') +
+      '<button type="button" class="bc-fold' + (mf ? ' on' : '') + '" data-bc="fold" data-id="tmore">' + svg('right') + 'কোথা থেকে, কত reaction (না দিলেও চলবে)</button>' +
+      (mf ? '<div class="tr-meta"><label><span class="bc-lbl">কোন network</span><select class="bc-in" id="bci_stp" data-bcin="stp"><option value="">জানি না</option>' + SNETS.map(function (n) { return '<option value="' + n + '"' + (v('stp') === n ? ' selected' : '') + '>' + netName(n) + '</option>'; }).join('') + '</select></label>' +
+        '<label><span class="bc-lbl">কার লেখা</span>' + inp('sta', 'নাম') + '</label><label class="w2"><span class="bc-lbl">লিংক</span>' + inp('stu', 'https://…', '', 'url') + '</label>' +
+        '<label><span class="bc-lbl">reaction</span>' + inp('str', '০', ' inputmode="numeric"') + '</label><label><span class="bc-lbl">share</span>' + inp('sts', '০', ' inputmode="numeric"') + '</label>' +
+        '<label><span class="bc-lbl">দেখা হয়েছে</span>' + inp('stv', '০', ' inputmode="numeric"') + '</label></div>' : '') +
+      '<div class="uc-a">' + btn(svg('check') + 'ধরন শিখুন', 'data-bc="stadd"', 'dark', 'stadd', String(v('stx')).trim().length < 80) +
+      (reading ? '<span class="tr-busy"><span class="bc-spin"></span>' + bn(reading) + 'টা লেখার ধরন পড়ছে… ১-২ মিনিট</span>' : String(v('stx')).trim().length && String(v('stx')).trim().length < 80 ? '<span class="bc-sub">পুরো পোস্টটা দিন (অন্তত ৮০ অক্ষর)</span>' : '') + '</div></section>';
+    // his styles
+    h += '<div class="bc-block"><div class="bc-h2"><h2>আপনার ধরন</h2><span>' + (mine.length ? bn(mine.length) + 'টা · প্রতিটা network-এ একটাই চালু থাকে' : 'এখনো নেই') + '</span></div>' +
+      (mine.length ? '<div class="st-g">' + mine.map(function (p) { return styleCard(p, ex); }).join('') + '</div>' : '<p class="tr-empty">উপরে একটা লেখা পেস্ট করুন। মিলে যাওয়া লেখা একই ধরনে জমা হয়ে ধরনটা আরও পাকা হবে; আলাদা হলে নতুন ধরন হবে।</p>') + '</div>';
+    if (sug.length) h += '<div class="bc-block"><div class="bc-h2"><h2>AI খুঁজে এনেছে</h2><span>সবচেয়ে বেশি সাড়া পাওয়া পোস্ট থেকে · রাখলে তবেই কাজে লাগবে</span></div><div class="st-g">' + sug.map(function (p) { return styleCard(p, ex); }).join('') + '</div></div>';
+    // scout + creators
+    var sc = d.scout || {}, runs = (sc.runs || []).length, cr = d.creators || [];
+    var srcs = [['youtube', sc.youtube ? 'চালু' : 'চাবি নেই', sc.youtube], ['facebook', sc.apify ? 'চালু' : 'Apify token-এর অপেক্ষায়', sc.apify], ['linkedin', sc.apify ? 'চালু' : 'Apify token-এর অপেক্ষায়', sc.apify]];
+    h += '<div class="bc-block tr-scout"><div class="bc-h2"><h2>নিজে নিজে খোঁজা</h2><span>প্রতি মাসের ১ তারিখে নিজে চলে · মাসে সর্বোচ্চ ২ বার</span></div>' +
+      '<div class="tr-sc"><div class="tr-runs">' + [0, 1].map(function (i) { return '<i class="' + (i < runs ? 'f' : '') + '"></i>'; }).join('') + '<span>এ মাসে ' + bn(runs) + '/২ বার</span></div>' +
+      '<ul class="tr-srcs">' + srcs.map(function (x) { return '<li class="' + (x[2] ? 'on' : '') + '">' + lb(x[0]) + '<span>' + x[1] + '</span></li>'; }).join('') + '</ul>' +
+      btn(scouting ? 'খুঁজছে…' : 'এখন খুঁজুন', 'data-bc="stscout"', 'dark', 'stscout', runs >= 2 || scouting) + '</div>' +
+      '<div class="bc-lbl">যাদের পোস্ট দেখবে (Facebook পেজ বা LinkedIn প্রোফাইল)</div>' +
+      (cr.length ? '<ul class="tr-cr">' + cr.map(function (c) {
+        return '<li class="' + (c.active ? '' : 'off') + '">' + logo(c.platform, 15) + '<span data-noi18n="1">' + esc(c.name || c.url.replace(/^https:\/\/(www\.)?/, '')) + '</span><span class="bc-sp"></span>' +
+          '<button type="button" class="tr-sw sm' + (c.active ? ' on' : '') + '" role="switch" aria-checked="' + !!c.active + '" aria-label="এই ক্রিয়েটর" data-bc="stcr" data-id="' + c.id + '" data-on="' + (c.active ? 0 : 1) + '"><i></i></button></li>';
+      }).join('') + '</ul>' : '<p class="tr-empty sm">এখনো কেউ নেই। যাদের লেখা মানুষ খুব পছন্দ করে, তাদের লিংক দিন।' + (sc.apify ? '' : ' Apify token বসালে তবেই এদের পোস্ট পড়া যাবে।') + '</p>') +
+      '<div class="tr-add"><select class="bc-in" id="bci_crp" data-bcin="crp" aria-label="network"><option value="facebook"' + (v('crp') !== 'linkedin' ? ' selected' : '') + '>Facebook</option><option value="linkedin"' + (v('crp') === 'linkedin' ? ' selected' : '') + '>LinkedIn</option></select>' +
+      inp('cru', 'https://www.facebook.com/…', ' aria-label="লিংক"', 'url') + inp('crn', 'নাম', ' aria-label="নাম"') + btn('যোগ করুন', 'data-bc="stcradd"', '', 'stcradd') + '</div></div>';
+    return h;
+  }
+  // ---------- brand-17: LinkedIn yellow lane - a counter board with a queue; he posts every item by hand
+  var LIK = [['comment', 'কমেন্ট', 'অন্যের পোস্টে'], ['reply', 'রিপ্লাই', 'আপনার পোস্টে'], ['connect', 'কানেকশন', 'নোটসহ আমন্ত্রণ'], ['dm', 'মেসেজ', 'প্রথম মেসেজ']];
+  function likName(k) { var x = LIK.filter(function (q) { return q[0] === k; })[0]; return x ? x[1] : k; }
+  function liTicket(t, L) {
+    var k = t.kind, cap = L.caps[k], n = (L.today || {})[k] || 0, full = (cap != null && n >= cap) || L.paused, key = 'lt' + t.id, txt = v(key, t.draft || '');
+    var cf = !!C.fold['lc' + t.id], h = '<article class="lt ' + t.state + '"><div class="lt-h"><span class="lt-k">' + likName(k) + '</span>' + (t.name ? '<b data-noi18n="1">' + esc(t.name) + '</b>' : '') + '<span class="bc-sp"></span>' +
+      (t.url ? '<a href="' + esc(t.url) + '" target="_blank" rel="noopener">LinkedIn-এ দেখুন</a>' : '') + '</div>';
+    if (t.context) h += '<div class="lt-their' + (cf ? ' open' : '') + '" data-noi18n="1">' + esc(t.context) + '</div>' + (String(t.context).length > 220 ? '<button type="button" class="bc-fold' + (cf ? ' on' : '') + '" data-bc="fold" data-id="lc' + t.id + '" style="margin-top:4px">' + svg('right') + (cf ? 'কম দেখান' : 'ওঁদের পুরো লেখা') + '</button>' : '');
+    if (t.state === 'drafting') return h + '<p class="tr-busy"><span class="bc-spin"></span>লিখছে…</p></article>';
+    if (t.state === 'failed') return h + '<div class="bc-call"><span>' + esc(t.error || 'লেখা গেল না।') + '</span><span class="bc-sp"></span>' + btn('আবার লিখুন', 'data-bc="limark" data-id="' + t.id + '" data-s="redo"', 'sm', 'lm' + t.id) + btn('বাদ দিন', 'data-bc="limark" data-id="' + t.id + '" data-s="skipped"', 'ghost sm', 'lx' + t.id) + '</div></article>';
+    if (t.state === 'sent') return h + '<p class="lt-done">' + (t.done_at ? dDate(new Date(t.done_at)) + '-এ পাঠিয়েছেন' : 'পাঠিয়েছেন') + '</p><div class="lt-a">' + btn(svg('check') + 'গ্রহণ করেছে', 'data-bc="limark" data-id="' + t.id + '" data-s="accepted"', 'sm', 'lm' + t.id) + '</div></article>';
+    if (t.state !== 'todo') return h + '<p class="lt-done">' + ({ done: 'পোস্ট করেছেন', accepted: 'গ্রহণ করেছে', skipped: 'বাদ দিয়েছেন' }[t.state] || '') + '</p></article>';
+    h += '<textarea class="ph-ed lt-ed" id="bci_' + key + '" data-bcin="' + key + '" data-noi18n="1" rows="' + Math.min(9, Math.max(3, Math.ceil(String(txt).length / 42))) + '" aria-label="AI-র লেখা">' + esc(txt) + '</textarea>';
+    if (k === 'connect') h += '<div class="lt-len' + (String(txt).length > 200 ? ' x' : '') + '">' + bn(String(txt).length) + '/২০০</div>';
+    var fl = (t.flags || []).filter(function (f) { return f && (f.reason || f.tell); });
+    if (fl.length) h += '<p class="lt-flag">' + fl.map(function (f) { return esc(f.reason || f.tell); }).join(' · ') + '</p>';
+    var nx = (L.next_ok || {})[k], wait = nx && new Date(nx) > new Date();
+    h += '<div class="lt-a">' + btn(svg('copy') + (t.url ? 'কপি করে খুলুন' : 'কপি করুন'), 'data-bc="licopy" data-id="' + t.id + '"', 'dark', '', L.paused) +
+      btn(svg('check') + (k === 'connect' ? 'পাঠিয়েছি' : 'পোস্ট করেছি'), 'data-bc="limark" data-id="' + t.id + '" data-s="done"', '', 'lm' + t.id, full) +
+      btn('আবার লিখুন', 'data-bc="limark" data-id="' + t.id + '" data-s="redo"', 'ghost', 'lr' + t.id) + btn('বাদ দিন', 'data-bc="limark" data-id="' + t.id + '" data-s="skipped"', 'ghost', 'lx' + t.id) + '</div>' +
+      (full && !L.paused ? '<p class="lt-flag">আজকের সীমা শেষ। কাল আবার।</p>' : wait ? '<p class="lt-wait">একটু ফাঁক দিন: পরেরটা ' + dTime(new Date(nx)) + '-এর পর</p>' : '');
+    return h + '</article>';
+  }
+  function liHtml() {
+    var g = gate(['li']); if (g) return headHtml('LinkedIn', '') + g;
+    var d = C.d.li, L = d.lane || { caps: {} }, tasks = d.tasks || [], jobs = d.jobs || {}, pulling = Object.keys(jobs).some(function (x) { return jobs[x].state === 'reading'; });
+    var kill = L.paused ? '' : btn('সব থামান', 'data-bc="likill" data-id="1"', 'redline', 'likill');
+    var h = headHtml('LinkedIn', 'AI লিখে দেয়, পোস্ট করেন আপনি নিজে', kill);
+    if (L.paused) h += '<div class="li-stop"><div><b>LinkedIn-এর সব কাজ থামানো</b><span>' + dDate(new Date(L.paused_until)) + ' থেকে আবার চলবে, প্রথম ৪ সপ্তাহ অর্ধেক সীমায়।</span></div>' + btn('এখনই চালু করুন', 'data-bc="likill" data-id="0"', '', 'likill') + '</div>';
+    else if (L.warm) h += '<p class="li-warm">শুরুর ৪ সপ্তাহ অর্ধেক সীমা চলছে, ' + dDate(new Date(L.warm_until)) + ' পর্যন্ত। LinkedIn যেন হঠাৎ বেশি কাজ না দেখে।</p>';
+    h += '<div class="li-meters">' + LIK.map(function (q) {
+      var k = q[0], n = (L.today || {})[k] || 0, cap = L.caps[k], pct = cap ? Math.min(100, Math.round(100 * n / cap)) : 0, cls = cap == null ? '' : cap === 0 || n >= cap ? 'full' : pct >= 80 ? 'near' : '';
+      var nx = (L.next_ok || {})[k], wait = nx && new Date(nx) > new Date();
+      return '<div class="li-m ' + cls + '"><span class="li-k">' + q[1] + '</span><b>' + bn(n) + (cap != null ? '<small>/' + bn(cap) + '</small>' : '') + '</b>' +
+        (cap != null ? '<span class="li-bar"><i style="width:' + pct + '%"></i></span>' : '<span class="li-bar none"></span>') +
+        '<small>' + (k === 'connect' ? 'এ সপ্তাহে ' + bn((L.week || {}).connect || 0) + '/৮০' : cap == null ? 'সীমা নেই, তবে একসাথে নয়' : cap === 0 ? 'গ্রহণের হার কম, আমন্ত্রণ বন্ধ' : q[2]) + (wait ? ' · পরেরটা ' + dTime(new Date(nx)) + '-এর পর' : '') + '</small></div>';
+    }).join('') + '</div>';
+    var inv = L.invites || {};
+    h += '<div class="li-health"><span>গ্রহণের হার <b>' + (L.accept_rate == null ? 'অন্তত ১০টা পাঠালে দেখাবে' : bn(L.accept_rate) + '%') + '</b></span><span>অপেক্ষায় আমন্ত্রণ <b>' + bn(inv.pending || 0) + '</b></span>' +
+      (inv.old ? '<span class="x">৩ সপ্তাহের পুরোনো <b>' + bn(inv.old) + '</b> · LinkedIn-এ গিয়ে তুলে নিন</span>' : '') + '</div>';
+    // add form
+    var kk = C.lk || 'comment';
+    h += '<section class="li-add"><div class="bc-h2"><h2>নতুন কাজ</h2><span>' + (L.apify ? 'লিংক দিলেই পোস্টটা পড়ে নেবে' : 'ওঁদের লেখা পেস্ট করুন') + '</span></div>' +
+      '<div class="bc-pills" role="tablist">' + LIK.map(function (q) { return '<button type="button" role="tab" data-bc="lik" data-id="' + q[0] + '"' + (kk === q[0] ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + q[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="li-f"><label><span class="bc-lbl">কার</span>' + inp('lnm', 'নাম', ' autocomplete="off"') + '</label><label class="w2"><span class="bc-lbl">লিংক</span>' + inp('lurl', 'https://www.linkedin.com/…', '', 'url') + '</label></div>' +
+      '<span class="bc-lbl">' + ({ comment: 'ওঁদের পোস্ট', reply: 'আপনার পোস্টে ওঁদের কমেন্ট', connect: 'ওঁদের সম্পর্কে (কী লিখেছেন, কী করেন)', dm: 'ওঁরা কী করেছেন (কমেন্ট, লাইক, গ্রহণ)' }[kk]) + '</span>' +
+      ta('lctx', 'এখানে পেস্ট করুন', '', ' rows="4"') +
+      '<div class="uc-a">' + btn(svg('check') + 'AI দিয়ে লিখুন', 'data-bc="liadd"', 'dark', 'liadd', L.paused) + (L.apify ? btn(pulling ? 'কমেন্ট আনছে…' : 'আমার পোস্টের কমেন্ট আনুন', 'data-bc="lipull"', 'ghost', 'lipull', pulling) : '') + '</div></section>';
+    var todo = tasks.filter(function (t) { return /^(todo|drafting|failed)$/.test(t.state); }), sent = tasks.filter(function (t) { return t.state === 'sent'; }), done = tasks.filter(function (t) { return /^(done|accepted|skipped)$/.test(t.state); });
+    h += '<div class="bc-block"><div class="bc-h2"><h2>আজকের কাজ</h2><span>' + (todo.length ? bn(todo.length) + 'টা তৈরি · কপি করুন, LinkedIn-এ বসান, তারপর “পোস্ট করেছি”' : 'কিছু অপেক্ষায় নেই') + '</span></div>' +
+      (todo.length ? '<div class="lt-g">' + todo.map(function (t) { return liTicket(t, L); }).join('') + '</div>' : '<p class="tr-empty">উপরে একটা পোস্ট বা কমেন্ট দিন; AI উত্তর লিখে দেবে। আপনি নিজে হাতে পোস্ট করবেন, তাই account নিরাপদ থাকে।</p>') + '</div>';
+    if (sent.length) h += '<div class="bc-block"><div class="bc-h2"><h2>পাঠানো আমন্ত্রণ</h2><span>গ্রহণ করলে চাপুন, হার ঠিক থাকবে</span></div><div class="lt-g">' + sent.map(function (t) { return liTicket(t, L); }).join('') + '</div></div>';
+    if (done.length) { var df = !!C.fold.ldone; h += '<button type="button" class="bc-fold' + (df ? ' on' : '') + '" data-bc="fold" data-id="ldone">' + svg('right') + 'গত ৩ দিনে করা (' + bn(done.length) + ')</button>' + (df ? '<div class="lt-g">' + done.map(function (t) { return liTicket(t, L); }).join('') + '</div>' : ''); }
+    return h;
+  }
   function sideHtml(narrow) {
     if (C.sec === 'home') return narrow ? '' : sideDrafts();
     if (C.sec === 'posts') return '';
@@ -59914,7 +60175,7 @@ select.bc-in{padding-right:28px}
   function mainHtml(narrow) {
     switch (C.sec) {
       case 'posts': return postsHtml(); case 'ideas': return ideasHtml(); case 'media': return mediaHtml(); case 'listen': return listenHtml();
-      case 'people': return peopleHtml(); case 'results': return resultsHtml(); case 'rules': return rulesHtml(); case 'map': return mapPageHtml();
+      case 'people': return peopleHtml(); case 'results': return resultsHtml(); case 'rules': return rulesHtml(); case 'map': return mapPageHtml(); case 'train': return trainHtml(); case 'linkedin': return liHtml();
       default: return homeHtml(narrow);
     }
   }
@@ -60145,6 +60406,35 @@ select.bc-in{padding-right:28px}
       if (when) args.at = new Date(when).toISOString();
       act('uc' + id, 'erpBrandDeskIdeaPost', args, function (r) { C.d.drafts = r; poll('drafts'); if (id === 'u') { delete C.media.u; C.v.ut = ''; C.v.uat = ''; } else { C.v.cap = ''; C.v.iat = ''; } toast(args.deep ? 'গবেষণা শুরু হলো। শেষ হলে প্রতিটা network-এর draft পোস্ট পেজে অপেক্ষায় আসবে।' : 'AI লিখছে। এক-দুই মিনিটে প্রতিটা network-এর draft পোস্ট পেজে আসবে।'); });
     }
+    else if (w === 'stoff') { var so = !(C.d.styles && C.d.styles.off); act('stoff', 'erpBrandDeskStyleSet', { off: so }, function (r) { C.d.styles = r; toast(so ? 'সব ধরন বন্ধ। এখন মূল নিয়মে লেখা হবে।' : 'ধরন আবার চালু।'); }); }
+    else if (w === 'stnet') { var pn = t.getAttribute('data-p'), sp_ = ((C.d.styles && C.d.styles.profiles) || []).filter(function (q) { return String(q.id) === String(id); })[0], onn2 = !(sp_ && (sp_.platforms || []).indexOf(pn) >= 0);
+      act('sn' + id + pn, 'erpBrandDeskStyleSet', { id: Number(id), platform: pn, on: onn2 }, function (r) { C.d.styles = r; toast(onn2 ? netName(pn) + '-এর পোস্ট এখন এই ধরনে লেখা হবে।' : netName(pn) + ' আবার মূল নিয়মে।'); }); }
+    else if (w === 'stkeep') act('sk' + id, 'erpBrandDeskStyleSet', { id: Number(id), status: 'active' }, function (r) { C.d.styles = r; toast('রাখা হলো। এবার কোন network-এ চালু হবে বাছুন।'); });
+    else if (w === 'stret') act('sr' + id, 'erpBrandDeskStyleSet', { id: Number(id), status: 'retired' }, function (r) { C.d.styles = r; toast('সরিয়ে রাখা হলো; কিছু মুছে যায়নি।'); });
+    else if (w === 'stadd') {
+      var sx = String(v('stx')).trim(); if (sx.length < 80) { toast('পুরো পোস্টটা দিন (অন্তত ৮০ অক্ষর)।', true); return; }
+      var sa = { text: sx, platform: v('stp'), author: v('sta'), url: v('stu'), reactions: String(v('str')).replace(/[^0-9]/g, ''), shares: String(v('sts')).replace(/[^0-9]/g, ''), views: String(v('stv')).replace(/[^0-9]/g, '') };
+      act('stadd', 'erpBrandDeskStyleAdd', sa, function (r) { C.d.styles = r; ['stx', 'stp', 'sta', 'stu', 'str', 'sts', 'stv'].forEach(function (q) { delete C.v[q]; }); C.fold.tmore = false; poll('styles'); toast('ধরন পড়ছে। ১-২ মিনিটে কার্ড আসবে।'); });
+    }
+    else if (w === 'stscout') act('stscout', 'erpBrandDeskStyleScout', {}, function (r) { C.d.styles = r; poll('styles'); toast('খোঁজা শুরু হলো। ৫-১০ মিনিটে নতুন ধরন “AI খুঁজে এনেছে”-তে আসবে।'); });
+    else if (w === 'stcr') act('stcr' + id, 'erpBrandDeskStyleCreator', { id: Number(id), active: t.getAttribute('data-on') === '1' }, function (r) { C.d.styles = r; });
+    else if (w === 'stcradd') act('stcradd', 'erpBrandDeskStyleCreator', { platform: v('crp') || 'facebook', url: String(v('cru')).trim(), name: String(v('crn')).trim() }, function (r) { C.d.styles = r; delete C.v.cru; delete C.v.crn; toast('যোগ হলো।'); });
+    else if (w === 'lik') { C.lk = id; draw(); }
+    else if (w === 'liadd') act('liadd', 'erpBrandDeskLiAdd', { kind: C.lk || 'comment', name: String(v('lnm')).trim(), url: String(v('lurl')).trim(), context: String(v('lctx')).trim() }, function (r) { C.d.li = r; ['lnm', 'lurl', 'lctx'].forEach(function (q) { delete C.v[q]; }); poll('li'); toast('লিখছে। আধা মিনিটের মধ্যে নিচে আসবে।'); });
+    else if (w === 'lipull') act('lipull', 'erpBrandDeskLiPull', {}, function (r) { C.d.li = r; poll('li'); toast('আপনার পোস্টের কমেন্ট পড়ছে; রিপ্লাই নিচে আসবে।'); });
+    else if (w === 'likill') {
+      var kon = id === '1';
+      if (kon && !window.confirm('LinkedIn-এর সব কাজ ১৪ দিনের জন্য থামবে। LinkedIn থেকে সতর্কবার্তা, CAPTCHA বা “unusual activity” দেখলে এটা চাপুন। থামাবেন?')) return;
+      act('likill', 'erpBrandDeskLiKill', { on: kon }, function (r) { C.d.li = r; toast(kon ? 'থামানো হলো। ১৪ দিন পর অর্ধেক সীমায় আবার চলবে।' : 'আবার চালু।'); });
+    }
+    else if (w === 'licopy') {
+      var lt = ((C.d.li && C.d.li.tasks) || []).filter(function (q) { return String(q.id) === String(id); })[0]; if (!lt) return;
+      var ltx = v('lt' + id, lt.draft || '');
+      if (ltx !== lt.draft) srv('erpBrandDeskLiMark', [{ id: Number(id), state: 'edit', text: ltx }], function (r) { C.d.li = r; }, function () {});
+      try { navigator.clipboard.writeText(ltx).then(function () { toast('কপি হলো। LinkedIn-এ বসিয়ে পোস্ট করুন, তারপর এখানে “' + (lt.kind === 'connect' ? 'পাঠিয়েছি' : 'পোস্ট করেছি') + '” চাপুন।'); }, function () { toast('কপি করা গেল না; লেখাটা বেছে নিজে কপি করুন।', true); }); } catch (e5) { toast('কপি করা গেল না।', true); }
+      if (lt.url) window.open(lt.url, '_blank', 'noopener');
+    }
+    else if (w === 'limark') { var ls = t.getAttribute('data-s'); act((ls === 'redo' ? 'lr' : ls === 'skipped' ? 'lx' : 'lm') + id, 'erpBrandDeskLiMark', { id: Number(id), state: ls }, function (r) { C.d.li = r; if (ls === 'redo') poll('li'); if (ls === 'done') toast('গোনা হলো।'); }); }
     else if (w === 'itab') { C.itab = id; draw(); need(); }
     else if (w === 'nrun') act('nrun', 'erpBrandDeskNewsRun', {}, function (r) { C.d.news = r; poll('news'); toast('খবর পড়া শুরু হলো। ৫-১০ মিনিটে পোস্ট আসবে।'); });
     else if (w === 'nmake') act('nm' + id, 'erpBrandDeskNewsMake', { id: Number(id) }, function (r) { C.d.news = r; poll('news'); toast('এই খবরের সূত্র পড়ে পোস্ট লিখছে। কয়েক মিনিট লাগবে।'); });

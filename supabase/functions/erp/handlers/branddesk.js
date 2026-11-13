@@ -83,6 +83,61 @@ export async function erpBrandDeskNews(ctx) {
   await gate(ctx);
   return bridge(ctx, '/news');
 }
+// brand-17: Train (writing styles learned from writing he likes) and the LinkedIn yellow lane (AI prepares, he posts by hand)
+const STYLE_NETS = ['linkedin', 'facebook', 'instagram', 'youtube', 'threads', 'tiktok'];
+const LI_KINDS = ['comment', 'reply', 'connect', 'dm'];
+const cnt = (x) => (x === '' || x == null ? null : (Number.isFinite(Number(x)) && Number(x) >= 0 ? Math.round(Number(x)) : NaN));
+export async function erpBrandDeskStyles(ctx) { await gate(ctx); return bridge(ctx, '/styles'); }
+export async function erpBrandDeskStyleAdd(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, text = str(p.text);
+  if (text.length < 80) throw new Error('Paste a longer piece (a whole post).');
+  if (text.length > 12000) throw new Error('Keep it under 12000 letters.');
+  const url = str(p.url);
+  if (url && !/^https:\/\//.test(url)) throw new Error('The link must start with https://');
+  const body = { text, url: url.slice(0, 500), author: str(p.author).slice(0, 200), platform: STYLE_NETS.includes(str(p.platform)) ? str(p.platform) : '' };
+  for (const k of ['reactions', 'comments', 'shares', 'views', 'followers']) { const n = cnt(p[k]); if (Number.isNaN(n)) throw new Error('Numbers only for ' + k + '.'); body[k] = n; }
+  return bridge(ctx, '/styles/add', body);
+}
+export async function erpBrandDeskStyleSet(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, b = {};
+  if ('off' in p) b.off = !!p.off;
+  if (p.id != null) { const id = parseInt(p.id, 10); if (!(id > 0)) throw new Error('Pick a style.'); b.id = id; }
+  if (p.platform != null) { if (!STYLE_NETS.includes(str(p.platform))) throw new Error('That network is not known.'); b.platform = str(p.platform); b.on = !!p.on; }
+  if (p.status != null) { if (!['active', 'retired'].includes(p.status)) throw new Error('Unknown step.'); b.status = p.status; }
+  if (p.name_bn != null) b.name_bn = str(p.name_bn).slice(0, 80);
+  if (!Object.keys(b).length) throw new Error('Nothing to change.');
+  return bridge(ctx, '/styles/set', b);
+}
+export async function erpBrandDeskStyleCreator(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {};
+  if (p.id != null) return bridge(ctx, '/styles/creator', { id: parseInt(p.id, 10), active: !!p.active });
+  const url = str(p.url), platform = str(p.platform);
+  if (!['linkedin', 'facebook'].includes(platform)) throw new Error('Pick Facebook or LinkedIn.');
+  if (!/^https:\/\/(www\.|m\.)?(facebook|linkedin)\.com\//.test(url)) throw new Error('Give a facebook.com page or linkedin.com profile link.');
+  return bridge(ctx, '/styles/creator', { url: url.slice(0, 400), platform, name: str(p.name).slice(0, 120) });
+}
+export async function erpBrandDeskStyleScout(ctx) { await gate(ctx); return bridge(ctx, '/styles/scout', {}); }
+export async function erpBrandDeskLi(ctx) { await gate(ctx); return bridge(ctx, '/li'); }
+export async function erpBrandDeskLiAdd(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, kind = str(p.kind), url = str(p.url), context = str(p.context);
+  if (!LI_KINDS.includes(kind)) throw new Error('Pick comment, reply, connect or message.');
+  if (url && !/^https:\/\/(www\.)?linkedin\.com\//.test(url)) throw new Error('Use a linkedin.com link.');
+  if (context.length > 8000) throw new Error('Keep their text under 8000 letters.');
+  return bridge(ctx, '/li/add', { kind, url: url.slice(0, 600), context, name: str(p.name).slice(0, 200) });
+}
+export async function erpBrandDeskLiMark(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, id = parseInt(p.id, 10), state = str(p.state);
+  if (!(id > 0)) throw new Error('Pick an item.');
+  if (!['done', 'skipped', 'accepted', 'redo', 'edit'].includes(state)) throw new Error('Unknown step.');
+  return bridge(ctx, '/li/mark', { id, state, text: state === 'edit' ? str(p.text).slice(0, 3000) : undefined });
+}
+export async function erpBrandDeskLiKill(ctx, payload) { await gate(ctx); return bridge(ctx, '/li/kill', { on: !!(payload || {}).on }); }
+export async function erpBrandDeskLiPull(ctx) { await gate(ctx); return bridge(ctx, '/li/pull', {}); }
 export async function erpBrandDeskNewsRun(ctx) {
   await gate(ctx);
   return bridge(ctx, '/news/run', {});
@@ -456,4 +511,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
