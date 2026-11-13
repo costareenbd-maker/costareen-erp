@@ -138,6 +138,32 @@ export async function erpBrandDeskLiMark(ctx, payload) {
 }
 export async function erpBrandDeskLiKill(ctx, payload) { await gate(ctx); return bridge(ctx, '/li/kill', { on: !!(payload || {}).on }); }
 export async function erpBrandDeskLiPull(ctx) { await gate(ctx); return bridge(ctx, '/li/pull', {}); }
+// brand-19: the personal-brand model's weekly routine; every slot is the owner's to change
+const R_PLATS = ['facebook', 'instagram', 'tiktok', 'youtube', 'linkedin', 'threads', 'x'];
+const R_FORMATS = ['story', 'reel', 'text', 'news', 'album', 'face', 'photo', 'carousel', 'live', 'video', 'short', 'long', 'community', 'post', 'engage', 'trial'];
+const R_PILLARS = ['', 'proof', 'teach', 'person', 'news'];
+export async function erpBrandDeskRoutine(ctx) { await gate(ctx); return bridge(ctx, '/routine'); }
+export async function erpBrandDeskRoutineSlot(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, id = p.id == null ? 0 : parseInt(p.id, 10);
+  if (p.id != null && !(id > 0)) throw new Error('Pick a slot.');
+  if (p.remove) { if (!id) throw new Error('Pick a slot.'); return bridge(ctx, '/routine/slot', { id, remove: true }); }
+  const dow = parseInt(p.dow, 10), at = str(p.at), platform = str(p.platform), format = str(p.format), pillar = str(p.pillar), level = parseInt(p.level || 2, 10);
+  if (!(dow >= 0 && dow <= 6)) throw new Error('Pick the day.');
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(at)) throw new Error('Give the time as HH:MM.');
+  if (!R_PLATS.includes(platform)) throw new Error('That network is not known.');
+  if (!R_FORMATS.includes(format)) throw new Error('That kind of post is not known.');
+  if (!R_PILLARS.includes(pillar)) throw new Error('That topic is not known.');
+  if (![1, 2, 3].includes(level)) throw new Error('The plan is light, medium or full.');
+  return bridge(ctx, '/routine/slot', { id: id || undefined, dow, at, platform, format, pillar, face: !!p.face, level, active: p.active !== false, topic: str(p.topic).slice(0, 200) });
+}
+export async function erpBrandDeskRoutineLevel(ctx, payload) {
+  await gate(ctx);
+  const level = parseInt((payload || {}).level, 10);
+  if (![1, 2, 3].includes(level)) throw new Error('Pick light, medium or full.');
+  return bridge(ctx, '/routine/level', { level });
+}
+export async function erpBrandDeskRoutineReset(ctx) { await gate(ctx); return bridge(ctx, '/routine/reset', {}); }
 export async function erpBrandDeskNewsRun(ctx) {
   await gate(ctx);
   return bridge(ctx, '/news/run', {});
@@ -511,4 +537,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskRoutine, erpBrandDeskRoutineSlot, erpBrandDeskRoutineLevel, erpBrandDeskRoutineReset, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

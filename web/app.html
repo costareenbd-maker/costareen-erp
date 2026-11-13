@@ -8545,7 +8545,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrandDeskCockpit|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrandDeskCockpit|erpBrandDeskRoutine|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 // crit8-nav (10 Nov 2026): these calls only read when they are sent without a change (the list form) and write with one.
 // The same rule as the server's ERP_READ_WHEN (allow.js): the list form runs beside other reads, sends no one-time key
 // and drops no caches; the changing form stays a write. erpTool and erpBrainFact always write (every branch changes data).
@@ -58792,6 +58792,57 @@ select.bc-in{padding-right:28px}
 .uc-n .bc-pl[disabled]{opacity:.35;cursor:not-allowed}
 .uc-deep{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--bc-ink-2)}
 .uc-a{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+/* brand-19: রুটিন - the weekly timetable */
+.rt-st{border:1px solid var(--bc-rule);border-radius:16px;padding:14px 16px;margin:2px 0 16px;background:var(--bc-ground)}
+.rt-st.down{box-shadow:inset 0 0 0 1.5px var(--bc-wait)}
+.rt-st p{margin:0 0 10px;font-size:14px;line-height:1.6;color:var(--bc-ink-2);max-width:78ch}.rt-st p:last-child{margin:10px 0 0}
+.rt-st ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.rt-st li{min-width:0}
+.rt-st li b{display:block;font:700 24px/1.1 "Pretendard Variable",Pretendard,system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--bc-ink)}
+.rt-st li b small{font-size:14px;font-weight:600;color:var(--bc-ink-3)}
+.rt-st li.lo b{color:#8A5B00}
+.rt-st li span{font-size:12.5px;line-height:1.45;color:var(--bc-ink-3);display:block;margin-top:3px}
+.rt-pil{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.rt-pil>div{background:var(--bc-shelf);border-radius:12px;padding:11px 12px;min-width:0}
+.rt-pil b{font:700 22px/1 "Pretendard Variable",Pretendard,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.rt-pil small{font-size:12px;color:var(--bc-ink-3);margin-left:6px}
+.rt-pil strong{display:block;font:700 15px/1.3 "Hind Siliguri",system-ui,sans-serif;margin-top:5px}
+.rt-pil span{display:block;font-size:12.5px;line-height:1.45;color:var(--bc-ink-2)}
+.rt-pil i{display:block;height:4px;border-radius:99px;background:var(--bc-ink);margin-top:8px;max-width:100%}
+.rt-note{font-size:13px;line-height:1.55;color:var(--bc-ink-3);margin:8px 2px 0;max-width:86ch}
+.rt-ctl{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin:18px 0 12px}
+.rt-nets{display:flex;flex-wrap:wrap;gap:6px}
+.rt-days{display:none;gap:4px;overflow-x:auto;scrollbar-width:none;margin-bottom:10px}
+.rt-days button{all:unset;box-sizing:border-box;cursor:pointer;flex:1 0 auto;min-width:44px;text-align:center;padding:7px 6px;border-radius:10px;font:600 14px "Hind Siliguri",system-ui,sans-serif;color:var(--bc-ink-2)}
+.rt-days button small{display:block;font:600 11.5px "Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-3)}
+.rt-days button.on{background:var(--bc-ink);color:#fff}.rt-days button.on small{color:#fff;opacity:.75}
+.rt-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:start}
+.rt-day{border:1px solid var(--bc-rule);border-radius:14px;background:var(--bc-ground);min-width:0;overflow:hidden}
+.rt-day>header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 10px 7px;border-bottom:1px solid var(--bc-rule)}
+.rt-day>header b{font:700 16px "Hind Siliguri",system-ui,sans-serif}
+.rt-band{padding:7px 6px 5px}.rt-band+.rt-band{border-top:1px dashed var(--bc-rule)}
+.rt-band>h3{margin:0 4px 3px;font:600 12px "Hind Siliguri",system-ui,sans-serif;color:var(--bc-ink-3)}
+.rt-none{margin:0 4px 4px;font-size:12.5px;color:var(--bc-ink-3)}
+.rt-dep{all:unset;box-sizing:border-box;display:grid;grid-template-columns:auto 1fr;gap:1px 7px;width:100%;cursor:pointer;padding:6px 5px 6px 9px;border-radius:9px;position:relative;min-height:44px}
+.rt-dep::before{content:"";position:absolute;left:1px;top:7px;bottom:7px;width:3px;border-radius:3px;background:var(--c)}
+.rt-dep:hover,.rt-dep[aria-expanded="true"]{background:var(--bc-shelf)}
+.rt-dep time{grid-row:span 3;font:600 13px "Pretendard Variable",Pretendard,system-ui,sans-serif;font-variant-numeric:tabular-nums;min-width:34px;padding-top:1px}
+.rt-dep .f{font:600 13.5px/1.35 "Hind Siliguri",system-ui,sans-serif;color:var(--bc-ink);min-width:0}
+.rt-dep .p{font-size:12px;color:var(--bc-ink-3);min-width:0}.rt-dep .p em{font-style:normal}.rt-dep .p b{color:var(--bc-ink);font-weight:600}
+.rt-dep .fill{font-size:12px;line-height:1.4;color:#7A5A00;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.rt-dep .fill.ok{color:var(--bc-good)}
+.rt-dep.cut time,.rt-dep.cut .f{text-decoration:line-through;color:var(--bc-ink-3)}.rt-dep.cut::before{background:var(--bc-rule)}
+.rt-tp{margin:2px 8px 0;font-size:13px;color:var(--bc-ink-2)}
+.rt-ed{margin:4px 2px 8px;padding:10px 12px 12px;background:var(--bc-shelf);border-radius:12px}
+.rt-edg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 10px}
+.rt-ed .bc-in{width:100%;box-sizing:border-box}.rt-ed .bc-lbl{margin-top:8px}
+.rt-chk{display:flex;gap:6px 18px;flex-wrap:wrap;margin-top:10px}
+.rt-new{border:1px solid var(--bc-rule);border-radius:16px;padding:14px 16px;margin-bottom:14px;max-width:560px}
+.rt-new .rt-ed{margin:0;background:none;padding:0}
+.rt-foot{margin-top:18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+@container bc (max-width:1180px){.rt-week{grid-template-columns:1fr}.rt-days{display:flex}.rt-day{display:none}.rt-day.cur{display:block}
+  .rt-dep time{font-size:15px;min-width:46px}.rt-dep .f{font-size:15.5px}.rt-dep .p,.rt-dep .fill{font-size:13px}.rt-dep{padding:9px 8px 9px 12px}}
+@container bc (max-width:900px){.rt-st ul,.rt-pil{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @container bc (max-width:900px){.uc-g{grid-template-columns:1fr}}
 /* brand-17: Train (লেখার ধরন) - the switchboard of the lines + style cards */
 .tr-sw{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:9px;height:38px;padding:0 14px 0 6px;border-radius:999px;background:var(--bc-shelf);font:600 14px "Hind Siliguri","Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-2);cursor:pointer}
@@ -59002,6 +59053,7 @@ select.bc-in{padding-right:28px}
     people: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c.8-3.4 3.2-5 6-5s5.2 1.6 6 5M16 5.2a3 3 0 0 1 0 5.6M18 15c1.6.7 2.6 2.4 3 5"/>',
     results: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
     rules: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+    routine: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M7.5 14h3M13.5 14h3M7.5 17.5h3"/>',
     train: '<path d="M4 19c3-1 4-4 5-8l1.5-5.5a1.5 1.5 0 0 1 2.9.8L12 12c-.6 2.6-.2 4.4 1.5 5.2"/><path d="M15 19h5M4 21h16"/>',
     linkedin: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v6M8 7.2v.1M12 16v-3.2c0-1.6 1-2.6 2.3-2.6S16.5 11 16.5 12.6V16"/>',
     map: '<circle cx="5" cy="6" r="2.2"/><circle cx="19" cy="6" r="2.2"/><circle cx="12" cy="18" r="2.2"/><path d="M7 7l4 9M17 7l-4 9M7.2 6h9.6"/>',
@@ -59020,8 +59072,8 @@ select.bc-in{padding-right:28px}
   function btn(label, data, cls, bk, dis) { var b = bk && C.busy[bk]; return '<button type="button" class="bc-btn' + (cls ? ' ' + cls : '') + '" ' + data + (b || dis ? ' disabled' : '') + '>' + (b ? '<span class="bc-spin"></span>' : '') + label + '</button>'; }
   function inp(key, ph, extra, type) { return '<input class="bc-in" id="bci_' + key + '" data-bcin="' + key + '" type="' + (type || 'text') + '" data-noi18n="1" placeholder="' + esc(ph || '') + '" value="' + esc(v(key)) + '"' + (extra || '') + '>'; }
   function ta(key, ph, dflt, extra) { return '<textarea class="bc-ta" id="bci_' + key + '" data-bcin="' + key + '" data-noi18n="1" placeholder="' + esc(ph || '') + '"' + (extra || '') + '>' + esc(v(key, dflt)) + '</textarea>'; }
-  var SECS = [['home', 'হোম'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ'], ['train', 'লেখার ধরন'], ['linkedin', 'LinkedIn']];
-  var NEED = { home: ['cockpit', 'drafts', 'settings'], posts: ['cockpit', 'drafts', 'settings'], ideas: ['drafts', 'memos', 'board', 'settings', 'news'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen'], rules: ['settings'], map: ['cockpit'], train: ['styles'], linkedin: ['li'] };
+  var SECS = [['home', 'হোম'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ'], ['routine', 'রুটিন'], ['train', 'লেখার ধরন'], ['linkedin', 'LinkedIn']];
+  var NEED = { home: ['cockpit', 'drafts', 'settings'], posts: ['cockpit', 'drafts', 'settings'], ideas: ['drafts', 'memos', 'board', 'settings', 'news'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen'], rules: ['settings'], map: ['cockpit'], train: ['styles'], linkedin: ['li'], routine: ['routine'] };
   function on() { return typeof VIEW !== 'undefined' && VIEW === 'branddesk' && typeof ME !== 'undefined' && ME && ME.role === 'owner'; }
   function fonts() {
     if (document.getElementById('bc_font')) return;
@@ -59029,7 +59081,7 @@ select.bc-in{padding-right:28px}
     l.href = 'https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap'; document.head.appendChild(l);
   }
   // ---------- data: one store, one loader per read; bridge reads wait until the cockpit says the Mac is on
-  var CALL = { mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', li: 'erpBrandDeskLi' };
+  var CALL = { mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', li: 'erpBrandDeskLi', routine: 'erpBrandDeskRoutine' };
   function ready() { var d = C.d.cockpit; return !!(d && d.online && d.keySet); }
   function get(k, force) {
     if (C.busy['g_' + k] || (C.d[k] && !force)) return;
@@ -59383,7 +59435,7 @@ select.bc-in{padding-right:28px}
     if (x.media && !C.media[x.id] && x.media.path) C.media[x.id] = { id: x.media.id, path: x.media.path, type: x.media.type || 'image', name: x.media.name || '', asset: x.media.asset || '', thumb: x.media.type === 'video' ? '' : x.media.path };
     if (x.planned_at && C.v['a' + x.id] === undefined && new Date(x.planned_at) > new Date()) C.v['a' + x.id] = x.planned_at;
     var mine = accountsFor(x), sel = accSel(x, mine), id = x.id, body = v('e' + id, x.body || ''), editing = C.edit[id], block = (x.legal_flags || []).some(function (f) { return f.severity === 'block'; }), lim = LIMIT[netOf(x.platform)] || 5000;
-    var h = '<div class="ph-slot' + (x._old ? ' old' : '') + '" id="bc_tk_' + id + '"><div class="ph-top">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sp"></span>' + (x._old ? '<span class="bc-tag">পুরনো সংস্করণ</span>' : '') + (block ? '<span class="bc-tag x">আটকাবে</span>' : '') + '</div>' +
+    var h = '<div class="ph-slot' + (x._old ? ' old' : '') + '" id="bc_tk_' + id + '"><div class="ph-top">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sp"></span>' + (x.pillar && RPIL[x.pillar] ? '<span class="bc-tag">' + RPIL[x.pillar][0] + '</span>' : '') + (x.style_name ? '<span class="bc-tag" title="এই লেখার ধরন">' + esc(x.style_name_bn || x.style_name) + '</span>' : '') + (x._old ? '<span class="bc-tag">পুরনো সংস্করণ</span>' : '') + (block ? '<span class="bc-tag x">আটকাবে</span>' : '') + '</div>' +
       phoneCard(x.platform, mine[0] || null, body, 'd' + id, { edit: editing ? 'e' + id : '', title: (x.title_options || [])[0], pic: picOf(id), npic: ((C.cards[id] || {}).pictures || []).length, media: C.media[id] });
     h += '<div class="ph-meta"><span id="bc_cnt_' + id + '" class="' + (body.length > lim ? 'over' : '') + '">' + bn(body.length) + (body.length > lim * .8 ? ' / ' + bn(lim) : '') + ' অক্ষর</span><span>· ' + MODEW[modeOf(netOf(x.platform), C.media[id])] + '</span><span>· ' + (v('a' + id) ? 'যাবে ' + whenWords(v('a' + id)) : 'যাবে পরের ফাঁকা সময়ে') + '</span>' + (mine.length > 1 ? '<span class="bc-sp"></span>' + mine.map(function (n) { return '<button type="button" class="bc-nc bclg' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" data-noi18n="1">' + logo(n.platform, 15) + esc(n.name || '') + '</button>'; }).join('') : '') + '</div>' + flagsHtml(x);
     // brand-18 (owner 14 Nov): the AI's questions made every card very tall; they hide behind a button and stay open while he is answering
@@ -59795,7 +59847,7 @@ select.bc-in{padding-right:28px}
     var h = headHtml('মিডিয়া', 'আপনার ভিডিও আর ছবির তাক');
     var o = offline(); if (o) return h + o;
     var search = '<form class="bc-search" data-bc-form="vfind" role="search">' + svg('search') + '<input id="bci_vq" data-bcin="vq" data-noi18n="1" placeholder="মানে দিয়ে খুঁজুন: দোকানে কথা বলছি, প্রিন্টারের কাছ থেকে…" value="' + esc(C.vq || '') + '" aria-label="ভিডিও খুঁজুন">' + btn('খুঁজুন', 'data-bc="vfind"', 'dark', 'g_videos') + '</form>' +
-      '<div class="bc-ex">' + ['দোকানে কথা বলছি', 'পণ্যের ক্লোজআপ', 'প্রিন্টার চলছে', 'বাক্স খোলা'].map(function (q) { return '<button type="button" class="bc-pl" style="--c:#16181D" data-bc="vex" data-id="' + esc(q) + '">' + esc(q) + '</button>'; }).join('') + (C.vq ? '<button type="button" class="bc-btn ghost sm" data-bc="vall">সব নতুনগুলো</button>' : '') + '</div>';
+      '<div class="bc-ex">' + ['দোকানে কথা বলছি', 'প্রোডাক্টের ক্লোজআপ', 'প্রিন্টার চলছে', 'বাক্স খোলা'].map(function (q) { return '<button type="button" class="bc-pl" style="--c:#16181D" data-bc="vex" data-id="' + esc(q) + '">' + esc(q) + '</button>'; }).join('') + (C.vq ? '<button type="button" class="bc-btn ghost sm" data-bc="vall">সব নতুনগুলো</button>' : '') + '</div>';
     var g = gate(['videos']); if (g) return h + g;
     h += albumHtml();
     var list = C.d.videos.videos || [], jobs = (C.d.shorts && C.d.shorts.jobs) || {}, hl = ((C.d.cockpit && C.d.cockpit.cockpit) || {}).health || {};
@@ -60155,7 +60207,7 @@ select.bc-in{padding-right:28px}
         '<small>' + (k === 'connect' ? 'এ সপ্তাহে ' + bn((L.week || {}).connect || 0) + '/৮০' : cap == null ? 'সীমা নেই, তবে একসাথে নয়' : cap === 0 ? 'গ্রহণের হার কম, আমন্ত্রণ বন্ধ' : q[2]) + (wait ? ' · পরেরটা ' + dTime(new Date(nx)) + '-এর পর' : '') + '</small></div>';
     }).join('') + '</div>';
     var inv = L.invites || {};
-    h += '<div class="li-health"><span>গ্রহণের হার <b>' + (L.accept_rate == null ? 'অন্তত ১০টা পাঠালে দেখাবে' : bn(L.accept_rate) + '%') + '</b></span><span>অপেক্ষায় আমন্ত্রণ <b>' + bn(inv.pending || 0) + '</b></span>' +
+    h += '<div class="li-health"><span>গ্রহণের হার <b>' + (L.accept_rate == null ? 'অন্তত ১০টা পাঠালে দেখাবে' : bn(L.accept_rate) + '%') + '</b></span><span>অপেক্ষায় আমন্ত্রণ <b>' + bn(inv.pending || 0) + '</b></span><span>এ সপ্তাহে পোস্ট <b>' + bn(L.posts_week || 0) + '</b>/৩</span>' +
       (inv.old ? '<span class="x">৩ সপ্তাহের পুরোনো <b>' + bn(inv.old) + '</b> · LinkedIn-এ গিয়ে তুলে নিন</span>' : '') + '</div>';
     // add form
     var kk = C.lk || 'comment';
@@ -60172,6 +60224,75 @@ select.bc-in{padding-right:28px}
     if (done.length) { var df = !!C.fold.ldone; h += '<button type="button" class="bc-fold' + (df ? ' on' : '') + '" data-bc="fold" data-id="ldone">' + svg('right') + 'গত ৩ দিনে করা (' + bn(done.length) + ')</button>' + (df ? '<div class="lt-g">' + done.map(function (t) { return liTicket(t, L); }).join('') + '</div>' : ''); }
     return h;
   }
+  // ---------- brand-19: রুটিন - the personal-brand model as a weekly timetable; every slot is his to change
+  var RPIL = { proof: ['প্রমাণ', 45, 'কাজের ভেতরটা; যাচাই করছেন আপনি'], teach: ['শেখানো', 30, 'ক্রেতা যা জিজ্ঞেস করে'], person: ['মানুষটা', 15, 'আপনার গল্প ও জীবন'], news: ['খবর ও মত', 10, 'খবর আর লাভে তার মানে'] };
+  var RFMT = { story: 'Story', reel: 'Reels ভিডিও', text: 'লেখা পোস্ট', news: 'খবর নিয়ে লেখা', album: 'ছবির album', face: 'নিজের ছবি + লেখা', photo: 'নিজের একটা ছবি', carousel: 'Carousel', live: 'Live', video: 'ছোট ভিডিও', 'short': 'Shorts', 'long': 'লম্বা ভিডিও', community: 'Community পোস্ট', post: 'পোস্ট', engage: 'রিপ্লাই ও কমেন্ট', trial: 'Trial Reel' };
+  var RDAY = [['শনি', 'শনিবার'], ['রবি', 'রবিবার'], ['সোম', 'সোমবার'], ['মঙ্গল', 'মঙ্গলবার'], ['বুধ', 'বুধবার'], ['বৃহঃ', 'বৃহস্পতিবার'], ['শুক্র', 'শুক্রবার']];
+  var RNET = ['facebook', 'instagram', 'tiktok', 'youtube', 'linkedin', 'threads', 'x'];
+  var RLV = [[1, 'হালকা'], [2, 'মাঝারি'], [3, 'পুরো']];
+  function rtime(t) { var h = +t.slice(0, 2), m = t.slice(3, 5); return bn((h % 12 || 12) + ':' + m); }
+  function rpart(t) { var h = +t.slice(0, 2); return h < 12 ? 0 : h < 18 ? 1 : 2; }
+  function rsel(key, opts, lab) { return '<label><span class="bc-lbl">' + lab + '</span><select class="bc-in" id="bci_' + key + '" data-bcin="' + key + '">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (String(v(key)) === String(o[0]) ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></label>'; }
+  function rEditor(x) {
+    var isNew = !x;
+    return '<div class="rt-ed"><div class="rt-edg">' +
+      rsel('r_dow', RDAY.map(function (d, i) { return [i, d[1]]; }), 'দিন') +
+      '<label><span class="bc-lbl">সময়</span><input class="bc-in" type="time" id="bci_r_at" data-bcin="r_at" value="' + esc(v('r_at')) + '"></label>' +
+      rsel('r_plat', RNET.map(function (n) { return [n, netName(n)]; }), 'কোথায়') +
+      rsel('r_fmt', Object.keys(RFMT).map(function (k) { return [k, RFMT[k]]; }), 'কী ধরনের') +
+      rsel('r_pil', [['', 'ঠিক করা নেই']].concat(Object.keys(RPIL).map(function (k) { return [k, RPIL[k][0]]; })), 'বিষয়') +
+      rsel('r_lvl', RLV, 'কোন পরিকল্পনা থেকে') + '</div>' +
+      '<label><span class="bc-lbl">কী নিয়ে (নিজের জন্য টোকা)</span>' + inp('r_tp', 'যেমন: supplier-এর কাছে যাওয়া') + '</label>' +
+      '<div class="rt-chk"><label class="bc-chk"><input type="checkbox" data-bcin="r_face"' + (C.v.r_face ? ' checked' : '') + '>আপনার মুখ থাকবে</label>' +
+      '<label class="bc-chk"><input type="checkbox" data-bcin="r_on"' + (C.v.r_on === false ? '' : ' checked') + '>চালু</label></div>' +
+      '<div class="lt-a">' + btn(svg('check') + (isNew ? 'ঘরটা যোগ করুন' : 'রাখুন'), 'data-bc="rsave"', 'dark', 'rsave') + (isNew ? '' : btn('মুছে দিন', 'data-bc="rdel" data-id="' + x.id + '"', 'ghost', 'rdel')) + btn('থাক', 'data-bc="rclose"', 'ghost', '') + '</div></div>';
+  }
+  function routineHtml() {
+    var g = gate(['routine']); if (g) return headHtml('রুটিন', '') + g;
+    var d = C.d.routine, st = d.status || {}, lvl = st.level || 2, eff = st.effective || lvl, fills = d.fills || {}, slots = d.slots || [];
+    if (C.rday == null) C.rday = (new Date().getDay() + 1) % 7;
+    if (!C.rp) { C.rp = {}; RNET.forEach(function (n) { C.rp[n] = 1; }); }
+    var h = headHtml('রুটিন', 'কোন দিন, কখন, কোথায়, কী যাবে', btn(svg('plus') + 'নতুন ঘর', 'data-bc="rnew"', 'dark', ''));
+    // backup status: the stock of photos, what is queued, and whether the week stepped down
+    var need = st.need || {}, have = st.have || {}, shortP = have.photos != null && have.photos < need.photos, shortV = have.videos != null && have.videos < need.videos;
+    h += '<div class="rt-st' + (eff < lvl ? ' down' : '') + '">' + (eff < lvl ? '<p><b>এ সপ্তাহে হালকা পরিকল্পনা চলছে।</b> ছবি আর লাইনের পোস্ট দুটোই কম, তাই নতুন লেখা শুধু হালকা পরিকল্পনার ঘরে বসছে। ছবি এলে নিজে থেকে ' + RLV[lvl - 1][1] + '-তে ফিরবে।</p>' : '') +
+      '<ul><li class="' + (shortP ? 'lo' : '') + '"><b>' + (have.photos == null ? '—' : bn(have.photos)) + '<small>/' + bn(need.photos || 0) + '</small></b><span>নতুন ছবি album-এ / সপ্তাহে দরকার</span></li>' +
+      '<li class="' + (shortV ? 'lo' : '') + '"><b>' + (have.videos == null ? '—' : bn(have.videos)) + '<small>/' + bn(need.videos || 0) + '</small></b><span>নতুন ভিডিও / সপ্তাহে দরকার</span></li>' +
+      '<li><b>' + bn(st.ahead || 0) + '</b><span>অনুমোদিত পোস্ট সামনের ২ সপ্তাহে</span></li><li><b>' + bn(st.waiting || 0) + '</b><span>লেখা আপনার অপেক্ষায়</span></li></ul>' +
+      (shortP || shortV ? '<p>' + (shortP ? 'ছবি কম: ছবির ঘরে লেখা বা খবর বসবে, নকল ছবি কখনো নয়। ' : '') + (shortV ? 'ভিডিও কম: Reels-এর ঘর ফাঁকা থাকবে। ' : '') + 'একবার বাইরে গিয়ে ১০টা ছবি আর ৩টা ভিডিও তুলে Brand album-এ রাখলে ২-৩ সপ্তাহ চলে।</p>' : '') + '</div>';
+    // the model: target share and what the routine really holds (Facebook, the plan in use)
+    var fb = slots.filter(function (x) { return x.active && x.platform === 'facebook' && x.pillar && x.level <= lvl; }), faceN = fb.filter(function (x) { return x.face; }).length;
+    h += '<div class="rt-pil">' + Object.keys(RPIL).map(function (k) {
+      var n = fb.filter(function (x) { return x.pillar === k; }).length, pc = fb.length ? Math.round(100 * n / fb.length) : 0;
+      return '<div><b>' + bn(pc) + '%</b><small>লক্ষ্য ' + bn(RPIL[k][1]) + '%</small><strong>' + RPIL[k][0] + '</strong><span>' + RPIL[k][2] + ' · ' + bn(n) + 'টা</span><i style="width:' + Math.min(100, pc / 45 * 100) + '%"></i></div>';
+    }).join('') + '</div><p class="rt-note">Facebook-এ সপ্তাহে ' + bn(fb.length) + 'টা পোস্ট, তার ' + bn(faceN) + 'টায় আপনার মুখ। শতাংশগুলো শুরুর অনুমান; কোনো গবেষণা কোনো অনুপাত প্রমাণ করেনি।</p>';
+    // controls
+    h += '<div class="rt-ctl"><div class="bc-pills" role="group" aria-label="পরিকল্পনা">' + RLV.map(function (l) { return '<button type="button" data-bc="rlvl" data-id="' + l[0] + '"' + (lvl === l[0] ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + (C.busy.rlvl ? ' disabled' : '') + '>' + l[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="rt-nets">' + RNET.map(function (n) { return '<button type="button" class="st-net' + (C.rp[n] ? ' on' : '') + '" style="--c:' + netCol(n) + '" aria-pressed="' + !!C.rp[n] + '" data-bc="rplat" data-id="' + n + '">' + logo(n, 14) + esc(netName(n)) + '</button>'; }).join('') + '</div></div>';
+    if (C.redit === 'new') h += '<section class="rt-new"><div class="bc-h2"><h2>নতুন ঘর</h2><span>যেকোনো দিন, যেকোনো সময়</span></div>' + rEditor(null) + '</section>';
+    var show = slots.filter(function (x) { return C.rp[x.platform] && (x.level <= lvl || C.redit === String(x.id)); });
+    h += '<div class="rt-days" role="group" aria-label="দিন">' + RDAY.map(function (dn, i) { var n = show.filter(function (x) { return x.dow === i && x.active; }).length; return '<button type="button" data-bc="rday" data-id="' + i + '"' + (C.rday === i ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + dn[0] + '<small>' + bn(n) + '</small></button>'; }).join('') + '</div>';
+    var BANDS = ['সকাল', 'দুপুর ও বিকেল', 'রাত'];
+    h += '<div class="rt-week">' + RDAY.map(function (dn, i) {
+      var items = show.filter(function (x) { return x.dow === i; }), col = '<section class="rt-day' + (C.rday === i ? ' cur' : '') + (i === 6 ? ' off' : '') + '"><header><b>' + dn[1] + '</b>' + (i === 6 ? '<span class="bc-tag w">ছুটির দিন</span>' : '') + '</header>';
+      for (var b = 0; b < 3; b++) {
+        var bi = items.filter(function (x) { return rpart(x.at) === b; });
+        col += '<div class="rt-band"><h3>' + BANDS[b] + '</h3>' + (bi.length ? '' : '<p class="rt-none">' + (i === 6 && b === 1 ? 'জুমার সময় ফাঁকা' : 'কিছু নেই') + '</p>');
+        bi.forEach(function (x) {
+          var f = fills[x.id], op = C.redit === String(x.id);
+          col += '<button type="button" class="rt-dep' + (x.active ? '' : ' cut') + '" style="--c:' + netCol(x.platform) + '" data-bc="redit" data-id="' + x.id + '" aria-expanded="' + op + '"><time>' + rtime(x.at) + '</time><span class="f">' + (RFMT[x.format] || x.format) + '</span>' +
+            '<span class="p">' + esc(netName(x.platform)) + (x.pillar && RPIL[x.pillar] ? ' <em>· ' + RPIL[x.pillar][0] + '</em>' : '') + (x.face ? ' <em>·</em> <b>মুখ</b>' : '') + '</span>' +
+            (f && f.draft ? '<span class="fill' + (f.state === 'approved' ? ' ok' : '') + '" data-noi18n="1">' + (f.state === 'approved' ? 'যাবে: ' : 'অপেক্ষায়: ') + esc(f.hook) + '</span>' : '') + '</button>';
+          if (op) col += (x.topic_bn ? '<p class="rt-tp">কী নিয়ে: ' + esc(x.topic_bn) + '</p>' : '') + rEditor(x);
+        });
+        col += '</div>';
+      }
+      return col + '</section>';
+    }).join('') + '</div>';
+    h += '<div class="rt-foot"><p class="rt-note">সময়গুলো বড় গবেষণা আর বাংলাদেশের দোকান বন্ধের সময় (রাত ৮টা) থেকে নেওয়া; কোন বারে কী যাবে তা শুরুর খসড়া। নতুন লেখা নিজে থেকে পরের ফাঁকা মানানসই ঘরের সময় পায়; পোস্ট পেজে সেটা বদলানো যায়। Story, Live আর LinkedIn-এর কমেন্ট আপনি নিজের হাতে দেন; এই তালিকা সেগুলোর জন্য মনে করিয়ে দেওয়া।</p>' +
+      (C.fold.rreset ? '<div class="bc-call"><span>আপনার সব বদল মুছে গবেষণার রুটিনে ফিরে যাবে। নিশ্চিত?</span><span class="bc-sp"></span>' + btn('হ্যাঁ, ফিরিয়ে দিন', 'data-bc="rreset"', 'red sm', 'rreset') + btn('না', 'data-bc="fold" data-id="rreset"', 'ghost sm', '') + '</div>' : '<button type="button" class="bc-btn ghost" data-bc="fold" data-id="rreset">গবেষণার রুটিনে ফিরে যান</button>') + '</div>';
+    return h;
+  }
   function sideHtml(narrow) {
     if (C.sec === 'home') return narrow ? '' : sideDrafts();
     if (C.sec === 'posts') return '';
@@ -60181,7 +60302,7 @@ select.bc-in{padding-right:28px}
   function mainHtml(narrow) {
     switch (C.sec) {
       case 'posts': return postsHtml(); case 'ideas': return ideasHtml(); case 'media': return mediaHtml(); case 'listen': return listenHtml();
-      case 'people': return peopleHtml(); case 'results': return resultsHtml(); case 'rules': return rulesHtml(); case 'map': return mapPageHtml(); case 'train': return trainHtml(); case 'linkedin': return liHtml();
+      case 'people': return peopleHtml(); case 'results': return resultsHtml(); case 'rules': return rulesHtml(); case 'map': return mapPageHtml(); case 'train': return trainHtml(); case 'linkedin': return liHtml(); case 'routine': return routineHtml();
       default: return homeHtml(narrow);
     }
   }
@@ -60359,7 +60480,12 @@ select.bc-in{padding-right:28px}
     }
     else if (w === 'decide') { var a = t.getAttribute('data-act'); act((a === 'send' ? 'dc' : 'dd') + id, 'erpBrandDeskDecide', { id: id, action: a }, function () { toast(a === 'send' ? 'এখনই পাঠানো হচ্ছে।' : 'বাদ দেওয়া হলো।'); C.pick = ''; get('cockpit', true); }); }
     // drafts
-    else if (w === 'approve') approve(id);
+    else if (w === 'approve') {
+      // brand-19: a draft with no lived detail asks once more before it goes (owner's rule: no generic AI post slips through)
+      var ax = findDraft(id);
+      if (ax && ax.lived === false && !C.fold['lv' + id] && !String(v('qa' + id)).trim()) { C.fold['lv' + id] = 1; C.fold['q' + id] = 1; toast('এই লেখায় আপনার নিজের কোনো ঘটনা বা ছবি নেই। AI-এর প্রশ্নের উত্তর দিন, বা তবুও পাঠাতে চাইলে আবার “অনুমোদন দিন” চাপুন।', true, 9000); draw(); return; }
+      approve(id);
+    }
     else if (w === 'approveall') {
       var g = groups().filter(function (x) { return x.key === id; })[0]; if (!g) return;
       var ids = g.list.filter(function (x) { return !x._old && accSel(x, accountsFor(x)).length; }).map(function (x) { return x.id; }), n = 0;
@@ -60441,6 +60567,24 @@ select.bc-in{padding-right:28px}
       if (lt.url) window.open(lt.url, '_blank', 'noopener');
     }
     else if (w === 'limark') { var ls = t.getAttribute('data-s'); act((ls === 'redo' ? 'lr' : ls === 'skipped' ? 'lx' : 'lm') + id, 'erpBrandDeskLiMark', { id: Number(id), state: ls }, function (r) { C.d.li = r; if (ls === 'redo') poll('li'); if (ls === 'done') toast('গোনা হলো।'); }); }
+    else if (w === 'rday') { C.rday = Number(id); C.redit = ''; draw(); }
+    else if (w === 'rplat') { C.rp[id] = C.rp[id] ? 0 : 1; draw(); }
+    else if (w === 'rlvl') act('rlvl', 'erpBrandDeskRoutineLevel', { level: Number(id) }, function (r) { C.d.routine = r; toast('পরিকল্পনা বদলাল। নতুন লেখা এখন থেকে এই ঘরগুলোতে বসবে।'); });
+    else if (w === 'rclose') { C.redit = ''; draw(); }
+    else if (w === 'rnew') { C.redit = 'new'; C.v.r_dow = C.rday || 0; C.v.r_at = '21:00'; C.v.r_plat = 'facebook'; C.v.r_fmt = 'text'; C.v.r_pil = 'teach'; C.v.r_lvl = (C.d.routine && C.d.routine.status && C.d.routine.status.level) || 2; C.v.r_tp = ''; C.v.r_face = false; C.v.r_on = true; draw(); }
+    else if (w === 'redit') {
+      if (C.redit === String(id)) { C.redit = ''; draw(); return; }
+      var rx = ((C.d.routine && C.d.routine.slots) || []).filter(function (q) { return String(q.id) === String(id); })[0]; if (!rx) return;
+      C.redit = String(id); C.v.r_dow = rx.dow; C.v.r_at = rx.at; C.v.r_plat = rx.platform; C.v.r_fmt = rx.format; C.v.r_pil = rx.pillar || ''; C.v.r_lvl = rx.level; C.v.r_tp = rx.topic_bn || ''; C.v.r_face = !!rx.face; C.v.r_on = rx.active !== false; draw();
+    }
+    else if (w === 'rsave') {
+      var ra = { dow: Number(v('r_dow')), at: String(v('r_at')).slice(0, 5), platform: v('r_plat'), format: v('r_fmt'), pillar: v('r_pil'), level: Number(v('r_lvl')), topic: String(v('r_tp')).trim(), face: !!C.v.r_face, active: C.v.r_on !== false };
+      if (C.redit !== 'new') ra.id = Number(C.redit);
+      if (!/^\d\d:\d\d$/.test(ra.at)) { toast('সময়টা দিন।', true); return; }
+      act('rsave', 'erpBrandDeskRoutineSlot', ra, function (r) { C.d.routine = r; C.rday = ra.dow; C.redit = ''; toast('রাখা হলো।'); });
+    }
+    else if (w === 'rdel') act('rdel', 'erpBrandDeskRoutineSlot', { id: Number(id), remove: true }, function (r) { C.d.routine = r; C.redit = ''; toast('ঘরটা মুছে গেল।'); });
+    else if (w === 'rreset') act('rreset', 'erpBrandDeskRoutineReset', {}, function (r) { C.d.routine = r; C.fold.rreset = false; C.redit = ''; toast('গবেষণার রুটিন ফিরে এল।'); });
     else if (w === 'itab') { C.itab = id; draw(); need(); }
     else if (w === 'nrun') act('nrun', 'erpBrandDeskNewsRun', {}, function (r) { C.d.news = r; poll('news'); toast('খবর পড়া শুরু হলো। ৫-১০ মিনিটে পোস্ট আসবে।'); });
     else if (w === 'nmake') act('nm' + id, 'erpBrandDeskNewsMake', { id: Number(id) }, function (r) { C.d.news = r; poll('news'); toast('এই খবরের সূত্র পড়ে পোস্ট লিখছে। কয়েক মিনিট লাগবে।'); });

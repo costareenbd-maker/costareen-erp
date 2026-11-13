@@ -1,0 +1,2781 @@
+[
+{
+"line": 16,
+"end": 16,
+"kind": "script",
+"header": "",
+"bytes": 57
+},
+{
+"line": 17,
+"end": 17,
+"kind": "script",
+"header": "",
+"bytes": 103
+},
+{
+"line": 20,
+"end": 538,
+"kind": "style",
+"header": "",
+"bytes": 40272
+},
+{
+"line": 541,
+"end": 546,
+"kind": "style",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 524
+},
+{
+"line": 547,
+"end": 547,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 652
+},
+{
+"line": 550,
+"end": 587,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 3195
+},
+{
+"line": 654,
+"end": 10615,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 615673
+},
+{
+"line": 10616,
+"end": 10668,
+"kind": "style",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 3958
+},
+{
+"line": 10669,
+"end": 10938,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 21324
+},
+{
+"line": 10939,
+"end": 10954,
+"kind": "style",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 1541
+},
+{
+"line": 10955,
+"end": 11162,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 17494
+},
+{
+"line": 11163,
+"end": 11172,
+"kind": "style",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 907
+},
+{
+"line": 11173,
+"end": 11653,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 43377
+},
+{
+"line": 11654,
+"end": 11661,
+"kind": "style",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 484
+},
+{
+"line": 11662,
+"end": 11924,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 18611
+},
+{
+"line": 11925,
+"end": 11940,
+"kind": "style",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 1238
+},
+{
+"line": 11941,
+"end": 12095,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 9109
+},
+{
+"line": 12096,
+"end": 12207,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 8361
+},
+{
+"line": 12208,
+"end": 12234,
+"kind": "style",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 1912
+},
+{
+"line": 12235,
+"end": 12262,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 1220
+},
+{
+"line": 12263,
+"end": 12268,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 319
+},
+{
+"line": 12269,
+"end": 12394,
+"kind": "style",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 9635
+},
+{
+"line": 12395,
+"end": 12525,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 10075
+},
+{
+"line": 12526,
+"end": 12539,
+"kind": "style",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 946
+},
+{
+"line": 12540,
+"end": 12572,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 2179
+},
+{
+"line": 12573,
+"end": 12645,
+"kind": "style",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 6499
+},
+{
+"line": 12646,
+"end": 13007,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 24215
+},
+{
+"line": 13008,
+"end": 13049,
+"kind": "style",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 2838
+},
+{
+"line": 13050,
+"end": 13088,
+"kind": "style",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 3822
+},
+{
+"line": 13089,
+"end": 13171,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 6032
+},
+{
+"line": 13172,
+"end": 13186,
+"kind": "style",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 1167
+},
+{
+"line": 13187,
+"end": 13387,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 18692
+},
+{
+"line": 13388,
+"end": 13397,
+"kind": "style",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 623
+},
+{
+"line": 13398,
+"end": 13446,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 3410
+},
+{
+"line": 13447,
+"end": 13599,
+"kind": "script",
+"header": "login-1 (owner 6 Nov 2026: \"on the phone the app shows first, then the sign-in moves in - ",
+"bytes": 16757
+},
+{
+"line": 13602,
+"end": 13872,
+"kind": "script",
+"header": "plan A5: any currency, the other costs of a shipment -->",
+"bytes": 18100
+},
+{
+"line": 13875,
+"end": 13880,
+"kind": "script",
+"header": "plan A7: inside a pool the Expenses screen points to the pool's book -->",
+"bytes": 181
+},
+{
+"line": 13883,
+"end": 13894,
+"kind": "script",
+"header": "plan B1: the partner's own access link, shown once -->",
+"bytes": 511
+},
+{
+"line": 13897,
+"end": 13961,
+"kind": "script",
+"header": "plan B2: one inventory screen - mine, the pool, the partner's -->",
+"bytes": 5483
+},
+{
+"line": 13964,
+"end": 14023,
+"kind": "script",
+"header": "plan B3: sell from the joint pool without switching business -->",
+"bytes": 3770
+},
+{
+"line": 14026,
+"end": 14048,
+"kind": "style",
+"header": "plan C2: one table style everywhere - the old screens' tables look like the new lists -->",
+"bytes": 1718
+},
+{
+"line": 14051,
+"end": 14077,
+"kind": "style",
+"header": "plan C3: New invoice - totals always in sight, quantity keys, fits a phone -->",
+"bytes": 1645
+},
+{
+"line": 14078,
+"end": 14120,
+"kind": "script",
+"header": "plan C3: New invoice - totals always in sight, quantity keys, fits a phone -->",
+"bytes": 2665
+},
+{
+"line": 14123,
+"end": 14126,
+"kind": "style",
+"header": "plan C4: dashboard trimmed - what needs doing, today, this month; the rest behind tabs -->",
+"bytes": 88
+},
+{
+"line": 14127,
+"end": 14159,
+"kind": "script",
+"header": "plan C4: dashboard trimmed - what needs doing, today, this month; the rest behind tabs -->",
+"bytes": 2039
+},
+{
+"line": 14162,
+"end": 14174,
+"kind": "style",
+"header": "plan C5: one search, short help with \"?\", menu groups that fold on a phone -->",
+"bytes": 897
+},
+{
+"line": 14175,
+"end": 14275,
+"kind": "script",
+"header": "plan C5: one search, short help with \"?\", menu groups that fold on a phone -->",
+"bytes": 5209
+},
+{
+"line": 14278,
+"end": 14344,
+"kind": "script",
+"header": "plan D4: quotation -> invoice in one click -->",
+"bytes": 4575
+},
+{
+"line": 14347,
+"end": 14354,
+"kind": "style",
+"header": "plan D3: product photos - on the product page, in the product list, in the invoice search ",
+"bytes": 726
+},
+{
+"line": 14355,
+"end": 14459,
+"kind": "script",
+"header": "plan D3: product photos - on the product page, in the product list, in the invoice search ",
+"bytes": 6028
+},
+{
+"line": 14462,
+"end": 14472,
+"kind": "style",
+"header": "plan D3: colour families - colours of one product kept together -->",
+"bytes": 850
+},
+{
+"line": 14473,
+"end": 14602,
+"kind": "script",
+"header": "plan D3: colour families - colours of one product kept together -->",
+"bytes": 9924
+},
+{
+"line": 14605,
+"end": 14612,
+"kind": "style",
+"header": "plan D5: notes and files on a product, a customer, a supplier, an invoice -->",
+"bytes": 448
+},
+{
+"line": 14613,
+"end": 14713,
+"kind": "script",
+"header": "plan D5: notes and files on a product, a customer, a supplier, an invoice -->",
+"bytes": 6648
+},
+{
+"line": 14716,
+"end": 14803,
+"kind": "script",
+"header": "sheet build b261003-0358: Steadfast Express, consignment numbers on invoices, \"Check deliv",
+"bytes": 6677
+},
+{
+"line": 14806,
+"end": 14814,
+"kind": "style",
+"header": "plan D1: serial numbers and warranty -->",
+"bytes": 552
+},
+{
+"line": 14815,
+"end": 15015,
+"kind": "script",
+"header": "plan D1: serial numbers and warranty -->",
+"bytes": 13800
+},
+{
+"line": 15018,
+"end": 15025,
+"kind": "style",
+"header": "plan D2: repair / service jobs -->",
+"bytes": 526
+},
+{
+"line": 15026,
+"end": 15188,
+"kind": "script",
+"header": "plan D2: repair / service jobs -->",
+"bytes": 16591
+},
+{
+"line": 15191,
+"end": 15201,
+"kind": "style",
+"header": "plan D6: Excel out, spreadsheet in -->",
+"bytes": 742
+},
+{
+"line": 15202,
+"end": 15368,
+"kind": "script",
+"header": "plan D6: Excel out, spreadsheet in -->",
+"bytes": 13635
+},
+{
+"line": 15371,
+"end": 15375,
+"kind": "style",
+"header": "per-person sign-in: e-mail + password for everyone (Odoo's way); users with roles; session",
+"bytes": 125
+},
+{
+"line": 15376,
+"end": 15468,
+"kind": "script",
+"header": "per-person sign-in: e-mail + password for everyone (Odoo's way); users with roles; session",
+"bytes": 9096
+},
+{
+"line": 15471,
+"end": 15556,
+"kind": "script",
+"header": "platform admin: every business on the system (Odoo's database manager) -->",
+"bytes": 9194
+},
+{
+"line": 15559,
+"end": 15566,
+"kind": "style",
+"header": "no money lost: Sales \"unpaid and at risk\" box, money alerts, alert rules -->",
+"bytes": 416
+},
+{
+"line": 15567,
+"end": 15672,
+"kind": "script",
+"header": "no money lost: Sales \"unpaid and at risk\" box, money alerts, alert rules -->",
+"bytes": 10319
+},
+{
+"line": 15675,
+"end": 15681,
+"kind": "style",
+"header": "Settings > Connections: every outside service at a glance, and the website -->",
+"bytes": 545
+},
+{
+"line": 15682,
+"end": 15765,
+"kind": "script",
+"header": "Settings > Connections: every outside service at a glance, and the website -->",
+"bytes": 11873
+},
+{
+"line": 15768,
+"end": 15809,
+"kind": "script",
+"header": "Google Drive: copies of invoices, quotations, receipts, exports and backups in the owner's",
+"bytes": 4490
+},
+{
+"line": 15816,
+"end": 15855,
+"kind": "script",
+"header": "live backup sheet, and going back to a backup -->",
+"bytes": 4460
+},
+{
+"line": 15858,
+"end": 15865,
+"kind": "style",
+"header": "any website: match website products, and the open door -->",
+"bytes": 547
+},
+{
+"line": 15866,
+"end": 15949,
+"kind": "script",
+"header": "any website: match website products, and the open door -->",
+"bytes": 9393
+},
+{
+"line": 15952,
+"end": 15957,
+"kind": "style",
+"header": "tidy-1: how it is paid, delivery types, COD collected, parcel labels, new business -->",
+"bytes": 264
+},
+{
+"line": 15958,
+"end": 16128,
+"kind": "script",
+"header": "tidy-1: how it is paid, delivery types, COD collected, parcel labels, new business -->",
+"bytes": 15293
+},
+{
+"line": 16184,
+"end": 16192,
+"kind": "style",
+"header": "tidy-2: explanations behind \"?\" - one rule for every screen; warnings always stay visible ",
+"bytes": 799
+},
+{
+"line": 16193,
+"end": 16279,
+"kind": "script",
+"header": "tidy-2: explanations behind \"?\" - one rule for every screen; warnings always stay visible ",
+"bytes": 5270
+},
+{
+"line": 16284,
+"end": 16289,
+"kind": "style",
+"header": "installer: build your own copy (#/install/<code>), and the provider's list of copies -->",
+"bytes": 337
+},
+{
+"line": 16290,
+"end": 16530,
+"kind": "script",
+"header": "installer: build your own copy (#/install/<code>), and the provider's list of copies -->",
+"bytes": 25752
+},
+{
+"line": 16533,
+"end": 16584,
+"kind": "script",
+"header": "installer-2: updates, web addresses, a new token -->",
+"bytes": 3829
+},
+{
+"line": 16587,
+"end": 16602,
+"kind": "script",
+"header": "installer-3: a neutral address opens nobody's ERP by itself; the title follows the busines",
+"bytes": 934
+},
+{
+"line": 16605,
+"end": 16618,
+"kind": "script",
+"header": "tidy-4: switching business leaves nothing of the previous one on screen -->",
+"bytes": 883
+},
+{
+"line": 16621,
+"end": 16632,
+"kind": "style",
+"header": "tidy-5: messages at the top with a working close, the red note's \u2715 closes it, tiles -->",
+"bytes": 856
+},
+{
+"line": 16633,
+"end": 16665,
+"kind": "script",
+"header": "tidy-5: messages at the top with a working close, the red note's \u2715 closes it, tiles -->",
+"bytes": 2582
+},
+{
+"line": 16668,
+"end": 16725,
+"kind": "script",
+"header": "tidy-5: website products to match - behind a button; Add to ERP or Link to our SKU, no gue",
+"bytes": 5377
+},
+{
+"line": 16728,
+"end": 16733,
+"kind": "style",
+"header": "tidy-5: a small status button on pages that need an outside service; it opens the same set",
+"bytes": 505
+},
+{
+"line": 16734,
+"end": 16799,
+"kind": "script",
+"header": "tidy-5: a small status button on pages that need an outside service; it opens the same set",
+"bytes": 4047
+},
+{
+"line": 16802,
+"end": 16843,
+"kind": "script",
+"header": "tidy-5: delete a business of your own (a copy first), and bring it back -->",
+"bytes": 3502
+},
+{
+"line": 16846,
+"end": 16891,
+"kind": "style",
+"header": "ui-6: account menu (photo, appearance, language, my account, sign out), a sidebar that fol",
+"bytes": 3973
+},
+{
+"line": 16893,
+"end": 17096,
+"kind": "script",
+"header": "ui-6: account menu (photo, appearance, language, my account, sign out), a sidebar that fol",
+"bytes": 15411
+},
+{
+"line": 17099,
+"end": 17110,
+"kind": "script",
+"header": "the automatic jobs in plain words (Platform) -->",
+"bytes": 959
+},
+{
+"line": 17113,
+"end": 17181,
+"kind": "script",
+"header": "owner safety: recovery checklist, emergency link, two owners agree before one loses access",
+"bytes": 6656
+},
+{
+"line": 17184,
+"end": 17188,
+"kind": "style",
+"header": "the background photo lives in the Themes window only -->",
+"bytes": 306
+},
+{
+"line": 17189,
+"end": 17213,
+"kind": "script",
+"header": "the background photo lives in the Themes window only -->",
+"bytes": 1895
+},
+{
+"line": 17216,
+"end": 17247,
+"kind": "script",
+"header": "tidy-6: the service status and its buttons sit inside the boxes, not in rows of their own ",
+"bytes": 1960
+},
+{
+"line": 17250,
+"end": 17259,
+"kind": "style",
+"header": "tidy-7: a page's own buttons sit in its title bar (right); keys and passwords are never fi",
+"bytes": 905
+},
+{
+"line": 17260,
+"end": 17292,
+"kind": "script",
+"header": "tidy-7: a page's own buttons sit in its title bar (right); keys and passwords are never fi",
+"bytes": 1976
+},
+{
+"line": 17295,
+"end": 17313,
+"kind": "style",
+"header": "game: \"Print Run\" - a small print-head runner in the empty space under New invoice, and wh",
+"bytes": 2239
+},
+{
+"line": 17314,
+"end": 17759,
+"kind": "script",
+"header": "game: \"Print Run\" - a small print-head runner in the empty space under New invoice, and wh",
+"bytes": 34318
+},
+{
+"line": 17762,
+"end": 17786,
+"kind": "script",
+"header": "tidy-10: locked system values (warn before changing) and undo for every saved default -->",
+"bytes": 1559
+},
+{
+"line": 17789,
+"end": 17794,
+"kind": "style",
+"header": "stick fight: a yellow ninja against one blue fighter at a time on the outlines of the page",
+"bytes": 700
+},
+{
+"line": 17795,
+"end": 17851,
+"kind": "script",
+"header": "stick fight: a yellow ninja against one blue fighter at a time on the outlines of the page",
+"bytes": 4153
+},
+{
+"line": 17853,
+"end": 17871,
+"kind": "script",
+"header": "lang-2: the language of what customers receive -->",
+"bytes": 1420
+},
+{
+"line": 17873,
+"end": 17876,
+"kind": "style",
+"header": "lang-1: English / Bangla per person (the switch is in the top bar; saved with the login) -",
+"bytes": 300
+},
+{
+"line": 17877,
+"end": 17977,
+"kind": "script",
+"header": "lang-1: English / Bangla per person (the switch is in the top bar; saved with the login) -",
+"bytes": 188355
+},
+{
+"line": 17980,
+"end": 18093,
+"kind": "script",
+"header": "lang-3: the business's own Bangla words, laid over the built-in ones -->",
+"bytes": 8052
+},
+{
+"line": 18095,
+"end": 18112,
+"kind": "script",
+"header": "set-password links: an expired or used link says so (2026-10-04) -->",
+"bytes": 908
+},
+{
+"line": 18114,
+"end": 18136,
+"kind": "style",
+"header": "multi-1: online Brawl - who is online, challenge, accept, pick fighters, fight (2026-10-04",
+"bytes": 2509
+},
+{
+"line": 18137,
+"end": 18380,
+"kind": "script",
+"header": "multi-1: online Brawl - who is online, challenge, accept, pick fighters, fight (2026-10-04",
+"bytes": 18438
+},
+{
+"line": 18382,
+"end": 18394,
+"kind": "style",
+"header": "sorting everywhere (2026-10-04): a visible Sort by in the big lists; click a heading of an",
+"bytes": 1111
+},
+{
+"line": 18395,
+"end": 18469,
+"kind": "script",
+"header": "sorting everywhere (2026-10-04): a visible Sort by in the big lists; click a heading of an",
+"bytes": 4818
+},
+{
+"line": 18471,
+"end": 18499,
+"kind": "script",
+"header": "easy-1: WooCommerce in one click (2026-10-04) -->",
+"bytes": 1655
+},
+{
+"line": 18501,
+"end": 18509,
+"kind": "script",
+"header": "the sync plugin key next to WooCommerce (2026-10-05) -->",
+"bytes": 563
+},
+{
+"line": 18511,
+"end": 18514,
+"kind": "style",
+"header": "the open door inside the Website box, and a ready PHP file for the programmer (2026-10-05)",
+"bytes": 237
+},
+{
+"line": 18515,
+"end": 18599,
+"kind": "script",
+"header": "the open door inside the Website box, and a ready PHP file for the programmer (2026-10-05)",
+"bytes": 4708
+},
+{
+"line": 18601,
+"end": 18604,
+"kind": "style",
+"header": "one phone = one customer on New invoice; the invoice number opens its PDF (2026-10-05) -->",
+"bytes": 146
+},
+{
+"line": 18605,
+"end": 18633,
+"kind": "script",
+"header": "one phone = one customer on New invoice; the invoice number opens its PDF (2026-10-05) -->",
+"bytes": 1912
+},
+{
+"line": 18635,
+"end": 18658,
+"kind": "script",
+"header": "audit (2026-10-05): unsaved drafts are kept or warned about -->",
+"bytes": 1626
+},
+{
+"line": 18660,
+"end": 18672,
+"kind": "script",
+"header": "Receive: where from + optional reference; New stock updates as the quantity is typed (2026",
+"bytes": 708
+},
+{
+"line": 18674,
+"end": 18736,
+"kind": "script",
+"header": "work in progress survives a refresh; other browser tabs see new products and stock at once",
+"bytes": 4353
+},
+{
+"line": 18739,
+"end": 18749,
+"kind": "style",
+"header": "abilities per person (058): Settings > Users > Abilities -->",
+"bytes": 745
+},
+{
+"line": 18750,
+"end": 18821,
+"kind": "script",
+"header": "abilities per person (058): Settings > Users > Abilities -->",
+"bytes": 4276
+},
+{
+"line": 18824,
+"end": 18858,
+"kind": "style",
+"header": "hover on everything you can press (2026-10-05): one layer over the old styles, mouse only;",
+"bytes": 2291
+},
+{
+"line": 18861,
+"end": 18905,
+"kind": "script",
+"header": "Stage 1b: the terms on the sign-up, the brand (name, sponsor, colour, logo) on install pag",
+"bytes": 4481
+},
+{
+"line": 18908,
+"end": 18975,
+"kind": "script",
+"header": "Stage 1b: Platform - the permanent install link, its QR code, a website button, and the br",
+"bytes": 7509
+},
+{
+"line": 18978,
+"end": 18987,
+"kind": "style",
+"header": "Stage 1c: Platform health + announcements; inside a company's ERP: the announcement banner",
+"bytes": 963
+},
+{
+"line": 18988,
+"end": 19068,
+"kind": "script",
+"header": "Stage 1c: Platform health + announcements; inside a company's ERP: the announcement banner",
+"bytes": 6721
+},
+{
+"line": 19071,
+"end": 19133,
+"kind": "script",
+"header": "Stage 1d: the provider's compliance view (Platform) and the company's view of the provider",
+"bytes": 7534
+},
+{
+"line": 19136,
+"end": 19145,
+"kind": "style",
+"header": "Stage 2: the open market - find stock from other suppliers; the owner chooses what to shar",
+"bytes": 570
+},
+{
+"line": 19146,
+"end": 19248,
+"kind": "script",
+"header": "Stage 2: the open market - find stock from other suppliers; the owner chooses what to shar",
+"bytes": 9755
+},
+{
+"line": 19251,
+"end": 19260,
+"kind": "style",
+"header": "Stage 3: deals between ERPs on the market - request, price, accept, invoice, receive, rate",
+"bytes": 826
+},
+{
+"line": 19261,
+"end": 19385,
+"kind": "script",
+"header": "Stage 3: deals between ERPs on the market - request, price, accept, invoice, receive, rate",
+"bytes": 12632
+},
+{
+"line": 19388,
+"end": 19501,
+"kind": "script",
+"header": "Stage 4: low-stock hints, price guide, shared product names, wanted board -->",
+"bytes": 11101
+},
+{
+"line": 19504,
+"end": 19518,
+"kind": "style",
+"header": "Invoice designs: Settings > Invoice design - several looks, colours, font, what is shown, ",
+"bytes": 1456
+},
+{
+"line": 19519,
+"end": 19674,
+"kind": "script",
+"header": "Invoice designs: Settings > Invoice design - several looks, colours, font, what is shown, ",
+"bytes": 16804
+},
+{
+"line": 19677,
+"end": 19731,
+"kind": "style",
+"header": "quotation looks (2026-10-06): Signature (the original), Modern band, Minimal, Classic, Bol",
+"bytes": 5063
+},
+{
+"line": 19732,
+"end": 19751,
+"kind": "script",
+"header": "quotation looks (2026-10-06): Signature (the original), Modern band, Minimal, Classic, Bol",
+"bytes": 1788
+},
+{
+"line": 19755,
+"end": 19775,
+"kind": "style",
+"header": "game-10 (2026-10-06): \"+ My fighter\" - anyone makes a Brawl fighter from a photo, in the b",
+"bytes": 2151
+},
+{
+"line": 19776,
+"end": 19970,
+"kind": "script",
+"header": "game-10 (2026-10-06): \"+ My fighter\" - anyone makes a Brawl fighter from a photo, in the b",
+"bytes": 15828
+},
+{
+"line": 19974,
+"end": 19984,
+"kind": "style",
+"header": "joint-1 (2026-10-06): Joint stock - goods owned together with a partner company (docs/JOIN",
+"bytes": 1088
+},
+{
+"line": 19985,
+"end": 20454,
+"kind": "script",
+"header": "joint-1 (2026-10-06): Joint stock - goods owned together with a partner company (docs/JOIN",
+"bytes": 52657
+},
+{
+"line": 20458,
+"end": 20547,
+"kind": "script",
+"header": "joint-2 (2026-10-06): joint products on New invoice. They sit in the same search as the co",
+"bytes": 4877
+},
+{
+"line": 20551,
+"end": 20675,
+"kind": "script",
+"header": "joint-3/4 (2026-10-06): Joint stock - the Sales tab, late payers, flags, both owners agree",
+"bytes": 12433
+},
+{
+"line": 20679,
+"end": 20693,
+"kind": "style",
+"header": "Stage N0 + N1 (docs/NETWORK-BLUEPRINT.md): scan with the phone camera, warranty rules, the",
+"bytes": 1471
+},
+{
+"line": 20694,
+"end": 20883,
+"kind": "script",
+"header": "Stage N0 + N1 (docs/NETWORK-BLUEPRINT.md): scan with the phone camera, warranty rules, the",
+"bytes": 21680
+},
+{
+"line": 20936,
+"end": 20978,
+"kind": "script",
+"header": "Stage N2 (docs/NETWORK-BLUEPRINT.md section 5): the public register's moderation card on t",
+"bytes": 5235
+},
+{
+"line": 20982,
+"end": 21039,
+"kind": "script",
+"header": "Stage N3 (docs/NETWORK-BLUEPRINT.md): the Print Doctor - a button on the Repairs screen (o",
+"bytes": 8668
+},
+{
+"line": 21043,
+"end": 21054,
+"kind": "style",
+"header": "Stage N4 (docs/NETWORK-BLUEPRINT.md section 4): the print-business kit - jobs on a board w",
+"bytes": 1004
+},
+{
+"line": 21055,
+"end": 21216,
+"kind": "script",
+"header": "Stage N4 (docs/NETWORK-BLUEPRINT.md section 4): the print-business kit - jobs on a board w",
+"bytes": 28384
+},
+{
+"line": 21220,
+"end": 21247,
+"kind": "script",
+"header": "Stage N5 (docs/NETWORK-BLUEPRINT.md section 4.1): Find stock - the shop's public switch on",
+"bytes": 4008
+},
+{
+"line": 21251,
+"end": 21293,
+"kind": "script",
+"header": "Stage N1b (docs/NETWORK-BLUEPRINT.md section 4.5): the community card on the Platform scre",
+"bytes": 7649
+},
+{
+"line": 21297,
+"end": 21317,
+"kind": "script",
+"header": "Stage N5b (docs/NETWORK-BLUEPRINT.md section 4.1): colour swatches for the Colour Finder -",
+"bytes": 2566
+},
+{
+"line": 21321,
+"end": 21330,
+"kind": "style",
+"header": "restock (2026-10-06): waiting orders - a customer order short of stock asks the market for",
+"bytes": 848
+},
+{
+"line": 21331,
+"end": 21444,
+"kind": "script",
+"header": "restock (2026-10-06): waiting orders - a customer order short of stock asks the market for",
+"bytes": 9820
+},
+{
+"line": 21447,
+"end": 21451,
+"kind": "style",
+"header": "Stage N6 (docs/NETWORK-BLUEPRINT.md section 4): the keep-customers kit - points and level ",
+"bytes": 456
+},
+{
+"line": 21452,
+"end": 21561,
+"kind": "script",
+"header": "Stage N6 (docs/NETWORK-BLUEPRINT.md section 4): the keep-customers kit - points and level ",
+"bytes": 15958
+},
+{
+"line": 21565,
+"end": 21594,
+"kind": "script",
+"header": "Stage N7 (docs/NETWORK-BLUEPRINT.md section 4.1): the Get-it-printed board inside Print jo",
+"bytes": 6927
+},
+{
+"line": 21598,
+"end": 21646,
+"kind": "script",
+"header": "Stage N8 (docs/NETWORK-BLUEPRINT.md section 4.1): the design desk - a button on the Repair",
+"bytes": 6368
+},
+{
+"line": 21650,
+"end": 21653,
+"kind": "style",
+"header": "Stage N9 (docs/NETWORK-BLUEPRINT.md section 4.3): sell without stock. The Resell screen fo",
+"bytes": 417
+},
+{
+"line": 21654,
+"end": 21766,
+"kind": "script",
+"header": "Stage N9 (docs/NETWORK-BLUEPRINT.md section 4.3): sell without stock. The Resell screen fo",
+"bytes": 23416
+},
+{
+"line": 21772,
+"end": 21824,
+"kind": "style",
+"header": "Apps page: the special features customers reach from outside, as app icons (a phone's home",
+"bytes": 4924
+},
+{
+"line": 21825,
+"end": 22121,
+"kind": "script",
+"header": "Apps page: the special features customers reach from outside, as app icons (a phone's home",
+"bytes": 24026
+},
+{
+"line": 22126,
+"end": 22133,
+"kind": "style",
+"header": "Receive stock from a file (handlers/receivefile.js): a supplier's packing list / proforma ",
+"bytes": 505
+},
+{
+"line": 22134,
+"end": 22495,
+"kind": "script",
+"header": "Receive stock from a file (handlers/receivefile.js): a supplier's packing list / proforma ",
+"bytes": 31268
+},
+{
+"line": 22498,
+"end": 22539,
+"kind": "script",
+"header": "Platform > AI reader: the provider's Gemini key for photos of supplier documents (handlers",
+"bytes": 3683
+},
+{
+"line": 22542,
+"end": 22547,
+"kind": "style",
+"header": "Platform > Catalogue: the master catalogue the server keeps by itself (handlers/catalogue.",
+"bytes": 529
+},
+{
+"line": 22548,
+"end": 22591,
+"kind": "script",
+"header": "Platform > Catalogue: the master catalogue the server keeps by itself (handlers/catalogue.",
+"bytes": 5837
+},
+{
+"line": 22594,
+"end": 22595,
+"kind": "style",
+"header": "Ask your ERP: a chat inside the ERP (handlers/assistant.js). Questions answered through th",
+"bytes": 17
+},
+{
+"line": 22596,
+"end": 22609,
+"kind": "script",
+"header": "Ask your ERP: a chat inside the ERP (handlers/assistant.js). Questions answered through th",
+"bytes": 1102
+},
+{
+"line": 22612,
+"end": 22622,
+"kind": "style",
+"header": "What to push next (handlers/push.js): on Campaigns, for the platform admin, or for everyon",
+"bytes": 601
+},
+{
+"line": 22623,
+"end": 22697,
+"kind": "script",
+"header": "What to push next (handlers/push.js): on Campaigns, for the platform admin, or for everyon",
+"bytes": 7307
+},
+{
+"line": 22700,
+"end": 22710,
+"kind": "style",
+"header": "Advertisement tab on Campaigns: what to advertise, where, ready post text (template, impro",
+"bytes": 728
+},
+{
+"line": 22711,
+"end": 22805,
+"kind": "script",
+"header": "Advertisement tab on Campaigns: what to advertise, where, ready post text (template, impro",
+"bytes": 11961
+},
+{
+"line": 22809,
+"end": 22827,
+"kind": "style",
+"header": "Creators (handlers/creators.js): influencer sponsorships run for a brand as its reseller. ",
+"bytes": 1195
+},
+{
+"line": 22828,
+"end": 23137,
+"kind": "script",
+"header": "Creators (handlers/creators.js): influencer sponsorships run for a brand as its reseller. ",
+"bytes": 51461
+},
+{
+"line": 23143,
+"end": 23416,
+"kind": "style",
+"header": "fd-1 (FilaDash merge P1, docs/FILADASH-MERGE-REVIEW.md): the partner's FilaDash design sys",
+"bytes": 26907
+},
+{
+"line": 23417,
+"end": 23427,
+"kind": "script",
+"header": "fd-1 (FilaDash merge P1, docs/FILADASH-MERGE-REVIEW.md): the partner's FilaDash design sys",
+"bytes": 548
+},
+{
+"line": 23434,
+"end": 23567,
+"kind": "style",
+"header": "fd-2 (FilaDash merge P2): the dashboard in FilaDash's layout, on our figures (handlers/fdd",
+"bytes": 13883
+},
+{
+"line": 23568,
+"end": 23723,
+"kind": "script",
+"header": "fd-2 (FilaDash merge P2): the dashboard in FilaDash's layout, on our figures (handlers/fdd",
+"bytes": 13456
+},
+{
+"line": 23729,
+"end": 23737,
+"kind": "style",
+"header": "fd-3 (FilaDash merge P2): every screen opens the FilaDash way - eyebrow (business), big ti",
+"bytes": 529
+},
+{
+"line": 23738,
+"end": 23830,
+"kind": "script",
+"header": "fd-3 (FilaDash merge P2): every screen opens the FilaDash way - eyebrow (business), big ti",
+"bytes": 6407
+},
+{
+"line": 23836,
+"end": 23860,
+"kind": "style",
+"header": "fd-4 (FilaDash merge P2): his table card toolbar on every big list. Above each list of 5+ ",
+"bytes": 2762
+},
+{
+"line": 23861,
+"end": 23966,
+"kind": "script",
+"header": "fd-4 (FilaDash merge P2): his table card toolbar on every big list. Above each list of 5+ ",
+"bytes": 7417
+},
+{
+"line": 23971,
+"end": 23987,
+"kind": "style",
+"header": "fd-5 (FilaDash merge P3): Shipments - every receiving (a shipment, a local buy) with its F",
+"bytes": 1843
+},
+{
+"line": 23988,
+"end": 24085,
+"kind": "script",
+"header": "fd-5 (FilaDash merge P3): Shipments - every receiving (a shipment, a local buy) with its F",
+"bytes": 10305
+},
+{
+"line": 24093,
+"end": 24102,
+"kind": "style",
+"header": "fd-6 (FilaDash merge P3): shipment costing by weight + order stages (108_ship_weight.sql, ",
+"bytes": 756
+},
+{
+"line": 24103,
+"end": 24226,
+"kind": "script",
+"header": "fd-6 (FilaDash merge P3): shipment costing by weight + order stages (108_ship_weight.sql, ",
+"bytes": 10505
+},
+{
+"line": 24232,
+"end": 24291,
+"kind": "script",
+"header": "fd-7 (FilaDash merge P3, decision F2): investors per shipment. On one shipment: who funded",
+"bytes": 4859
+},
+{
+"line": 24297,
+"end": 24431,
+"kind": "script",
+"header": "fd-9 (FilaDash merge P3): holding cost settings + the Commission screen.",
+"bytes": 13100
+},
+{
+"line": 24438,
+"end": 24443,
+"kind": "style",
+"header": "fd-10 (FilaDash merge P3): the rest of P3 on the page.",
+"bytes": 508
+},
+{
+"line": 24444,
+"end": 24598,
+"kind": "script",
+"header": "fd-10 (FilaDash merge P3): the rest of P3 on the page.",
+"bytes": 14991
+},
+{
+"line": 24604,
+"end": 24610,
+"kind": "style",
+"header": "fd-11 (FilaDash merge): Money > Cash-up (count an account by notes or a total; a differenc",
+"bytes": 398
+},
+{
+"line": 24611,
+"end": 24713,
+"kind": "script",
+"header": "fd-11 (FilaDash merge): Money > Cash-up (count an account by notes or a total; a differenc",
+"bytes": 9163
+},
+{
+"line": 24719,
+"end": 24726,
+"kind": "style",
+"header": "fd-12 (FilaDash merge): Sell > Pre-orders. A customer orders what is not on the shelf at a",
+"bytes": 665
+},
+{
+"line": 24727,
+"end": 24833,
+"kind": "script",
+"header": "fd-12 (FilaDash merge): Sell > Pre-orders. A customer orders what is not on the shelf at a",
+"bytes": 11243
+},
+{
+"line": 24838,
+"end": 24854,
+"kind": "script",
+"header": "fd-13 (pre-order hold): units that arrived for a pre-order are held for that customer. Sav",
+"bytes": 895
+},
+{
+"line": 24861,
+"end": 24865,
+"kind": "style",
+"header": "fd-14 (FilaDash merge): customer extras. Customers: the follow-ups (call someone on a day ",
+"bytes": 411
+},
+{
+"line": 24866,
+"end": 24939,
+"kind": "script",
+"header": "fd-14 (FilaDash merge): customer extras. Customers: the follow-ups (call someone on a day ",
+"bytes": 7095
+},
+{
+"line": 24944,
+"end": 24955,
+"kind": "style",
+"header": "fd-15 (FilaDash merge): the ERP's own help in Bangla and English. System > Help (\u09b8\u09be\u09b9\u09be\u09af\u09cd\u09af):",
+"bytes": 831
+},
+{
+"line": 24956,
+"end": 25018,
+"kind": "script",
+"header": "fd-15 (FilaDash merge): the ERP's own help in Bangla and English. System > Help (\u09b8\u09be\u09b9\u09be\u09af\u09cd\u09af):",
+"bytes": 4662
+},
+{
+"line": 25028,
+"end": 25181,
+"kind": "style",
+"header": "fd-17 (FilaDash merge, owner 13 Oct 2026: \"his design is the top priority\"): his shell and",
+"bytes": 14799
+},
+{
+"line": 25182,
+"end": 25433,
+"kind": "script",
+"header": "fd-17 (FilaDash merge, owner 13 Oct 2026: \"his design is the top priority\"): his shell and",
+"bytes": 20151
+},
+{
+"line": 25446,
+"end": 25689,
+"kind": "style",
+"header": "fd-18 (FilaDash merge): Overview > ERP Navigator - the partner's \"ERP Mind Map\" screen por",
+"bytes": 30702
+},
+{
+"line": 25690,
+"end": 26964,
+"kind": "script",
+"header": "fd-18 (FilaDash merge): Overview > ERP Navigator - the partner's \"ERP Mind Map\" screen por",
+"bytes": 111572
+},
+{
+"line": 26977,
+"end": 27203,
+"kind": "style",
+"header": "fd-21 (FilaDash merge, owner 13 Oct 2026: \"his design is the top priority\"): his Payments,",
+"bytes": 22889
+},
+{
+"line": 27204,
+"end": 27914,
+"kind": "script",
+"header": "fd-21 (FilaDash merge, owner 13 Oct 2026: \"his design is the top priority\"): his Payments,",
+"bytes": 74993
+},
+{
+"line": 27930,
+"end": 28204,
+"kind": "style",
+"header": "fd-22 (FilaDash merge, owner 13 Oct 2026: \"his design is the top priority\"): his Analytics",
+"bytes": 30239
+},
+{
+"line": 28205,
+"end": 28987,
+"kind": "script",
+"header": "fd-22 (FilaDash merge, owner 13 Oct 2026: \"his design is the top priority\"): his Analytics",
+"bytes": 89613
+},
+{
+"line": 29002,
+"end": 29355,
+"kind": "style",
+"header": "fd-20 (FilaDash merge, owner 13 Oct 2026: \"his design is the top priority and inspiration;",
+"bytes": 39089
+},
+{
+"line": 29356,
+"end": 30154,
+"kind": "script",
+"header": "fd-20 (FilaDash merge, owner 13 Oct 2026: \"his design is the top priority and inspiration;",
+"bytes": 78356
+},
+{
+"line": 30168,
+"end": 30520,
+"kind": "style",
+"header": "fd-19 (FilaDash merge, owner 13 Oct 2026: \"his design is the top priority; apply every sma",
+"bytes": 32017
+},
+{
+"line": 30521,
+"end": 31385,
+"kind": "script",
+"header": "fd-19 (FilaDash merge, owner 13 Oct 2026: \"his design is the top priority; apply every sma",
+"bytes": 75736
+},
+{
+"line": 31392,
+"end": 31410,
+"kind": "style",
+"header": "fd-23 (audit 14 Oct 2026): fixes from the live click-through. Selected tabs/chips/pills us",
+"bytes": 1425
+},
+{
+"line": 31411,
+"end": 31465,
+"kind": "script",
+"header": "fd-23 (audit 14 Oct 2026): fixes from the live click-through. Selected tabs/chips/pills us",
+"bytes": 3520
+},
+{
+"line": 31472,
+"end": 31514,
+"kind": "style",
+"header": "fd-24 (owner 14 Oct 2026): FilaDash is the only look now (Classic and the \"Look\" switch re",
+"bytes": 4120
+},
+{
+"line": 31515,
+"end": 31736,
+"kind": "script",
+"header": "fd-24 (owner 14 Oct 2026): FilaDash is the only look now (Classic and the \"Look\" switch re",
+"bytes": 23548
+},
+{
+"line": 31741,
+"end": 31765,
+"kind": "style",
+"header": "fd-25 (owner 14 Oct 2026: \"our design is flat\"): his glow and hover life. The \"+\" glows at",
+"bytes": 2966
+},
+{
+"line": 31772,
+"end": 33343,
+"kind": "script",
+"header": "fd-26 (owner 14 Oct 2026: \"a better theme system, more colours and options\"): 15 complete ",
+"bytes": 62408
+},
+{
+"line": 33344,
+"end": 33384,
+"kind": "style",
+"header": "fd-26 (owner 14 Oct 2026: \"a better theme system, more colours and options\"): 15 complete ",
+"bytes": 4100
+},
+{
+"line": 33385,
+"end": 33491,
+"kind": "script",
+"header": "fd-26 (owner 14 Oct 2026: \"a better theme system, more colours and options\"): 15 complete ",
+"bytes": 9679
+},
+{
+"line": 33496,
+"end": 33536,
+"kind": "script",
+"header": "fd-27: the FilaDash look (theme, accent, chart colours, text size, density, corners) and t",
+"bytes": 1991
+},
+{
+"line": 33545,
+"end": 33585,
+"kind": "style",
+"header": "fd-28 (owner 14 Oct 2026): the dashboard edited in place. \"Customise\" turns on edit mode: ",
+"bytes": 4105
+},
+{
+"line": 33586,
+"end": 33765,
+"kind": "script",
+"header": "fd-28 (owner 14 Oct 2026): the dashboard edited in place. \"Customise\" turns on edit mode: ",
+"bytes": 13364
+},
+{
+"line": 33769,
+"end": 33775,
+"kind": "style",
+"header": "fd-29: one theme window. The old \"Themes\" window (colour pairs) is gone for good: anything",
+"bytes": 395
+},
+{
+"line": 33776,
+"end": 33788,
+"kind": "script",
+"header": "fd-29: one theme window. The old \"Themes\" window (colour pairs) is gone for good: anything",
+"bytes": 796
+},
+{
+"line": 33792,
+"end": 33811,
+"kind": "style",
+"header": "fd-30 (owner): Settings uses the same pill tabs as every other screen (no side list), at e",
+"bytes": 1939
+},
+{
+"line": 33818,
+"end": 33841,
+"kind": "style",
+"header": "fd-31 (owner 14 Oct 2026; channel, seller pick and + New product dropped the same day): on",
+"bytes": 2858
+},
+{
+"line": 33842,
+"end": 34013,
+"kind": "script",
+"header": "fd-31 (owner 14 Oct 2026; channel, seller pick and + New product dropped the same day): on",
+"bytes": 11850
+},
+{
+"line": 34017,
+"end": 34051,
+"kind": "style",
+"header": "fd-32 (owner): Customers, then every screen but the Dashboard - the list is the point. The",
+"bytes": 3402
+},
+{
+"line": 34052,
+"end": 34060,
+"kind": "script",
+"header": "fd-32 (owner): Customers, then every screen but the Dashboard - the list is the point. The",
+"bytes": 379
+},
+{
+"line": 34065,
+"end": 34074,
+"kind": "style",
+"header": "fd-33 (owner 14 Oct 2026): Customers - \"Dues by age\" removed; the Follow-ups card removed ",
+"bytes": 864
+},
+{
+"line": 34075,
+"end": 34114,
+"kind": "script",
+"header": "fd-33 (owner 14 Oct 2026): Customers - \"Dues by age\" removed; the Follow-ups card removed ",
+"bytes": 3001
+},
+{
+"line": 34121,
+"end": 34126,
+"kind": "style",
+"header": "fd-34 (owner 14 Oct 2026, wholesale): no 5 % rule and no discount limit any more; a line t",
+"bytes": 555
+},
+{
+"line": 34127,
+"end": 34186,
+"kind": "script",
+"header": "fd-34 (owner 14 Oct 2026, wholesale): no 5 % rule and no discount limit any more; a line t",
+"bytes": 3662
+},
+{
+"line": 34193,
+"end": 34241,
+"kind": "style",
+"header": "fd-35 (owner 14 Oct 2026): the assistant lives in a chat bubble in the corner of every scr",
+"bytes": 5254
+},
+{
+"line": 34242,
+"end": 34330,
+"kind": "script",
+"header": "fd-35 (owner 14 Oct 2026): the assistant lives in a chat bubble in the corner of every scr",
+"bytes": 7431
+},
+{
+"line": 34337,
+"end": 34365,
+"kind": "style",
+"header": "fd-36 (owner 14 Oct 2026): the side menu folds to icons only (no names; a name shows when ",
+"bytes": 2941
+},
+{
+"line": 34366,
+"end": 34446,
+"kind": "script",
+"header": "fd-36 (owner 14 Oct 2026): the side menu folds to icons only (no names; a name shows when ",
+"bytes": 6012
+},
+{
+"line": 34453,
+"end": 34497,
+"kind": "style",
+"header": "fd-38 (owner 14 Oct 2026): Joint stock in his design. His head (title + i, the pool and it",
+"bytes": 4354
+},
+{
+"line": 34498,
+"end": 34574,
+"kind": "script",
+"header": "fd-38 (owner 14 Oct 2026): Joint stock in his design. His head (title + i, the pool and it",
+"bytes": 9925
+},
+{
+"line": 34592,
+"end": 34743,
+"kind": "style",
+"header": "fd-39 (phone): the phone layout, after an audit of every screen at 375 / 360 / 414 px agai",
+"bytes": 14365
+},
+{
+"line": 34744,
+"end": 34825,
+"kind": "script",
+"header": "fd-39 (phone): the phone layout, after an audit of every screen at 375 / 360 / 414 px agai",
+"bytes": 5778
+},
+{
+"line": 34828,
+"end": 34834,
+"kind": "style",
+"header": "fd-40 (phone, New invoice): one field per row on a phone, so the 11-digit phone and \"Paid ",
+"bytes": 443
+},
+{
+"line": 34838,
+"end": 34851,
+"kind": "style",
+"header": "fd-41 (owner, third try 14 Oct 2026: the bottom row \"looks like another menu\"): the fold c",
+"bytes": 1326
+},
+{
+"line": 34852,
+"end": 34869,
+"kind": "script",
+"header": "fd-41 (owner, third try 14 Oct 2026: the bottom row \"looks like another menu\"): the fold c",
+"bytes": 1107
+},
+{
+"line": 34873,
+"end": 34918,
+"kind": "script",
+"header": "fd-42: Bangla for the words added on 14 Oct 2026 (New invoice red marks and profit warning",
+"bytes": 3123
+},
+{
+"line": 34926,
+"end": 34938,
+"kind": "style",
+"header": "fd-43 (owner 14 Oct 2026, \"we have a lot of menus\"): a shorter side menu. Analytics, Profi",
+"bytes": 1264
+},
+{
+"line": 34939,
+"end": 35049,
+"kind": "script",
+"header": "fd-43 (owner 14 Oct 2026, \"we have a lot of menus\"): a shorter side menu. Analytics, Profi",
+"bytes": 8541
+},
+{
+"line": 35054,
+"end": 35074,
+"kind": "style",
+"header": "fd-44 (owner 14 Oct 2026): the message box in his design (prototype fd.css .fd-toast: a ca",
+"bytes": 1805
+},
+{
+"line": 35075,
+"end": 35106,
+"kind": "script",
+"header": "fd-44 (owner 14 Oct 2026): the message box in his design (prototype fd.css .fd-toast: a ca",
+"bytes": 1574
+},
+{
+"line": 35118,
+"end": 35214,
+"kind": "style",
+"header": "fd-45 (owner 14 Oct 2026): the dashboard as the owner's own.",
+"bytes": 9547
+},
+{
+"line": 35215,
+"end": 35596,
+"kind": "script",
+"header": "fd-45 (owner 14 Oct 2026): the dashboard as the owner's own.",
+"bytes": 38618
+},
+{
+"line": 35605,
+"end": 35735,
+"kind": "style",
+"header": "fd-46 (owner 14 Oct 2026: \"build everything as AiPraktor has built\"): the Inbox. Every cha",
+"bytes": 15384
+},
+{
+"line": 35736,
+"end": 36857,
+"kind": "script",
+"header": "fd-46 (owner 14 Oct 2026: \"build everything as AiPraktor has built\"): the Inbox. Every cha",
+"bytes": 170759
+},
+{
+"line": 36858,
+"end": 36861,
+"kind": "script",
+"header": "fd-46 (owner 14 Oct 2026: \"build everything as AiPraktor has built\"): the Inbox. Every cha",
+"bytes": 440
+},
+{
+"line": 36862,
+"end": 36876,
+"kind": "script",
+"header": "fd-46 (owner 14 Oct 2026: \"build everything as AiPraktor has built\"): the Inbox. Every cha",
+"bytes": 1615
+},
+{
+"line": 36882,
+"end": 37023,
+"kind": "style",
+"header": "fd-47 (owner 15 Oct 2026: \"my inbox should look like the reference website\", then \"act as ",
+"bytes": 13144
+},
+{
+"line": 37024,
+"end": 37031,
+"kind": "script",
+"header": "fd-47 (owner 15 Oct 2026: \"my inbox should look like the reference website\", then \"act as ",
+"bytes": 382
+},
+{
+"line": 37036,
+"end": 37147,
+"kind": "style",
+"header": "inbox-look-1 (owner 6 Nov 2026: \"the ERP inbox does not look nice\"; ERP Inbox is the one i",
+"bytes": 13142
+},
+{
+"line": 37148,
+"end": 37166,
+"kind": "script",
+"header": "inbox-look-1 (owner 6 Nov 2026: \"the ERP inbox does not look nice\"; ERP Inbox is the one i",
+"bytes": 951
+},
+{
+"line": 37171,
+"end": 37183,
+"kind": "style",
+"header": "multi-wa-1 (owner 6 Nov 2026): several WhatsApp numbers, each with one job (customer chat ",
+"bytes": 991
+},
+{
+"line": 37184,
+"end": 37266,
+"kind": "script",
+"header": "multi-wa-1 (owner 6 Nov 2026): several WhatsApp numbers, each with one job (customer chat ",
+"bytes": 7929
+},
+{
+"line": 37270,
+"end": 37274,
+"kind": "style",
+"header": "alerts-1 (owner 6 Nov 2026): Phone alerts - a notification on this phone even when the ERP",
+"bytes": 278
+},
+{
+"line": 37275,
+"end": 37335,
+"kind": "script",
+"header": "alerts-1 (owner 6 Nov 2026): Phone alerts - a notification on this phone even when the ERP",
+"bytes": 5410
+},
+{
+"line": 37339,
+"end": 37346,
+"kind": "style",
+"header": "fd-48 (owner 15 Oct 2026: \"I don't want this kind of text beside every name, rather a help",
+"bytes": 832
+},
+{
+"line": 37347,
+"end": 37380,
+"kind": "script",
+"header": "fd-48 (owner 15 Oct 2026: \"I don't want this kind of text beside every name, rather a help",
+"bytes": 1884
+},
+{
+"line": 37382,
+"end": 37410,
+"kind": "script",
+"header": "fd-49: bring in the page's old Facebook chats (erpInboxPullOld) -->",
+"bytes": 1524
+},
+{
+"line": 37411,
+"end": 37420,
+"kind": "script",
+"header": "fd-49: bring in the page's old Facebook chats (erpInboxPullOld) -->",
+"bytes": 498
+},
+{
+"line": 37423,
+"end": 37431,
+"kind": "style",
+"header": "fd-50 (owner 17 Oct 2026): the balance sheet - what the business owns, what it owes, net w",
+"bytes": 692
+},
+{
+"line": 37432,
+"end": 37478,
+"kind": "script",
+"header": "fd-50 (owner 17 Oct 2026): the balance sheet - what the business owns, what it owes, net w",
+"bytes": 4427
+},
+{
+"line": 37480,
+"end": 37493,
+"kind": "script",
+"header": "fd-51 (owner 17 Oct 2026): an order (shipment) is paid when it is created; pay more before",
+"bytes": 911
+},
+{
+"line": 37496,
+"end": 37549,
+"kind": "script",
+"header": "fd-52 (owner 17 Oct 2026): what the Inbox AI may say about a product - a description and t",
+"bytes": 4271
+},
+{
+"line": 37553,
+"end": 37630,
+"kind": "script",
+"header": "fd-53 (owner 17 Oct 2026): read the business's own website for the Inbox AI - policies and",
+"bytes": 7155
+},
+{
+"line": 37633,
+"end": 37698,
+"kind": "script",
+"header": "fd-54 (owner 18 Oct 2026): the website's prices follow the ERP's. Web orders > Website pri",
+"bytes": 5521
+},
+{
+"line": 37701,
+"end": 37735,
+"kind": "script",
+"header": "fd-55 (owner 18 Oct 2026): joint stock between the two shops - ask for goods, send them (c",
+"bytes": 4644
+},
+{
+"line": 37741,
+"end": 37893,
+"kind": "script",
+"header": "fd-56 (owner 18 Oct 2026: \"match every page inside the joint stock to the ERP outside, so ",
+"bytes": 11961
+},
+{
+"line": 37897,
+"end": 37939,
+"kind": "script",
+"header": "fd-57 (owner 18 Oct 2026: \"make the joint invoice page; I don't share my customers with th",
+"bytes": 2752
+},
+{
+"line": 37942,
+"end": 37944,
+"kind": "style",
+"header": "fd-58 (owner 19 Oct 2026): joint products in their joint stock's own colour (the Joint tag",
+"bytes": 56
+},
+{
+"line": 37945,
+"end": 38017,
+"kind": "script",
+"header": "fd-58 (owner 19 Oct 2026): joint products in their joint stock's own colour (the Joint tag",
+"bytes": 4791
+},
+{
+"line": 38021,
+"end": 38071,
+"kind": "script",
+"header": "fd-59 (owner 19 Oct 2026): Bangla for sentences with a bold word in the middle. The senten",
+"bytes": 7678
+},
+{
+"line": 38075,
+"end": 38086,
+"kind": "style",
+"header": "fd-60 (owner 20 Oct 2026, advertising automation S1): Posts on the Advertisement tab - a p",
+"bytes": 860
+},
+{
+"line": 38087,
+"end": 38242,
+"kind": "script",
+"header": "fd-60 (owner 20 Oct 2026, advertising automation S1): Posts on the Advertisement tab - a p",
+"bytes": 21092
+},
+{
+"line": 38246,
+"end": 38264,
+"kind": "style",
+"header": "fd-61 (owner 20 Oct 2026, advertising automation S2): Content - pictures and videos made f",
+"bytes": 1495
+},
+{
+"line": 38265,
+"end": 38392,
+"kind": "script",
+"header": "fd-61 (owner 20 Oct 2026, advertising automation S2): Content - pictures and videos made f",
+"bytes": 21964
+},
+{
+"line": 38396,
+"end": 38402,
+"kind": "style",
+"header": "fd-62 (owner 20 Oct 2026, advertising automation S3): the inspiration box (a reel link or ",
+"bytes": 713
+},
+{
+"line": 38403,
+"end": 38497,
+"kind": "script",
+"header": "fd-62 (owner 20 Oct 2026, advertising automation S3): the inspiration box (a reel link or ",
+"bytes": 15054
+},
+{
+"line": 38501,
+"end": 38507,
+"kind": "style",
+"header": "fd-63 (owner 20 Oct 2026, advertising automation S4): Paid ads - boost a published post on",
+"bytes": 845
+},
+{
+"line": 38508,
+"end": 38601,
+"kind": "script",
+"header": "fd-63 (owner 20 Oct 2026, advertising automation S4): Paid ads - boost a published post on",
+"bytes": 17455
+},
+{
+"line": 38605,
+"end": 38609,
+"kind": "style",
+"header": "keep-draft-1 + pf-plus-1 (owner 21 Oct 2026): a half-filled product form waits on its own ",
+"bytes": 245
+},
+{
+"line": 38610,
+"end": 38691,
+"kind": "script",
+"header": "keep-draft-1 + pf-plus-1 (owner 21 Oct 2026): a half-filled product form waits on its own ",
+"bytes": 5972
+},
+{
+"line": 38698,
+"end": 38724,
+"kind": "style",
+"header": "rvw-1 (21 Oct 2026, asked by Walid): Stock entry \u203a Receive as a real step-by-step form. On",
+"bytes": 1785
+},
+{
+"line": 38725,
+"end": 38876,
+"kind": "script",
+"header": "rvw-1 (21 Oct 2026, asked by Walid): Stock entry \u203a Receive as a real step-by-step form. On",
+"bytes": 8489
+},
+{
+"line": 38882,
+"end": 38900,
+"kind": "style",
+"header": "leads-1 (owner 22 Oct 2026: \"a Leads menu - leads of customers and suppliers from Google, ",
+"bytes": 1478
+},
+{
+"line": 38901,
+"end": 39217,
+"kind": "script",
+"header": "leads-1 (owner 22 Oct 2026: \"a Leads menu - leads of customers and suppliers from Google, ",
+"bytes": 35844
+},
+{
+"line": 39222,
+"end": 39229,
+"kind": "style",
+"header": "ai-1 (owner 22 Oct 2026: \"the best output from AI everywhere; I must be able to switch the",
+"bytes": 418
+},
+{
+"line": 39230,
+"end": 39321,
+"kind": "script",
+"header": "ai-1 (owner 22 Oct 2026: \"the best output from AI everywhere; I must be able to switch the",
+"bytes": 10103
+},
+{
+"line": 39325,
+"end": 39387,
+"kind": "script",
+"header": "myupd-1 (owner 21 Oct 2026: \"he can't see the Platform tab - every company should push its",
+"bytes": 4333
+},
+{
+"line": 39392,
+"end": 39406,
+"kind": "style",
+"header": "devsync-1 (owner 21 Oct 2026: \"his changes should be on this link, real-time trackable\"): ",
+"bytes": 1409
+},
+{
+"line": 39407,
+"end": 39447,
+"kind": "script",
+"header": "devsync-1 (owner 21 Oct 2026: \"his changes should be on this link, real-time trackable\"): ",
+"bytes": 3071
+},
+{
+"line": 39453,
+"end": 39468,
+"kind": "style",
+"header": "inv3-1 (21 Oct 2026, asked by Walid): New invoice - everything that is filled in on the le",
+"bytes": 787
+},
+{
+"line": 39469,
+"end": 39497,
+"kind": "script",
+"header": "inv3-1 (21 Oct 2026, asked by Walid): New invoice - everything that is filled in on the le",
+"bytes": 1345
+},
+{
+"line": 39502,
+"end": 39504,
+"kind": "style",
+"header": "req-1 (21 Oct 2026, asked by Walid): every field that must be filled carries a red star af",
+"bytes": 100
+},
+{
+"line": 39505,
+"end": 39528,
+"kind": "script",
+"header": "req-1 (21 Oct 2026, asked by Walid): every field that must be filled carries a red star af",
+"bytes": 1422
+},
+{
+"line": 39533,
+"end": 39585,
+"kind": "script",
+"header": "rvedit-1 (21 Oct 2026, asked by Walid): an Edit button beside Remove on each Receive line.",
+"bytes": 2808
+},
+{
+"line": 39587,
+"end": 39587,
+"kind": "script",
+"header": "fd-37: the page is styled: show it -->",
+"bytes": 76
+},
+{
+"line": 39594,
+"end": 39625,
+"kind": "style",
+"header": "engine-1 (owner 22 Oct 2026: \"the ERP is a screen where I see the output and give inputs; ",
+"bytes": 3366
+},
+{
+"line": 39626,
+"end": 39951,
+"kind": "script",
+"header": "engine-1 (owner 22 Oct 2026: \"the ERP is a screen where I see the output and give inputs; ",
+"bytes": 35635
+},
+{
+"line": 39957,
+"end": 39979,
+"kind": "style",
+"header": "watch-1 (owner 22 Oct 2026, Engine step 2: \"an agent who looks for issues all over the bus",
+"bytes": 2076
+},
+{
+"line": 39980,
+"end": 40170,
+"kind": "script",
+"header": "watch-1 (owner 22 Oct 2026, Engine step 2: \"an agent who looks for issues all over the bus",
+"bytes": 24698
+},
+{
+"line": 40176,
+"end": 40183,
+"kind": "style",
+"header": "brain-1 (owner 22 Oct 2026: \"other, different businesses and later public users - how will",
+"bytes": 658
+},
+{
+"line": 40184,
+"end": 40257,
+"kind": "script",
+"header": "brain-1 (owner 22 Oct 2026: \"other, different businesses and later public users - how will",
+"bytes": 9422
+},
+{
+"line": 40263,
+"end": 40281,
+"kind": "style",
+"header": "brief-1 (owner 22 Oct 2026: \"everything based on the business, the actions strategic and m",
+"bytes": 1486
+},
+{
+"line": 40282,
+"end": 40400,
+"kind": "script",
+"header": "brief-1 (owner 22 Oct 2026: \"everything based on the business, the actions strategic and m",
+"bytes": 15802
+},
+{
+"line": 40406,
+"end": 40418,
+"kind": "style",
+"header": "leads-2 (owner 22 Oct 2026: \"in the leads page there should be only two lists, customer an",
+"bytes": 1115
+},
+{
+"line": 40419,
+"end": 40502,
+"kind": "script",
+"header": "leads-2 (owner 22 Oct 2026: \"in the leads page there should be only two lists, customer an",
+"bytes": 9127
+},
+{
+"line": 40508,
+"end": 40515,
+"kind": "style",
+"header": "ai-hub (owner 22 Oct 2026: \"it is creating a lot of menu - I want to minimize the menu; pu",
+"bytes": 1066
+},
+{
+"line": 40516,
+"end": 40570,
+"kind": "script",
+"header": "ai-hub (owner 22 Oct 2026: \"it is creating a lot of menu - I want to minimize the menu; pu",
+"bytes": 4342
+},
+{
+"line": 40578,
+"end": 40580,
+"kind": "style",
+"header": "clean-2 (owner 22 Oct 2026: \"clean the whole ERP - every option in the place it belongs, n",
+"bytes": 174
+},
+{
+"line": 40581,
+"end": 40615,
+"kind": "script",
+"header": "clean-2 (owner 22 Oct 2026: \"clean the whole ERP - every option in the place it belongs, n",
+"bytes": 2421
+},
+{
+"line": 40620,
+"end": 40676,
+"kind": "script",
+"header": "fix-1 (24 Oct 2026, the partner's odd-case report, batch 1): (1) a save the server wants c",
+"bytes": 4553
+},
+{
+"line": 40683,
+"end": 40690,
+"kind": "style",
+"header": "onway-1 (owner 27 Oct 2026: \"I only know what a shipment cost and what it really weighs wh",
+"bytes": 519
+},
+{
+"line": 40691,
+"end": 40831,
+"kind": "script",
+"header": "onway-1 (owner 27 Oct 2026: \"I only know what a shipment cost and what it really weighs wh",
+"bytes": 9573
+},
+{
+"line": 40837,
+"end": 40843,
+"kind": "style",
+"header": "match-2 (owner 27 Oct 2026: \"many products differ from an existing one by a word or two - ",
+"bytes": 399
+},
+{
+"line": 40844,
+"end": 40872,
+"kind": "script",
+"header": "match-2 (owner 27 Oct 2026: \"many products differ from an existing one by a word or two - ",
+"bytes": 2422
+},
+{
+"line": 40877,
+"end": 40889,
+"kind": "style",
+"header": "ai-bn-1 (owner 27 Oct 2026: \"the Bangla text in AI is very small - make it bigger\"): in Ba",
+"bytes": 1729
+},
+{
+"line": 40890,
+"end": 40900,
+"kind": "script",
+"header": "ai-bn-1 (owner 27 Oct 2026: \"the Bangla text in AI is very small - make it bigger\"): in Ba",
+"bytes": 362
+},
+{
+"line": 40907,
+"end": 40930,
+"kind": "style",
+"header": "seo-1 (Bendar B6, 28 Oct 2026): AI > SEO - every website of the business checked every nig",
+"bytes": 1964
+},
+{
+"line": 40931,
+"end": 41010,
+"kind": "script",
+"header": "seo-1 (Bendar B6, 28 Oct 2026): AI > SEO - every website of the business checked every nig",
+"bytes": 9826
+},
+{
+"line": 41015,
+"end": 41050,
+"kind": "style",
+"header": "brand-1 (owner 3 Nov 2026): Brand desk - the owner's personal brand as a business of its o",
+"bytes": 3136
+},
+{
+"line": 41051,
+"end": 41272,
+"kind": "script",
+"header": "brand-1 (owner 3 Nov 2026): Brand desk - the owner's personal brand as a business of its o",
+"bytes": 25105
+},
+{
+"line": 41280,
+"end": 41425,
+"kind": "style",
+"header": "clean-1 (owner 28 Oct 2026, Pinterest reference \"ERP/POS System - Yeakub Rahaman\" / Starli",
+"bytes": 20624
+},
+{
+"line": 41426,
+"end": 41455,
+"kind": "script",
+"header": "clean-1 (owner 28 Oct 2026, Pinterest reference \"ERP/POS System - Yeakub Rahaman\" / Starli",
+"bytes": 2051
+},
+{
+"line": 41462,
+"end": 41518,
+"kind": "style",
+"header": "look-clean-2 (owner 28 Oct 2026: \"only a little changed - change more, especially the icon",
+"bytes": 8457
+},
+{
+"line": 41519,
+"end": 41562,
+"kind": "script",
+"header": "look-clean-2 (owner 28 Oct 2026: \"only a little changed - change more, especially the icon",
+"bytes": 3457
+},
+{
+"line": 41570,
+"end": 41579,
+"kind": "style",
+"header": "scan-all-1 (owner 28 Oct 2026: \"staff fill the first steps by hand; before, a photo filled",
+"bytes": 889
+},
+{
+"line": 41580,
+"end": 41681,
+"kind": "script",
+"header": "scan-all-1 (owner 28 Oct 2026: \"staff fill the first steps by hand; before, a photo filled",
+"bytes": 7275
+},
+{
+"line": 41686,
+"end": 41700,
+"kind": "style",
+"header": "clean-contrast-1 (owner 29 Oct 2026: \"the writing can't be seen - fix problems like this\")",
+"bytes": 2801
+},
+{
+"line": 41706,
+"end": 41725,
+"kind": "style",
+"header": "clean-biz-1 (owner 29 Oct 2026: \"I can't switch to my other business\"): in the Clean look ",
+"bytes": 2045
+},
+{
+"line": 41730,
+"end": 41747,
+"kind": "script",
+"header": "fl-1 (owner 29 Oct 2026: \"on reload things I hid show once, then hide - I want a proper, p",
+"bytes": 692
+},
+{
+"line": 41760,
+"end": 41863,
+"kind": "style",
+"header": "polish-1 (owner 30 Oct 2026: \"do all of it - every page, every function - decide yourself ",
+"bytes": 11216
+},
+{
+"line": 41872,
+"end": 41896,
+"kind": "style",
+"header": "polish-2 (owner 30 Oct 2026: \"sob koro\" - the sub-tabs and dialogs polish-1 had not reache",
+"bytes": 2613
+},
+{
+"line": 41907,
+"end": 41914,
+"kind": "style",
+"header": "price-each-1 (owner 1 Nov 2026, joint stock: \"I changed taka to dollars and typed the rate",
+"bytes": 326
+},
+{
+"line": 41915,
+"end": 42029,
+"kind": "script",
+"header": "price-each-1 (owner 1 Nov 2026, joint stock: \"I changed taka to dollars and typed the rate",
+"bytes": 7548
+},
+{
+"line": 42038,
+"end": 42047,
+"kind": "style",
+"header": "price-each-2 (owner 1 Nov 2026: \"make joint stock like the normal stock and add the missin",
+"bytes": 605
+},
+{
+"line": 42048,
+"end": 42253,
+"kind": "script",
+"header": "price-each-2 (owner 1 Nov 2026: \"make joint stock like the normal stock and add the missin",
+"bytes": 16205
+},
+{
+"line": 42256,
+"end": 42261,
+"kind": "style",
+"header": "ad-photo-1 (owner 1 Nov 2026): the ad photo of the day (ChatGPT, one product a day, best s",
+"bytes": 495
+},
+{
+"line": 42262,
+"end": 42332,
+"kind": "script",
+"header": "ad-photo-1 (owner 1 Nov 2026): the ad photo of the day (ChatGPT, one product a day, best s",
+"bytes": 5896
+},
+{
+"line": 42336,
+"end": 42346,
+"kind": "style",
+"header": "tools-1 (owner 6 Nov 2026): Tools - the open-source tools on the Mac mini, each opened in ",
+"bytes": 1005
+},
+{
+"line": 42347,
+"end": 42418,
+"kind": "script",
+"header": "tools-1 (owner 6 Nov 2026): Tools - the open-source tools on the Mac mini, each opened in ",
+"bytes": 6408
+},
+{
+"line": 42424,
+"end": 42443,
+"kind": "style",
+"header": "hold-1 (owner 6 Nov 2026): \"Send for confirmation\" - an invoice that waits for the custome",
+"bytes": 1881
+},
+{
+"line": 42444,
+"end": 42693,
+"kind": "script",
+"header": "hold-1 (owner 6 Nov 2026): \"Send for confirmation\" - an invoice that waits for the custome",
+"bytes": 20163
+},
+{
+"line": 42698,
+"end": 42701,
+"kind": "style",
+"header": "invedit-1 (owner 6 Nov 2026): Edit a saved invoice. \"Edit invoice\" on the invoice's page p",
+"bytes": 280
+},
+{
+"line": 42702,
+"end": 42807,
+"kind": "script",
+"header": "invedit-1 (owner 6 Nov 2026): Edit a saved invoice. \"Edit invoice\" on the invoice's page p",
+"bytes": 7546
+},
+{
+"line": 42811,
+"end": 42814,
+"kind": "style",
+"header": "night-books B5 (owner D1 = A, 6 Nov 2026): sales with no known cost are kept OUT of profit",
+"bytes": 71
+},
+{
+"line": 42815,
+"end": 42867,
+"kind": "script",
+"header": "night-books B5 (owner D1 = A, 6 Nov 2026): sales with no known cost are kept OUT of profit",
+"bytes": 3019
+},
+{
+"line": 42871,
+"end": 42883,
+"kind": "script",
+"header": "night-books B6 (owner D2 = A, 6 Nov 2026): the server compares this month so far with the ",
+"bytes": 564
+},
+{
+"line": 42894,
+"end": 42914,
+"kind": "style",
+"header": "night-tools (tooldoor-1, 6 Nov 2026; apps-_index.md T1/T3, B5a, B8a; owner D21/D22/D23): t",
+"bytes": 1670
+},
+{
+"line": 42915,
+"end": 43153,
+"kind": "script",
+"header": "night-tools (tooldoor-1, 6 Nov 2026; apps-_index.md T1/T3, B5a, B8a; owner D21/D22/D23): t",
+"bytes": 21666
+},
+{
+"line": 43163,
+"end": 43168,
+"kind": "style",
+"header": "night-f1 (6 Nov 2026, acct-shell.md P0-1): the shell knows where you are on every screen.",
+"bytes": 274
+},
+{
+"line": 43169,
+"end": 43229,
+"kind": "script",
+"header": "night-f1 (6 Nov 2026, acct-shell.md P0-1): the shell knows where you are on every screen.",
+"bytes": 3757
+},
+{
+"line": 43237,
+"end": 43240,
+"kind": "style",
+"header": "night-f2 (6 Nov 2026, inv-_index.md \u00a71, D4 + D5): ONE money format. tk(v) = \u09f312,500 with S",
+"bytes": 254
+},
+{
+"line": 43241,
+"end": 43291,
+"kind": "script",
+"header": "night-f2 (6 Nov 2026, inv-_index.md \u00a71, D4 + D5): ONE money format. tk(v) = \u09f312,500 with S",
+"bytes": 2651
+},
+{
+"line": 43298,
+"end": 43311,
+"kind": "style",
+"header": "night-f3 (6 Nov 2026, sales-_index.md \"one primary per state\"): one action-bar helper for ",
+"bytes": 1412
+},
+{
+"line": 43312,
+"end": 43374,
+"kind": "script",
+"header": "night-f3 (6 Nov 2026, sales-_index.md \"one primary per state\"): one action-bar helper for ",
+"bytes": 3970
+},
+{
+"line": 43382,
+"end": 43391,
+"kind": "style",
+"header": "night-f4 (6 Nov 2026, D13, eval-adapt.md \"phone list order\"): on a phone the work comes fi",
+"bytes": 969
+},
+{
+"line": 43392,
+"end": 43438,
+"kind": "script",
+"header": "night-f4 (6 Nov 2026, D13, eval-adapt.md \"phone list order\"): on a phone the work comes fi",
+"bytes": 3224
+},
+{
+"line": 43442,
+"end": 43446,
+"kind": "style",
+"header": "night-f7 (6 Nov 2026, eval-adapt.md: Settings > Security was 53,111px tall on a phone, Bac",
+"bytes": 249
+},
+{
+"line": 43447,
+"end": 43484,
+"kind": "script",
+"header": "night-f7 (6 Nov 2026, eval-adapt.md: Settings > Security was 53,111px tall on a phone, Bac",
+"bytes": 2493
+},
+{
+"line": 43496,
+"end": 43525,
+"kind": "style",
+"header": "night-w2 (6 Nov 2026, acct-shell.md + acct-settings.md; owner accepted D8-D12): the shell ",
+"bytes": 2924
+},
+{
+"line": 43526,
+"end": 43693,
+"kind": "script",
+"header": "night-w2 (6 Nov 2026, acct-shell.md + acct-settings.md; owner accepted D8-D12): the shell ",
+"bytes": 9907
+},
+{
+"line": 43708,
+"end": 43739,
+"kind": "style",
+"header": "night-sales (6 Nov 2026, Wave 3, sales-*.md; owner accepted every star default: D14-D18, t",
+"bytes": 2379
+},
+{
+"line": 43740,
+"end": 44205,
+"kind": "script",
+"header": "night-sales (6 Nov 2026, Wave 3, sales-*.md; owner accepted every star default: D14-D18, t",
+"bytes": 36365
+},
+{
+"line": 44221,
+"end": 44285,
+"kind": "style",
+"header": "night-stock (6 Nov 2026, Wave 4: inv-*.md + acct-*.md shapes; owner accepted every star de",
+"bytes": 6463
+},
+{
+"line": 44286,
+"end": 44619,
+"kind": "script",
+"header": "night-stock (6 Nov 2026, Wave 4: inv-*.md + acct-*.md shapes; owner accepted every star de",
+"bytes": 22313
+},
+{
+"line": 44635,
+"end": 44671,
+"kind": "style",
+"header": "night-ai (6 Nov 2026, Wave 5; ai-_index.md, ai-ai.md, ai-engine.md, ai-skills.md, ai-watch",
+"bytes": 3298
+},
+{
+"line": 44672,
+"end": 45018,
+"kind": "script",
+"header": "night-ai (6 Nov 2026, Wave 5; ai-_index.md, ai-ai.md, ai-engine.md, ai-skills.md, ai-watch",
+"bytes": 31020
+},
+{
+"line": 45021,
+"end": 45047,
+"kind": "script",
+"header": "night-f2 review fix (7 Nov 2026): the invoice drawer's sub-texts in Bangla (they were left",
+"bytes": 1033
+},
+{
+"line": 45050,
+"end": 45087,
+"kind": "style",
+"header": "crm-1 (7 Nov 2026): customer tools - timeline, own fields, companies, saved views + condit",
+"bytes": 4212
+},
+{
+"line": 45088,
+"end": 45552,
+"kind": "script",
+"header": "crm-1 (7 Nov 2026): customer tools - timeline, own fields, companies, saved views + condit",
+"bytes": 52998
+},
+{
+"line": 45556,
+"end": 45556,
+"kind": "style",
+"header": "adsrc-3: profit per ad (handlers/adprofit.js), under Paid ads -->",
+"bytes": 362
+},
+{
+"line": 45557,
+"end": 45591,
+"kind": "script",
+"header": "adsrc-3: profit per ad (handlers/adprofit.js), under Paid ads -->",
+"bytes": 3515
+},
+{
+"line": 45596,
+"end": 45602,
+"kind": "style",
+"header": "joint-multi-1 (owner 8 Nov 2026: \"Send stock / Ask for stock take only one product, but we",
+"bytes": 518
+},
+{
+"line": 45603,
+"end": 45705,
+"kind": "script",
+"header": "joint-multi-1 (owner 8 Nov 2026: \"Send stock / Ask for stock take only one product, but we",
+"bytes": 10001
+},
+{
+"line": 45707,
+"end": 45717,
+"kind": "style",
+"header": "factory-1 + taste-1: the weekly ad factory and the owner's taste (handlers/factory.js, tas",
+"bytes": 989
+},
+{
+"line": 45718,
+"end": 45811,
+"kind": "script",
+"header": "factory-1 + taste-1: the weekly ad factory and the owner's taste (handlers/factory.js, tas",
+"bytes": 12395
+},
+{
+"line": 45822,
+"end": 45858,
+"kind": "style",
+"header": "distill-shell (9 Nov 2026): the app shell distilled. System check (and Analytics) load aga",
+"bytes": 3949
+},
+{
+"line": 45859,
+"end": 46031,
+"kind": "script",
+"header": "distill-shell (9 Nov 2026): the app shell distilled. System check (and Analytics) load aga",
+"bytes": 12669
+},
+{
+"line": 46041,
+"end": 46087,
+"kind": "style",
+"header": "distill-sales (9 Nov 2026): the sales screens stripped to the work. Invoices: the list fir",
+"bytes": 4257
+},
+{
+"line": 46088,
+"end": 46409,
+"kind": "script",
+"header": "distill-sales (9 Nov 2026): the sales screens stripped to the work. Invoices: the list fir",
+"bytes": 25892
+},
+{
+"line": 46418,
+"end": 46451,
+"kind": "style",
+"header": "distill-contacts (9 Nov 2026): Customers / Leads / Campaigns / Customer tools - the list a",
+"bytes": 3205
+},
+{
+"line": 46452,
+"end": 46723,
+"kind": "script",
+"header": "distill-contacts (9 Nov 2026): Customers / Leads / Campaigns / Customer tools - the list a",
+"bytes": 23499
+},
+{
+"line": 46736,
+"end": 46789,
+"kind": "style",
+"header": "distill-goods (9 Nov 2026): Products / Product cost / Stock entry / Shipments / Suppliers ",
+"bytes": 4270
+},
+{
+"line": 46790,
+"end": 47013,
+"kind": "script",
+"header": "distill-goods (9 Nov 2026): Products / Product cost / Stock entry / Shipments / Suppliers ",
+"bytes": 18552
+},
+{
+"line": 47026,
+"end": 47067,
+"kind": "style",
+"header": "distill-money (9 Nov 2026, acct-cash/expenses/profit/capital.md + ai-analytics.md): the mo",
+"bytes": 3347
+},
+{
+"line": 47068,
+"end": 47349,
+"kind": "script",
+"header": "distill-money (9 Nov 2026, acct-cash/expenses/profit/capital.md + ai-analytics.md): the mo",
+"bytes": 21216
+},
+{
+"line": 47360,
+"end": 47403,
+"kind": "style",
+"header": "distill-ai (9 Nov 2026): the AI screens stripped to their essence, every ability kept. The",
+"bytes": 3409
+},
+{
+"line": 47404,
+"end": 47664,
+"kind": "script",
+"header": "distill-ai (9 Nov 2026): the AI screens stripped to their essence, every ability kept. The",
+"bytes": 26903
+},
+{
+"line": 47667,
+"end": 47749,
+"kind": "script",
+"header": "distill:bn-topup -->",
+"bytes": 10855
+}
+]

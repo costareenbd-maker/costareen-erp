@@ -16,6 +16,7 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (/\/news(\/(run|make))?$/.test(url)) return { body: { news: [{ id: 4, title: 'Korea cuts cosmetics export fees', region: 'KR', picked: true, state: 'made', analysis: { kind: 'opportunity', facts: [{ text: '5%', n: 1 }] } }], jobs: {}, last_run: null, job: url.endsWith('/run') ? 'n1' : undefined } };
   if (url.endsWith('/styles/add') || url.endsWith('/styles/set') || url.endsWith('/styles')) return { body: { profiles: [], examples: [], off: false } };
   if (url.endsWith('/li/add') || url.endsWith('/li/mark') || url.endsWith('/li/kill') || url.endsWith('/li')) return { body: { tasks: [], lane: { caps: {} } } };
+  if (url.includes('/routine')) return { body: { slots: [], status: { level: 2, effective: 2 }, fills: {} } };
   if (url.endsWith('/media/upload')) return { body: { id: 'up9', path: 'https://social.example.com/uploads/p.jpg', type: 'image', asset: '5d23777f-eda4-40ef-9b8d-8065d7a9a896' } };
   if (url.endsWith('/drafts/idea')) return { body: { job: 'i1', waiting: [], ideas: [], jobs: {} } };
   if (url.endsWith('/media/attach')) return { body: { id: 'up1abc', path: 'https://social.example.com/uploads/a.jpg', type: 'image', name: 'a.jpg' } };
@@ -202,6 +203,22 @@ const lead = await sql`select kind, name, email, note from inbox_leads where bus
 check('the person becomes a supplier lead of that business', r.ok && r.result.added && lead.length === 1 && lead[0].kind === 'supplier' && /LinkedIn post/.test(lead[0].note), lead);
 r = await owner('erpBrandDeskToLeads', [{ id: 'p1', business: tgt.id }]);
 check('handing the same person twice adds nothing', r.ok && r.result.added === false, r);
+// brand-19: the routine
+r = await owner('erpBrandDeskRoutineSlot', [{ dow: 7, at: '09:30', platform: 'facebook', format: 'text' }]);
+check('a routine slot on a day that does not exist is refused', !r.ok, r);
+r = await owner('erpBrandDeskRoutineSlot', [{ dow: 1, at: '9.30', platform: 'facebook', format: 'text' }]);
+check('a routine time that is not HH:MM is refused', !r.ok, r);
+r = await owner('erpBrandDeskRoutineSlot', [{ dow: 1, at: '09:30', platform: 'myspace', format: 'text' }]);
+check('a routine slot on an unknown network is refused', !r.ok, r);
+r = await owner('erpBrandDeskRoutineSlot', [{ dow: 1, at: '09:30', platform: 'facebook', format: 'text', pillar: 'teach', face: false, level: 2 }]);
+const rs = seen.filter((x) => x.url.endsWith('/routine/slot')).pop();
+check('a new routine slot goes to the bridge', r.ok && rs.body.dow === 1 && rs.body.at === '09:30' && rs.body.pillar === 'teach' && rs.body.id === undefined, rs && rs.body);
+r = await owner('erpBrandDeskRoutineLevel', [{ level: 5 }]);
+check('a plan that is not light, medium or full is refused', !r.ok, r);
+r = await owner('erpBrandDeskRoutineLevel', [{ level: 3 }]);
+check('the plan can be raised', r.ok, r);
+r = await mgr('erpBrandDeskRoutineSlot', [{ dow: 1, at: '09:30', platform: 'facebook', format: 'text' }]);
+check('staff cannot change the routine', !r.ok, r);
 // brand-17: Train + LinkedIn lane
 r = await owner('erpBrandDeskStyleAdd', [{ text: 'too short' }]);
 check('a too-short style piece is refused', !r.ok, r);
