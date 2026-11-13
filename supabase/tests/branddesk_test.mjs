@@ -16,6 +16,7 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (/\/news(\/(run|make))?$/.test(url)) return { body: { news: [{ id: 4, title: 'Korea cuts cosmetics export fees', region: 'KR', picked: true, state: 'made', analysis: { kind: 'opportunity', facts: [{ text: '5%', n: 1 }] } }], jobs: {}, last_run: null, job: url.endsWith('/run') ? 'n1' : undefined } };
   if (url.endsWith('/styles/add') || url.endsWith('/styles/set') || url.endsWith('/styles')) return { body: { profiles: [], examples: [], off: false } };
   if (url.endsWith('/li/add') || url.endsWith('/li/mark') || url.endsWith('/li/kill') || url.endsWith('/li')) return { body: { tasks: [], lane: { caps: {} } } };
+  if (url.includes('/reels')) return { body: { reels: [], jobs: {} } };
   if (url.includes('/routine')) return { body: { slots: [], status: { level: 2, effective: 2 }, fills: {} } };
   if (url.endsWith('/media/upload')) return { body: { id: 'up9', path: 'https://social.example.com/uploads/p.jpg', type: 'image', asset: '5d23777f-eda4-40ef-9b8d-8065d7a9a896' } };
   if (url.endsWith('/drafts/idea')) return { body: { job: 'i1', waiting: [], ideas: [], jobs: {} } };
@@ -203,6 +204,23 @@ const lead = await sql`select kind, name, email, note from inbox_leads where bus
 check('the person becomes a supplier lead of that business', r.ok && r.result.added && lead.length === 1 && lead[0].kind === 'supplier' && /LinkedIn post/.test(lead[0].note), lead);
 r = await owner('erpBrandDeskToLeads', [{ id: 'p1', business: tgt.id }]);
 check('handing the same person twice adds nothing', r.ok && r.result.added === false, r);
+// brand-20: news Reels
+r = await owner('erpBrandDeskReelScript', [{ news_id: 0 }]);
+check('a Reel script without a news story is refused', !r.ok, r);
+r = await owner('erpBrandDeskReelVoice', [{ id: 1, type: 'image/png', data: 'AAAA' }]);
+check('a voice upload that is not audio is refused', !r.ok, r);
+r = await owner('erpBrandDeskReelVoice', [{ id: 1, type: 'audio/mp4', data: 'not base64!' }]);
+check('a broken voice recording is refused', !r.ok, r);
+r = await owner('erpBrandDeskReelVoice', [{ id: 1, type: 'audio/mp4; codecs=mp4a', data: 'AAAA' }]);
+const rv = seen.filter((x) => x.url.endsWith('/reels/voice')).pop();
+check('his voice goes to the bridge', r.ok && rv.body.type === 'audio/mp4' && rv.body.id === 1, rv && rv.body);
+r = await owner('erpBrandDeskReelDrafts', [{ id: 1, platforms: ['linkedin', 'myspace'] }]);
+check('a Reel cannot go to a network that takes no Reels', !r.ok, r);
+r = await owner('erpBrandDeskReelDrafts', [{ id: 1, platforms: ['facebook', 'tiktok', 'myspace'] }]);
+const rdr = seen.filter((x) => x.url.endsWith('/reels/drafts')).pop();
+check('a Reel goes to the drafts of the networks picked', r.ok && rdr.body.platforms.join() === 'facebook,tiktok', rdr && rdr.body);
+r = await mgr('erpBrandDeskReelRender', [{ id: 1 }]);
+check('staff cannot make a Reel', !r.ok, r);
 // brand-19: the routine
 r = await owner('erpBrandDeskRoutineSlot', [{ dow: 7, at: '09:30', platform: 'facebook', format: 'text' }]);
 check('a routine slot on a day that does not exist is refused', !r.ok, r);

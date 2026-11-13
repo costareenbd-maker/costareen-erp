@@ -164,6 +164,41 @@ export async function erpBrandDeskRoutineLevel(ctx, payload) {
   return bridge(ctx, '/routine/level', { level });
 }
 export async function erpBrandDeskRoutineReset(ctx) { await gate(ctx); return bridge(ctx, '/routine/reset', {}); }
+// brand-20: news Reels - script from the checked facts, his own voice, scenes drawn and joined on the Mac
+const REEL_NETS = ['facebook', 'instagram', 'tiktok', 'youtube'];
+const reelId = (p) => { const id = parseInt((p || {}).id, 10); if (!(id > 0)) throw new Error('Pick a Reel.'); return id; };
+export async function erpBrandDeskReels(ctx) { await gate(ctx); return bridge(ctx, '/reels'); }
+export async function erpBrandDeskReelScript(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, news_id = parseInt(p.news_id, 10);
+  if (!(news_id > 0)) throw new Error('Pick a news story.');
+  return bridge(ctx, '/reels/script', { news_id, photo: p.photo ? mediaRefs([p.photo])[0] : undefined });
+}
+export async function erpBrandDeskReelPhoto(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {};
+  return bridge(ctx, '/reels/photo', { id: reelId(p), photo: p.photo ? mediaRefs([p.photo])[0] : null });
+}
+export async function erpBrandDeskReelVoice(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, type = str(p.type).toLowerCase().split(';')[0], data = str(p.data);
+  if (!/^(audio\/[a-z0-9.+-]+|video\/(mp4|webm))$/.test(type)) throw new Error('Give a voice recording.');
+  if (!data || !/^[A-Za-z0-9+/=]+$/.test(data)) throw new Error('The recording did not come through; try again.');
+  if (data.length > 16000000) throw new Error('The recording is too big; keep it under two minutes.');
+  return bridge(ctx, '/reels/voice', { id: reelId(p), type, data }, 150000);
+}
+export async function erpBrandDeskReelEdit(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, says = (Array.isArray(p.says) ? p.says : []).slice(0, 8).map((x) => str(x).slice(0, 400));
+  return bridge(ctx, '/reels/edit', { id: reelId(p), says, caption: str(p.caption).slice(0, 2000) });
+}
+export async function erpBrandDeskReelRender(ctx, payload) { await gate(ctx); const p = payload || {}; return bridge(ctx, '/reels/render', { id: reelId(p), silent: !!p.silent }); }
+export async function erpBrandDeskReelDrafts(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, platforms = [...new Set((Array.isArray(p.platforms) ? p.platforms : []).map((x) => str(x).toLowerCase()).filter((x) => REEL_NETS.includes(x)))];
+  if (!platforms.length) throw new Error('Pick at least one network.');
+  return bridge(ctx, '/reels/drafts', { id: reelId(p), platforms });
+}
 export async function erpBrandDeskNewsRun(ctx) {
   await gate(ctx);
   return bridge(ctx, '/news/run', {});
@@ -537,4 +572,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskRoutine, erpBrandDeskRoutineSlot, erpBrandDeskRoutineLevel, erpBrandDeskRoutineReset, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskReels, erpBrandDeskReelScript, erpBrandDeskReelPhoto, erpBrandDeskReelVoice, erpBrandDeskReelEdit, erpBrandDeskReelRender, erpBrandDeskReelDrafts, erpBrandDeskRoutine, erpBrandDeskRoutineSlot, erpBrandDeskRoutineLevel, erpBrandDeskRoutineReset, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

@@ -8545,7 +8545,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrandDeskCockpit|erpBrandDeskRoutine|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrandDeskCockpit|erpBrandDeskReels|erpBrandDeskRoutine|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 // crit8-nav (10 Nov 2026): these calls only read when they are sent without a change (the list form) and write with one.
 // The same rule as the server's ERP_READ_WHEN (allow.js): the list form runs beside other reads, sends no one-time key
 // and drops no caches; the changing form stays a write. erpTool and erpBrainFact always write (every branch changes data).
@@ -58792,6 +58792,20 @@ select.bc-in{padding-right:28px}
 .uc-n .bc-pl[disabled]{opacity:.35;cursor:not-allowed}
 .uc-deep{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--bc-ink-2)}
 .uc-a{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+/* brand-20: news Reels panel under a news card */
+.rl{border-top:1px solid var(--bc-rule);padding:4px 18px 16px}
+.rl .bc-fold{margin-top:8px}
+.rl-g{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:8px 26px;margin-top:6px}
+.rl h4{margin:10px 0 6px;font:700 15px "Hind Siliguri",system-ui,sans-serif;color:var(--bc-ink)}
+.rl h4 small{font-weight:500;font-size:12.5px;color:var(--bc-ink-3);margin-left:8px}
+.rl-sc{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.rl-sc li{display:grid;grid-template-columns:92px minmax(0,1fr);gap:8px;align-items:start}
+.rl-sc .bc-tag{justify-self:start;margin-top:8px}
+.rl-sc .bc-ta{min-height:0;font-size:15px;line-height:1.55}
+.rl-v{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;align-items:flex-start}
+.rl-v video{width:220px;max-width:100%;aspect-ratio:9/16;border-radius:14px;background:#14171C}
+.rl-v>div{flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px}
+@container bc (max-width:900px){.rl-g{grid-template-columns:1fr}.rl-sc li{grid-template-columns:1fr}.rl-sc .bc-tag{margin-top:0}}
 /* brand-19: রুটিন - the weekly timetable */
 .rt-st{border:1px solid var(--bc-rule);border-radius:16px;padding:14px 16px;margin:2px 0 16px;background:var(--bc-ground)}
 .rt-st.down{box-shadow:inset 0 0 0 1.5px var(--bc-wait)}
@@ -59073,7 +59087,7 @@ select.bc-in{padding-right:28px}
   function inp(key, ph, extra, type) { return '<input class="bc-in" id="bci_' + key + '" data-bcin="' + key + '" type="' + (type || 'text') + '" data-noi18n="1" placeholder="' + esc(ph || '') + '" value="' + esc(v(key)) + '"' + (extra || '') + '>'; }
   function ta(key, ph, dflt, extra) { return '<textarea class="bc-ta" id="bci_' + key + '" data-bcin="' + key + '" data-noi18n="1" placeholder="' + esc(ph || '') + '"' + (extra || '') + '>' + esc(v(key, dflt)) + '</textarea>'; }
   var SECS = [['home', 'হোম'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ'], ['routine', 'রুটিন'], ['train', 'লেখার ধরন'], ['linkedin', 'LinkedIn']];
-  var NEED = { home: ['cockpit', 'drafts', 'settings'], posts: ['cockpit', 'drafts', 'settings'], ideas: ['drafts', 'memos', 'board', 'settings', 'news'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen'], rules: ['settings'], map: ['cockpit'], train: ['styles'], linkedin: ['li'], routine: ['routine'] };
+  var NEED = { home: ['cockpit', 'drafts', 'settings'], posts: ['cockpit', 'drafts', 'settings'], ideas: ['drafts', 'memos', 'board', 'settings', 'news', 'reels'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen'], rules: ['settings'], map: ['cockpit'], train: ['styles'], linkedin: ['li'], routine: ['routine'] };
   function on() { return typeof VIEW !== 'undefined' && VIEW === 'branddesk' && typeof ME !== 'undefined' && ME && ME.role === 'owner'; }
   function fonts() {
     if (document.getElementById('bc_font')) return;
@@ -59081,7 +59095,7 @@ select.bc-in{padding-right:28px}
     l.href = 'https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap'; document.head.appendChild(l);
   }
   // ---------- data: one store, one loader per read; bridge reads wait until the cockpit says the Mac is on
-  var CALL = { mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', li: 'erpBrandDeskLi', routine: 'erpBrandDeskRoutine' };
+  var CALL = { mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', li: 'erpBrandDeskLi', routine: 'erpBrandDeskRoutine', reels: 'erpBrandDeskReels' };
   function ready() { var d = C.d.cockpit; return !!(d && d.online && d.keySet); }
   function get(k, force) {
     if (C.busy['g_' + k] || (C.d[k] && !force)) return;
@@ -59096,11 +59110,12 @@ select.bc-in{padding-right:28px}
     var r = C.d[k] || {}, jobs = r.jobs || {}, ks = Object.keys(jobs), run = false;
     if (k === 'drafts') run = ks.some(function (x) { return jobs[x].state === 'writing' || jobs[x].state === 'researching'; });
     if (k === 'listen') run = ks.some(function (x) { return jobs[x].state === 'reading'; });
+    if (k === 'reels') run = ks.some(function (x) { return /^(writing|drawing|joining)$/.test(jobs[x].state); });
     if (k === 'styles') run = ks.some(function (x) { return /^(reading|scouting)$/.test(jobs[x].state); });
     if (k === 'li') run = ks.some(function (x) { return jobs[x].state === 'reading'; }) || (r.tasks || []).some(function (q) { return q.state === 'drafting'; });
     if (k === 'shorts') run = ks.some(function (x) { return jobs[x].state === 'fetching' || jobs[x].state === 'making'; });
     if (k === 'news') { run = ks.some(function (x) { return /^(reading|picking|writing)$/.test(jobs[x].state); }) || (r.news || []).some(function (n) { return n.state === 'reading'; }); if (run) C.nrun = 1; else if (C.nrun) { C.nrun = 0; get('drafts', true); } }
-    clearTimeout(POLL[k]); if (run) POLL[k] = setTimeout(function () { if (on()) get(k, true); }, k === 'drafts' ? 12000 : 20000);
+    clearTimeout(POLL[k]); if (run) POLL[k] = setTimeout(function () { if (on()) get(k, true); }, k === 'drafts' ? 12000 : k === 'reels' ? 7000 : 20000);
   }
   function need() { (NEED[C.sec] || []).forEach(function (k) { if (k === 'cockpit' || ready()) get(k); }); }
   function has(k) { return !!C.d[k]; }
@@ -59699,7 +59714,8 @@ select.bc-in{padding-right:28px}
     h += '<footer class="nw-ft"><div class="nw-src">' + src.map(function (x) { return '<a href="' + esc(x.url || '#') + '" target="_blank" rel="noopener" data-noi18n="1"><sup>[' + bn(x.n) + ']</sup> ' + esc(x.source || '') + '</a>'; }).join('') + '</div><span class="bc-sp"></span>' +
       (fb ? '<button type="button" class="bc-btn sm bclg" style="--c:' + netCol('facebook') + '" data-bc="ndraft" data-id="' + fb.id + '">' + logo('facebook', 14) + 'Facebook draft</button>' : '') +
       (ln ? '<button type="button" class="bc-btn sm bclg" style="--c:' + netCol('linkedin') + '" data-bc="ndraft" data-id="' + ln.id + '">' + logo('linkedin', 14) + 'LinkedIn draft</button>' : '') +
-      (!fb && !ln ? '<span class="bc-sub">draft অনুমোদন বা বাদ হয়ে গেছে</span>' : '') + '</footer></article>';
+      (!fb && !ln ? '<span class="bc-sub">draft অনুমোদন বা বাদ হয়ে গেছে</span>' : '') +
+      (reelOf(n.id) ? '' : btn(pi('media') + 'Reels বানান', 'data-bc="rlnew" data-id="' + n.id + '"', 'sm dark', 'rln' + n.id, reelBusy(n.id))) + '</footer>' + reelHtml(n) + '</article>';
     return h;
   }
   // brand-14: each idea is a card; one idea becomes a different post on each network (the viral playbook picks the format)
@@ -60293,6 +60309,46 @@ select.bc-in{padding-right:28px}
       (C.fold.rreset ? '<div class="bc-call"><span>আপনার সব বদল মুছে গবেষণার রুটিনে ফিরে যাবে। নিশ্চিত?</span><span class="bc-sp"></span>' + btn('হ্যাঁ, ফিরিয়ে দিন', 'data-bc="rreset"', 'red sm', 'rreset') + btn('না', 'data-bc="fold" data-id="rreset"', 'ghost sm', '') + '</div>' : '<button type="button" class="bc-btn ghost" data-bc="fold" data-id="rreset">গবেষণার রুটিনে ফিরে যান</button>') + '</div>';
     return h;
   }
+  // ---------- brand-20: news Reels - the script he reads, his voice, the drawn video, then drafts for four networks
+  function reelOf(nid) { return ((C.d.reels && C.d.reels.reels) || []).filter(function (r) { return String(r.news_id) === String(nid); })[0] || null; }
+  function reelJob(test) { var j = (C.d.reels && C.d.reels.jobs) || {}; return Object.keys(j).map(function (k) { return j[k]; }).filter(test)[0] || null; }
+  function reelBusy(nid) { return !!reelJob(function (j) { return j.state === 'writing' && String(j.news) === String(nid); }); }
+  var RLNET = ['facebook', 'instagram', 'tiktok', 'youtube'];
+  function reelHtml(n) {
+    var r = reelOf(n.id);
+    if (!r) {
+      var wj = reelJob(function (j) { return String(j.news) === String(n.id) && (j.state === 'writing' || j.state === 'failed'); });
+      if (wj && wj.state === 'writing') return '<div class="rl"><p class="tr-busy"><span class="bc-spin"></span>Reels-এর script লিখছে… এক-দুই মিনিট</p></div>';
+      if (wj && wj.state === 'failed') return '<div class="rl"><div class="bc-call"><span>' + esc(wj.error || 'script লেখা গেল না।') + '</span></div></div>';
+      return '';
+    }
+    var sp = r.script || {}, sc = sp.scenes || [], id = r.id, k = 'rl' + id, ph = C.media[k] || r.photo, job = reelJob(function (j) { return String(j.reel) === String(id) && /^(drawing|joining)$/.test(j.state); });
+    var words = sc.reduce(function (a, x) { return a + String(x.say || '').split(/\s+/).length; }, 0), open = C.fold['rlo' + id] !== false;
+    var h = '<div class="rl"><button type="button" class="bc-fold' + (open ? ' on' : '') + '" data-bc="rlfold" data-id="' + id + '">' + svg('right') + 'খবরের Reels' + (r.state === 'done' && !r.silent ? ' · ভিডিও তৈরি' : r.voice ? ' · গলা দেওয়া আছে' : ' · script তৈরি') + '</button>';
+    if (!open) return h + '</div>';
+    if ((sp.warn || []).length) h += '<div class="bc-flag"><span class="bc-tag w">দেখে নিন</span><span>' + sp.warn.map(esc).join(' ') + '</span></div>';
+    h += '<div class="rl-g"><section><h4>১. যা পড়বেন <small>প্রায় ' + bn(Math.round(words / 2.3)) + ' সেকেন্ড · ' + bn(sc.length) + 'টা দৃশ্য</small></h4>' +
+      '<ol class="rl-sc">' + sc.map(function (x, i) {
+        var what = { hook: 'শুরু: আপনার ছবি', number: 'সংখ্যা', bars: 'chart', compare: 'তুলনা', text: 'লেখা', outro: 'শেষ' }[x.type] || '';
+        return '<li><span class="bc-tag">' + what + '</span><textarea class="bc-ta" data-bcin="rls' + id + '_' + i + '" id="bci_rls' + id + '_' + i + '" data-noi18n="1" rows="2" aria-label="দৃশ্য ' + bn(i + 1) + '-এ যা বলবেন">' + esc(v('rls' + id + '_' + i, x.say || '')) + '</textarea></li>';
+      }).join('') + '</ol><div class="lt-a">' + btn('বদল রাখুন', 'data-bc="rledit" data-id="' + id + '"', 'sm', 'rle' + id) +
+      '<button type="button" class="bc-btn ghost sm" data-bc="tcopy" data-t="' + esc(sc.map(function (x) { return x.say; }).join('\n\n')) + '">' + svg('copy') + 'পুরোটা কপি</button></div></section>';
+    h += '<section><h4>২. শুরুর ছবি <small>প্রথম ৩ সেকেন্ডে আপনি</small></h4>' + (ph ? mediaChip(k) : '<div class="uc-drop">' + mediaButton(k) + '<span class="bc-sub">Brand album থেকে আপনার একটা ছবি। না দিলে শুধু লেখা দিয়ে শুরু হবে।</span></div>') + pickerHtml(k) +
+      (C.media[k] && (!r.photo || r.photo.id !== C.media[k].id) ? '<div class="lt-a">' + btn('এই ছবিটা রাখুন', 'data-bc="rlphoto" data-id="' + id + '"', 'sm', 'rlp' + id) + '</div>' : '') +
+      '<h4 style="margin-top:16px">৩. আপনার গলা <small>ফোনে script-টা পড়ে record করুন</small></h4>' +
+      '<div class="uc-drop"><label class="bc-btn' + (r.voice ? '' : ' dark') + (C.busy['rlv' + id] ? ' is-busy' : '') + '">' + (C.busy['rlv' + id] ? '<span class="bc-spin"></span>তুলছি…' : (r.voice ? 'আবার record দিন' : 'record করা গলা দিন')) + '<input type="file" accept="audio/*,video/mp4,video/webm" data-bcvoice="' + id + '" hidden' + (C.busy['rlv' + id] ? ' disabled' : '') + '></label>' +
+      '<span class="bc-sub">' + (r.voice ? (r.voice_ai ? 'AI গলা দেওয়া আছে' : 'আপনার গলা দেওয়া আছে') : (C.d.reels.voice_clone ? 'না দিলে clone করা গলা ব্যবহার হবে, তখন AI লেবেল লাগবে' : 'ফোনের voice recorder-এ পড়ে ফাইলটা এখানে দিন')) + '</span></div></section></div>';
+    if (job) h += '<p class="tr-busy" style="margin-top:12px"><span class="bc-spin"></span>' + (job.state === 'joining' ? 'ভিডিও জোড়া লাগছে…' : 'দৃশ্য আঁকছে' + (job.scene ? ' ' + bn(job.scene) + '/' + bn(job.of) : '') + '…') + '</p>';
+    else h += '<div class="lt-a" style="margin-top:12px">' + btn(svg('check') + (r.state === 'done' && !r.silent ? 'ভিডিও আবার বানান' : 'ভিডিও বানান'), 'data-bc="rlrender" data-id="' + id + '"', 'dark', 'rlr' + id, !r.voice && !C.d.reels.voice_clone) +
+      btn('গলা ছাড়া নমুনা দেখুন', 'data-bc="rlrender" data-id="' + id + '" data-s="1"', 'ghost', 'rlr' + id) + (r.error && r.state !== 'done' ? '<span class="lt-flag">' + esc(r.error) + '</span>' : '') + '</div>';
+    if (r.state === 'done' && r.video && r.video.path) {
+      h += '<div class="rl-v"><video controls playsinline preload="metadata" src="' + esc(r.video.path) + '"></video><div><p class="bc-sub">' + bn(r.seconds || 0) + ' সেকেন্ড' + (r.silent ? ' · গলা ছাড়া নমুনা; পাঠানো যাবে না' : '') + '</p>';
+      if (!r.silent) h += '<div class="st-nets">' + RLNET.map(function (nn) { var onn = (C.rln || {})[nn] !== 0; return '<button type="button" class="st-net' + (onn ? ' on' : '') + '" style="--c:' + netCol(nn) + '" aria-pressed="' + onn + '" data-bc="rlnet" data-id="' + nn + '">' + logo(nn, 14) + esc(netName(nn)) + '</button>'; }).join('') + '</div>' +
+        '<div class="lt-a">' + btn(svg('check') + 'এই network-গুলোর draft-এ পাঠান', 'data-bc="rldrafts" data-id="' + id + '"', 'dark', 'rld' + id) + '</div><p class="bc-sub">draft পোস্ট পেজে অপেক্ষা করবে; আপনি অনুমোদন দিলে তবেই যাবে।</p>';
+      h += '</div></div>';
+    }
+    return h + '</div>';
+  }
   function sideHtml(narrow) {
     if (C.sec === 'home') return narrow ? '' : sideDrafts();
     if (C.sec === 'posts') return '';
@@ -60363,6 +60419,16 @@ select.bc-in{padding-right:28px}
   document.addEventListener('change', function (e) {
     var wk = e.target && e.target.getAttribute && e.target.getAttribute('data-bcwhen');
     if (wk && on()) { var cur = String(v(wk) || ''), dp = cur.slice(0, 10), tp = cur.slice(11, 16); if (e.target.getAttribute('data-part') === 'd') dp = e.target.value; else tp = e.target.value; C.v[wk] = dp + 'T' + tp; return; }
+  });
+  document.addEventListener('change', function (e) {
+    var x = e.target, id = x && x.getAttribute && x.getAttribute('data-bcvoice'); if (!on() || !id || !x.files || !x.files[0]) return;
+    var f = x.files[0];
+    if (!/^(audio\/|video\/(mp4|webm))/.test(f.type)) return toast('গলার recording দিন (audio ফাইল)।', true);
+    if (f.size > 11 * 1024 * 1024) return toast('ফাইলটা বড়। দুই মিনিটের কম record করুন।', true);
+    var rd = new FileReader();
+    rd.onload = function () { act('rlv' + id, 'erpBrandDeskReelVoice', { id: Number(id), type: f.type, data: String(rd.result).split(',')[1] }, function (r) { C.d.reels = r; toast('গলা পাওয়া গেছে। এবার “ভিডিও বানান” চাপুন।'); }); };
+    rd.onerror = function () { toast('ফাইলটা পড়া গেল না।', true); };
+    rd.readAsDataURL(f);
   });
   document.addEventListener('change', function (e) { var x = e.target; if (on() && x.getAttribute && x.getAttribute('data-bcin')) { C.v[x.getAttribute('data-bcin')] = x.type === 'checkbox' ? x.checked : x.value; if (x.getAttribute('data-bcin') === 'ideep') draw(); } });
   // a photo from the phone: made smaller in the browser (longest side 2048 px, JPEG), then sent to the Brand album
@@ -60585,6 +60651,16 @@ select.bc-in{padding-right:28px}
     }
     else if (w === 'rdel') act('rdel', 'erpBrandDeskRoutineSlot', { id: Number(id), remove: true }, function (r) { C.d.routine = r; C.redit = ''; toast('ঘরটা মুছে গেল।'); });
     else if (w === 'rreset') act('rreset', 'erpBrandDeskRoutineReset', {}, function (r) { C.d.routine = r; C.fold.rreset = false; C.redit = ''; toast('গবেষণার রুটিন ফিরে এল।'); });
+    else if (w === 'rlnew') act('rln' + id, 'erpBrandDeskReelScript', { news_id: Number(id) }, function (r) { C.d.reels = r; poll('reels'); toast('Reels-এর script লিখছে। এক-দুই মিনিটে এই খবরের নিচে আসবে।'); });
+    else if (w === 'rlfold') { C.fold['rlo' + id] = C.fold['rlo' + id] === false; draw(); }
+    else if (w === 'rlnet') { C.rln = C.rln || {}; C.rln[id] = C.rln[id] === 0 ? 1 : 0; draw(); }
+    else if (w === 'rledit') {
+      var rr = ((C.d.reels && C.d.reels.reels) || []).filter(function (q) { return String(q.id) === String(id); })[0]; if (!rr) return;
+      act('rle' + id, 'erpBrandDeskReelEdit', { id: Number(id), says: ((rr.script || {}).scenes || []).map(function (x, i) { return String(v('rls' + id + '_' + i, x.say || '')).trim(); }) }, function (r) { C.d.reels = r; toast('রাখা হলো। ভিডিও আগে বানানো থাকলে আবার বানাতে হবে।'); });
+    }
+    else if (w === 'rlphoto') { var pm = C.media['rl' + id]; if (!pm) return; if (pm.type === 'video') { toast('এখানে ছবি দিন।', true); return; } act('rlp' + id, 'erpBrandDeskReelPhoto', { id: Number(id), photo: { id: pm.id, path: pm.path } }, function (r) { C.d.reels = r; toast('শুরুর ছবি রাখা হলো।'); }); }
+    else if (w === 'rlrender') act('rlr' + id, 'erpBrandDeskReelRender', { id: Number(id), silent: t.getAttribute('data-s') === '1' }, function (r) { C.d.reels = r; poll('reels'); toast('ভিডিও বানানো শুরু হলো। ১-২ মিনিট লাগবে।'); });
+    else if (w === 'rldrafts') act('rld' + id, 'erpBrandDeskReelDrafts', { id: Number(id), platforms: RLNET.filter(function (nn) { return (C.rln || {})[nn] !== 0; }) }, function (r) { C.d.reels = r; get('drafts', true); toast(r.made ? bn(r.made) + 'টা draft পোস্ট পেজে অপেক্ষায় গেল।' : 'এই network-গুলোর draft আগে থেকেই আছে।'); });
     else if (w === 'itab') { C.itab = id; draw(); need(); }
     else if (w === 'nrun') act('nrun', 'erpBrandDeskNewsRun', {}, function (r) { C.d.news = r; poll('news'); toast('খবর পড়া শুরু হলো। ৫-১০ মিনিটে পোস্ট আসবে।'); });
     else if (w === 'nmake') act('nm' + id, 'erpBrandDeskNewsMake', { id: Number(id) }, function (r) { C.d.news = r; poll('news'); toast('এই খবরের সূত্র পড়ে পোস্ট লিখছে। কয়েক মিনিট লাগবে।'); });
