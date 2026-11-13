@@ -77,6 +77,23 @@ export async function erpBrandDeskCockpit(ctx) {
   return out;
 }
 
+// brand-15: trade news read every morning on the bridge (Bangladesh, Korea, China, Europe); 3 picked stories become a
+// fact-checked Facebook (Bangla) and LinkedIn (English) draft each, waiting for approval like every other draft
+export async function erpBrandDeskNews(ctx) {
+  await gate(ctx);
+  return bridge(ctx, '/news');
+}
+export async function erpBrandDeskNewsRun(ctx) {
+  await gate(ctx);
+  return bridge(ctx, '/news/run', {});
+}
+export async function erpBrandDeskNewsMake(ctx, payload) {
+  await gate(ctx);
+  const id = parseInt((payload || {}).id, 10);
+  if (!(id > 0)) throw new Error('Pick a news story.');
+  return bridge(ctx, '/news/make', { id });
+}
+
 // brand-13: a photo or video from the Brand album, already uploaded to Postiz by erpBrandDeskAttach
 function mediaRefs(m) {
   if (m == null) return [];
@@ -411,4 +428,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskMedia, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

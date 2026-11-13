@@ -4343,3 +4343,16 @@ visits (Umami, LinkedIn), the one-video-everywhere draft rule, English cluster n
 - People: kinds of question as tiles (tap = Listen filtered), business leads first, then one card per commenter; the add-a-contact
   form opens from a button on the phone.
 - Not done: few-shot from his own best posts (needs them); answers by voice through the journal bot.
+
+## brand-15 (13 Nov 2026): trade news ideas, B2B positioning
+- Positioning: he is an import-export trader and K-beauty wholesaler; the reader is a business (shop, online page, reseller,
+  importer, brand), never the shopper. Writer silent rule + Listen "question -> idea" prompt changed; 8 consumer skincare
+  ideas (routines, melasma, bleaching, dermatology) parked; 3 seller ideas from the same questions added.
+- Ideas page has two tabs: আমার আইডিয়া / বাণিজ্যের খবর. Bridge reads Google News every day at 07:00 Dhaka (17 searches:
+  Bangladesh duty/LC/dollar/LDC/NBR, Korea cosmetics export/K-beauty/Korea-Bangladesh, China tariff, EU tariff + 3 Bangla),
+  AI scores every headline for a BD K-beauty importer, picks 3, reads the article (googlenewsdecoder + trafilatura) and 1-2
+  more sources, writes facts with source numbers, the reasoning for Bangladesh, who gains/loses, what a business can do,
+  unknowns, a Facebook (Bangla) and a LinkedIn (English) post; a fact-check pass compares every number with the sources and
+  corrects the posts, problems show on the draft. Drafts wait for approval like any other; first reply = source links.
+- erpBrandDeskNews / NewsRun / NewsMake (owner only), tests (100 pass).
+- Not done: no paid news API (Google News RSS only); articles behind paywalls or JS can fail and are skipped.
