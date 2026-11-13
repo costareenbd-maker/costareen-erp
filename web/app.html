@@ -59124,7 +59124,7 @@ select.bc-in{padding-right:28px}
     return '<div class="mp-sel">' + (m.thumb ? '<img alt="" src="' + m.thumb + '">' : '') + '<span><b data-noi18n="1">' + esc(m.name || '') + '</b><small>' + (m.type === 'video' ? 'ভিডিও' : 'ছবি') + (m.type === 'video' && isTall(m) ? ' · খাড়া, Reels/Shorts/TikTok-এর মতো যাবে' : m.type === 'video' ? ' · আড়াআড়ি' : '') + '</small></span><button type="button" class="bc-btn ghost sm" data-bc="munpick" data-id="' + k + '">সরান</button></div>';
   }
   function pickerHtml(k) {
-    if (C.mpk !== k) return '';
+    if (String(C.mpk) !== String(k)) return '';
     var d = C.d.mlib;
     var h = '<div class="mp"><div class="mp-h"><b>Brand album থেকে বেছে নিন</b><span class="bc-sp"></span><button type="button" class="bc-btn ghost sm" data-bc="mclose">বন্ধ</button></div>';
     if (!d) return h + (C.err.mlib ? '<div class="bc-note">' + esc(C.err.mlib) + '</div>' : skel(110)) + '</div>';
@@ -59134,7 +59134,7 @@ select.bc-in{padding-right:28px}
       return '<button type="button" class="mp-i" data-bc="mpick" data-k="' + k + '" data-id="' + esc(it.id) + '"' + (busy ? ' disabled' : '') + ' title="' + esc(it.name) + '">' + (it.thumb ? '<img alt="" src="' + it.thumb + '">' : '') + (it.type === 'video' ? '<span class="ph-play">' + pi('play') + '</span>' : '') + (busy ? '<span class="mp-busy"><span class="bc-spin"></span></span>' : '') + '</button>';
     }).join('') + '</div><div class="bc-note">বাছাই করলে ছবি বা ভিডিওটা Postiz-এ উঠে যায় (বড় ভিডিওতে এক মিনিট লাগতে পারে)।</div></div>';
   }
-  function mediaButton(k) { return '<button type="button" class="bc-btn ghost" data-bc="mopen" data-id="' + k + '" aria-expanded="' + (C.mpk === k) + '">' + pi('media') + (C.media[k] ? 'বদলান' : 'ছবি/ভিডিও') + '</button>'; }
+  function mediaButton(k) { return '<button type="button" class="bc-btn ghost" data-bc="mopen" data-id="' + k + '" aria-expanded="' + (String(C.mpk) === String(k)) + '">' + pi('media') + (C.media[k] ? 'বদলান' : 'ছবি/ভিডিও') + '</button>'; }
   function measureAspect(m) { if (!m || !m.thumb || C.ar[m.asset]) return; var im = new Image(); im.onload = function () { if (im.naturalWidth) { C.ar[m.asset] = im.naturalHeight / im.naturalWidth; draw(); } }; im.src = m.thumb; }
   // a draft on the wall: its phone card, then what he can do with it
   function draftCard(x) {
@@ -59748,7 +59748,7 @@ select.bc-in{padding-right:28px}
     var t = e.target.closest && e.target.closest('[data-bc]'); if (!t || !el('bc_root') || !el('bc_root').contains(t)) return;
     var w = t.getAttribute('data-bc'), id = t.getAttribute('data-id');
     if (w === 'sec' || w === 'go') C.railMore = false;
-    if (w === 'mopen') { C.mpk = C.mpk === id ? '' : id; if (C.mpk && !C.d.mlib) { C.err.mlib = ''; get('mlib'); } draw(); return; }
+    if (w === 'mopen') { C.mpk = String(C.mpk) === String(id) ? '' : id; if (C.mpk && !C.d.mlib) { C.err.mlib = ''; get('mlib'); } draw(); return; }
     if (w === 'mclose') { C.mpk = ''; draw(); return; }
     if (w === 'munpick') { delete C.media[id]; draw(); return; }
     if (w === 'mpick') {
