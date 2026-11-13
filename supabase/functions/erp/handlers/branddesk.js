@@ -199,6 +199,20 @@ export async function erpBrandDeskReelDrafts(ctx, payload) {
   if (!platforms.length) throw new Error('Pick at least one network.');
   return bridge(ctx, '/reels/drafts', { id: reelId(p), platforms });
 }
+// brand-21: the AI chooses another album picture for a draft; how long a used picture stays in the Brand album
+export async function erpBrandDeskDraftRepick(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, id = parseInt(p.id, 10);
+  if (!(id > 0)) throw new Error('Pick a draft.');
+  const exclude = (Array.isArray(p.exclude) ? p.exclude : []).map((x) => str(x)).filter((x) => /^[0-9a-f-]{20,64}$/i.test(x)).slice(0, 40);
+  return bridge(ctx, '/drafts/repick', { id, exclude });
+}
+export async function erpBrandDeskMediaKeep(ctx, payload) {
+  await gate(ctx);
+  const days = parseInt((payload || {}).days, 10);
+  if (![0, 30, 60, 90].includes(days)) throw new Error('Pick off, 30, 60 or 90 days.');
+  return bridge(ctx, '/media/keep', { days });
+}
 export async function erpBrandDeskNewsRun(ctx) {
   await gate(ctx);
   return bridge(ctx, '/news/run', {});
@@ -572,4 +586,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskReels, erpBrandDeskReelScript, erpBrandDeskReelPhoto, erpBrandDeskReelVoice, erpBrandDeskReelEdit, erpBrandDeskReelRender, erpBrandDeskReelDrafts, erpBrandDeskRoutine, erpBrandDeskRoutineSlot, erpBrandDeskRoutineLevel, erpBrandDeskRoutineReset, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskDraftRepick, erpBrandDeskMediaKeep, erpBrandDeskReels, erpBrandDeskReelScript, erpBrandDeskReelPhoto, erpBrandDeskReelVoice, erpBrandDeskReelEdit, erpBrandDeskReelRender, erpBrandDeskReelDrafts, erpBrandDeskRoutine, erpBrandDeskRoutineSlot, erpBrandDeskRoutineLevel, erpBrandDeskRoutineReset, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

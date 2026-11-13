@@ -58792,6 +58792,50 @@ select.bc-in{padding-right:28px}
 .uc-n .bc-pl[disabled]{opacity:.35;cursor:not-allowed}
 .uc-deep{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--bc-ink-2)}
 .uc-a{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+/* brand-21: the AI's pick on a draft, used marks, the record of uses */
+.pm-why{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap;margin:8px 10px 0;font-size:13.5px;line-height:1.5;color:var(--bc-ink-2)}
+.pm-why>span:first-child{flex:1;min-width:200px}.pm-why b{color:var(--bc-ink);font-weight:600}
+.pm-why.none>span:first-child{color:#7A5A00}
+.pm-a{display:flex;gap:6px}
+.um{position:absolute;left:6px;top:6px;min-width:22px;height:22px;padding:0 5px;border-radius:999px;background:var(--bc-ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:2px;font:700 11.5px "Pretendard Variable",Pretendard,system-ui,sans-serif;box-sizing:border-box;box-shadow:0 0 0 2px #fff}
+.um svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:3}
+.um.w{min-width:14px;width:14px;height:14px;padding:0;background:var(--bc-wait)}
+.mw-p{position:relative}.um-t{font-weight:600;color:var(--bc-ink)}
+.mw-n{margin:6px 0 0;font-size:13px;line-height:1.5;color:var(--bc-ink-2)}.mw-n b{color:var(--bc-ink);font-weight:600}
+.mw-u{list-style:none;margin:8px 0 2px;padding:0;display:grid;gap:6px}
+.mw-u li{display:grid;grid-template-columns:auto auto 1fr;gap:2px 8px;align-items:center;font-size:13px}
+.mw-u li i{width:11px;height:11px;border-radius:50%;background:var(--c)}
+.mw-u li span{color:var(--bc-ink-3)}.mw-u li em{grid-column:2 / -1;font-style:normal;color:var(--bc-ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.mw-keep{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font:600 14px "Hind Siliguri",system-ui,sans-serif}
+.mw-keep .rt-note{flex-basis:100%;margin:0;font-weight:400}
+/* review fixes (impeccable finish review, 14 Nov) */
+.bc textarea::placeholder,.bc input::placeholder{color:var(--bc-ink-3)}
+.bc-vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.uc-drop label:focus-within{outline:2px solid var(--bc-ink);outline-offset:2px}
+.bc-pills button[disabled]{opacity:.5;cursor:default}
+.li-stop span{color:#fff}
+.st-net.on{background:var(--bc-ground);color:var(--bc-ink);box-shadow:inset 0 0 0 2px var(--c)}
+.st-net:not(.on){color:var(--bc-ink-3)}.st-net:not(.on) .bc-lgo{filter:grayscale(1);opacity:.6}
+.rl-sc .bc-ta,.lt-ed{field-sizing:content;resize:none;min-height:3.4em;overflow:hidden}
+.lt-ed{margin-top:10px;width:100%;box-sizing:border-box}
+.rt-bar{display:block;position:relative;height:6px;border-radius:99px;background:var(--bc-rule);margin-top:9px}
+.rt-bar i{display:block;height:100%;border-radius:99px;background:var(--bc-ink)}
+.rt-bar u{position:absolute;top:-4px;width:2px;height:14px;background:var(--bc-alert);text-decoration:none}
+.rt-short{margin:0 0 14px}
+.rt-day.today{border-top:3px solid var(--bc-ink)}
+.rt-days button.today:not(.on){box-shadow:inset 0 -3px 0 var(--bc-ink)}
+.tr-row:focus-visible,.rt-days button:focus-visible,.bc-pills button:focus-visible,.rt-dep:focus-visible{outline-offset:-2px}
+@container bc (min-width:1181px){.rt-edg{grid-template-columns:1fr}.rt-ed .lt-a .bc-btn{height:34px;padding:0 10px;font-size:13px}}
+@container bc (max-width:759px){
+  .tr-sw,.st-net,.rt-ed .bc-in,.li-add .bc-in,.tr-paste .bc-in,.tr-add .bc-in{height:44px}
+  .tr-sw.sm{min-width:52px;justify-content:center}
+  .rt-ctl .bc-pills button,.li-add .bc-pills button,.mw-keep .bc-pills button{min-height:44px;padding:0 16px;box-sizing:border-box}
+  .rt-ed .bc-btn,.lt-a .bc-btn,.lt-a .bc-btn.sm,.pm-a .bc-btn,.st-f .bc-btn,.tr-add .bc-btn,.uc-drop .bc-btn{height:44px}
+  .rl .bc-fold,.st .bc-fold,.tr-paste .bc-fold,.bq-t,.rt-chk .bc-chk{min-height:44px}
+  .rt-chk .bc-chk input{width:22px;height:22px}
+  .rt-nets{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;max-width:100%}
+  .rt-days button{border-radius:16px}}
+@container bc (max-width:520px){.tr-sc{flex-direction:column;align-items:stretch}.tr-srcs{flex-direction:column;gap:8px}.tr-sc .bc-btn{width:100%}}
 /* brand-20: news Reels panel under a news card */
 .rl{border-top:1px solid var(--bc-rule);padding:4px 18px 16px}
 .rl .bc-fold{margin-top:8px}
@@ -58801,7 +58845,7 @@ select.bc-in{padding-right:28px}
 .rl-sc{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .rl-sc li{display:grid;grid-template-columns:92px minmax(0,1fr);gap:8px;align-items:start}
 .rl-sc .bc-tag{justify-self:start;margin-top:8px}
-.rl-sc .bc-ta{min-height:0;font-size:15px;line-height:1.55}
+.rl-sc .bc-ta{font-size:15px;line-height:1.55}
 .rl-v{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;align-items:flex-start}
 .rl-v video{width:220px;max-width:100%;aspect-ratio:9/16;border-radius:14px;background:#14171C}
 .rl-v>div{flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px}
@@ -59108,7 +59152,8 @@ select.bc-in{padding-right:28px}
   var POLL = {};
   function poll(k) {
     var r = C.d[k] || {}, jobs = r.jobs || {}, ks = Object.keys(jobs), run = false;
-    if (k === 'drafts') run = ks.some(function (x) { return jobs[x].state === 'writing' || jobs[x].state === 'researching'; });
+    if (k === 'drafts') { var mj = r.mjobs || {}, pk = Object.keys(mj).some(function (x) { return mj[x].state === 'picking'; }); if (C.picking && !pk) { C.media = Object.keys(C.media).reduce(function (a, q) { if (!/^\d+$/.test(q) || (C.keepm || {})[q]) a[q] = C.media[q]; return a; }, {}); } C.picking = pk;
+      run = pk || ks.some(function (x) { return jobs[x].state === 'writing' || jobs[x].state === 'researching'; }); }
     if (k === 'listen') run = ks.some(function (x) { return jobs[x].state === 'reading'; });
     if (k === 'reels') run = ks.some(function (x) { return /^(writing|drawing|joining)$/.test(jobs[x].state); });
     if (k === 'styles') run = ks.some(function (x) { return /^(reading|scouting)$/.test(jobs[x].state); });
@@ -59440,11 +59485,22 @@ select.bc-in{padding-right:28px}
     var items = d.items || [];
     if (!items.length) return h + '<div class="bc-note">' + esc(d.note || 'Brand album এখনো খালি। ফোনের Immich app-এ বা G:\\Brand-upload-এ রাখুন।') + '</div></div>';
     return h + '<div class="mp-g">' + items.map(function (it) { var busy = C.busy['at' + it.id];
-      return '<button type="button" class="mp-i" data-bc="mpick" data-k="' + k + '" data-id="' + esc(it.id) + '"' + (busy ? ' disabled' : '') + ' title="' + esc(it.name) + '">' + (it.thumb ? '<img alt="" src="' + it.thumb + '">' : '') + (it.type === 'video' ? '<span class="ph-play">' + pi('play') + '</span>' : '') + (busy ? '<span class="mp-busy"><span class="bc-spin"></span></span>' : '') + '</button>';
+      return '<button type="button" class="mp-i" data-bc="mpick" data-k="' + k + '" data-id="' + esc(it.id) + '"' + (busy ? ' disabled' : '') + ' title="' + esc(it.name) + '">' + (it.thumb ? '<img alt="" src="' + it.thumb + '">' : '') + (it.type === 'video' ? '<span class="ph-play">' + pi('play') + '</span>' : '') + usedMark(it) + (busy ? '<span class="mp-busy"><span class="bc-spin"></span></span>' : '') + '</button>';
     }).join('') + '</div><div class="bc-note">বাছাই করলে ছবি বা ভিডিওটা Postiz-এ উঠে যায় (বড় ভিডিওতে এক মিনিট লাগতে পারে)।</div></div>';
   }
+  function usedN(it) { return (it.uses || []).filter(function (u) { return u.posted; }).length; }
+  function usedMark(it) { var n = usedN(it), w = (it.uses || []).length - n; return n ? '<span class="um" title="ব্যবহার হয়েছে">' + svg('check') + (n > 1 ? '×' + bn(n) : '') + '</span>' : w ? '<span class="um w" title="একটা লেখায় লাগানো আছে"></span>' : ''; }
   function mediaButton(k) { return '<button type="button" class="bc-btn ghost" data-bc="mopen" data-id="' + k + '" aria-expanded="' + (String(C.mpk) === String(k)) + '">' + pi('media') + (C.media[k] ? 'বদলান' : 'ছবি/ভিডিও') + '</button>'; }
   function measureAspect(m) { if (!m || !m.thumb || C.ar[m.asset]) return; var im = new Image(); im.onload = function () { if (im.naturalWidth) { C.ar[m.asset] = im.naturalHeight / im.naturalWidth; draw(); } }; im.src = m.thumb; }
+  // brand-21: why the AI chose this picture (or that nothing fitted), and the two ways to change it
+  function pickBusy(id) { var j = (C.d.drafts && C.d.drafts.mjobs) || {}; return Object.keys(j).some(function (k) { return j[k].state === 'picking' && String(j[k].draft) === String(id); }); }
+  function pickWhy(x) {
+    var id = x.id, m = C.media[id], auto = m && x.media && x.media.auto && m.id === x.media.id;
+    if (pickBusy(id)) return '<p class="pm-why"><span class="bc-spin"></span>AI অন্য ছবি খুঁজছে…</p>';
+    if (!x.media_why || (m && !auto)) return '';
+    return '<div class="pm-why' + (m ? '' : ' none') + '"><span>' + (m ? '<b>AI বেছেছে:</b> ' : '') + '<span data-noi18n="1">' + esc(x.media_why) + '</span></span>' +
+      '<span class="pm-a">' + btn(m ? 'অন্য ছবি' : 'আবার খুঁজুন', 'data-bc="repick" data-id="' + id + '"', 'sm', 'rp' + id) + '<button type="button" class="bc-btn ghost sm" data-bc="mopen" data-id="' + id + '">নিজে বাছুন</button></span></div>';
+  }
   // a draft on the wall: its phone card, then what he can do with it
   function draftCard(x) {
     if (x.media && !C.media[x.id] && x.media.path) C.media[x.id] = { id: x.media.id, path: x.media.path, type: x.media.type || 'image', name: x.media.name || '', asset: x.media.asset || '', thumb: x.media.type === 'video' ? '' : x.media.path };
@@ -59465,7 +59521,7 @@ select.bc-in{padding-right:28px}
     h += '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : btn(svg('copy') + 'লেখা কপি', 'data-bc="copy" data-id="' + id + '"', 'dark', '')) + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
       '<button type="button" class="bc-btn ghost" data-bc="pedit" data-id="' + id + '" aria-pressed="' + !!editing + '">' + (editing ? 'লেখা হয়ে গেছে' : 'লেখা বদলান') + '</button>' + mediaButton(id) + '</div>';
     h = h.replace(/<\/div>$/, '');
-    h += '<button type="button" class="bc-btn ghost" data-bc="more" data-id="' + id + '" aria-expanded="' + !!C.open[id] + '">আরও' + svg('right') + '</button></div>' + mediaChip(id) + pickerHtml(id);
+    h += '<button type="button" class="bc-btn ghost" data-bc="more" data-id="' + id + '" aria-expanded="' + !!C.open[id] + '">আরও' + svg('right') + '</button></div>' + mediaChip(id) + pickWhy(x) + pickerHtml(id);
     if (C.open[id]) {
       var c = C.cards[id];
       h += '<div class="bc-more"><div class="bc-lbl" style="margin-top:0">কখন যাবে</div><div class="ph-when">' + whenHtml('a' + id) + '</div><div class="bc-row">' + (mine.length ? '<button type="button" class="bc-btn sm" data-bc="copy" data-id="' + id + '">' + svg('copy') + 'লেখা কপি</button> ' : '') + btn(c && c.state === 'making' ? 'ছবি বানাচ্ছি…' : 'carousel আর quote ছবি বানান', 'data-bc="cards" data-id="' + id + '"', 'sm', '', c && c.state === 'making') + '</div>' +
@@ -59892,10 +59948,15 @@ select.bc-in{padding-right:28px}
     var h = '<div class="bc-h2" style="margin-top:4px"><h2>Brand album</h2><span>' + bn(items.length - nV) + 'টা ছবি' + (nV ? ', ' + bn(nV) + 'টা ভিডিও' : '') + ' · ফোনের Immich থেকে</span></div><div class="mw">';
     h += items.map(function (it) {
       var big = C.mview === it.id;
-      return '<figure class="mw-i' + (big ? ' big' : '') + '"><button type="button" class="mw-p" data-bc="mview" data-id="' + esc(it.id) + '" aria-expanded="' + big + '" title="' + esc(it.name || '') + '">' + (it.thumb ? '<img alt="" loading="lazy" src="' + it.thumb + '">' : '<span class="ph-media">' + pi('media') + '</span>') + (it.type === 'video' ? '<span class="ph-play">' + pi('play') + '</span>' : '') + '</button>' +
-        '<figcaption><span data-noi18n="1">' + esc(it.name || '') + '</span><small>' + (it.type === 'video' ? 'ভিডিও' + (it.duration ? ' · ' + secs(it.duration) : '') : 'ছবি') + (it.at ? ' · ' + ago(it.at) : '') + '</small>' + btn('পোস্টে লাগান', 'data-bc="mpost" data-id="' + esc(it.id) + '"', 'sm', 'mp' + it.id) + '</figcaption></figure>';
+      return '<figure class="mw-i' + (big ? ' big' : '') + '"><button type="button" class="mw-p" data-bc="mview" data-id="' + esc(it.id) + '" aria-expanded="' + big + '" title="' + esc(it.name || '') + '">' + (it.thumb ? '<img alt="" loading="lazy" src="' + it.thumb + '">' : '<span class="ph-media">' + pi('media') + '</span>') + (it.type === 'video' ? '<span class="ph-play">' + pi('play') + '</span>' : '') + usedMark(it) + '</button>' +
+        '<figcaption><span data-noi18n="1">' + esc(it.name || '') + '</span><small>' + (it.type === 'video' ? 'ভিডিও' + (it.duration ? ' · ' + secs(it.duration) : '') : 'ছবি') + (it.at ? ' · ' + ago(it.at) : '') + (usedN(it) ? ' · <b class="um-t">' + bn(usedN(it)) + ' বার ব্যবহার</b>' : '') + '</small>' +
+        (big ? (it.note ? '<p class="mw-n"><b>AI যা দেখেছে:</b> <span data-noi18n="1">' + esc(it.note) + '</span></p>' : '<p class="mw-n">AI এখনো ছবিটা দেখেনি; আধা ঘণ্টার মধ্যে দেখে নেবে।</p>') +
+          ((it.uses || []).length ? '<ul class="mw-u">' + it.uses.map(function (u) { var ud = new Date(u.at); return '<li style="--c:' + netCol(u.platform) + '"><i></i><b>' + esc(netName(u.platform)) + '</b><span>' + (isNaN(ud) ? '' : dDate(ud)) + (u.posted ? '' : ' · অনুমোদনের অপেক্ষায়') + '</span><em data-noi18n="1">' + esc(u.hook || '') + '</em></li>'; }).join('') + '</ul>' : '<p class="mw-n">এখনো কোনো পোস্টে যায়নি।</p>') : '') +
+        btn('পোস্টে লাগান', 'data-bc="mpost" data-id="' + esc(it.id) + '"', 'sm', 'mp' + it.id) + '</figcaption></figure>';
     }).join('');
-    return h + '</div>';
+    var kd = d.keep_days == null ? 30 : d.keep_days;
+    return h + '</div><div class="mw-keep"><span>ব্যবহারের পর album থেকে সরিয়ে রাখা</span><div class="bc-pills" role="group" aria-label="ব্যবহারের পর সরিয়ে রাখা">' + [[0, 'বন্ধ'], [30, '৩০ দিন'], [60, '৬০ দিন'], [90, '৯০ দিন']].map(function (o) { return '<button type="button" data-bc="mkeep" data-id="' + o[0] + '" aria-pressed="' + (kd === o[0]) + '"' + (kd === o[0] ? ' class="on"' : '') + (C.busy.mkeep ? ' disabled' : '') + '>' + o[1] + '</button>'; }).join('') + '</div>' +
+      '<p class="rt-note">ব্যবহার হওয়া ছবি এই সময়ের পর Immich-এর “Brand used” album-এ সরে যায়, যাতে বাছাইয়ের তালিকা পরিষ্কার থাকে। কিছুই মোছা হয় না; “Brand”-এ ফিরিয়ে আনলে আবার কাজে লাগবে।</p></div>';
   }
   function isLead(c) { return !!c.lead_kind && c.lead_kind !== 'none' && c.lead_kind !== 'retail_buyer'; }
   function ytFeed(list, biz) {
@@ -60104,7 +60165,7 @@ select.bc-in{padding-right:28px}
   // ---------- brand-17: লেখার ধরন (Train) - a switchboard of the lines: which learned style each network writes in
   var SNETS = ['facebook', 'linkedin', 'instagram', 'youtube', 'tiktok', 'threads'];
   function styleOn(net) { var d = C.d.styles; if (!d || d.off) return null; return (d.profiles || []).filter(function (p) { return p.status === 'active' && (p.platforms || []).indexOf(net) >= 0; })[0] || null; }
-  function bigN(n) { n = Number(n || 0); return n >= 1e6 ? bn((n / 1e6).toFixed(n >= 1e7 ? 0 : 1)) + 'M' : n >= 1e3 ? bn(Math.round(n / 1e3)) + 'K' : bn(n); }
+  function bigN(n) { n = Number(n || 0); return n >= 1e7 ? bn((n / 1e7).toFixed(n >= 1e8 ? 0 : 1)) + ' কোটি' : n >= 1e5 ? bn((n / 1e5).toFixed(n >= 1e6 ? 0 : 1)) + ' লাখ' : n >= 1e3 ? bn(Math.round(n / 1e3)) + ' হাজার' : bn(n); }
   function stSource(e) {
     if (!e) return '';
     var bits = [];
@@ -60158,7 +60219,7 @@ select.bc-in{padding-right:28px}
     var mf = !!C.fold.tmore;
     h += '<section class="tr-paste" id="bc_tpaste"><div class="bc-h2"><h2>নতুন লেখা শেখান</h2><span>বিষয় যা-ই হোক; শুধু কীভাবে লেখা, সেটা শিখবে</span></div>' +
       ta('stx', 'যে লেখাটা ভালো লেগেছে, পুরোটা এখানে পেস্ট করুন। কারো পোস্ট, কোনো লেখকের লেখা, যেকোনো বিষয়।', '', ' rows="7" aria-label="যে লেখা ভালো লেগেছে"') +
-      '<button type="button" class="bc-fold' + (mf ? ' on' : '') + '" data-bc="fold" data-id="tmore">' + svg('right') + 'কোথা থেকে, কত reaction (না দিলেও চলবে)</button>' +
+      '<button type="button" class="bc-fold' + (mf ? ' on' : '') + '" data-bc="fold" data-id="tmore">' + svg('right') + 'কোথা থেকে, কত reaction</button>' +
       (mf ? '<div class="tr-meta"><label><span class="bc-lbl">কোন network</span><select class="bc-in" id="bci_stp" data-bcin="stp"><option value="">জানি না</option>' + SNETS.map(function (n) { return '<option value="' + n + '"' + (v('stp') === n ? ' selected' : '') + '>' + netName(n) + '</option>'; }).join('') + '</select></label>' +
         '<label><span class="bc-lbl">কার লেখা</span>' + inp('sta', 'নাম') + '</label><label class="w2"><span class="bc-lbl">লিংক</span>' + inp('stu', 'https://…', '', 'url') + '</label>' +
         '<label><span class="bc-lbl">reaction</span>' + inp('str', '০', ' inputmode="numeric"') + '</label><label><span class="bc-lbl">share</span>' + inp('sts', '০', ' inputmode="numeric"') + '</label>' +
@@ -60197,7 +60258,7 @@ select.bc-in{padding-right:28px}
     if (t.state === 'failed') return h + '<div class="bc-call"><span>' + esc(t.error || 'লেখা গেল না।') + '</span><span class="bc-sp"></span>' + btn('আবার লিখুন', 'data-bc="limark" data-id="' + t.id + '" data-s="redo"', 'sm', 'lm' + t.id) + btn('বাদ দিন', 'data-bc="limark" data-id="' + t.id + '" data-s="skipped"', 'ghost sm', 'lx' + t.id) + '</div></article>';
     if (t.state === 'sent') return h + '<p class="lt-done">' + (t.done_at ? dDate(new Date(t.done_at)) + '-এ পাঠিয়েছেন' : 'পাঠিয়েছেন') + '</p><div class="lt-a">' + btn(svg('check') + 'গ্রহণ করেছে', 'data-bc="limark" data-id="' + t.id + '" data-s="accepted"', 'sm', 'lm' + t.id) + '</div></article>';
     if (t.state !== 'todo') return h + '<p class="lt-done">' + ({ done: 'পোস্ট করেছেন', accepted: 'গ্রহণ করেছে', skipped: 'বাদ দিয়েছেন' }[t.state] || '') + '</p></article>';
-    h += '<textarea class="ph-ed lt-ed" id="bci_' + key + '" data-bcin="' + key + '" data-noi18n="1" rows="' + Math.min(9, Math.max(3, Math.ceil(String(txt).length / 42))) + '" aria-label="AI-র লেখা">' + esc(txt) + '</textarea>';
+    h += '<textarea class="bc-ta lt-ed" id="bci_' + key + '" data-bcin="' + key + '" data-noi18n="1" rows="3" aria-label="AI-র লেখা">' + esc(txt) + '</textarea>';
     if (k === 'connect') h += '<div class="lt-len' + (String(txt).length > 200 ? ' x' : '') + '">' + bn(String(txt).length) + '/২০০</div>';
     var fl = (t.flags || []).filter(function (f) { return f && (f.reason || f.tell); });
     if (fl.length) h += '<p class="lt-flag">' + fl.map(function (f) { return esc(f.reason || f.tell); }).join(' · ') + '</p>';
@@ -60228,7 +60289,7 @@ select.bc-in{padding-right:28px}
     // add form
     var kk = C.lk || 'comment';
     h += '<section class="li-add"><div class="bc-h2"><h2>নতুন কাজ</h2><span>' + (L.apify ? 'লিংক দিলেই পোস্টটা পড়ে নেবে' : 'ওঁদের লেখা পেস্ট করুন') + '</span></div>' +
-      '<div class="bc-pills" role="tablist">' + LIK.map(function (q) { return '<button type="button" role="tab" data-bc="lik" data-id="' + q[0] + '"' + (kk === q[0] ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + q[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="bc-pills" role="group" aria-label="কাজের ধরন">' + LIK.map(function (q) { return '<button type="button" data-bc="lik" data-id="' + q[0] + '"' + (kk === q[0] ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + q[1] + '</button>'; }).join('') + '</div>' +
       '<div class="li-f"><label><span class="bc-lbl">কার</span>' + inp('lnm', 'নাম', ' autocomplete="off"') + '</label><label class="w2"><span class="bc-lbl">লিংক</span>' + inp('lurl', 'https://www.linkedin.com/…', '', 'url') + '</label></div>' +
       '<span class="bc-lbl">' + ({ comment: 'ওঁদের পোস্ট', reply: 'আপনার পোস্টে ওঁদের কমেন্ট', connect: 'ওঁদের সম্পর্কে (কী লিখেছেন, কী করেন)', dm: 'ওঁরা কী করেছেন (কমেন্ট, লাইক, গ্রহণ)' }[kk]) + '</span>' +
       ta('lctx', 'এখানে পেস্ট করুন', '', ' rows="4"') +
@@ -60258,46 +60319,50 @@ select.bc-in{padding-right:28px}
       rsel('r_fmt', Object.keys(RFMT).map(function (k) { return [k, RFMT[k]]; }), 'কী ধরনের') +
       rsel('r_pil', [['', 'ঠিক করা নেই']].concat(Object.keys(RPIL).map(function (k) { return [k, RPIL[k][0]]; })), 'বিষয়') +
       rsel('r_lvl', RLV, 'কোন পরিকল্পনা থেকে') + '</div>' +
-      '<label><span class="bc-lbl">কী নিয়ে (নিজের জন্য টোকা)</span>' + inp('r_tp', 'যেমন: supplier-এর কাছে যাওয়া') + '</label>' +
+      '<label><span class="bc-lbl">কী নিয়ে</span>' + inp('r_tp', 'নিজের জন্য টোকা, যেমন: supplier-এর কাছে যাওয়া') + '</label>' +
       '<div class="rt-chk"><label class="bc-chk"><input type="checkbox" data-bcin="r_face"' + (C.v.r_face ? ' checked' : '') + '>আপনার মুখ থাকবে</label>' +
       '<label class="bc-chk"><input type="checkbox" data-bcin="r_on"' + (C.v.r_on === false ? '' : ' checked') + '>চালু</label></div>' +
-      '<div class="lt-a">' + btn(svg('check') + (isNew ? 'ঘরটা যোগ করুন' : 'রাখুন'), 'data-bc="rsave"', 'dark', 'rsave') + (isNew ? '' : btn('মুছে দিন', 'data-bc="rdel" data-id="' + x.id + '"', 'ghost', 'rdel')) + btn('থাক', 'data-bc="rclose"', 'ghost', '') + '</div></div>';
+      '<div class="lt-a">' + btn(svg('check') + (isNew ? 'ঘরটা যোগ করুন' : 'রাখুন'), 'data-bc="rsave"', 'dark', 'rsave') + (isNew ? '' : (C.fold['rdel' + x.id] ? '' : '<button type="button" class="bc-btn ghost" data-bc="fold" data-id="rdel' + x.id + '">মুছে দিন</button>')) + btn('বন্ধ করুন', 'data-bc="rclose"', 'ghost', '') + '</div>' +
+      (!isNew && C.fold['rdel' + x.id] ? '<div class="bc-call" style="margin-top:10px"><span>ঘরটা মুছে যাবে। নিশ্চিত?</span><span class="bc-sp"></span>' + btn('হ্যাঁ, মুছুন', 'data-bc="rdel" data-id="' + x.id + '"', 'red sm', 'rdel') + '<button type="button" class="bc-btn ghost sm" data-bc="fold" data-id="rdel' + x.id + '">না</button></div>' : '') + '</div>';
   }
   function routineHtml() {
     var g = gate(['routine']); if (g) return headHtml('রুটিন', '') + g;
     var d = C.d.routine, st = d.status || {}, lvl = st.level || 2, eff = st.effective || lvl, fills = d.fills || {}, slots = d.slots || [];
     if (C.rday == null) C.rday = (new Date().getDay() + 1) % 7;
     if (!C.rp) { C.rp = {}; RNET.forEach(function (n) { C.rp[n] = 1; }); }
-    var h = headHtml('রুটিন', 'কোন দিন, কখন, কোথায়, কী যাবে', btn(svg('plus') + 'নতুন ঘর', 'data-bc="rnew"', 'dark', ''));
+    var h = headHtml('রুটিন', 'কোন দিন, কখন, কোথায়, কী যাবে', btn(svg('plus') + 'ঘর যোগ করুন', 'data-bc="rnew"', 'dark', ''));
     // backup status: the stock of photos, what is queued, and whether the week stepped down
     var need = st.need || {}, have = st.have || {}, shortP = have.photos != null && have.photos < need.photos, shortV = have.videos != null && have.videos < need.videos;
-    h += '<div class="rt-st' + (eff < lvl ? ' down' : '') + '">' + (eff < lvl ? '<p><b>এ সপ্তাহে হালকা পরিকল্পনা চলছে।</b> ছবি আর লাইনের পোস্ট দুটোই কম, তাই নতুন লেখা শুধু হালকা পরিকল্পনার ঘরে বসছে। ছবি এলে নিজে থেকে ' + RLV[lvl - 1][1] + '-তে ফিরবে।</p>' : '') +
+    var stH = '<div class="rt-st' + (eff < lvl ? ' down' : '') + '">' + (eff < lvl ? '<p><b>এ সপ্তাহে হালকা পরিকল্পনা চলছে।</b> ছবি আর লাইনের পোস্ট দুটোই কম, তাই নতুন লেখা শুধু হালকা পরিকল্পনার ঘরে বসছে। ছবি এলে নিজে থেকে ' + RLV[lvl - 1][1] + '-তে ফিরবে।</p>' : '') +
       '<ul><li class="' + (shortP ? 'lo' : '') + '"><b>' + (have.photos == null ? '—' : bn(have.photos)) + '<small>/' + bn(need.photos || 0) + '</small></b><span>নতুন ছবি album-এ / সপ্তাহে দরকার</span></li>' +
       '<li class="' + (shortV ? 'lo' : '') + '"><b>' + (have.videos == null ? '—' : bn(have.videos)) + '<small>/' + bn(need.videos || 0) + '</small></b><span>নতুন ভিডিও / সপ্তাহে দরকার</span></li>' +
       '<li><b>' + bn(st.ahead || 0) + '</b><span>অনুমোদিত পোস্ট সামনের ২ সপ্তাহে</span></li><li><b>' + bn(st.waiting || 0) + '</b><span>লেখা আপনার অপেক্ষায়</span></li></ul>' +
       (shortP || shortV ? '<p>' + (shortP ? 'ছবি কম: ছবির ঘরে লেখা বা খবর বসবে, নকল ছবি কখনো নয়। ' : '') + (shortV ? 'ভিডিও কম: Reels-এর ঘর ফাঁকা থাকবে। ' : '') + 'একবার বাইরে গিয়ে ১০টা ছবি আর ৩টা ভিডিও তুলে Brand album-এ রাখলে ২-৩ সপ্তাহ চলে।</p>' : '') + '</div>';
     // the model: target share and what the routine really holds (Facebook, the plan in use)
     var fb = slots.filter(function (x) { return x.active && x.platform === 'facebook' && x.pillar && x.level <= lvl; }), faceN = fb.filter(function (x) { return x.face; }).length;
-    h += '<div class="rt-pil">' + Object.keys(RPIL).map(function (k) {
+    var pilH = '<div class="rt-pil">' + Object.keys(RPIL).map(function (k) {
       var n = fb.filter(function (x) { return x.pillar === k; }).length, pc = fb.length ? Math.round(100 * n / fb.length) : 0;
-      return '<div><b>' + bn(pc) + '%</b><small>লক্ষ্য ' + bn(RPIL[k][1]) + '%</small><strong>' + RPIL[k][0] + '</strong><span>' + RPIL[k][2] + ' · ' + bn(n) + 'টা</span><i style="width:' + Math.min(100, pc / 45 * 100) + '%"></i></div>';
+      return '<div><b>' + bn(pc) + '%</b><small>লক্ষ্য ' + bn(RPIL[k][1]) + '%</small><strong>' + RPIL[k][0] + '</strong><span>' + RPIL[k][2] + ' · ' + bn(n) + 'টা</span><span class="rt-bar"><i style="width:' + Math.min(100, pc) + '%"></i><u style="left:' + RPIL[k][1] + '%" title="লক্ষ্য"></u></span></div>';
     }).join('') + '</div><p class="rt-note">Facebook-এ সপ্তাহে ' + bn(fb.length) + 'টা পোস্ট, তার ' + bn(faceN) + 'টায় আপনার মুখ। শতাংশগুলো শুরুর অনুমান; কোনো গবেষণা কোনো অনুপাত প্রমাণ করেনি।</p>';
+    var today = (new Date().getDay() + 1) % 7;
+    if (eff < lvl || shortP || shortV) h += '<div class="bc-wait calm rt-short"><p>' + (eff < lvl ? 'এ সপ্তাহে হালকা পরিকল্পনা চলছে' : 'এ সপ্তাহে জোগান কম') + '<small>ছবি ' + (have.photos == null ? '—' : bn(have.photos)) + '/' + bn(need.photos || 0) + ' · ভিডিও ' + (have.videos == null ? '—' : bn(have.videos)) + '/' + bn(need.videos || 0) + '</small></p><span class="bc-sp"></span><button type="button" class="bc-btn sm" data-bc="jump" data-id="bc_rtst">বিস্তারিত</button></div>';
     // controls
     h += '<div class="rt-ctl"><div class="bc-pills" role="group" aria-label="পরিকল্পনা">' + RLV.map(function (l) { return '<button type="button" data-bc="rlvl" data-id="' + l[0] + '"' + (lvl === l[0] ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + (C.busy.rlvl ? ' disabled' : '') + '>' + l[1] + '</button>'; }).join('') + '</div>' +
       '<div class="rt-nets">' + RNET.map(function (n) { return '<button type="button" class="st-net' + (C.rp[n] ? ' on' : '') + '" style="--c:' + netCol(n) + '" aria-pressed="' + !!C.rp[n] + '" data-bc="rplat" data-id="' + n + '">' + logo(n, 14) + esc(netName(n)) + '</button>'; }).join('') + '</div></div>';
     if (C.redit === 'new') h += '<section class="rt-new"><div class="bc-h2"><h2>নতুন ঘর</h2><span>যেকোনো দিন, যেকোনো সময়</span></div>' + rEditor(null) + '</section>';
     var show = slots.filter(function (x) { return C.rp[x.platform] && (x.level <= lvl || C.redit === String(x.id)); });
-    h += '<div class="rt-days" role="group" aria-label="দিন">' + RDAY.map(function (dn, i) { var n = show.filter(function (x) { return x.dow === i && x.active; }).length; return '<button type="button" data-bc="rday" data-id="' + i + '"' + (C.rday === i ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + dn[0] + '<small>' + bn(n) + '</small></button>'; }).join('') + '</div>';
+    h += '<div class="rt-days" role="group" aria-label="দিন">' + RDAY.map(function (dn, i) { var n = show.filter(function (x) { return x.dow === i && x.active; }).length; return '<button type="button" data-bc="rday" data-id="' + i + '" aria-label="' + dn[1] + ', ' + bn(n) + 'টা"' + (C.rday === i ? ' class="on' + (i === today ? ' today' : '') + '" aria-pressed="true"' : (i === today ? ' class="today"' : '') + ' aria-pressed="false"') + '>' + dn[0] + '<small>' + (i === today ? 'আজ · ' : '') + bn(n) + '</small></button>'; }).join('') + '</div>' +
+      (RNET.some(function (nn) { return C.rp[nn]; }) ? '' : '<p class="tr-empty">কোনো network বাছা নেই। উপরে একটা বেছে নিন।</p>');
     var BANDS = ['সকাল', 'দুপুর ও বিকেল', 'রাত'];
     h += '<div class="rt-week">' + RDAY.map(function (dn, i) {
-      var items = show.filter(function (x) { return x.dow === i; }), col = '<section class="rt-day' + (C.rday === i ? ' cur' : '') + (i === 6 ? ' off' : '') + '"><header><b>' + dn[1] + '</b>' + (i === 6 ? '<span class="bc-tag w">ছুটির দিন</span>' : '') + '</header>';
+      var items = show.filter(function (x) { return x.dow === i; }), col = '<section class="rt-day' + (C.rday === i ? ' cur' : '') + (i === 6 ? ' off' : '') + (i === today ? ' today' : '') + '"><header><b>' + dn[1] + '</b>' + (i === today ? '<span class="bc-tag lead">আজ</span>' : '') + (i === 6 ? '<span class="bc-tag">ছুটির দিন</span>' : '') + '</header>';
       for (var b = 0; b < 3; b++) {
         var bi = items.filter(function (x) { return rpart(x.at) === b; });
         col += '<div class="rt-band"><h3>' + BANDS[b] + '</h3>' + (bi.length ? '' : '<p class="rt-none">' + (i === 6 && b === 1 ? 'জুমার সময় ফাঁকা' : 'কিছু নেই') + '</p>');
         bi.forEach(function (x) {
           var f = fills[x.id], op = C.redit === String(x.id);
           col += '<button type="button" class="rt-dep' + (x.active ? '' : ' cut') + '" style="--c:' + netCol(x.platform) + '" data-bc="redit" data-id="' + x.id + '" aria-expanded="' + op + '"><time>' + rtime(x.at) + '</time><span class="f">' + (RFMT[x.format] || x.format) + '</span>' +
-            '<span class="p">' + esc(netName(x.platform)) + (x.pillar && RPIL[x.pillar] ? ' <em>· ' + RPIL[x.pillar][0] + '</em>' : '') + (x.face ? ' <em>·</em> <b>মুখ</b>' : '') + '</span>' +
+            '<span class="p">' + esc(netName(x.platform)) + (x.pillar && RPIL[x.pillar] ? ' <em>· ' + RPIL[x.pillar][0] + '</em>' : '') + (x.face ? ' <em>·</em> <b>মুখ</b>' : '') + (x.active ? '' : ' <em>· বন্ধ</em>') + '</span>' +
             (f && f.draft ? '<span class="fill' + (f.state === 'approved' ? ' ok' : '') + '" data-noi18n="1">' + (f.state === 'approved' ? 'যাবে: ' : 'অপেক্ষায়: ') + esc(f.hook) + '</span>' : '') + '</button>';
           if (op) col += (x.topic_bn ? '<p class="rt-tp">কী নিয়ে: ' + esc(x.topic_bn) + '</p>' : '') + rEditor(x);
         });
@@ -60305,6 +60370,7 @@ select.bc-in{padding-right:28px}
       }
       return col + '</section>';
     }).join('') + '</div>';
+    h += '<div class="bc-block" id="bc_rtst"><div class="bc-h2"><h2>এ সপ্তাহের জোগান</h2><span>ছবি, ভিডিও আর লাইনে থাকা লেখা</span></div>' + stH + '</div><div class="bc-block"><div class="bc-h2"><h2>বিষয়ের ভাগ</h2><span>দাগটা লক্ষ্য, কালো দাগ এখন যা আছে</span></div>' + pilH + '</div>';
     h += '<div class="rt-foot"><p class="rt-note">সময়গুলো বড় গবেষণা আর বাংলাদেশের দোকান বন্ধের সময় (রাত ৮টা) থেকে নেওয়া; কোন বারে কী যাবে তা শুরুর খসড়া। নতুন লেখা নিজে থেকে পরের ফাঁকা মানানসই ঘরের সময় পায়; পোস্ট পেজে সেটা বদলানো যায়। Story, Live আর LinkedIn-এর কমেন্ট আপনি নিজের হাতে দেন; এই তালিকা সেগুলোর জন্য মনে করিয়ে দেওয়া।</p>' +
       (C.fold.rreset ? '<div class="bc-call"><span>আপনার সব বদল মুছে গবেষণার রুটিনে ফিরে যাবে। নিশ্চিত?</span><span class="bc-sp"></span>' + btn('হ্যাঁ, ফিরিয়ে দিন', 'data-bc="rreset"', 'red sm', 'rreset') + btn('না', 'data-bc="fold" data-id="rreset"', 'ghost sm', '') + '</div>' : '<button type="button" class="bc-btn ghost" data-bc="fold" data-id="rreset">গবেষণার রুটিনে ফিরে যান</button>') + '</div>';
     return h;
@@ -60330,13 +60396,13 @@ select.bc-in{padding-right:28px}
     h += '<div class="rl-g"><section><h4>১. যা পড়বেন <small>প্রায় ' + bn(Math.round(words / 2.3)) + ' সেকেন্ড · ' + bn(sc.length) + 'টা দৃশ্য</small></h4>' +
       '<ol class="rl-sc">' + sc.map(function (x, i) {
         var what = { hook: 'শুরু: আপনার ছবি', number: 'সংখ্যা', bars: 'chart', compare: 'তুলনা', text: 'লেখা', outro: 'শেষ' }[x.type] || '';
-        return '<li><span class="bc-tag">' + what + '</span><textarea class="bc-ta" data-bcin="rls' + id + '_' + i + '" id="bci_rls' + id + '_' + i + '" data-noi18n="1" rows="' + Math.min(7, Math.max(2, Math.ceil(String(v('rls' + id + '_' + i, x.say || '')).length / 30))) + '" aria-label="দৃশ্য ' + bn(i + 1) + '-এ যা বলবেন">' + esc(v('rls' + id + '_' + i, x.say || '')) + '</textarea></li>';
+        return '<li><span class="bc-tag">' + what + '</span><textarea class="bc-ta" data-bcin="rls' + id + '_' + i + '" id="bci_rls' + id + '_' + i + '" data-noi18n="1" rows="2" aria-label="দৃশ্য ' + bn(i + 1) + '-এ যা বলবেন">' + esc(v('rls' + id + '_' + i, x.say || '')) + '</textarea></li>';
       }).join('') + '</ol><div class="lt-a">' + btn('বদল রাখুন', 'data-bc="rledit" data-id="' + id + '"', 'sm', 'rle' + id) +
       '<button type="button" class="bc-btn ghost sm" data-bc="tcopy" data-t="' + esc(sc.map(function (x) { return x.say; }).join('\n\n')) + '">' + svg('copy') + 'পুরোটা কপি</button></div></section>';
     h += '<section><h4>২. শুরুর ছবি <small>প্রথম ৩ সেকেন্ডে আপনি</small></h4>' + (ph ? mediaChip(k) : '<div class="uc-drop">' + mediaButton(k) + '<span class="bc-sub">Brand album থেকে আপনার একটা ছবি। না দিলে শুধু লেখা দিয়ে শুরু হবে।</span></div>') + pickerHtml(k) +
       (C.media[k] && (!r.photo || r.photo.id !== C.media[k].id) ? '<div class="lt-a">' + btn('এই ছবিটা রাখুন', 'data-bc="rlphoto" data-id="' + id + '"', 'sm', 'rlp' + id) + '</div>' : '') +
-      '<h4 style="margin-top:16px">৩. আপনার গলা <small>ফোনে script-টা পড়ে record করুন</small></h4>' +
-      '<div class="uc-drop"><label class="bc-btn' + (r.voice ? '' : ' dark') + (C.busy['rlv' + id] ? ' is-busy' : '') + '">' + (C.busy['rlv' + id] ? '<span class="bc-spin"></span>তুলছি…' : (r.voice ? 'আবার record দিন' : 'record করা গলা দিন')) + '<input type="file" accept="audio/*,video/mp4,video/webm" data-bcvoice="' + id + '" hidden' + (C.busy['rlv' + id] ? ' disabled' : '') + '></label>' +
+      '<h4 style="margin-top:16px">৩. আপনার গলা</h4>' +
+      '<div class="uc-drop"><label class="bc-btn' + (r.voice ? '' : ' dark') + (C.busy['rlv' + id] ? ' is-busy' : '') + '">' + (C.busy['rlv' + id] ? '<span class="bc-spin"></span>তুলছি…' : (r.voice ? 'আবার record দিন' : 'record করা গলা দিন')) + '<input type="file" class="bc-vh" accept="audio/*,video/mp4,video/webm" data-bcvoice="' + id + '"' + (C.busy['rlv' + id] ? ' disabled' : '') + '></label>' +
       '<span class="bc-sub">' + (r.voice ? (r.voice_ai ? 'AI গলা দেওয়া আছে' : 'আপনার গলা দেওয়া আছে') : (C.d.reels.voice_clone ? 'না দিলে clone করা গলা ব্যবহার হবে, তখন AI লেবেল লাগবে' : 'ফোনের voice recorder-এ পড়ে ফাইলটা এখানে দিন')) + '</span></div></section></div>';
     if (job) h += '<p class="tr-busy" style="margin-top:12px"><span class="bc-spin"></span>' + (job.state === 'joining' ? 'ভিডিও জোড়া লাগছে…' : 'দৃশ্য আঁকছে' + (job.scene ? ' ' + bn(job.scene) + '/' + bn(job.of) : '') + '…') + '</p>';
     else h += '<div class="lt-a" style="margin-top:12px">' + btn(svg('check') + (r.state === 'done' && !r.silent ? 'ভিডিও আবার বানান' : 'ভিডিও বানান'), 'data-bc="rlrender" data-id="' + id + '"', 'dark', 'rlr' + id, !r.voice && !C.d.reels.voice_clone) +
@@ -60362,6 +60428,7 @@ select.bc-in{padding-right:28px}
       default: return homeHtml(narrow);
     }
   }
+  function fitAreas() { var r = root(); if (!r) return; [].forEach.call(r.querySelectorAll('.rl-sc textarea, textarea.lt-ed'), function (t) { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 2) + 'px'; }); }
   var DRAWING = false;
   function draw() {
     if (!on() || DRAWING) return;
@@ -60369,12 +60436,15 @@ select.bc-in{padding-right:28px}
     DRAWING = true;
     try {
       need();
-      var ae = document.activeElement, fid = ae && ae.id && r.contains(ae) ? ae.id : '', ss = null, se = null;
+      var ae = document.activeElement, fid = ae && ae.id && r.contains(ae) ? ae.id : '', ss = null, se = null, fsel = '';
+      // review fix: buttons without an id keep the keyboard focus across a redraw (found again by what they do)
+      if (!fid && ae && r.contains(ae) && ae.getAttribute && ae.getAttribute('data-bc')) { var q1 = function (a) { var val = ae.getAttribute(a); return val == null ? '' : '[' + a + '="' + String(val).replace(/["\\]/g, '') + '"]'; }; fsel = q1('data-bc') + q1('data-id') + q1('data-p') + q1('data-s'); }
       try { if (fid && ae.selectionStart != null) { ss = ae.selectionStart; se = ae.selectionEnd; } } catch (e) {}
       var narrow = narrowNow(), side = sideHtml(narrow);
       r.innerHTML = '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="bcIgG" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#FEDA75"/><stop offset=".3" stop-color="#FA7E1E"/><stop offset=".6" stop-color="#D62976"/><stop offset=".85" stop-color="#962FBF"/><stop offset="1" stop-color="#4F5BD5"/></linearGradient></defs></svg><div class="bc' + (side ? '' : ' noside') + '">' + railHtml() + '<main class="bc-main">' + mainHtml(narrow) + '</main>' + (side ? '<aside class="bc-side" aria-label="' + (C.sec === 'posts' ? 'নতুন পোস্ট' : C.sec === 'people' ? 'Leads-এ যোগ' : 'আপনার অপেক্ষায়') + '">' + side + '</aside>' : '') + '</div>';
       if (fid) { var nf = el(fid); if (nf) { try { nf.focus({ preventScroll: true }); if (ss != null) nf.setSelectionRange(ss, se); } catch (e) {} } }
-      requestAnimationFrame(fitFolds);
+      requestAnimationFrame(fitFolds); requestAnimationFrame(fitAreas);
+      if (!fid && fsel) { var nf2 = null; try { nf2 = r.querySelector(fsel); } catch (e) {} if (nf2) { try { nf2.focus({ preventScroll: true }); } catch (e) {} } }
       if (C.sec === 'map') requestAnimationFrame(wires);
       if (C.sec === 'home') requestAnimationFrame(function () { var sc = r.querySelector('.bc-scroll'), nw = sc && sc.querySelector('.bc-now'); if (sc && nw && sc.scrollWidth > sc.clientWidth && !C.moved) { sc.scrollLeft = nw.offsetLeft - sc.clientWidth / 2; C.moved = 1; } });
     } finally { DRAWING = false; }
@@ -60502,7 +60572,7 @@ select.bc-in{padding-right:28px}
     if (w === 'munpick') { delete C.media[id]; draw(); return; }
     if (w === 'mpick') {
       var mk = t.getAttribute('data-k'), it = ((C.d.mlib && C.d.mlib.items) || []).filter(function (q) { return q.id === id; })[0]; if (!it) return;
-      act('at' + id, 'erpBrandDeskAttach', { asset_id: id }, function (r) { C.media[mk] = { id: r.id, path: r.path, type: r.type || it.type, name: r.name || it.name, thumb: it.thumb, asset: it.id, duration: it.duration }; measureAspect(C.media[mk]); C.mpk = ''; toast((r.type === 'video' ? 'ভিডিও' : 'ছবি') + ' যুক্ত হলো।'); });
+      act('at' + id, 'erpBrandDeskAttach', { asset_id: id }, function (r) { C.media[mk] = { id: r.id, path: r.path, type: r.type || it.type, name: r.name || it.name, thumb: it.thumb, asset: it.id, duration: it.duration }; C.keepm = C.keepm || {}; C.keepm[mk] = 1; measureAspect(C.media[mk]); C.mpk = ''; toast((r.type === 'video' ? 'ভিডিও' : 'ছবি') + ' যুক্ত হলো।'); });
       return;
     }
     if (w === 'exp') { C.exp[id] = !C.exp[id]; draw(); return; }
@@ -60661,6 +60731,9 @@ select.bc-in{padding-right:28px}
     else if (w === 'rlphoto') { var pm = C.media['rl' + id]; if (!pm) return; if (pm.type === 'video') { toast('এখানে ছবি দিন।', true); return; } act('rlp' + id, 'erpBrandDeskReelPhoto', { id: Number(id), photo: { id: pm.id, path: pm.path } }, function (r) { C.d.reels = r; toast('শুরুর ছবি রাখা হলো।'); }); }
     else if (w === 'rlrender') act('rlr' + id, 'erpBrandDeskReelRender', { id: Number(id), silent: t.getAttribute('data-s') === '1' }, function (r) { C.d.reels = r; poll('reels'); toast('ভিডিও বানানো শুরু হলো। ১-২ মিনিট লাগবে।'); });
     else if (w === 'rldrafts') act('rld' + id, 'erpBrandDeskReelDrafts', { id: Number(id), platforms: RLNET.filter(function (nn) { return (C.rln || {})[nn] !== 0; }) }, function (r) { C.d.reels = r; get('drafts', true); toast(r.made ? bn(r.made) + 'টা draft পোস্ট পেজে অপেক্ষায় গেল।' : 'এই network-গুলোর draft আগে থেকেই আছে।'); });
+    else if (w === 'repick') { C.tried = C.tried || {}; var rpx = findDraft(id), cur = rpx && rpx.media && rpx.media.asset; C.tried[id] = (C.tried[id] || []).concat(cur ? [cur] : []);
+      act('rp' + id, 'erpBrandDeskDraftRepick', { id: Number(id), exclude: C.tried[id] }, function (r) { C.d.drafts = r; delete C.media[id]; C.picking = true; poll('drafts'); toast('AI আরেকটা ছবি খুঁজছে।'); }); }
+    else if (w === 'mkeep') act('mkeep', 'erpBrandDeskMediaKeep', { days: Number(id) }, function (r) { if (C.d.mlib) C.d.mlib.keep_days = r.keep_days; toast(r.keep_days ? 'ব্যবহারের ' + bn(r.keep_days) + ' দিন পর ছবি “Brand used” album-এ সরে যাবে। কিছু মুছবে না।' : 'সরিয়ে রাখা বন্ধ।'); });
     else if (w === 'itab') { C.itab = id; draw(); need(); }
     else if (w === 'nrun') act('nrun', 'erpBrandDeskNewsRun', {}, function (r) { C.d.news = r; poll('news'); toast('খবর পড়া শুরু হলো। ৫-১০ মিনিটে পোস্ট আসবে।'); });
     else if (w === 'nmake') act('nm' + id, 'erpBrandDeskNewsMake', { id: Number(id) }, function (r) { C.d.news = r; poll('news'); toast('এই খবরের সূত্র পড়ে পোস্ট লিখছে। কয়েক মিনিট লাগবে।'); });

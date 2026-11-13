@@ -16,6 +16,8 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (/\/news(\/(run|make))?$/.test(url)) return { body: { news: [{ id: 4, title: 'Korea cuts cosmetics export fees', region: 'KR', picked: true, state: 'made', analysis: { kind: 'opportunity', facts: [{ text: '5%', n: 1 }] } }], jobs: {}, last_run: null, job: url.endsWith('/run') ? 'n1' : undefined } };
   if (url.endsWith('/styles/add') || url.endsWith('/styles/set') || url.endsWith('/styles')) return { body: { profiles: [], examples: [], off: false } };
   if (url.endsWith('/li/add') || url.endsWith('/li/mark') || url.endsWith('/li/kill') || url.endsWith('/li')) return { body: { tasks: [], lane: { caps: {} } } };
+  if (url.endsWith('/drafts/repick')) return { body: { job: 'mp1', waiting: [], ideas: [], jobs: {}, mjobs: {} } };
+  if (url.endsWith('/media/keep')) return { body: { keep_days: 60 } };
   if (url.includes('/reels')) return { body: { reels: [], jobs: {} } };
   if (url.includes('/routine')) return { body: { slots: [], status: { level: 2, effective: 2 }, fills: {} } };
   if (url.endsWith('/media/upload')) return { body: { id: 'up9', path: 'https://social.example.com/uploads/p.jpg', type: 'image', asset: '5d23777f-eda4-40ef-9b8d-8065d7a9a896' } };
@@ -204,6 +206,16 @@ const lead = await sql`select kind, name, email, note from inbox_leads where bus
 check('the person becomes a supplier lead of that business', r.ok && r.result.added && lead.length === 1 && lead[0].kind === 'supplier' && /LinkedIn post/.test(lead[0].note), lead);
 r = await owner('erpBrandDeskToLeads', [{ id: 'p1', business: tgt.id }]);
 check('handing the same person twice adds nothing', r.ok && r.result.added === false, r);
+// brand-21: pictures
+r = await owner('erpBrandDeskDraftRepick', [{ id: 0 }]);
+check('another picture without a draft is refused', !r.ok, r);
+r = await owner('erpBrandDeskDraftRepick', [{ id: 7, exclude: ['5d23777f-eda4-40ef-9b8d-8065d7a9a896', '../etc/passwd', 12] }]);
+const rpk = seen.filter((x) => x.url.endsWith('/drafts/repick')).pop();
+check('only real album ids are passed as pictures to skip', r.ok && rpk.body.exclude.length === 1 && rpk.body.id === 7, rpk && rpk.body);
+r = await owner('erpBrandDeskMediaKeep', [{ days: 7 }]);
+check('a keep time that is not on the list is refused', !r.ok, r);
+r = await owner('erpBrandDeskMediaKeep', [{ days: 60 }]);
+check('the keep time can be changed', r.ok && r.result.keep_days === 60, r);
 // brand-20: news Reels
 r = await owner('erpBrandDeskReelScript', [{ news_id: 0 }]);
 check('a Reel script without a news story is refused', !r.ok, r);
