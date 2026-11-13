@@ -59151,7 +59151,9 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
   .ps-tabs button{flex-direction:column;justify-content:center;gap:2px;padding:6px 2px!important;min-height:54px;font-size:13.5px!important;text-align:center}
   .ps-tabs button em{height:18px;min-width:18px;font-size:11px}
   .bc-rail button{font-size:13px}
-  .bc-rail button .bc-rdot{position:absolute;top:4px;right:10px;margin:0}
+  .bc-rail button .bc-rdot{position:absolute;top:6px;left:10px;margin:0}
+  .bc-cad .bc-dots{grid-column:1!important}
+  .bc-cad>b{grid-column:2;grid-row:2;justify-self:end;align-self:center}
   .bc-menu{justify-content:flex-start;margin-top:-6px}
   .bc-menu .bc-btn{flex:1 1 auto}
 }
@@ -60109,7 +60111,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
     var n = counts(), all = stations(), L = n.listen;
     h += '<p class="bc-lede">এ সপ্তাহে <b>' + bn(n.gone) + 'টা</b> পোস্ট গেছে, <b>' + bn(n.queued) + 'টা</b> যাবে' + (n.stuck.length ? ', মোট <b class="x">' + bn(n.stuck.length) + 'টা আটকে</b>' : '') + '।</p>';
     // brand-24: what came back, each a door to its page (the bar chart of the same days is gone: the lines carry them)
-    h += '<div class="bc-line rs-back"><button type="button" data-bc="sec" data-id="listen">প্রশ্ন <b>' + bnN(L.questions) + '</b></button><button type="button" data-bc="sec" data-id="people">লিড <b>' + bnN(L.leads) + '</b></button>' + (L.comments || L.total ? '<button type="button" data-bc="sec" data-id="listen">কমেন্ট <b>' + bnN(L.comments || L.total) + '</b></button>' : '') + '</div>';
+    h += '<div class="bc-line rs-back"><button type="button" data-bc="sec" data-id="listen">প্রশ্ন <b>' + bnN(L.questions) + '</b></button><button type="button" data-bc="sec" data-id="people">লিড <b>' + bnN(L.leads) + '</b></button>' + '' + '</div>';
     var d0 = new Date(); d0.setHours(0, 0, 0, 0); d0.setDate(d0.getDate() - 7);
     var days = []; for (var i = 0; i < 15; i++) { var d = new Date(d0); d.setDate(d0.getDate() + i); days.push({ d: d, go: 0, q: 0, x: 0 }); }
     function dayIx(s) { var t = new Date(s.at); t.setHours(0, 0, 0, 0); return Math.round((t - d0) / 864e5); }
@@ -60437,7 +60439,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
       '<ul><li class="' + (shortP ? 'lo' : '') + '"><b>' + (have.photos == null ? '—' : bn(have.photos)) + '<small>/' + bn(need.photos || 0) + '</small></b><span>এ সপ্তাহের নতুন ছবি</span></li>' +
       '<li class="' + (shortV ? 'lo' : '') + '"><b>' + (have.videos == null ? '—' : bn(have.videos)) + '<small>/' + bn(need.videos || 0) + '</small></b><span>এ সপ্তাহের নতুন ভিডিও</span></li>' +
       '<li><b>' + bn(st.ahead || 0) + '</b><span>সামনের ২ সপ্তাহের তৈরি পোস্ট</span></li><li><b>' + bn(st.waiting || 0) + '</b><span>আপনার অনুমোদনের অপেক্ষায়</span></li></ul>' +
-      (shortP || shortV ? '<p>' + (shortP ? 'ছবি কম, তাই ছবির ঘরে লেখা যাবে। ' : '') + (shortV ? 'ভিডিও কম, তাই Reels-এর ঘর ফাঁকা থাকবে। ' : '') + bn(need.photos || 0) + 'টা ছবি আর ' + bn(need.videos || 0) + 'টা ভিডিও Brand অ্যালবামে দিন।</p>' : '') + '</div>';
+      (shortP || shortV ? '<p>' + (shortP ? 'ছবি কম, তাই ছবির ঘরে লেখা যাবে। ' : '') + (shortV ? 'ভিডিও কম, তাই Reels-এর ঘর ফাঁকা থাকবে। ' : '') + 'আরও ' + bn(Math.max(0, (need.photos || 0) - (have.photos || 0))) + 'টা ছবি আর ' + bn(Math.max(0, (need.videos || 0) - (have.videos || 0))) + 'টা ভিডিও Brand অ্যালবামে দিন।</p>' : '') + '</div>';
     // the model: target share and what the routine really holds (Facebook, the plan in use)
     var fb = slots.filter(function (x) { return x.active && x.platform === 'facebook' && x.pillar && x.level <= lvl; }), faceN = fb.filter(function (x) { return x.face; }).length;
     var pilH = '<div class="rt-pil">' + Object.keys(RPIL).map(function (k) {
