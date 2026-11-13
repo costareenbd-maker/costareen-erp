@@ -176,6 +176,15 @@ export async function erpBrandDeskMakeDrafts(ctx, payload) {
   const plats = (Array.isArray(p.platforms) ? p.platforms : []).map((x) => str(x).toLowerCase()).filter((x) => DRAFT_PLATFORMS.includes(x));
   const body = { platforms: [...new Set(plats)].slice(0, 4) };
   if (id !== null) body.idea_id = id; else { body.text = text; if (/^[a-z0-9_]{2,40}$/.test(str(p.topic))) body.topic = str(p.topic); }
+  // brand-14: his answers to the writer's questions; they are kept as true facts and the draft is written again
+  const answers = str(p.answers);
+  if (answers.length > 2000) throw new Error('Keep the answers under 2000 letters.');
+  if (answers) {
+    if (id === null) throw new Error('Pick an idea.');
+    const redo = parseInt(p.redo, 10);
+    if (!(redo > 0)) throw new Error('Pick the draft to write again.');
+    body.answers = answers; body.redo = redo;
+  }
   return bridge(ctx, '/drafts/make', body);
 }
 export async function erpBrandDeskDraftDecide(ctx, payload) {

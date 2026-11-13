@@ -4329,3 +4329,17 @@ visits (Umami, LinkedIn), the one-video-everywhere draft rule, English cluster n
   into core/voice/viral-playbook.md (originality gate, first-frame rule, sends/saves/replies, BD platform sizes, per
   platform format rules, named series, risks). Every draft now carries a media_plan (format + why, first 3 seconds, shots
   he films himself, on-screen text, cover/thumbnail, length, sound, series); cards show it under "ছবি/ভিডিও পরিকল্পনা".
+
+## brand-14 (13 Nov 2026): writer asks him, idea cards, album wall, people cards
+- Writer v5 (bridge, PROMPT_VERSION brand-13-v5): core/voice/exemplars.md (4 true posts as the quality bar + one flat draft
+  with why it is flat); rules: open on a moment, one tension, concrete nouns, late small lesson; generic ideas must become his
+  experience. Each draft carries `questions` (ask_owner, 0-3 Bangla questions for details only he knows). On the card he answers,
+  and erpBrandDeskMakeDrafts {idea_id, platforms, answers, redo} writes it again around his answers; answers are kept in
+  owner_facts and fed to every later draft; the old draft is rejected once the new one exists. The 6 brand-8-v1 drafts were rejected.
+- Ideas: the idea bank is a wall of cards (topic colour, "আপনার গল্প" vs "AI প্রশ্ন করবে", one logo per network lit with the
+  planned format when a draft waits, topic filter). One idea still becomes a different post per network.
+- Media: the Brand album (images + videos, Immich thumbnails) shows as a picture wall; tap to enlarge, "পোস্টে লাগান" attaches it
+  to the composer.
+- People: kinds of question as tiles (tap = Listen filtered), business leads first, then one card per commenter; the add-a-contact
+  form opens from a button on the phone.
+- Not done: few-shot from his own best posts (needs them); answers by voice through the journal bot.
