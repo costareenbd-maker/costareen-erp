@@ -4466,3 +4466,21 @@ pick; mark used photos with where and when; clear used ones after some days." Bl
   correct reason; asking for another correctly answered "nothing fits". NOT tested: the archive move (no picture is 30
   days past its use yet), albums with hundreds of photos (the pick reads at most 40 unused candidates), videos (never
   auto-picked).
+
+## brand-22..24 (14 Nov 2026): critique of every page, speed, new font, new Home
+Owner: critique every page, button and text with impeccable and rebuild; cut extra words and tag lines; better Bangla font;
+a new Home picked from Pinterest; the system is slow and the last two rail tabs fall into the ERP.
+- Speed: Posts froze the page for 24 s on a phone-speed CPU (fitFolds cut each caption by a binary search of innerHTML +
+  scrollHeight on every redraw). Now CSS line-clamp + one read pass: the same switch is 0.23-0.3 s. The bridge serves the
+  cockpit read from a 20 s cache (was 1.2 s per open, now ~0 s; a stale copy is served while it refreshes).
+- The rail entries "ERP সেটিংস" and "অ্যাপস" (they opened the ERP) are gone; the ERP breadcrumb is hidden over the cockpit.
+- Font: Noto Sans Bengali for text, Anek Bangla for headings (Google Fonts), replacing Hind Siliguri in the cockpit only.
+- Home: week board (one column per day Saturday..Friday, every post as a card in its network's tint: gone, going, stuck,
+  waiting, or an empty routine slot), today marked; phone = day strip + that day's cards. Reference pin saved at
+  .impeccable/review/pin-home-ref.jpg.
+- Critique: .impeccable/critique/brand-cockpit-crit-A.md (21/40) and -B.md (23/40), both applied (brand-24: 79b633c,
+  9ea58cc): sub-titles removed, copy table applied, slimmer draft card, flags per network, 44 px phone targets, counts agree,
+  in-page confirms, owner name from data. brand-23 (bcf2baf + bridge 7bd7a54): owner-facing handler and bridge messages in
+  Bangla, bn_err hides raw errors; claim-check reasons, positioning and topic labels in Bangla (data).
+- NOT done: AI-written cluster labels and comment summaries on Listen still come back in English (the page prefers *_bn
+  fields when present); "?" help buttons not built; one topic list for Rules and Routine is the owner's choice.
