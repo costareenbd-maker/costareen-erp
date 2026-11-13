@@ -58898,8 +58898,9 @@ select.bc-in{padding-right:28px}
 .lt-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px}
 .lt-k{font:600 12.5px "Hind Siliguri",system-ui,sans-serif;background:#E8F1FB;color:#0A4C91;padding:3px 9px;border-radius:999px}
 .lt-h a{font-size:13px;color:var(--bc-ink-2);text-underline-offset:3px}
-.lt-their{margin-top:8px;font-size:13.5px;line-height:1.55;color:var(--bc-ink-2);background:var(--bc-shelf);border-radius:10px;padding:8px 11px;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.lt-their.open{display:block}
+.lt-their{margin-top:8px;font-size:13.5px;line-height:1.55;color:var(--bc-ink-2);background:var(--bc-shelf);border-radius:10px;padding:8px 11px;white-space:pre-line}
+.lt-their>span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.lt-their.open>span{display:block}
 .lt-ed{margin-top:10px;width:100%;box-sizing:border-box}
 .lt-len{text-align:right;font-size:12px;color:var(--bc-ink-3);font-variant-numeric:tabular-nums}.lt-len.x{color:var(--bc-alert-ink);font-weight:700}
 .lt-flag{font-size:13px;color:#7A5A00;margin:6px 0 0}
@@ -60118,7 +60119,7 @@ select.bc-in{padding-right:28px}
     var k = t.kind, cap = L.caps[k], n = (L.today || {})[k] || 0, full = (cap != null && n >= cap) || L.paused, key = 'lt' + t.id, txt = v(key, t.draft || '');
     var cf = !!C.fold['lc' + t.id], h = '<article class="lt ' + t.state + '"><div class="lt-h"><span class="lt-k">' + likName(k) + '</span>' + (t.name ? '<b data-noi18n="1">' + esc(t.name) + '</b>' : '') + '<span class="bc-sp"></span>' +
       (t.url ? '<a href="' + esc(t.url) + '" target="_blank" rel="noopener">LinkedIn-এ দেখুন</a>' : '') + '</div>';
-    if (t.context) h += '<div class="lt-their' + (cf ? ' open' : '') + '" data-noi18n="1">' + esc(t.context) + '</div>' + (String(t.context).length > 220 ? '<button type="button" class="bc-fold' + (cf ? ' on' : '') + '" data-bc="fold" data-id="lc' + t.id + '" style="margin-top:4px">' + svg('right') + (cf ? 'কম দেখান' : 'ওঁদের পুরো লেখা') + '</button>' : '');
+    if (t.context) h += '<div class="lt-their' + (cf ? ' open' : '') + '" data-noi18n="1"><span>' + esc(t.context) + '</span></div>' + (String(t.context).length > 220 ? '<button type="button" class="bc-fold' + (cf ? ' on' : '') + '" data-bc="fold" data-id="lc' + t.id + '" style="margin-top:4px">' + svg('right') + (cf ? 'কম দেখান' : 'ওঁদের পুরো লেখা') + '</button>' : '');
     if (t.state === 'drafting') return h + '<p class="tr-busy"><span class="bc-spin"></span>লিখছে…</p></article>';
     if (t.state === 'failed') return h + '<div class="bc-call"><span>' + esc(t.error || 'লেখা গেল না।') + '</span><span class="bc-sp"></span>' + btn('আবার লিখুন', 'data-bc="limark" data-id="' + t.id + '" data-s="redo"', 'sm', 'lm' + t.id) + btn('বাদ দিন', 'data-bc="limark" data-id="' + t.id + '" data-s="skipped"', 'ghost sm', 'lx' + t.id) + '</div></article>';
     if (t.state === 'sent') return h + '<p class="lt-done">' + (t.done_at ? dDate(new Date(t.done_at)) + '-এ পাঠিয়েছেন' : 'পাঠিয়েছেন') + '</p><div class="lt-a">' + btn(svg('check') + 'গ্রহণ করেছে', 'data-bc="limark" data-id="' + t.id + '" data-s="accepted"', 'sm', 'lm' + t.id) + '</div></article>';
