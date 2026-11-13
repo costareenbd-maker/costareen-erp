@@ -58675,6 +58675,10 @@ select.bc-in{padding-right:28px}
 .mp-sel b{display:block;font:600 13.5px "Pretendard Variable",system-ui,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mp-sel small{font:12.5px "Hind Siliguri",system-ui,sans-serif;color:var(--bc-ink-3)}
 .bc-btn svg[viewBox]{flex:none}
+.ph-x{margin-top:8px;border:1px solid var(--bc-rule);border-radius:10px;padding:0 12px;background:#fff}
+.ph-x summary{cursor:pointer;font:600 13.5px "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;color:var(--bc-ink-2);padding:9px 0;list-style-position:inside}
+.ph-x p{margin:0 0 8px;white-space:pre-wrap;font:14px/1.5 "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;color:var(--bc-ink)}
+.ph-x .bc-btn{margin-bottom:10px}
 @container bc (min-width:1500px){.bc{grid-template-columns:224px minmax(0,1fr) 400px}.bc.noside{grid-template-columns:224px minmax(0,1fr)}}
 @container bc (max-width:1139px){
   .bc{grid-template-columns:200px minmax(0,1fr)}
@@ -59142,6 +59146,8 @@ select.bc-in{padding-right:28px}
     var h = '<div class="ph-slot' + (x._old ? ' old' : '') + '" id="bc_tk_' + id + '"><div class="ph-top">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sp"></span>' + (x._old ? '<span class="bc-tag">পুরনো সংস্করণ</span>' : '') + (block ? '<span class="bc-tag x">আটকাবে</span>' : '') + '</div>' +
       phoneCard(x.platform, mine[0] || null, body, 'd' + id, { edit: editing ? 'e' + id : '', title: (x.title_options || [])[0], pic: picOf(id), npic: ((C.cards[id] || {}).pictures || []).length, media: C.media[id] });
     h += '<div class="ph-meta"><span id="bc_cnt_' + id + '" class="' + (body.length > lim ? 'over' : '') + '">' + bn(body.length) + (body.length > lim * .8 ? ' / ' + bn(lim) : '') + ' অক্ষর</span><span>· ' + MODEW[modeOf(netOf(x.platform), C.media[id])] + '</span><span>· ' + (v('a' + id) ? 'যাবে ' + whenWords(v('a' + id)) : 'যাবে পরের ফাঁকা সময়ে') + '</span>' + (mine.length > 1 ? '<span class="bc-sp"></span>' + mine.map(function (n) { return '<button type="button" class="bc-nc bclg' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" data-noi18n="1">' + logo(n.platform, 15) + esc(n.name || '') + '</button>'; }).join('') : '') + '</div>' + flagsHtml(x);
+    if (x.script) h += '<details class="ph-x"><summary>ক্যামেরায় যা বলবেন</summary><p data-noi18n="1">' + esc(x.script) + '</p><button type="button" class="bc-btn ghost sm" data-bc="tcopy" data-t="' + esc(x.script) + '">' + svg('copy') + 'কপি</button></details>';
+    if (x.first_reply) h += '<details class="ph-x"><summary>প্রথম reply (পোস্টের নিচে নিজে দিন)</summary><p data-noi18n="1">' + esc(x.first_reply) + '</p><button type="button" class="bc-btn ghost sm" data-bc="tcopy" data-t="' + esc(x.first_reply) + '">' + svg('copy') + 'কপি</button></details>';
     if ((x.title_options || []).length && (editing || netOf(x.platform) === 'youtube')) h += '<div class="bc-ncs" style="margin-top:8px">' + x.title_options.map(function (t) { return '<button type="button" class="bc-pl" style="--c:#16181D" data-bc="tcopy" data-t="' + esc(t) + '" title="চাপলে কপি হবে" data-noi18n="1">' + esc(t) + '</button>'; }).join('') + '</div>';
     h += '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : btn(svg('copy') + 'লেখা কপি', 'data-bc="copy" data-id="' + id + '"', 'dark', '')) + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
       '<button type="button" class="bc-btn ghost" data-bc="pedit" data-id="' + id + '" aria-pressed="' + !!editing + '">' + (editing ? 'লেখা হয়ে গেছে' : 'লেখা বদলান') + '</button>' + mediaButton(id) + '</div>';
@@ -59778,7 +59784,7 @@ select.bc-in{padding-right:28px}
     if (w === 'topen') { var tm = new Date(); tm.setDate(tm.getDate() + 1); tm.setHours(10, 0, 0, 0); C.v[id] = ymd(tm) + 'T10:00'; draw(); return; }
     if (w === 'tclear') { delete C.v[id]; draw(); return; }
     if (w === 'copen') { C.open['c' + id] = !C.open['c' + id]; draw(); return; }
-    if (w === 'tcopy') { var tt = t.getAttribute('data-t'); try { navigator.clipboard.writeText(tt).then(function () { toast('শিরোনাম কপি হলো।'); }); } catch (e9) {} return; }
+    if (w === 'tcopy') { var tt = t.getAttribute('data-t'); try { navigator.clipboard.writeText(tt).then(function () { toast('কপি হলো।'); }); } catch (e9) {} return; }
     if (w === 'callidea') { var cl = ((C.d.cockpit && C.d.cockpit.cockpit && C.d.cockpit.cockpit.calls) || [])[Number(id)]; if (cl) act('ci' + id, 'erpBrandDeskIdea', { content: '#idea #fromcall ' + untag(strip(cl.text)).slice(0, 2000) }, function (r) { C.d.memos = r; toast('আইডিয়া পেজে “ধরা হয়েছে”-তে গেল।'); }); return; }
     if (w === 'lidea') { var lc = ((C.d.listen && C.d.listen.comments) || []).filter(function (q) { return String(q.id) === String(id); })[0]; if (lc) act('li' + id, 'erpBrandDeskIdea', { content: '#idea #listen ' + (lc.summary || '') + '\n' + String(lc.text || '').slice(0, 1500) + '\n— ' + (lc.author_name || '') + (lc.channel_title ? ' (' + lc.channel_title + ')' : '') }, function (r) { C.d.memos = r; toast('আইডিয়া পেজে “ধরা হয়েছে”-তে গেল।'); }); return; }
     if (w === 'sec') { C.sec = id; C.pick = ''; C.dep = ''; try { localStorage.setItem('bc_sec', id); } catch (e2) {} draw(); scrollTo({ top: 0 }); }

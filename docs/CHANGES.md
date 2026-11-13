@@ -4316,3 +4316,11 @@ visits (Umami, LinkedIn), the one-video-everywhere draft rule, English cluster n
   from known app behaviour, not freshly researched (Firecrawl was out of credits) - check against his phone.
   NOT done: YouTube posting (needs title + privacy settings through the pacer), a real video in the Brand album to test the
   Reels look end to end, posting a draft with media was not run live (it would publish).
+- brand-13 writer v3 (13 Nov): owner said the captions sound generic and AI-made. Research with sources
+  (Socialinsider ~78M posts, Buffer 52M, LinkedIn 12 Mar 2026 feed post, YouTube Help, AuthoredUp, Meta bait rules,
+  Wikipedia "Signs of AI writing", blader/humanizer, stop-slop, Bangla code-mixing studies) is in the brand repo
+  docs/research/captions-2026-11.md. The bridge writer now reads his true story bank, a per-platform playbook and
+  humanizer rules (G:\bendar-brand\core\voice), writes three hooks and keeps the best, then a second editor pass removes
+  AI tells, fixes Bangla, and strips any internal rule from the post. Video drafts get a separate on-camera script;
+  every draft gets a first reply; leftover tells show as warnings. Draft cards show the script and the reply with copy.
+  NOT done: his own best posts as few-shot examples (none collected yet), A/B tests on his page.
