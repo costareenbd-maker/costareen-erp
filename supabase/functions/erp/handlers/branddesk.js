@@ -117,6 +117,34 @@ export async function erpBrandDeskAttach(ctx, payload) {
   return bridge(ctx, '/media/attach', { asset_id: id }, 140000);
 }
 
+// brand-16: a photo from his phone goes to the Brand album (Immich) and on to Postiz in one step
+export async function erpBrandDeskUpload(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, type = str(p.type).toLowerCase(), data = str(p.data), name = str(p.name).slice(0, 120);
+  if (!/^image\/(jpeg|png|webp|heic|heif)$/.test(type)) throw new Error('Upload a photo (JPG, PNG, WebP or HEIC). Put videos in the Brand album with the Immich app.');
+  if (!data || !/^[A-Za-z0-9+/=]+$/.test(data)) throw new Error('The photo did not come through; try again.');
+  if (data.length > 20000000) throw new Error('That photo is too big; under 15 MB please.');
+  return bridge(ctx, '/media/upload', { name, type, data }, 150000);
+}
+// brand-16: the two universal cards on Ideas - (1) his photo/video + his words, (2) just an idea, researched first.
+// The writer makes one draft per network, each in that network's own shape, with hashtags; the photo rides on every draft.
+export async function erpBrandDeskIdeaPost(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, text = str(p.text);
+  if (!text) throw new Error('Write a few words about it first.');
+  if (text.length > 4000) throw new Error('Keep it under 4000 letters; the AI writes the rest.');
+  const plats = [...new Set((Array.isArray(p.platforms) ? p.platforms : []).map((x) => str(x).toLowerCase()).filter((x) => DRAFT_PLATFORMS.includes(x)))].slice(0, 6);
+  if (!plats.length) throw new Error('Pick at least one network.');
+  const body = { text, platforms: plats, deep: !!p.deep };
+  if (p.media) {
+    const m = mediaRefs([p.media])[0], asset = str(p.media.asset);
+    if (asset && !/^[0-9a-f-]{20,64}$/i.test(asset)) throw new Error('The photo or video is not right.');
+    body.media = { ...m, type: p.media.type === 'video' ? 'video' : 'image', name: str(p.media.name).slice(0, 200), asset };
+  }
+  if (p.at) { const d = new Date(p.at); if (isNaN(d)) throw new Error('The time is not a date.'); if (d < new Date(Date.now() - 60000)) throw new Error('Pick a time in the future.'); body.at = d.toISOString(); }
+  return bridge(ctx, '/drafts/idea', body);
+}
+
 export async function erpBrandDeskPost(ctx, payload) {
   await gate(ctx);
   const p = payload || {}, nets = Array.isArray(p.networks) ? p.networks.filter((n) => n && str(n.id) && str(n.platform)) : [];
@@ -428,4 +456,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

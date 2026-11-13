@@ -4356,3 +4356,18 @@ visits (Umami, LinkedIn), the one-video-everywhere draft rule, English cluster n
   corrects the posts, problems show on the draft. Drafts wait for approval like any other; first reply = source links.
 - erpBrandDeskNews / NewsRun / NewsMake (owner only), tests (100 pass).
 - Not done: no paid news API (Google News RSS only); articles behind paywalls or JS can fail and are skipped.
+
+## brand-16 (13 Nov 2026): two universal idea cards, photo upload, more news sources
+- Ideas › আমার আইডিয়া opens with two cards. (1) ছবি বা ভিডিও থেকে পোস্ট: a photo from the phone (made smaller in the
+  browser, saved in the Brand album, sent to Postiz: erpBrandDeskUpload) or a photo/video from the album, his own words,
+  the networks (YouTube/TikTok greyed for a photo), an optional time. (2) শুধু আইডিয়া: his idea, optional research first.
+  Both call erpBrandDeskIdeaPost -> bridge /drafts/idea: one idea row, a draft per network in its own shape; the AI looks
+  at the photo (vision) and writes about what is really in it; the photo and the time ride on every draft (drafts.media,
+  drafts.planned_at) and show on the draft card; research (ideas.research) = Google News articles + YouTube comments ->
+  facts, for/against, what people say, angles.
+- Writer: hashtags per platform (counts per network, broad + niche + local, real tags only) and the virality signals.
+- News: +14 sources through Google News site: searches - Independent TV (itvbd.com), Channel 24, Jamuna TV, Somoy TV,
+  Yonhap, KBS World, Korea Herald, Arirang, CGTN, China Daily, Global Times, Reuters, Al Jazeera, BBC. Each story also
+  reads YouTube comments under recent videos on it ("people_comments", opinions only). Reddit refuses the Mac (403).
+- Not done: writers' own social accounts (X/LinkedIn have no free reading API); hashtag popularity is not measured
+  (no free API), the AI picks from platform rules; video upload from the page (videos go through the Immich app).

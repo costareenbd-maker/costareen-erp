@@ -14,6 +14,8 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (url.endsWith('/post')) return { body: { queued: ['a', 'b'] } };
   if (/\/media\/library(\?q=.*)?$/.test(url)) return { body: { items: [{ id: '5d23777f-eda4-40ef-9b8d-8065d7a9a896', type: 'image', name: 'a.jpg', thumb: 'data:image/webp;base64,AAAA' }], q: '' } };
   if (/\/news(\/(run|make))?$/.test(url)) return { body: { news: [{ id: 4, title: 'Korea cuts cosmetics export fees', region: 'KR', picked: true, state: 'made', analysis: { kind: 'opportunity', facts: [{ text: '5%', n: 1 }] } }], jobs: {}, last_run: null, job: url.endsWith('/run') ? 'n1' : undefined } };
+  if (url.endsWith('/media/upload')) return { body: { id: 'up9', path: 'https://social.example.com/uploads/p.jpg', type: 'image', asset: '5d23777f-eda4-40ef-9b8d-8065d7a9a896' } };
+  if (url.endsWith('/drafts/idea')) return { body: { job: 'i1', waiting: [], ideas: [], jobs: {} } };
   if (url.endsWith('/media/attach')) return { body: { id: 'up1abc', path: 'https://social.example.com/uploads/a.jpg', type: 'image', name: 'a.jpg' } };
   // brand-7: the claim check and the settings in the brand core database
   if (/\/listen(\/(pull|paste|ideas|channel|handed))?$/.test(url)) return { body: { comments: [{ id: 9, platform: 'youtube_ext', author_name: 'Test Shop BD', text: 'Wholesale price for 50 pcs?', summary: 'Asks wholesale price', intent: 'wholesale_interest', lead_kind: 'wholesale_buyer', channel_title: 'Some Channel', source_ref: 'abc123' }], counts: [], channels: [], clusters: [], jobs: {}, made: 2 } };
@@ -198,6 +200,24 @@ const lead = await sql`select kind, name, email, note from inbox_leads where bus
 check('the person becomes a supplier lead of that business', r.ok && r.result.added && lead.length === 1 && lead[0].kind === 'supplier' && /LinkedIn post/.test(lead[0].note), lead);
 r = await owner('erpBrandDeskToLeads', [{ id: 'p1', business: tgt.id }]);
 check('handing the same person twice adds nothing', r.ok && r.result.added === false, r);
+// brand-16: the two universal idea cards
+r = await owner('erpBrandDeskUpload', [{ name: 'a.mp4', type: 'video/mp4', data: 'AAAA' }]);
+check('a video upload is refused (videos go through the Immich app)', !r.ok, r);
+r = await owner('erpBrandDeskUpload', [{ name: 'a.jpg', type: 'image/jpeg', data: 'not base64!' }]);
+check('a broken photo is refused', !r.ok, r);
+r = await owner('erpBrandDeskUpload', [{ name: 'a.jpg', type: 'image/jpeg', data: 'AAAA' }]);
+check('a photo goes to the Brand album and Postiz', r.ok && r.result.id === 'up9', r);
+r = await owner('erpBrandDeskIdeaPost', [{ text: '', platforms: ['facebook'] }]);
+check('an empty idea is refused', !r.ok, r);
+r = await owner('erpBrandDeskIdeaPost', [{ text: 'Went to Olive Young HQ', platforms: [] }]);
+check('an idea without networks is refused', !r.ok, r);
+r = await owner('erpBrandDeskIdeaPost', [{ text: 'Went to Olive Young HQ', platforms: ['facebook', 'tiktok', 'myspace'], at: '2020-01-01T00:00:00Z' }]);
+check('a time in the past is refused', !r.ok && /future/.test(r.error), r);
+r = await owner('erpBrandDeskIdeaPost', [{ text: 'Went to Olive Young HQ', platforms: ['facebook', 'tiktok', 'myspace'], media: { id: 'up1abc', path: 'https://social.example.com/uploads/p.jpg', type: 'image', asset: '5d23777f-eda4-40ef-9b8d-8065d7a9a896' }, deep: true }]);
+const ip = seen.filter((x) => x.url.endsWith('/drafts/idea')).pop();
+check('the idea, its photo and the known networks go to the writer', r.ok && ip.body.platforms.join() === 'facebook,tiktok' && ip.body.media.path.startsWith('https://') && ip.body.deep === true, ip && ip.body);
+r = await owner('erpBrandDeskIdeaPost', [{ text: 'x', platforms: ['facebook'], media: { id: 'up9', path: 'http://bad' } }]);
+check('a photo link that is not https is refused', !r.ok, r);
 // brand-15: trade news -> posts
 r = await owner('erpBrandDeskNews', [{}]);
 check('the trade news comes from the bridge', r.ok && r.result.news[0].region === 'KR', r);

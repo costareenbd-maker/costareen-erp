@@ -58776,6 +58776,22 @@ select.bc-in{padding-right:28px}
 .nw-row .c b{font-weight:500}
 .nw-sc{width:30px;height:30px;flex:none;border-radius:8px;background:var(--bc-shelf);display:grid;place-items:center;font:700 13px "Pretendard Variable",system-ui,sans-serif;font-variant-numeric:tabular-nums}
 @container bc (max-width:820px){.nw-b{grid-template-columns:1fr}.nw-b section+section{border-left:0;border-top:1px solid var(--bc-rule)}.nw h3{font-size:18.5px}}
+.uc-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:0 0 22px}
+.uc{border:1px solid var(--bc-rule);border-radius:16px;background:var(--bc-ground);padding:16px 18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.uc-h{display:flex;gap:12px;align-items:flex-start}
+.uc-i{width:36px;height:36px;border-radius:10px;background:var(--bc-ink);color:#fff;display:grid;place-items:center;flex:none;font:700 17px system-ui}
+.uc-i svg{width:18px;height:18px}
+.uc-h h3{margin:0;font:700 17px "Hind Siliguri","Pretendard Variable",system-ui,sans-serif}
+.uc-h p{margin:2px 0 0;font-size:13.5px;line-height:1.5;color:var(--bc-ink-3)}
+.uc-drop{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:14px;border:1.5px dashed var(--bc-rule);border-radius:12px;background:var(--bc-shelf)}
+.uc-drop label.bc-btn{cursor:pointer}
+.uc-drop .bc-sub{flex:1 1 100%}
+.uc .bc-ta{width:100%;box-sizing:border-box}
+.uc-n{display:flex;flex-wrap:wrap;gap:6px}
+.uc-n .bc-pl[disabled]{opacity:.35;cursor:not-allowed}
+.uc-deep{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--bc-ink-2)}
+.uc-a{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+@container bc (max-width:900px){.uc-g{grid-template-columns:1fr}}
 @container bc (min-width:1500px){.bc{grid-template-columns:224px minmax(0,1fr) 400px}.bc.noside{grid-template-columns:224px minmax(0,1fr)}}
 @container bc (max-width:1139px){
   .bc{grid-template-columns:200px minmax(0,1fr)}
@@ -58904,7 +58920,7 @@ select.bc-in{padding-right:28px}
   var POLL = {};
   function poll(k) {
     var r = C.d[k] || {}, jobs = r.jobs || {}, ks = Object.keys(jobs), run = false;
-    if (k === 'drafts') run = ks.some(function (x) { return jobs[x].state === 'writing'; });
+    if (k === 'drafts') run = ks.some(function (x) { return jobs[x].state === 'writing' || jobs[x].state === 'researching'; });
     if (k === 'listen') run = ks.some(function (x) { return jobs[x].state === 'reading'; });
     if (k === 'shorts') run = ks.some(function (x) { return jobs[x].state === 'fetching' || jobs[x].state === 'making'; });
     if (k === 'news') { run = ks.some(function (x) { return /^(reading|picking|writing)$/.test(jobs[x].state); }) || (r.news || []).some(function (n) { return n.state === 'reading'; }); if (run) C.nrun = 1; else if (C.nrun) { C.nrun = 0; get('drafts', true); } }
@@ -59240,6 +59256,8 @@ select.bc-in{padding-right:28px}
   function measureAspect(m) { if (!m || !m.thumb || C.ar[m.asset]) return; var im = new Image(); im.onload = function () { if (im.naturalWidth) { C.ar[m.asset] = im.naturalHeight / im.naturalWidth; draw(); } }; im.src = m.thumb; }
   // a draft on the wall: its phone card, then what he can do with it
   function draftCard(x) {
+    if (x.media && !C.media[x.id] && x.media.path) C.media[x.id] = { id: x.media.id, path: x.media.path, type: x.media.type || 'image', name: x.media.name || '', asset: x.media.asset || '', thumb: x.media.type === 'video' ? '' : x.media.path };
+    if (x.planned_at && C.v['a' + x.id] === undefined && new Date(x.planned_at) > new Date()) C.v['a' + x.id] = x.planned_at;
     var mine = accountsFor(x), sel = accSel(x, mine), id = x.id, body = v('e' + id, x.body || ''), editing = C.edit[id], block = (x.legal_flags || []).some(function (f) { return f.severity === 'block'; }), lim = LIMIT[netOf(x.platform)] || 5000;
     var h = '<div class="ph-slot' + (x._old ? ' old' : '') + '" id="bc_tk_' + id + '"><div class="ph-top">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sp"></span>' + (x._old ? '<span class="bc-tag">পুরনো সংস্করণ</span>' : '') + (block ? '<span class="bc-tag x">আটকাবে</span>' : '') + '</div>' +
       phoneCard(x.platform, mine[0] || null, body, 'd' + id, { edit: editing ? 'e' + id : '', title: (x.title_options || [])[0], pic: picOf(id), npic: ((C.cards[id] || {}).pictures || []).length, media: C.media[id] });
@@ -59326,6 +59344,7 @@ select.bc-in{padding-right:28px}
   function jobsBar() {
     var jobs = (C.d.drafts && C.d.drafts.jobs) || {}, ks = Object.keys(jobs).sort(); if (!ks.length) return '';
     var j = jobs[ks[ks.length - 1]];
+    if (j.state === 'researching') return '<div class="bc-jobs"><span class="bc-spin"></span>আগে খবর আর মানুষের মন্তব্য খুঁজে পড়ছে, তারপর লিখবে… ৫-১০ মিনিট লাগতে পারে।</div>';
     if (j.state === 'writing') return '<div class="bc-jobs"><span class="bc-spin"></span>AI draft লিখছে… এক-দুই মিনিট লাগে। হয়ে গেলে পোস্ট পেজে অপেক্ষায় আসবে।</div>';
     if (j.state === 'failed' || j.error) return '<div class="bc-jobs bad">draft লেখা হয়নি: <span data-noi18n="1">' + esc(j.error || '') + '</span></div>';
     return '';
@@ -59384,6 +59403,31 @@ select.bc-in{padding-right:28px}
   }
   var PLATS = ['linkedin', 'facebook', 'instagram', 'youtube', 'threads', 'tiktok'];
   var AUD = { kr_supplier: 'কোরিয়ান সরবরাহকারী', global_brand: 'বিদেশি ব্র্যান্ড', bd_seller: 'বাংলাদেশি বিক্রেতা', bd_buyer: 'বাংলাদেশি ক্রেতা', global_buyer: 'বিদেশি ক্রেতা', mixed: 'সবার জন্য', retail_buyer: 'খুচরা ক্রেতা', supplier: 'সরবরাহকারী', customer: 'ক্রেতা', brand: 'ব্র্যান্ড' };
+  // brand-16: two cards for every network at once. Card 1: his photo or video + what happened -> a post per network with the
+  // picture on each. Card 2: just an idea -> the AI researches it (news + what people say), then writes for and against.
+  function cardNets(k) {
+    var m = k === 'u' ? C.media.u : null, off = C['off' + k] || {};
+    return '<div class="uc-n">' + draftPlats().map(function (p) {
+      var vidOnly = (p === 'youtube' || p === 'tiktok') && m && m.type !== 'video', on = !off[p] && !vidOnly;
+      return '<button type="button" class="bc-pl bclg' + (on ? ' on' : '') + '" style="--c:' + netCol(p) + '" data-bc="ucnet" data-k="' + k + '" data-id="' + p + '" aria-pressed="' + on + '"' + (vidOnly ? ' disabled title="ছবি দিয়ে YouTube আর TikTok হয় না; ভিডিও লাগে"' : '') + '>' + logo(p, 14) + esc(netName(p)) + '</button>';
+    }).join('') + '</div>';
+  }
+  function cardPicked(k) { var m = k === 'u' ? C.media.u : null, off = C['off' + k] || {}; return draftPlats().filter(function (p) { return !off[p] && !((p === 'youtube' || p === 'tiktok') && m && m.type !== 'video'); }); }
+  function ideaCards() {
+    var m = C.media.u;
+    var h = '<div class="uc-g">';
+    h += '<section class="uc"><div class="uc-h"><span class="uc-i">' + pi('media') + '</span><div><h3>ছবি বা ভিডিও থেকে পোস্ট</h3><p>ছবি দিন, কী হয়েছিল লিখুন। প্রতিটা network-এর জন্য আলাদা লেখা হবে, ছবিটা সব পোস্টে যাবে।</p></div></div>' +
+      (m ? mediaChip('u') : '<div class="uc-drop"><label class="bc-btn dark' + (C.busy.upu ? ' is-busy' : '') + '">' + (C.busy.upu ? '<span class="bc-spin"></span>তুলছি…' : pi('media') + 'ফোন থেকে ছবি দিন') + '<input type="file" accept="image/*" data-bcfile="u" hidden' + (C.busy.upu ? ' disabled' : '') + '></label>' + mediaButton('u') + '<span class="bc-sub">ভিডিও: ফোনের Immich-এ Brand album-এ রাখুন, তারপর এখান থেকে বাছুন</span></div>') + pickerHtml('u') +
+      ta('ut', 'কোথায় গিয়েছিলেন, কার সাথে, কী হলো, কী শিখলেন… নিজের কথায়।', '', ' rows="4" aria-label="ছবি বা ভিডিওটা নিয়ে আপনার কথা"') +
+      '<div class="bc-lbl">কোন network-এ</div>' + cardNets('u') + '<div class="bc-lbl">কখন যাবে</div><div class="ph-when">' + whenHtml('uat') + '</div>' +
+      '<div class="uc-a">' + btn(svg('check') + 'AI দিয়ে সব network-এর পোস্ট লিখুন', 'data-bc="ucgo" data-id="u"', 'dark', 'ucu') + '</div></section>';
+    h += '<section class="uc"><div class="uc-h"><span class="uc-i">?</span><div><h3>শুধু আইডিয়া</h3><p>আজ যা নিয়ে কথা বলতে চান লিখুন। AI খবর আর মানুষের মন্তব্য খুঁজে পক্ষে-বিপক্ষে ভেবে প্রতিটা network-এর পোস্ট লিখবে।</p></div></div>' +
+      ta('cap', 'যেমন: কোরিয়া থেকে ছোট দোকানের জন্য group shipment কেন লাভের', '', ' rows="4" aria-label="আপনার আইডিয়া"') +
+      '<label class="uc-deep"><input type="checkbox" data-bcin="ideep"' + (C.v.ideep === false ? '' : ' checked') + '> আগে গবেষণা করুক (খবর + YouTube-এর মন্তব্য, ৫-১০ মিনিট)</label>' +
+      '<div class="bc-lbl">কোন network-এ</div>' + cardNets('i') + '<div class="bc-lbl">কখন যাবে</div><div class="ph-when">' + whenHtml('iat') + '</div>' +
+      '<div class="uc-a">' + btn(svg('check') + (C.v.ideep === false ? 'AI দিয়ে লিখুন' : 'গবেষণা করে লিখুন'), 'data-bc="ucgo" data-id="i"', 'dark', 'uci') + btn('শুধু জমা রাখুন', 'data-bc="capsave"', 'ghost', 'capsave') + '</div></section>';
+    return h + '</div>';
+  }
   function ideaTabs() {
     var nd = (C.d.news && C.d.news.news) || [], fresh = nd.filter(function (n) { return n.picked; }).length;
     return '<div class="bc-pills it-tabs" role="tablist"><button type="button" role="tab" data-bc="itab" data-id="mine"' + (C.itab !== 'news' ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>আমার আইডিয়া</button>' +
@@ -59395,9 +59439,7 @@ select.bc-in{padding-right:28px}
     var bank = C.d.drafts.ideas || [], memos = (C.d.memos && C.d.memos.ideas) || [], cols = (C.d.board && C.d.board.board && C.d.board.board.columns) || [];
     var onBoard = cols.reduce(function (a, c) { return a + (c.cards || []).length; }, 0), wait = waitingList();
     var h = headHtml('আইডিয়া', 'ভাবনা থেকে পোস্ট, এক লাইনে') + ideaTabs();
-    h += '<div class="bc-cap">' + ta('cap', 'একটা ভাবনা লিখে রাখুন: গল্প, শিক্ষা, আজ যা দেখলেন। Enter চাপলে জমা থাকবে।', '', ' rows="2"') +
-      '<div class="bc-row"><span class="bc-sub">AI কোন network-এর জন্য লিখবে (একবারে ৪টা):</span>' + draftPlats().map(function (p) { return '<button type="button" class="bc-pl bclg' + (C.plats[p] ? ' on' : '') + '" style="--c:' + netCol(p) + '" data-bc="plat" data-id="' + p + '" aria-pressed="' + (C.plats[p] ? 'true' : 'false') + '">' + logo(p, 14) + esc(netName(p)) + '</button>'; }).join('') +
-      (noAI().length ? '<span class="bc-sub">' + esc(noAI().join(', ')) + '-এর জন্য AI এখনো লেখে না</span>' : '') + '<span class="bc-sp"></span>' + btn('জমা রাখুন', 'data-bc="capsave"', 'ghost', 'capsave') + btn('AI দিয়ে draft লিখুন', 'data-bc="capwrite"', 'dark', 'write') + '</div></div>';
+    h += ideaCards();
     h += jobsBar();
     h += '<div class="bc-spine" style="--n:4">' +
       '<button type="button" data-bc="jump" data-id="bc_inbox"><i></i><b>' + bn(memos.length) + '</b><span>ধরা হয়েছে</span><small>journal আর এখানে লেখা ভাবনা</small></button>' +
@@ -59934,7 +59976,26 @@ select.bc-in{padding-right:28px}
     var wk = e.target && e.target.getAttribute && e.target.getAttribute('data-bcwhen');
     if (wk && on()) { var cur = String(v(wk) || ''), dp = cur.slice(0, 10), tp = cur.slice(11, 16); if (e.target.getAttribute('data-part') === 'd') dp = e.target.value; else tp = e.target.value; C.v[wk] = dp + 'T' + tp; return; }
   });
-  document.addEventListener('change', function (e) { var x = e.target; if (on() && x.getAttribute && x.getAttribute('data-bcin')) C.v[x.getAttribute('data-bcin')] = x.type === 'checkbox' ? x.checked : x.value; });
+  document.addEventListener('change', function (e) { var x = e.target; if (on() && x.getAttribute && x.getAttribute('data-bcin')) { C.v[x.getAttribute('data-bcin')] = x.type === 'checkbox' ? x.checked : x.value; if (x.getAttribute('data-bcin') === 'ideep') draw(); } });
+  // a photo from the phone: made smaller in the browser (longest side 2048 px, JPEG), then sent to the Brand album
+  document.addEventListener('change', function (e) {
+    var x = e.target, k = x && x.getAttribute && x.getAttribute('data-bcfile'); if (!on() || !k || !x.files || !x.files[0]) return;
+    var f = x.files[0]; if (!/^image\//.test(f.type)) return toast('এখানে ছবি দিন। ভিডিও ফোনের Immich-এ Brand album-এ রাখুন।', true);
+    var rd = new FileReader();
+    rd.onload = function () {
+      var im = new Image();
+      im.onload = function () {
+        var sc = Math.min(1, 2048 / Math.max(im.naturalWidth, im.naturalHeight)), cv = document.createElement('canvas');
+        cv.width = Math.round(im.naturalWidth * sc); cv.height = Math.round(im.naturalHeight * sc); cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+        var url = cv.toDataURL('image/jpeg', 0.86), small = document.createElement('canvas'), s2 = 320 / Math.max(cv.width, cv.height); small.width = Math.round(cv.width * s2); small.height = Math.round(cv.height * s2); small.getContext('2d').drawImage(cv, 0, 0, small.width, small.height);
+        var th = small.toDataURL('image/jpeg', 0.8);
+        act('up' + k, 'erpBrandDeskUpload', { name: (f.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg', type: 'image/jpeg', data: url.split(',')[1] }, function (r) { C.media[k] = { id: r.id, path: r.path, type: 'image', name: r.name || f.name, thumb: th, asset: r.asset || '' }; C.ar[r.asset || r.id] = cv.height / cv.width; C.d.mlib = null; toast('ছবি Brand album-এ উঠল আর পোস্টে লাগল।'); });
+      };
+      im.onerror = function () { toast('এই ছবিটা খোলা যাচ্ছে না। JPG বা PNG দিন।', true); };
+      im.src = rd.result;
+    };
+    rd.readAsDataURL(f);
+  });
   document.addEventListener('keydown', function (e) {
     if (!on()) return;
     var t = e.target;
@@ -60072,6 +60133,17 @@ select.bc-in{padding-right:28px}
       var qx = findDraft(id), qt = String(v('qa' + id)).trim(); if (!qx) return;
       if (!qt) return toast('আগে উত্তরটা লিখুন।', true);
       act('qa' + id, 'erpBrandDeskMakeDrafts', { idea_id: qx.idea_id, platforms: [qx.platform], answers: qt.slice(0, 2000), redo: Number(id) }, function (r) { C.d.drafts = r; poll('drafts'); C.v['qa' + id] = ''; toast('আপনার উত্তর নিয়ে আবার লিখছে। এক-দুই মিনিটে নতুন draft আসবে, পুরনোটা সরে যাবে।'); });
+    }
+    else if (w === 'ucnet') { var kk = t.getAttribute('data-k'); C['off' + kk] = C['off' + kk] || {}; C['off' + kk][id] = !C['off' + kk][id]; draw(); }
+    else if (w === 'ucgo') {
+      var txt = String(v(id === 'u' ? 'ut' : 'cap')).trim(), pls = cardPicked(id), when = v(id === 'u' ? 'uat' : 'iat'), med = id === 'u' ? C.media.u : null;
+      if (id === 'u' && !med) return toast('আগে একটা ছবি বা ভিডিও দিন।', true);
+      if (!txt) return toast(id === 'u' ? 'ছবিটা নিয়ে কয়েকটা কথা লিখুন।' : 'আগে আইডিয়াটা লিখুন।', true);
+      if (!pls.length) return toast('অন্তত একটা network বেছে নিন।', true);
+      var args = { text: txt.slice(0, 4000), platforms: pls, deep: id === 'i' && C.v.ideep !== false };
+      if (med) args.media = { id: med.id, path: med.path, type: med.type, name: med.name, asset: med.asset };
+      if (when) args.at = new Date(when).toISOString();
+      act('uc' + id, 'erpBrandDeskIdeaPost', args, function (r) { C.d.drafts = r; poll('drafts'); if (id === 'u') { delete C.media.u; C.v.ut = ''; C.v.uat = ''; } else { C.v.cap = ''; C.v.iat = ''; } toast(args.deep ? 'গবেষণা শুরু হলো। শেষ হলে প্রতিটা network-এর draft পোস্ট পেজে অপেক্ষায় আসবে।' : 'AI লিখছে। এক-দুই মিনিটে প্রতিটা network-এর draft পোস্ট পেজে আসবে।'); });
     }
     else if (w === 'itab') { C.itab = id; draw(); need(); }
     else if (w === 'nrun') act('nrun', 'erpBrandDeskNewsRun', {}, function (r) { C.d.news = r; poll('news'); toast('খবর পড়া শুরু হলো। ৫-১০ মিনিটে পোস্ট আসবে।'); });
