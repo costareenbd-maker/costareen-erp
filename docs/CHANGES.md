@@ -4421,3 +4421,23 @@ built." Research: G:/bendar-brand/docs/reports/Personal brand content model.md a
   post" works only through the kinds a draft can fill, there is no automatic rewrite of a photo slot into a text post.
 - Mistake fixed in the same push: `git add -A web` swept ten local `web/*.bak` page backups into commit 9a09324; they
   were untracked again in f7e4af3 and are now in .gitignore (the files are still on disk; the history keeps one copy).
+
+## brand-20 (14 Nov 2026): news Reels
+Owner asked for Reels made from the news (script by AI, stock photos, Remotion, his cloned voice). Agreed changes after
+the research: his own recorded voice (clone only as a fallback), his photo in the first seconds, drawn charts instead of
+stock photos, at most 1-2 a week, nothing posts without his approval.
+- Bridge: table news_reels. reel_script writes 6-8 scenes (hook, number, bars, compare, text, outro) from the story's
+  checked facts; a figure that does not point at a fact raises a warning. reel_voice stores his recording. reel_render
+  draws every scene with the Mac's Chromium renderer (6 growth frames for charts and numbers), spreads scene time by
+  words over the voice length, joins with ffmpeg (1080x1920 h264 + aac, loudness-normalised), uploads to Postiz.
+  reel_to_drafts makes drafts for Facebook, Instagram, TikTok, YouTube with the video attached, pillar news, the next
+  free Reel slot of the routine. ffmpeg added to the bridge container (apk).
+- NOT Remotion: its free licence stops at 3 people and the company automation plan has a monthly minimum; the renderer
+  here costs nothing. ElevenLabs is wired but off (ELEVEN_KEY + ELEVEN_VOICE not set); an AI voice puts a "label it as AI"
+  warning on the drafts.
+- Page: every news card gets "Reels বানান"; the panel shows the script per scene (editable), the opening photo picker,
+  the voice upload, "ভিডিও বানান" / silent preview, the video and "send to drafts". `_headers`: media-src for the Postiz host.
+- ERP: erpBrandDeskReels / ReelScript / ReelPhoto / ReelVoice / ReelEdit / ReelRender / ReelDrafts. Tests 133 passed.
+- Tested on the Mac with a real story (dollar rate): script 7 scenes, silent preview 64 s, a 50 s render with a test tone
+  as voice, 4 drafts on Saturday's slots; test drafts rejected and the Reel put back to "script". NOT tested with his real
+  voice or a real opening photo; no video clip as the opening yet (photo only); scenes cut without transitions.
