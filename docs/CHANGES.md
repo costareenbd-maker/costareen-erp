@@ -4398,3 +4398,26 @@ Blueprint: `.impeccable/shape/brand-17-train-linkedin.md`.
 ## brand-18 (14 Nov 2026): AI's questions fold away on draft cards
 Owner: the "লেখাটা জীবন্ত করতে AI জানতে চায়" box under every draft made the wall very long. It is now hidden behind a
 button "AI-এর প্রশ্ন (N)" on each card; it stays open while he has typed an answer or the rewrite is running. Page only.
+
+## brand-19 (14 Nov 2026): the personal-brand model as a routine he can change
+Owner: "build the model, keep it customisable (times, routine, more posts), apply the earlier decisions that were never
+built." Research: G:/bendar-brand/docs/reports/Personal brand content model.md and Daily posting schedule Bangladesh.md.
+- Bridge: table routine_slots (day Sat..Fri, time in Bangladesh, network, kind of post, pillar, face, plan level, on/off),
+  seeded with the researched week (92 slots; Facebook 13 feed posts in the medium plan, face in 7; Instagram 7). Plans
+  1 light / 2 medium / 3 full (settings.routine_level). New drafts get the next free fitting slot as planned time
+  (next_slot: network + kind, pillar preferred). Backup rules: routine_status counts unused Brand-album photos/videos
+  against what the week needs and steps the plan down to light when photos and the queue are both short.
+- Writer v7 (brand-19-v7): every draft says its pillar (proof/teach/person/news) and whether it stands on a lived detail;
+  no bare price-list posts for the feed; videos open with him speaking; never plan an AI picture of a person, product,
+  place or document. A draft without a lived detail carries a warning and the page asks once more before approving.
+  The editor no longer aims at "passing a detector": it cuts the generic and keeps his concrete details.
+- News posts take the routine's news slots: a big story (score 85+) the next 9:30 morning, others the weekly news slot;
+  at most two timed news posts a week on Facebook; LinkedIn's news post on its Wednesday slot.
+- Page: new cockpit page রুটিন (backup status, pillar share against target, plan switch, network filter, week grid / day
+  tabs, tap a slot to change or remove it, add a slot, back to the researched routine). Draft cards show the pillar and
+  the writing style. LinkedIn health line shows posts this week.
+- ERP: erpBrandDeskRoutine / RoutineSlot / RoutineLevel / RoutineReset (owner-only). Tests: branddesk 126 passed.
+- NOT done: Stories, Lives and LinkedIn comments are reminders only (nothing posts them); "a slot takes another kind of
+  post" works only through the kinds a draft can fill, there is no automatic rewrite of a photo slot into a text post.
+- Mistake fixed in the same push: `git add -A web` swept ten local `web/*.bak` page backups into commit 9a09324; they
+  were untracked again in f7e4af3 and are now in .gitignore (the files are still on disk; the history keeps one copy).
