@@ -4514,3 +4514,19 @@ Shape brief: `.impeccable/shape/brand-25-results-coherence.md`.
   "missing" for the one TikTok post); Instagram/Threads are not connected, so their slots are not filled; the network
   line strip on Results was dropped (Home carries the week). serverfinal_test still fails on erpCrmAi (no activity-log
   words; not from this stage).
+brand-27 (14 Nov 2026, dev + Mac bridge): "আপনার মন্তব্য" - the owner's own critique under every piece of writing, so the
+writers slowly write like him. Boxes ("মন্তব্য", quiet ghost button; open = earlier critiques, textarea, সেভ করুন, on drafts
+"মন্তব্য দিয়ে আবার লিখুন", "বাছাই করা অংশ নিন" takes the phrase he selected) on every Posts draft card, every idea-bank card,
+both universal idea cards (general note), each news card, the Reels script, every LinkedIn ticket, each style sample.
+Bridge: owner_critiques (whole writing he read + context: platform, pillar, prompt_version, idea, picture note/media_why;
+quote; per-critique AI reading in analysis jsonb) and owner_lessons (lesson_en/bn, evidence, 1-2 was/better examples,
+weight, active, owner_set, source). Right after saving, one gpt-5.6-sol step reads the critique against its writing and the
+page shows "আমি যা বুঝলাম" + লেখা ছিল / এভাবে হলে ভালো with "ভুল বুঝেছে" (correction -> read again). Study (5 new critiques,
+once a day when anything is new, or "এখন শিখুন") merges the readings into max 25 lessons; lessons he switched off or wrote
+himself are never changed. Every writer prompt (writer, editor, news, LinkedIn, Reels, style sample) gets "HOW HE WANTS IT"
+with the lessons and their examples; PROMPT_VERSION brand-27-v8. His photo example fixed in WRITER_RULES 6c, EDITOR_RULES,
+his_media note and media_pick's why line, and stored as the first built-in lesson (source owner_words). লেখার ধরন page:
+"আপনার মন্তব্য থেকে শেখা" (counts, এখন শিখুন, switches, উদাহরণ, বদলান, বন্ধ করা, সাম্প্রতিক মন্তব্য). ERP: erpBrandDeskCritique(s),
+erpBrandDeskCritiqueFix, erpBrandDeskLessonSet ({id, active|text}), erpBrandDeskStudy; branddesk_test 163 pass. Study tested
+with 4 TEST critiques (3 lessons made, correction re-read worked), then deleted. NOT done: the rewrite-from-critique path was
+not run on a real draft (it would replace one of his waiting drafts); finish review round 2 was still running at hand-back.
