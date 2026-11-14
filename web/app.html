@@ -59604,6 +59604,26 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   .bx-bar .bc-btn{min-height:44px}
   .bx-bar .bc-pills button,.bx-sub .bc-pills button,.bxc-form .bc-pills button{min-height:44px;box-sizing:border-box}
 }
+/* brand-30 finish review (14 Nov 2026): the inbox takes only the height that is left (JS sets it), the send button is a
+   normal dark button clear of the shell chat bubble, the error box is one red line, a failed send says why in plain words. */
+.bx{height:auto;min-height:360px}
+.bx-cp{padding-right:72px}
+.bx-send{min-height:44px;padding:0 18px;flex-direction:row;gap:8px}
+.bx-send svg{flex:none}
+.bx-alert.one{align-items:center;gap:10px;border:1px solid var(--bc-alert);border-radius:12px;padding:4px 4px 4px 12px;color:var(--bc-alert-ink);font-size:14px;min-width:0}
+.bx-alert.one .ln{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bx-alert.one .ln b{color:var(--bc-alert-ink)}
+.bx-alert.one .bc-btn{flex:none}
+.bx-b .why{max-width:100%}
+.bx-b .why .bc-btn{height:34px}
+.bx-hole{font-size:13.5px;color:#7A5200;margin:8px 0 0}
+.bx-hole[hidden]{display:none}
+@container bc (max-width:759px){
+  .bx{height:auto!important;min-height:0}
+  .bx-cp{padding-right:0}
+  .bx-cp .bc-ta{max-height:140px}
+  .bx-b .why .bc-btn{min-height:44px;height:44px}
+}
 
 </style>
 
@@ -60596,7 +60616,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       '<div class="bc-pills" style="margin-bottom:6px"><button type="button" data-bc="nk" data-id="customer"' + (C.nk === 'customer' ? ' class="on"' : '') + '>কাস্টমার</button><button type="button" data-bc="nk" data-id="supplier"' + (C.nk === 'supplier' ? ' class="on"' : '') + '>সাপ্লায়ার</button></div>' +
       '<label class="bc-lbl" for="bci_np_name">নাম</label>' + inp('np_name', 'যেমন: Glow Shop Dhaka', ' style="width:100%"') +
       '<label class="bc-lbl" for="bci_np_phone">ফোন</label>' + inp('np_phone', '01…', ' style="width:100%" inputmode="tel"') +
-      '<label class="bc-lbl" for="bci_np_mail">ই-মেইল</label>' + inp('np_mail', 'না দিলেও চলে', ' style="width:100%" inputmode="email"') +
+      '<label class="bc-lbl" for="bci_np_mail">ইমেইল</label>' + inp('np_mail', 'না দিলেও চলে', ' style="width:100%" inputmode="email"') +
       '<label class="bc-lbl" for="bci_np_want">কী চান</label>' + inp('np_want', 'যেমন: ৫০টা sunscreen-এর দাম', ' style="width:100%"') +
       '<label class="bc-lbl" for="bci_np_src">কোথা থেকে এলেন</label>' + inp('np_src', 'যেমন: LinkedIn পোস্টের কমেন্ট', ' style="width:100%"') +
       '<label class="bc-lbl" for="bci_ltarget">কোন ব্যবসার লিড</label>' + bizSel('ltarget', biz).replace('class="bc-in"', 'class="bc-in" style="width:100%"') +
@@ -60674,7 +60694,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   var CONN = {
     postiz: ['Postiz · সব নেটওয়ার্ক', 'সব নেটওয়ার্কে পোস্ট এটাই করে'],
     erp_bridge_tiktok: ['TikTok · সরাসরি', 'Postiz ছাড়া TikTok-এ ভিডিও পাঠায়'],
-    linkedin_email_parse: ['LinkedIn · ই-মেইল', 'LinkedIn-এর ই-মেইল থেকে আপনার পোস্টের কমেন্ট আনে'],
+    linkedin_email_parse: ['LinkedIn · ইমেইল', 'LinkedIn-এর ইমেইল থেকে আপনার পোস্টের কমেন্ট আনে'],
     meta_graph: ['Facebook ও Instagram', 'আপনার পেজ আর Instagram-এর কমেন্ট ও মেসেজ ERP-তে আনে'],
     threads_api: ['Threads', 'Threads-এ রিপ্লাইয়ের আগে আপনার অনুমোদন নেয়'],
     youtube_data_api: ['YouTube', 'অন্যের ভিডিওর কমেন্ট পড়ে (শোনা পেজ)'],
@@ -61355,14 +61375,14 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   ICO.back = '<path d="M15 6l-6 6 6 6"/>'; ICO.photo = '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/>';
   ICO.spark = '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>';
   ICO.done = '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>';
-  var IB_F = [['all', 'সব'], ['email', 'Email'], ['whatsapp', 'WhatsApp'], ['telegram', 'Telegram'], ['facebook', 'Facebook'], ['instagram', 'Instagram'], ['comments', 'কমেন্ট']];
+  var IB_F = [['all', 'সব'], ['email', '<span data-noi18n="1">ইমেইল</span>'], ['whatsapp', 'WhatsApp'], ['telegram', 'Telegram'], ['facebook', 'Facebook'], ['instagram', 'Instagram'], ['comments', 'কমেন্ট']];
   var IB_CP = [['', 'সব'], ['facebook', 'Facebook'], ['instagram', 'Instagram'], ['youtube', 'YouTube']];
   var IB_ST = { ok: ['চালু', ''], error: ['ভুল', 'x'], waiting: ['বাকি', 'w'], 'new': ['বাকি', 'w'] };
   var IB_HELP = {
     gmail: ['Google Account খুলুন: <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer">myaccount.google.com/apppasswords</a> (আগে Security › 2-Step Verification চালু থাকতে হবে)।', 'নাম দিন, যেমন “Brand desk”, তারপর Create চাপুন।', 'যে ১৬ অক্ষরের পাসওয়ার্ড দেখায়, সেটা নিচের ঘরে বসান। আপনার সাধারণ Gmail পাসওয়ার্ড নয়।'],
     outlook: ['<a href="https://account.microsoft.com/security" target="_blank" rel="noopener noreferrer">account.microsoft.com/security</a> › Advanced security options-এ যান (Two-step verification চালু থাকতে হবে)।', 'App passwords › Create a new app password চাপুন।', 'পাসওয়ার্ডটা নিচে বসান। Microsoft কিছু ব্যক্তিগত Outlook অ্যাকাউন্টে app password আর নেয় না; তখন এখানে “ভুল” দেখাবে।'],
     yahoo: ['<a href="https://login.yahoo.com/account/security" target="_blank" rel="noopener noreferrer">login.yahoo.com/account/security</a> খুলুন।', 'Generate app password চাপুন, নাম দিন “Brand desk”।', 'যে পাসওয়ার্ড দেয়, সেটা নিচে বসান।'],
-    custom: ['আপনার ইমেইল কোম্পানির IMAP (পড়ার) আর SMTP (পাঠানোর) সার্ভারের নাম আর পোর্ট নিচে দিন।', 'সাধারণত IMAP পোর্ট ৯৯৩ আর SMTP পোর্ট ৪৬৫ বা ৫৮৭।']
+    custom: ['আপনার ইমেইল কোম্পানির IMAP (পড়ার) আর SMTP (পাঠানোর) সার্ভারের নাম আর পোর্ট নিচে দিন।', 'সাধারণত IMAP পোর্ট <span data-noi18n="1">993</span> আর SMTP পোর্ট <span data-noi18n="1">465</span> বা <span data-noi18n="1">587</span>।']
   };
   C.ibf = 'all'; C.ibp = ''; C.ibOpen = ''; C.ibT = null; C.ibChk = {}; C.ibPh = {}; C.ibAdd = false; C.ibForm = ''; C.ibPre = 'gmail'; C.ibQr = null;
   function ibWhen(v) {
@@ -61371,28 +61391,44 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     return days <= 0 ? dTime(d) : days === 1 ? 'গতকাল' : days < 7 ? DAY[d.getDay()] + 'বার' : dDate(d);
   }
   function ibDay(d) { var now = new Date(), days = Math.floor((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5); return days <= 0 ? 'আজ' : days === 1 ? 'গতকাল' : DAY[d.getDay()] + 'বার, ' + dDate(d); }
+  function ibNet(c) { return c === 'email' ? 'ইমেইল' : c === 'whatsapp' ? 'WhatsApp' : netName(c); }
+  // a raw provider error (Meta, Telegram, SMTP) in plain Bangla; fix = the channel whose যুক্ত করুন part mends it
+  function ibWhy(err, ch) {
+    var e = String(err || ''), fb = ch === 'facebook' || ch === 'instagram';
+    if (fb && /access token|OAuthException|session has expired|validating access|permission|\(#(10|190|200|230)\)|Meta কাজটা নিল না/i.test(e)) return { t: 'Facebook-এর অনুমতি শেষ। আবার যুক্ত করুন।', fix: 'facebook' };
+    if (ch === 'telegram' && /blocked by the user|bot was blocked|user is deactivated/i.test(e)) return { t: 'মানুষটা বট বন্ধ করে দিয়েছেন, তাই বার্তা যায় না।', fix: '' };
+    if (ch === 'telegram' && /unauthorized|401|টোকেন|token/i.test(e)) return { t: 'Telegram বটের টোকেন আর চলছে না। আবার যুক্ত করুন।', fix: 'telegram' };
+    if (ch === 'telegram' && /chat not found|forbidden|403/i.test(e)) return { t: 'Telegram এই মানুষকে বার্তা দিতে দিচ্ছে না।', fix: '' };
+    if (ch === 'email' && /535|auth|password|পাসওয়ার্ড|login/i.test(e)) return { t: 'ইমেইলের পাসওয়ার্ড আর নিচ্ছে না। আবার যুক্ত করুন।', fix: 'email' };
+    if (ch === 'whatsapp' && /QR|বিচ্ছিন্ন|যুক্ত নেই|close|disconnect/i.test(e)) return { t: 'WhatsApp ফোন থেকে বিচ্ছিন্ন। QR আবার স্ক্যান করুন।', fix: 'whatsapp' };
+    var b = e.replace(/\s*\([^)]*[A-Za-z]{3,}[^)]*\)\s*/g, ' ').trim();
+    if (b && /[\u0980-\u09FF]/.test(b)) return { t: b, fix: '' };
+    return { t: 'পাঠানো গেল না। একটু পরে আবার পাঠান।', fix: '' };
+  }
+  function ibShort(t) { var x = String(t || '').replace(/^TEST:\s*/, ''), i = x.indexOf('।'); return i > 0 ? x.slice(0, i + 1) : x; }
+  function ibHole(t) { return /\[[^\]\n]{0,60}\]/.test(String(t || '')); }
   function ibCounts() { return (C.d.inbox && C.d.inbox.counts) || (C.d.cockpit && C.d.cockpit.cockpit && C.d.cockpit.cockpit.inbox) || {}; }
   function ibChans() { return (C.d.ichan && C.d.ichan.channels) || []; }
   function ibEm(n) { return n ? '<em class="w">' + bn(n) + '</em>' : ''; }
   function ibRow(t) {
     var un = t.unread > 0, last = (t.dir === 'out' ? '<small>আপনি: </small>' : '') + '<span data-noi18n="1">' + esc(t.last || '') + '</span>';
     var sub = t.kind === 'comment' ? '<small>কমেন্ট' + (t.subject ? ' · <span data-noi18n="1">' + esc(t.subject) + '</span>' : '') + ' · </small>' : (t.channel === 'email' && t.subject ? '<small data-noi18n="1">' + esc(t.subject) + ' · </small>' : '');
-    return '<button type="button" class="bx-r' + (un ? ' un' : '') + (String(C.ibOpen) === String(t.id) ? ' on' : '') + '" data-bc="ibopen" data-id="' + t.id + '" aria-label="' + esc(t.name) + ', ' + esc(netName(t.channel)) + (un ? ', নতুন বার্তা' : '') + '">' +
+    return '<button type="button" class="bx-r' + (un ? ' un' : '') + (String(C.ibOpen) === String(t.id) ? ' on' : '') + '" data-bc="ibopen" data-id="' + t.id + '" aria-label="' + esc(t.name) + ', ' + esc(ibNet(t.channel)) + (un ? ', নতুন বার্তা' : '') + '">' +
       '<span class="lg">' + logo(t.channel, 20) + '</span><b data-noi18n="1">' + esc(t.name) + '</b><time>' + ibWhen(t.at) + '</time><p>' + sub + last + '</p>' + (un ? '<i class="dt" aria-hidden="true"></i>' : '') + '</button>';
   }
   function ibMedia(m) {
     return (m || []).map(function (x) {
       if (x.kind === 'image' && x.src && /^data:image\//.test(x.src)) return '<img src="' + esc(x.src) + '" alt="ছবি" loading="lazy">';
-      return '<span class="fl">' + svg('photo') + '<span data-noi18n="1">' + esc(x.name || 'ফাইল') + '</span>' + (x.big ? ' · বড়, app-এ দেখুন' : '') + '</span>';
+      return '<span class="fl">' + svg('photo') + '<span data-noi18n="1">' + esc(x.name || 'ফাইল') + '</span>' + (x.big ? ' · বড়, অ্যাপে দেখুন' : '') + '</span>';
     }).join('');
   }
   function ibThreadHtml(narrow) {
     var D = C.ibT;
     if (!D) return '<div class="bx-t">' + (C.err.ibt ? errCall(C.err.ibt, '<button class="bc-btn" type="button" data-bc="ibopen" data-id="' + esc(C.ibOpen) + '">আবার চেষ্টা করুন</button>') : skel(60) + skel(260)) + '</div>';
     var T = D.thread, id = T.id, h = '<div class="bx-t" aria-label="কথোপকথন">';
-    var open = T.url ? '<a class="bc-btn ghost sm" href="' + esc(T.url) + '" target="_blank" rel="noopener noreferrer">' + svg('out') + (T.channel === 'youtube' ? 'YouTube-এ খুলুন' : 'app-এ খুলুন') + '</a>' : '';
+    var open = T.url ? '<a class="bc-btn ghost sm" href="' + esc(T.url) + '" target="_blank" rel="noopener noreferrer">' + svg('out') + (T.channel === 'youtube' ? 'YouTube-এ খুলুন' : 'অ্যাপে খুলুন') + '</a>' : '';
     h += '<div class="bx-th">' + (narrow ? '<button type="button" class="bc-btn ghost sm" data-bc="ibback" aria-label="তালিকায় ফিরুন">' + svg('back') + '</button>' : '') + logo(T.channel, 22) +
-      '<div class="nm"><b data-noi18n="1">' + esc(T.name) + '</b><small>' + (T.handle ? '<span data-noi18n="1">' + esc(T.handle) + '</span> · ' : '') + esc(netName(T.channel)) + (T.kind === 'comment' ? ' কমেন্ট' : '') +
+      '<div class="nm"><b data-noi18n="1">' + esc(T.name) + '</b><small>' + (T.handle ? '<span data-noi18n="1">' + esc(T.handle) + '</span> · ' : '') + esc(ibNet(T.channel)) + (T.kind === 'comment' ? ' কমেন্ট' : '') +
       (T.subject ? ' · <span data-noi18n="1">' + esc(T.subject) + '</span>' : '') + '</small></div><div class="ac">' + open +
       btn(svg('done') + (T.done ? 'আবার খুলুন' : 'শেষ'), 'data-bc="ibdone" data-id="' + id + '"', 'ghost sm', 'ibdone') + '</div></div>';
     var M = D.messages || [], lastDay = '';
@@ -61400,16 +61436,17 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       var d = new Date(m.at), dk = isNaN(d) ? '' : d.toDateString(), sep = dk && dk !== lastDay ? '<span class="bx-day">' + ibDay(d) + '</span>' : ''; lastDay = dk || lastDay;
       var fail = m.status === 'failed', sending = m.status === 'sending';
       return sep + '<div class="bx-b ' + (m.direction === 'out' ? 'out' : 'in') + (fail ? ' fail' : '') + '">' + ibMedia(m.media) + (m.text ? '<div class="tx" data-noi18n="1">' + esc(m.text) + '</div>' : '') +
-        (fail ? '<div class="why"><span>যায়নি: ' + esc(m.error || 'কারণ জানা নেই') + '</span><button type="button" class="bc-lnk" data-bc="ibretry" data-id="' + m.id + '">আবার লিখুন</button></div>' : '<small>' + (sending ? 'পাঠানো হচ্ছে…' : isNaN(d) ? '' : dTime(d)) + '</small>') + '</div>';
+        (fail ? (function () { var y = ibWhy(m.error, T.channel); return '<div class="why"><span>যায়নি: ' + esc(y.t) + '</span>' + (y.fix ? '<button type="button" class="bc-btn sm" data-bc="ibadd" data-id="' + y.fix + '">যুক্ত করুন</button>' : '') + btn('আবার পাঠান', 'data-bc="ibretry" data-id="' + m.id + '"', 'sm', 'ibr' + m.id) + '</div>'; })() : '<small>' + (sending ? 'পাঠানো হচ্ছে…' : isNaN(d) ? '' : dTime(d)) + '</small>') + '</div>';
     }).join('') : '<div class="bx-empty">এখানে এখনো কোনো বার্তা নেই।</div>') + '</div>';
-    var k = 'ibtx_' + id, ph = C.ibPh[id], chk = C.ibChk[id];
+    var k = 'ibtx_' + id, ph = C.ibPh[id], chk = C.ibChk[id], hole = ibHole(v(k));
     if (T.can_reply) {
       h += '<div class="bx-cp"><label class="bc-vh" for="bci_' + k + '">আপনার উত্তর</label>' + ta(k, T.kind === 'comment' ? 'সবার সামনে উত্তর লিখুন…' : 'উত্তর লিখুন…', '', ' rows="3"').replace('class="bc-ta" id', 'class="bc-ta bx-ta" id') +
         (chk ? '<div class="bx-chk">' + (/আগে/.test(chk) ? '' : 'পাঠানোর আগে: ') + esc(chk) + '</div>' : '') +
+        '<p class="bx-hole" id="bc_ibhole"' + (hole ? '' : ' hidden') + '>[ ] ঘরগুলোতে আসল কথা বসান, তারপর পাঠানো যাবে।</p>' +
         (ph ? '<div class="bx-ph"><img src="' + esc(ph.thumb) + '" alt="বাছাই করা ছবি"><button type="button" class="bc-btn ghost sm" data-bc="ibphx" data-id="' + id + '" aria-label="ছবিটা সরান">' + svg('x') + '</button></div>' : '') +
         '<div class="bc-row">' + (T.photo ? '<label class="bc-btn ghost bx-pick" title="ছবি দিন">' + svg('photo') + '<span>ছবি</span><input type="file" accept="image/jpeg,image/png,image/webp" data-bcibph="' + id + '" aria-label="ছবি দিন"></label>' : '') +
         btn(svg('spark') + 'AI দিয়ে উত্তর লিখুন', 'data-bc="ibdraft" data-id="' + id + '"', 'ghost', 'ibd' + id) + '<span class="bc-sp"></span>' +
-        btn(svg('send') + 'পাঠান', 'data-bc="ibsend" data-id="' + id + '"', 'dark ct-send', 'ibs' + id, !String(v(k)).trim() && !ph) + '</div></div>';
+        btn(svg('send') + 'পাঠান', 'data-bc="ibsend" data-id="' + id + '"', 'dark bx-send', 'ibs' + id, (!String(v(k)).trim() && !ph) || hole) + '</div></div>';
     } else {
       h += '<div class="bx-ro"><p style="margin:0 0 8px">' + esc(T.why || 'এখান থেকে উত্তর যায় না।') + '</p>' +
         (T.channel === 'youtube' ? (C.v[k] ? ta(k, '', '', ' rows="3"') + '<div class="bc-row">' + btn(svg('copy') + 'কপি করুন', 'data-bc="ibcopy" data-id="' + id + '"', 'dark') + '</div>' : '') +
@@ -61423,7 +61460,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     if (C.ibAdd) return connectHtml();
     var h = headHtml('ইনবক্স', '', '<button type="button" class="bc-btn sm" data-bc="ibadd">' + svg('plus') + 'যুক্ত করুন</button>'), g = gate(['inbox'], 90); if (g) return h + g;
     var D = C.d.inbox, n = D.counts || {}, chans = ibChans(), real = chans.filter(function (c) { return c.kind !== 'youtube'; }), bad = chans.filter(function (c) { return c.state === 'error'; });
-    if (bad.length) h += '<div class="bx-alert" role="status"><div><b>' + bad.map(function (c) { return '<span data-noi18n="1">' + esc(c.name || c.address) + '</span>'; }).join(', ') + ' কাজ করছে না।</b> ' + esc(bad[0].error || '') + '</div><span class="bc-sp"></span><button type="button" class="bc-btn sm" data-bc="ibadd">ঠিক করুন</button></div>';
+    if (bad.length && !(narrow && C.ibOpen)) h += '<div class="bx-alert one" role="status"><span class="ln" title="' + esc(ibShort(ibWhy(bad[0].error, bad[0].kind).t)) + '"><b>' + bad.map(function (c) { return '<span data-noi18n="1">' + esc(c.name || c.address) + '</span>'; }).join(', ') + '</b> · ' + esc(ibShort(ibWhy(bad[0].error, bad[0].kind).t) || 'কাজ করছে না।') + '</span><button type="button" class="bc-btn sm" data-bc="ibadd" data-id="' + esc(bad[0].kind) + '">ঠিক করুন</button></div>';
     if (!real.length && C.d.ichan && !C.ibNoNag) h += '<div class="bc-wait calm"><p>আপনার কোনো ইমেইল, WhatsApp বা Telegram এখনো যুক্ত হয়নি<small>এখন শুধু YouTube-এর কমেন্ট আসছে। যুক্ত করলে সব বার্তা এখানে এক জায়গায় আসবে।</small></p><span class="bc-sp"></span><button type="button" class="bc-btn dark" data-bc="ibadd">' + svg('plus') + 'যুক্ত করুন</button></div>';
     if (!(narrow && C.ibOpen)) {
       h += '<div class="bx-bar"><div class="bc-pills big" role="group" aria-label="কোন চ্যানেল">' + IB_F.map(function (f) {
@@ -61435,10 +61472,13 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       }).join('') + '</div></div>';
     }
     var L = D.threads || [], list;
+    if (C.ibFchk) { C.ibFchk = 0; if (C.ibOpen && !L.some(function (t) { return String(t.id) === String(C.ibOpen); })) { C.ibOpen = ''; C.ibT = null; } }
     if (!L.length) {
-      var fname = (IB_F.filter(function (f) { return f[0] === C.ibf; })[0] || ['', ''])[1];
+      var fname = ibNet(C.ibf);
       var ch = C.ibf !== 'all' && C.ibf !== 'comments' && !chans.some(function (c) { return c.kind === C.ibf; });
-      list = '<div class="bx-none">' + (ch ? '<b>' + esc(fname) + ' যুক্ত নেই</b>যুক্ত করলে এখানে তার বার্তা আসবে।<div class="bc-row"><button type="button" class="bc-btn dark" data-bc="ibadd">' + svg('plus') + esc(fname) + ' যুক্ত করুন</button></div>'
+      var noIg = ch && C.ibf === 'instagram' && chans.some(function (c) { return c.kind === 'facebook'; });
+      list = '<div class="bx-none">' + (noIg ? '<b>Page-এর সাথে কোনো Instagram যুক্ত নেই</b>Instagram-কে professional account করে Facebook Page-এর সাথে যুক্ত করুন, তারপর Facebook আবার যুক্ত করুন।<div class="bc-row"><button type="button" class="bc-btn dark" data-bc="ibadd" data-id="facebook">Facebook অংশ খুলুন</button></div>'
+        : ch ? '<b>' + esc(fname) + ' যুক্ত নেই</b>যুক্ত করলে এখানে তার বার্তা আসবে।<div class="bc-row"><button type="button" class="bc-btn dark" data-bc="ibadd" data-id="' + esc(C.ibf) + '">' + svg('plus') + esc(fname) + ' যুক্ত করুন</button></div>'
         : '<b>' + (C.ibf === 'all' ? 'কোনো বার্তা নেই' : 'এখানে কিছু নেই') + '</b>' + (C.ibf === 'all' ? 'নতুন বার্তা এলে এখানে সবার ওপরে আসবে।' : 'শেষ করা কথোপকথন এখানে দেখায় না; নতুন বার্তা এলে আবার উঠে আসে।')) + '</div>';
     } else list = L.map(ibRow).join('') + (D.more ? '<div class="bx-more">' + btn('আরও দেখুন', 'data-bc="ibmore"', 'ghost', 'ibmore') + '</div>' : '');
     if (narrow) return h + (C.ibOpen ? ibThreadHtml(true) : '<div class="bx-l">' + list + '</div>');
@@ -61448,8 +61488,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function icState(c) { var s = IB_ST[c.state] || ['বাকি', 'w']; return '<span class="bxc-st ' + s[1] + '">' + s[0] + '</span>'; }
   function icRow(c, extra) {
     var sub = c.state === 'error' && c.error ? '<small class="x">' + esc(c.error) + '</small>' : c.last_ok ? '<small>শেষ ঠিক ছিল ' + ibWhen(c.last_ok) + '</small>' : '';
-    return '<div class="bxc-row">' + logo(c.kind, 20) + '<div class="c"><b data-noi18n="1">' + esc(c.address && c.address !== c.name ? c.name + ' · ' + c.address : c.name || c.address) + '</b>' + sub + '</div>' + icState(c) + '<div class="a">' +
-      (c.kind !== 'youtube' && c.kind !== 'whatsapp' ? btn('পরীক্ষা করুন', 'data-bc="ictest" data-id="' + c.id + '"', 'ghost sm', 'ict' + c.id) : '') + (extra || '') +
+    return '<div class="bxc-row">' + logo(c.kind, 20) + '<div class="c"><b data-noi18n="1">' + esc(c.address && c.address !== c.name ? c.name + ' · ' + c.address : c.name || c.address) + '</b>' + sub + '</div>' + icState(c) + '<div class="a">' + (extra || '') +
+      (c.kind !== 'youtube' && c.kind !== 'whatsapp' ? btn('পরীক্ষা করুন', 'data-bc="ictest" data-id="' + c.id + '"', 'ghost sm', 'ict' + c.id) : '') +
       (c.kind === 'youtube' ? '' : C.icDel === String(c.id) ? btn('নিশ্চিত, সরান', 'data-bc="icdel" data-id="' + c.id + '"', 'red sm', 'icd' + c.id) + '<button type="button" class="bc-btn ghost sm" data-bc="icnodel">থাক</button>' : btn(svg('trash') + 'সরান', 'data-bc="icdel" data-id="' + c.id + '"', 'ghost sm', 'icd' + c.id)) + '</div></div>';
   }
   function icField(key, label, ph, type, extra) { return '<label class="bc-lbl" for="bci_' + key + '">' + label + '</label>' + inp(key, ph, (extra || '') + ' autocomplete="off" spellcheck="false"', type); }
@@ -61474,31 +61514,32 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     if (!rd.key) h += '<div class="bx-alert"><div><b>Mac-এ গোপন চাবি (INBOX_KEY) নেই।</b> পাসওয়ার্ড বা টোকেন রাখা যাবে না।</div></div>';
     // email
     var em = of('email');
-    h += '<section class="bxc-sec"><header>' + logo('email', 22) + '<h2>ইমেইল</h2><span class="bc-sp"></span>' + (C.ibForm === 'mail' ? '' : '<button type="button" class="bc-btn sm" data-bc="icform" data-id="mail">' + svg('plus') + 'email যোগ করুন</button>') + '</header>' +
+    h += '<section class="bxc-sec" id="bxc_email"><header>' + logo('email', 22) + '<h2>ইমেইল</h2><span class="bc-sp"></span>' + (C.ibForm === 'mail' ? '' : '<button type="button" class="bc-btn sm" data-bc="icform" data-id="mail">' + svg('plus') + 'ইমেইল যুক্ত করুন</button>') + '</header>' +
       '<p>প্রতি মিনিটে নতুন মেইল পড়ে, এখান থেকে উত্তর যায় একই থ্রেডে। নিউজলেটার আর অটো-মেইল আসে না। যত খুশি ঠিকানা যোগ করুন।</p>' +
       em.map(function (c) { return icRow(c); }).join('') + (C.ibForm === 'mail' ? icMailForm() : !em.length ? '<div class="bxc-row"><div class="c"><b>কোনো ইমেইল যুক্ত নেই</b></div><span class="bxc-st w">বাকি</span></div>' : '') + '</section>';
     // telegram
     var tgc = of('telegram');
-    h += '<section class="bxc-sec"><header>' + logo('telegram', 22) + '<h2>Telegram</h2><span class="bc-sp"></span>' + (tgc.length && C.ibForm !== 'tg' ? '<button type="button" class="bc-btn ghost sm" data-bc="icform" data-id="tg">অন্য বট</button>' : '') + '</header>' +
+    h += '<section class="bxc-sec" id="bxc_telegram"><header>' + logo('telegram', 22) + '<h2>Telegram</h2><span class="bc-sp"></span>' + (tgc.length && C.ibForm !== 'tg' ? '<button type="button" class="bc-btn ghost sm" data-bc="icform" data-id="tg">' + svg('plus') + 'আরেকটা বট যুক্ত করুন</button>' : '') + '</header>' +
       '<p>আপনার নিজের নতুন একটা বট। মানুষ বটকে লিখলে বার্তা এখানে আসে, উত্তর যায় বট থেকে। Postiz-এর বট এখানে ব্যবহার হয় না।</p>' + tgc.map(function (c) { return icRow(c); }).join('');
     if (!tgc.length || C.ibForm === 'tg') h += '<div class="bxc-form"><ol class="bxc-steps"><li>Telegram-এ <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer">@BotFather</a> খুলুন, <b>/newbot</b> পাঠান।</li><li>বটের নাম দিন, তারপর username দিন (শেষে <b>bot</b> থাকবে, যেমন rahman_desk_bot)।</li><li>BotFather যে লম্বা টোকেন দেয় (সংখ্যা:অক্ষর), পুরোটা কপি করে নিচে বসান।</li></ol>' +
       icField('ict_tok', 'বটের টোকেন', '123456789:AA…', 'password', ' autocomplete="new-password"') + (C.icErr && C.icErr.k === 'tg' ? '<div class="bx-alert" role="alert" style="margin:12px 0 0">' + esc(C.icErr.t) + '</div>' : '') + '<div class="bc-row">' + btn(svg('check') + 'যুক্ত করুন', 'data-bc="ictsave"', 'dark', 'ictsave') + (tgc.length ? '<button type="button" class="bc-btn ghost" data-bc="icform" data-id="">বাতিল</button>' : '') + '</div></div>';
     h += '</section>';
     // whatsapp
     var wa = of('whatsapp')[0], q = C.ibQr;
-    h += '<section class="bxc-sec"><header>' + logo('whatsapp', 22) + '<h2>WhatsApp (আপনার নিজের নম্বর)</h2></header><p>আলাদা একটা সার্ভারে চলে, ব্যবসার WhatsApp-এর সাথে কোনো যোগ নেই। গ্রুপ আর স্ট্যাটাস আসে না।</p>';
+    h += '<section class="bxc-sec" id="bxc_whatsapp"><header>' + logo('whatsapp', 22) + '<h2>WhatsApp (আপনার নিজের নম্বর)</h2></header><p>আলাদা একটা সার্ভারে চলে, ব্যবসার WhatsApp-এর সাথে কোনো যোগ নেই। গ্রুপ আর স্ট্যাটাস আসে না।</p>';
     if (wa && wa.state === 'ok') h += icRow({ id: wa.id, kind: 'whatsapp', name: 'WhatsApp', address: wa.address ? '+' + wa.address : '', state: 'ok', last_ok: wa.last_ok });
     else {
-      if (wa) h += icRow(wa);
+      var qb = btn(q ? svg('reload') + 'নতুন QR' : 'QR দেখান', 'data-bc="icwa"', q ? 'ghost sm' : 'dark sm', 'icwa', !rd.wa);
+      if (wa) h += icRow(wa, qb);
       if (q && q.qr) h += '<div class="bxc-qr"><img src="' + esc(q.qr) + '" alt="WhatsApp যুক্ত করার QR কোড"><ol><li>ফোনে WhatsApp খুলুন।</li><li>⋮ বা Settings › <b>Linked devices</b> › <b>Link a device</b>।</li><li>এই QR-এর দিকে ফোন ধরুন। QR কিছুক্ষণ পরপর বদলায়, পাতা নিজে থেকে নতুনটা আনে।</li></ol></div>';
       else if (q && q.state === 'starting') h += '<div class="bxc-qr"><span class="bc-spin" style="color:var(--bc-ink)"></span> QR তৈরি হচ্ছে…</div>';
-      h += '<div class="bc-row">' + btn(q ? svg('reload') + 'নতুন QR' : 'QR দেখান', 'data-bc="icwa"', q ? 'ghost' : 'dark', 'icwa', !rd.wa) + '</div>';
+      if (!wa) h += '<div class="bc-row">' + btn(q ? svg('reload') + 'নতুন QR' : 'QR দেখান', 'data-bc="icwa"', q ? 'ghost' : 'dark', 'icwa', !rd.wa) + '</div>';
       if (!rd.wa) h += '<p class="bc-note">Mac-এ ব্যক্তিগত WhatsApp সার্ভারের চাবি নেই।</p>';
     }
     h += '</section>';
     // facebook + instagram
     var fb = of('facebook'), ig = of('instagram');
-    h += '<section class="bxc-sec"><header>' + logo('facebook', 22) + logo('instagram', 22) + '<h2>Facebook Page ও Instagram</h2></header><p>Page “Rahman Najir”-এর মেসেজ আর কমেন্ট, তার সাথে যুক্ত Instagram-এর DM আর কমেন্ট। এক চাপে Facebook-এ অনুমতি দিলেই চালু।</p>' +
+    h += '<section class="bxc-sec" id="bxc_facebook"><header>' + logo('facebook', 22) + logo('instagram', 22) + '<h2>Facebook Page ও Instagram</h2></header><p>Page “Rahman Najir”-এর মেসেজ আর কমেন্ট, তার সাথে যুক্ত Instagram-এর DM আর কমেন্ট। এক চাপে Facebook-এ অনুমতি দিলেই চালু।</p>' +
       fb.concat(ig).map(function (c) { return icRow(c); }).join('') +
       '<div class="bc-row">' + btn(fb.length ? svg('reload') + 'আবার যুক্ত করুন' : 'Facebook যুক্ত করুন', 'data-bc="icfb"', fb.length ? 'ghost' : 'dark', 'icfb', !rd.meta) + '</div>' +
       (rd.meta ? '<ol class="bxc-steps"><li>নতুন ট্যাবে Facebook খুলবে: Page <b>Rahman Najir</b> বাছুন, সব অনুমতিতে হ্যাঁ দিন।</li><li>Instagram-কে আগে professional account করে Page-এর সাথে যুক্ত রাখুন, তাহলে সেটাও আসবে।</li><li>“যুক্ত হলো” দেখলে ট্যাবটা বন্ধ করে এখানে “নতুন করে আনুন” চাপুন।</li></ol>' : '<p class="bc-note">Mac-এ Meta app-এর চাবি নেই।</p>') + '</section>';
@@ -61506,7 +61547,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     var yt = of('youtube');
     h += '<section class="bxc-sec"><header>' + logo('youtube', 22) + '<h2>YouTube কমেন্ট</h2></header><p>“শোনা” থেকে আসে: অন্যের ভিডিওতে যেখানে মানুষ প্রশ্ন, দাম বা আসল-নকল নিয়ে লেখেন। উত্তর দিতে হয় YouTube-এ; AI লেখাটা বানিয়ে দেয়।</p>' + yt.map(function (c) { return icRow(c); }).join('') + '</section>';
     h += '<section class="bxc-sec"><header><h2>যেগুলো এখানে আনা যায় না</h2></header>' + (D.no_api || []).map(function (x) {
-      return '<div class="bxc-row">' + logo(x.kind, 20) + '<div class="c"><b>' + esc(x.name) + '</b><small>' + esc(x.why) + '</small></div><div class="a"><a class="bc-btn sm" href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + svg('out') + 'app-এ খুলুন</a></div></div>';
+      return '<div class="bxc-row">' + logo(x.kind, 20) + '<div class="c"><b>' + esc(x.name) + '</b><small>' + esc(x.why) + '</small></div><div class="a"><a class="bc-btn sm" href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + svg('out') + 'অ্যাপে খুলুন</a></div></div>';
     }).join('') + '</section></div>';
     return h;
   }
@@ -61523,7 +61564,30 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       draw(); ibEnd();
     }, function (e) { C.err.ibt = (e && e.message) || String(e); draw(); });
   }
-  function ibEnd() { requestAnimationFrame(function () { var m = el('bc_ibms'); if (m) m.scrollTop = m.scrollHeight; if (narrowNow() && m) { var cp = el('bc_root').querySelector('.bx-cp'); if (cp && C.ibJump) { cp.scrollIntoView({ block: 'end' }); } } C.ibJump = 0; }); }
+  function ibScroller(x) { for (var p = x && x.parentElement; p && p !== document.body; p = p.parentElement) { var o = getComputedStyle(p).overflowY; if ((o === 'auto' || o === 'scroll') && p.scrollHeight > p.clientHeight + 2) return p; } return document.scrollingElement || document.documentElement; }
+  // the last bubble (and its retry button) sits just above the sticky composer
+  function ibEnd() { requestAnimationFrame(function () { requestAnimationFrame(function () {
+    var m = el('bc_ibms'); if (!m) return; m.scrollTop = m.scrollHeight;
+    if (narrowNow()) {
+      var sc = ibScroller(m), last = m.lastElementChild, cp = el('bc_root').querySelector('.bx-cp'); sc.scrollTop = sc.scrollHeight;
+      if (last && cp) { var gap = last.getBoundingClientRect().bottom - cp.getBoundingClientRect().top + 12; if (gap > 0) sc.scrollTop += gap; }
+    }
+    C.ibJump = 0;
+  }); }); }
+  // the PC inbox takes only the height left under its top, so the composer is always in view
+  function ibFit() {
+    var b = el('bc_root') && el('bc_root').querySelector('.bx'); if (!b || narrowNow()) return;
+    var sc = ibScroller(b), top = b.getBoundingClientRect().top + (sc === document.scrollingElement || sc === document.documentElement ? window.scrollY : sc.scrollTop - sc.getBoundingClientRect().top);
+    var vh = sc === document.scrollingElement || sc === document.documentElement ? window.innerHeight : sc.getBoundingClientRect().bottom - (sc.getBoundingClientRect().top);
+    b.style.height = Math.max(360, Math.floor(vh - top - 12)) + 'px';
+  }
+  function ibAfter() {
+    if (!on() || C.sec !== 'inbox') return;
+    ibFit();
+    if (narrowNow()) [].forEach.call(el('bc_root').querySelectorAll('.bx-bar .on, .bx-sub .on'), function (x) { var r = x.parentNode; r.scrollLeft = x.offsetLeft - (r.clientWidth - x.offsetWidth) / 2; });
+    if (C.ibAdd && C.ibGoTo) { var s2 = el('bxc_' + C.ibGoTo); if (s2) { C.ibGoTo = ''; s2.scrollIntoView({ block: 'start' }); } }
+  }
+  addEventListener('resize', function () { if (on() && C.sec === 'inbox') ibFit(); });
   function ibQrPoll() {
     clearTimeout(C.ibQrT); if (!C.ibQr || C.sec !== 'inbox' || !C.ibAdd) return;
     C.ibQrT = setTimeout(function () {
@@ -61557,37 +61621,47 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   });
   document.addEventListener('input', function (e) {
     var x = e.target; if (!on() || !x.getAttribute) return; var k = x.getAttribute('data-bcin') || '';
-    if (k.indexOf('ibtx_') === 0) { var sb = el('bc_root').querySelector('[data-bc="ibsend"]'), id = k.slice(5); if (sb && !C.busy['ibs' + id]) sb.disabled = !x.value.trim() && !C.ibPh[id]; }
+    if (k.indexOf('ibtx_') === 0) { var sb = el('bc_root').querySelector('[data-bc="ibsend"]'), id = k.slice(5), hl = ibHole(x.value), hp = el('bc_ibhole'); if (sb && !C.busy['ibs' + id]) sb.disabled = (!x.value.trim() && !C.ibPh[id]) || hl; if (hp) hp.hidden = !hl; }
   });
   document.addEventListener('click', function (e) {
     if (!on()) return;
     var t = e.target.closest && e.target.closest('[data-bc]'); if (!t || !el('bc_root') || !el('bc_root').contains(t)) return;
     var w = t.getAttribute('data-bc'), id = t.getAttribute('data-id') || '';
     if (!/^(ib|ic)/.test(w)) return;
-    if (w === 'ibf') { C.ibf = id; C.ibp = ''; C.ibOpen = narrowNow() ? '' : C.ibOpen; ibLoad(); draw(); ibPillView(); return; }
-    if (w === 'ibp') { C.ibp = id; ibLoad(); draw(); ibPillView(); return; }
+    if (w === 'ibf') { C.ibf = id; C.ibp = ''; C.ibOpen = narrowNow() ? '' : C.ibOpen; C.ibFchk = 1; ibLoad(); draw(); ibPillView(); return; }
+    if (w === 'ibp') { C.ibp = id; C.ibFchk = 1; ibLoad(); draw(); ibPillView(); return; }
     if (w === 'ibopen') { C.ibJump = 1; ibOpen(id); return; }
     if (w === 'ibback') { C.ibOpen = ''; C.ibT = null; draw(); var r0 = el('bc_root').querySelector('.bx-r.on'); if (r0) r0.focus(); return; }
     if (w === 'ibmore') {
       var L = (C.d.inbox && C.d.inbox.threads) || [], last = L[L.length - 1]; if (!last) return;
       act('ibmore', 'erpBrandDeskInbox', { f: C.ibf, p: C.ibp, before: last.at }, function (r) { C.d.inbox.threads = L.concat(r.threads || []); C.d.inbox.more = r.more; }); return;
     }
-    if (w === 'ibadd') { C.ibAdd = !C.ibAdd; C.ibForm = ''; C.ibQr = null; if (C.ibAdd) get('ichan', true); draw(); window.scrollTo(0, 0); return; }
+    if (w === 'ibadd') { var go2 = id === 'instagram' ? 'facebook' : id; C.ibAdd = go2 ? true : !C.ibAdd; C.ibGoTo = go2; C.ibForm = ''; C.ibQr = null; if (C.ibAdd) get('ichan', true); draw(); if (!go2) window.scrollTo(0, 0); return; }
     if (w === 'ibphx') { delete C.ibPh[id]; draw(); return; }
     if (w === 'ibdraft') {
-      act('ibd' + id, 'erpBrandDeskReplyDraft', { thread: Number(id) }, function (r) { C.v['ibtx_' + id] = r.reply; C.ibChk[id] = r.check || ''; toast('AI খসড়া লিখেছে। দেখে, বদলে, তারপর পাঠান।');
+      act('ibd' + id, 'erpBrandDeskReplyDraft', { thread: Number(id) }, function (r) { C.v['ibtx_' + id] = r.reply; C.ibChk[id] = r.check || '';
         setTimeout(function () { var x = el('bci_ibtx_' + id); if (x) { x.focus(); x.style.height = 'auto'; x.style.height = Math.min(240, x.scrollHeight + 2) + 'px'; } }, 30); }); return;
     }
     if (w === 'ibcopy') { var tx = String(v('ibtx_' + id)); try { navigator.clipboard.writeText(tx).then(function () { toast('কপি হলো। YouTube-এ গিয়ে বসান।'); }); } catch (er) { toast('কপি করা গেল না। লেখাটা হাতে বেছে নিন।', true); } return; }
     if (w === 'ibsend') {
       var text = String(v('ibtx_' + id)).trim(), ph = C.ibPh[id]; if (!text && !ph) return toast('আগে উত্তরটা লিখুন।', true);
+      if (ibHole(text)) return toast('[ ] ঘরগুলোতে আসল কথা বসান, তারপর পাঠান।', true);
       act('ibs' + id, 'erpBrandDeskReply', { thread: Number(id), text: text, photo: ph || null }, function (r) {
         C.ibT = r; var lm = (r.messages || []).slice(-1)[0];
-        if (lm && lm.status === 'failed') toast('যায়নি: ' + esc(lm.error || ''), true, 9000); else { C.v['ibtx_' + id] = ''; delete C.ibPh[id]; delete C.ibChk[id]; toast('পাঠানো হলো।'); }
-        get('inbox', true); ibEnd();
+        if (lm && lm.status === 'failed') toast('যায়নি: ' + esc(ibWhy(lm.error, r.thread && r.thread.channel).t), true, 9000); else { C.v['ibtx_' + id] = ''; delete C.ibPh[id]; delete C.ibChk[id]; toast('পাঠানো হলো।'); }
+        C.ibJump = 1; get('inbox', true); ibEnd();
       }); return;
     }
-    if (w === 'ibretry') { var M = (C.ibT && C.ibT.messages) || [], m = M.filter(function (q) { return String(q.id) === id; })[0]; if (m && C.ibT) { C.v['ibtx_' + C.ibT.thread.id] = m.text; draw(); var x2 = el('bci_ibtx_' + C.ibT.thread.id); if (x2) x2.focus(); } return; }
+    if (w === 'ibretry') {
+      var M = (C.ibT && C.ibT.messages) || [], m = M.filter(function (q) { return String(q.id) === id; })[0]; if (!m || !C.ibT) return;
+      var tid2 = C.ibT.thread.id;
+      if (!String(m.text || '').trim()) { draw(); var x2 = el('bci_ibtx_' + tid2); if (x2) x2.focus(); return; }
+      act('ibr' + id, 'erpBrandDeskReply', { thread: Number(tid2), text: String(m.text), photo: null }, function (r) {
+        C.ibT = r; var lm2 = (r.messages || []).slice(-1)[0];
+        if (lm2 && lm2.status === 'failed') toast('আবারও যায়নি: ' + esc(ibWhy(lm2.error, r.thread && r.thread.channel).t), true, 9000); else toast('পাঠানো হলো।');
+        C.ibJump = 1; get('inbox', true); ibEnd();
+      }); return;
+    }
     if (w === 'ibdone') {
       var T = C.ibT && C.ibT.thread; if (!T) return; var nd = !T.done;
       act('ibdone', 'erpBrandDeskThreadDone', { thread: T.id, done: nd }, function (r) {
@@ -61663,6 +61737,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       var csb1 = r.querySelector('.cs-b'); if (csb1) { if (C.csEnd) { csb1.scrollTop = csb1.scrollHeight; C.csEnd = 0; } else csb1.scrollTop = cst; }
       if (fid) { var nf = el(fid); if (nf) { try { nf.focus({ preventScroll: true }); if (ss != null) nf.setSelectionRange(ss, se); } catch (e) {} } }
       requestAnimationFrame(fitFolds); requestAnimationFrame(fitAreas);
+      if (C.sec === 'inbox') requestAnimationFrame(ibAfter);
       if (!fid && fsel) { var nf2 = null; try { nf2 = r.querySelector(fsel); } catch (e) {} if (nf2) { try { nf2.focus({ preventScroll: true }); } catch (e) {} } }
       if (C.sec === 'map') requestAnimationFrame(wires);
       if (C.sec === 'home') requestAnimationFrame(function () { var sc = r.querySelector('.bc-scroll'), nw = sc && sc.querySelector('.bc-now'); if (sc && nw && sc.scrollWidth > sc.clientWidth && !C.moved) { sc.scrollLeft = nw.offsetLeft - sc.clientWidth / 2; C.moved = 1; } });
