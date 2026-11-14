@@ -59449,7 +59449,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
 .sx-vis{display:flex;align-items:flex-end;gap:18px;margin:12px 0 10px;flex-wrap:wrap}
 .sx-big b{display:block;font:800 36px/1 "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;letter-spacing:-.02em}
 .sx-big span{font-size:13px;color:var(--bc-ink-2)}
-.sx-big.none b{color:#B4B9C1}
+.sx-big.none b{color:var(--bc-ink-3)}
 .sx-wk{font-size:13.5px;color:var(--bc-ink-2);display:flex;gap:4px 14px;flex-wrap:wrap;padding-bottom:3px}
 .sx-wk b{color:var(--bc-ink);font-weight:700}
 .sx-ch{display:inline-flex;align-items:center;gap:2px;font-weight:700}
@@ -59490,14 +59490,16 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
 .sx-empty{padding:18px 0;color:var(--bc-ink-2);font-size:14px;border-bottom:1px solid var(--bc-rule)}
 .sx-empty p{margin:0 0 10px}
 .sx-umami{margin:0 0 14px}
+.sx-umami .sx-gap{margin-top:8px}
 @container bc (max-width:759px){
   .sx-sites{grid-template-columns:1fr}
   .sx-facts{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:10px}
   .sx .bc-btn{min-height:44px}
   .sx-ed .bc-btn{width:44px}
+  .sx-lb{width:44px;padding:0!important}.sx-lb span{display:none}
+  .sx .bc-h2{flex-wrap:nowrap;align-items:center}
   .sx-ed .bc-btn.red,.sx-ed .bc-btn.ghost:not([aria-label]){width:auto;padding:0 12px}
   .sx-acts .bc-btn{flex:1 1 auto}
-  .sx-b a.bc-btn{width:100%}
 }
 
 </style>
@@ -59539,7 +59541,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   var ICO = {
     home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
     biz: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.4 2.5 3.6 5.5 3.6 9s-1.2 6.5-3.6 9M12 3C9.6 5.5 8.4 8.5 8.4 12s1.2 6.5 3.6 9"/>',
-    out: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>', up: '<path d="M12 19V5M6 11l6-6 6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>', trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+    pulse: '<path d="M3 12h4l3-7 4 14 3-7h4"/>', out: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>', up: '<path d="M12 19V5M6 11l6-6 6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>', trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
     posts: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
     ideas: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>',
     media: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/>',
@@ -61129,10 +61131,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function sxVisitors(x, um) {
     var v = x.visitors || {}, st = v.state;
     if (st === 'ok' && v.week === 0 && !v.prev_week) return '<div class="sx-nov">ভিজিটর গোনা শুরু হয়নি: সাইটে tracker বসানো বাকি।</div>';
-    if (st !== 'ok') {
-      var why = st === 'no_site' ? 'Umami-তে সাইটটা এখনো যোগ হয়নি' : st === 'error' || st === 'no_answer' ? 'Umami এবার সাড়া দেয়নি' : 'Umami-র লগইন Mac-এ বসানো বাকি';
-      return '<div class="sx-nov">ভিজিটর গোনা শুরু হয়নি: ' + why + '।</div>';
-    }
+    if (st === 'no_site') return '<div class="sx-nov">ভিজিটর গোনা শুরু হয়নি: Umami-তে সাইটটা এখনো যোগ হয়নি।</div>';
+    if (st !== 'ok') return '<div class="sx-vis"><div class="sx-big none"><b>—</b><span>আজকের ভিজিটর</span></div><div class="sx-wk"><span>গতকাল <b>—</b></span><span>৭ দিনে <b>—</b></span></div></div>';
     var h = '<div class="sx-vis"><div class="sx-big"><b>' + (v.today == null ? '—' : bnN(v.today)) + '</b><span>আজকের ভিজিটর</span></div>' +
       '<div class="sx-wk"><span>গতকাল <b>' + (v.yesterday == null ? '—' : bnN(v.yesterday)) + '</b></span><span>৭ দিনে <b>' + (v.week == null ? '—' : bnN(v.week)) + '</b> ' + sxChange(v.week, v.prev_week) + '</span></div></div>';
     var pg = v.pages || [], rf = v.refs || [];
@@ -61146,7 +61146,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     var ed = C.sxEdit, nd = sxNeeds(x), never = !x.checked_at;
     if (ed && C.sxForm === String(x.id)) return '<div class="sx-site">' + sxSiteForm(x) + '</div>';
     var dotc = never ? 'q' : x.up ? '' : 'x', word = never ? 'দেখা হচ্ছে' : x.up ? 'চালু' : 'বন্ধ';
-    var spd = x.speed != null ? '<dd class="' + (x.speed < 50 ? 'bad' : x.speed < 90 ? 'warn' : '') + '">' + bn(x.speed) + '<small>/১০০</small></dd>' : '<dd>—' + (x.daily_at ? ' <small>' + (SPEED_WHY[x.speed_why] || '') + '</small>' : ' <small>আজ মাপা হবে</small>') + '</dd>';
+    var spd = x.speed != null ? '<dd class="' + (x.speed < 50 ? 'bad' : x.speed < 90 ? 'warn' : '') + '">' + bn(x.speed) + '<small>/১০০</small></dd>' : '<dd>—' + (!x.daily_at ? ' <small>আজ মাপা হবে</small>' : /^(quota|key)$/.test(x.speed_why || '') ? '' : ' <small>' + (SPEED_WHY[x.speed_why] || '') + '</small>') + '</dd>';
     var ssl = x.ssl_days == null ? '<dd>—</dd>' : x.ssl_days < 0 ? '<dd class="bad">ঠিক নেই</dd>' : '<dd class="' + (x.ssl_days < 21 ? 'bad' : x.ssl_days < 30 ? 'warn' : '') + '">' + bn(x.ssl_days) + ' দিন</dd>';
     var brk = x.broken == null ? '<dd>—' + (x.daily_at ? '' : ' <small>আজ দেখা হবে</small>') + '</dd>' : '<dd class="' + (x.broken ? 'bad' : '') + '">' + bn(x.broken) + '<small> / ' + bn(x.links || 0) + '</small></dd>';
     var ms = x.up && x.ms != null ? '<dd class="' + (x.ms > 3000 ? 'bad' : x.ms > 1500 ? 'warn' : '') + '">' + bn((x.ms / 1000).toFixed(1)) + '<small> সেকেন্ড</small></dd>' : '<dd>—</dd>';
@@ -61188,26 +61188,28 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       '<small>' + (run ? 'এখন পরীক্ষা চলছে…' : last ? 'শেষ পরীক্ষা ' + sxWhen(last) + '। প্রতি ৩০ মিনিটে নিজে থেকে পরীক্ষা হয়।' : 'প্রথম পরীক্ষা এক মিনিটের মধ্যে হবে।') + '</small></p>';
     // (a) websites
     h += '<div class="bc-h2"><h2>ওয়েবসাইট</h2><span class="bc-sp"></span>' +
-      (C.sxEdit ? '<button type="button" class="bc-btn dark sm" data-bc="sxedit">হয়ে গেছে</button>' : btn(run ? 'পরীক্ষা চলছে' : svg('reload') + 'এখন পরীক্ষা করুন', 'data-bc="sxrun"', 'sm', 'sxrun', run) + '<button type="button" class="bc-btn ghost sm" data-bc="sxedit">' + svg('pen') + 'তালিকা বদলান</button>') + '</div>';
-    if (D.umami && D.umami.state !== 'ok' && S.length) h += '<div class="bc-wait calm sx-umami"><p>ভিজিটর গোনা শুরু হয়নি<small>' + (D.umami.state === 'login_refused' ? 'Mac-এ বসানো Umami-র লগইন কাজ করছে না। ঠিক করলে সাইটগুলো Umami-তে নিজে থেকে যোগ হবে।' : 'Umami-র লগইন Mac-এ বসানো বাকি। বসালে সাইটগুলো Umami-তে নিজে থেকে যোগ হবে, তারপর প্রতিটা সাইটে tracker বসাতে হবে।') + '</small></p></div>';
+      (C.sxEdit ? '<button type="button" class="bc-btn dark sm" data-bc="sxedit">হয়ে গেছে</button>' : btn(run ? 'পরীক্ষা চলছে' : svg('pulse') + 'এখন পরীক্ষা করুন', 'data-bc="sxrun"', 'sm', 'sxrun', run) + '<button type="button" class="bc-btn ghost sm sx-lb" data-bc="sxedit" aria-label="তালিকা বদলান">' + svg('pen') + '<span>তালিকা বদলান</span></button>') + '</div>';
+    var noSpeed = S.some(function (x) { return x.speed == null && /^(quota|key)$/.test(x.speed_why || ''); }), umOff = D.umami && D.umami.state !== 'ok';
+    if ((umOff || noSpeed) && S.length) h += '<div class="bc-wait calm sx-umami"><p>' + (umOff ? 'ভিজিটর গোনা শুরু হয়নি<small>' + (D.umami.state === 'login_refused' ? 'Mac-এ বসানো Umami-র লগইন কাজ করছে না। ঠিক করলে সাইটগুলো Umami-তে নিজে থেকে যোগ হবে।' : 'Umami-র লগইন Mac-এ বসানো বাকি। বসালে সাইটগুলো Umami-তে নিজে থেকে যোগ হবে, তারপর প্রতিটা সাইটে গোনার ছোট কোড বসাতে হবে।') + '</small>' : '') +
+      (noSpeed ? (umOff ? '<small class="sx-gap">' : '<small>') + 'মোবাইলের গতি মাপা যাচ্ছে না: Google PageSpeed-এর চাবি Mac-এ বসানো বাকি।</small>' : '') + '</p></div>';
     if (!S.length) h += '<div class="sx-empty"><p>এখনো কোনো সাইট নেই। সাইট যোগ করলে প্রতি ৩০ মিনিটে তার খবর এখানে আসবে।</p>' + (C.sxForm === 'new' ? '' : '<button type="button" class="bc-btn dark" data-bc="sxform" data-id="new">' + svg('plus') + 'সাইট যোগ করুন</button>') + '</div>';
     else h += '<div class="sx-sites">' + S.map(function (x, i) { return sxSite(x, i, S.length); }).join('') + '</div>';
     if (C.sxForm === 'new') h += sxSiteForm(null);
     else if (C.sxEdit && S.length) h += '<div class="sx-acts">' + '<button type="button" class="bc-btn" data-bc="sxform" data-id="new">' + svg('plus') + 'সাইট যোগ করুন</button></div>';
     // (b) businesses: doors only
-    h += '<div class="bc-block"><div class="bc-h2"><h2>ব্যবসা</h2><span>ERP খুলবে নতুন ট্যাবে, নিজের লগইনে</span><span class="bc-sp"></span>' +
-      (C.bzEdit ? '<button type="button" class="bc-btn dark sm" data-bc="bzedit">হয়ে গেছে</button>' : '<button type="button" class="bc-btn ghost sm" data-bc="bzedit">' + svg('pen') + 'তালিকা বদলান</button>') + '</div>';
+    h += '<div class="bc-block"><div class="bc-h2"><h2>ব্যবসা</h2><span class="bc-sp"></span>' +
+      (C.bzEdit ? '<button type="button" class="bc-btn dark sm" data-bc="bzedit">হয়ে গেছে</button>' : '<button type="button" class="bc-btn ghost sm sx-lb" data-bc="bzedit" aria-label="তালিকা বদলান">' + svg('pen') + '<span>তালিকা বদলান</span></button>') + '</div>';
     if (!B.length) h += '<div class="sx-empty"><p>কোনো ব্যবসা যোগ করা নেই। যোগ করলে এখান থেকে এক চাপে তার ERP খুলবে।</p>' + (C.bzForm === 'new' ? '' : '<button type="button" class="bc-btn dark" data-bc="bzform" data-id="new">' + svg('plus') + 'ব্যবসা যোগ করুন</button>') + '</div>';
     else h += '<div class="sx-biz">' + B.map(function (x, i) {
       if (C.bzEdit && C.bzForm === String(x.id)) return '<div class="sx-b"><div>' + bzForm(x) + '</div></div>';
       return '<div class="sx-b"><div><h3 data-noi18n="1">' + esc(x.name) + '</h3>' + (x.note ? '<p data-noi18n="1">' + esc(x.note) + '</p>' : '') + '<small data-noi18n="1">' + esc(hostOf(x.erp_url)) + '</small></div>' +
         (C.bzEdit ? '<span class="sx-ed">' + btn(svg('up'), 'data-bc="bzmove" data-id="' + x.id + '" data-d="up" aria-label="ওপরে নিন"', 'ghost sm', 'bzm' + x.id, !i) + btn(svg('down'), 'data-bc="bzmove" data-id="' + x.id + '" data-d="down" aria-label="নিচে নিন"', 'ghost sm', 'bzm' + x.id, i === B.length - 1) +
           btn(svg('pen'), 'data-bc="bzform" data-id="' + x.id + '" aria-label="বদলান"', 'ghost sm') + (C.sxDel === 'bzdel' + x.id ? btn('নিশ্চিত, সরান', 'data-bc="bzdel" data-id="' + x.id + '"', 'red sm', 'bzd' + x.id) + '<button type="button" class="bc-btn ghost sm" data-bc="sxnodel">থাক</button>' : btn(svg('trash'), 'data-bc="bzdel" data-id="' + x.id + '" aria-label="সরান"', 'ghost sm', 'bzd' + x.id)) + '</span>'
-          : (x.erp_url ? '<a class="bc-btn dark" href="' + esc(x.erp_url) + '" target="_blank" rel="noopener noreferrer">ERP খুলুন' + svg('out') + '</a>' : '')) + '</div>';
+          : (x.erp_url ? '<a class="bc-btn" href="' + esc(x.erp_url) + '" target="_blank" rel="noopener noreferrer">ERP খুলুন' + svg('out') + '</a>' : '')) + '</div>';
     }).join('') + '</div>';
     if (C.bzForm === 'new') h += bzForm(null);
     else if (C.bzEdit && B.length) h += '<div class="sx-acts"><button type="button" class="bc-btn" data-bc="bzform" data-id="new">' + svg('plus') + 'ব্যবসা যোগ করুন</button></div>';
-    h += '</div><div class="bc-note" style="margin-top:22px">সব সংখ্যা সাইট থেকে আর Mac-এর নিজের টুল থেকে আসে, কোনো ERP থেকে নয়। — মানে সংখ্যাটা এখনো পাওয়া যায়নি।</div></div>';
+    h += '</div><div class="bc-note" style="margin-top:22px">সব সংখ্যা সাইট থেকে আর Mac-এর নিজের টুল থেকে আসে, কোনো ERP থেকে নয়। “—” মানে সংখ্যাটা এখনো পাওয়া যায়নি। ERP খোলে নতুন ট্যাবে, তার নিজের লগইনে।</div></div>';
     return h;
   }
   function sxDone(r, keys) { C.d.sites = r; keys.forEach(function (k) { Object.keys(C.v).forEach(function (q) { if (q.indexOf(k) === 0) delete C.v[q]; }); }); }
