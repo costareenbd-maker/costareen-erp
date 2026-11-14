@@ -4552,3 +4552,28 @@ on draft 36 (comment + photo -> reply in 36 s -> second comment from the page ->
 and on draft 37 (LinkedIn look); draft 36 put back exactly, test comments and the one lesson they made deleted. NOT done:
 news-card and LinkedIn-ticket sheets not captured (no made news / open ticket on dev right then); no AI answer on Instagram/
 YouTube/TikTok threads captured; the auto-study that ran during the test moved settings.lessons_last_study to today.
+brand-29 (14 Nov 2026, dev + Mac bridge): ব্যবসা ও সাইট - owner's rule: the Brand desk is his first step, each business's ERP
+the second, reached from here; the desk never reads from or writes to any ERP. New rail entry "ব্যবসা ও সাইট" (globe, right
+after হোম; on phone under আরও). (a) ওয়েবসাইট: one entry per site - live dot + চালু/বন্ধ, today's visitors big (when Umami
+counts), yesterday + 7 days + change vs the previous 7 days with an arrow, top 3 pages + top 3 referrers, speed (mobile
+PageSpeed), response time, HTTPS days left, broken home-page links (of max 25 own links); "কাজ লাগবে: ..." only when
+something is wrong (down, >3 s, SSL <21 days, speed <50, broken links, with the list under কোনগুলো); "সাইট খুলুন",
+"পরিসংখ্যান" (stats.costareen.com), "এখন পরীক্ষা করুন" (polls every 6 s until the run ends). (b) ব্যবসা: name, note, ERP
+host, "ERP খুলুন" (new tab, its own login). Both lists editable inline (add / edit / remove with a two-tap confirm / up-down).
+A missing number is "—" with its reason. Bridge: tables sites (soft remove), businesses, site_checks (120 days kept);
+sites_loop every 30 min (+ PageSpeed and link walk once per ~20 h; /cdn-cgi/ links skipped), Umami API (login from
+UMAMI_USER / UMAMI_PASS in /opt/brand/bridge/.env; websites created/found by domain automatically once it exists), PSI_KEY
+optional; the bridge container joined the brand-umami_default network. Seeded 4 sites + Costareen -> https://erp.costareen.com.
+ERP: erpBrandDeskSites (read), erpBrandDeskSitesRun, erpBrandDeskSiteSave, erpBrandDeskBizSave (owner only, https-only,
+actions save/remove/move); branddesk_test 184 pass (incl. "touches no ERP data"). Trackers committed (not deployed):
+costareen-site 27ed65e + starter-kit bfdda1a (next/script, only when UMAMI_WEBSITE_ID is set in the server env), 3dowala
+5eb5dae (theme setting "Umami website ID"). NOT done: Umami has no admin login in its env (only the default admin noted in
+/opt/brand/umami/NOTES.md), so no Umami websites/ids exist and no visitors are counted; keyless PageSpeed quota is 0, so
+speed shows "— চাবি লাগবে" until PSI_KEY is set; rmabidur.com source (G:/rmabidur-site, not in git) untouched; no live
+site deployed.
+brand-29 finish review (impeccable-finish-reviewer, after one recapture round): shared causes said once in the banner
+(visitors + "মোবাইলের গতি মাপা যাচ্ছে না: Google PageSpeed-এর চাবি Mac-এ বসানো বাকি"), each site keeps the focal "—"
+layout; ERP খুলুন is a neutral button (black = waits for you); no grey hint beside the ব্যবসা heading (moved to the note);
+"তালিকা বদলান" icon-only 44 px on phone inside the heading row; "এখন পরীক্ষা করুন" got its own icon; "tracker" -> "গোনার
+ছোট কোড"; the remove confirm shows its whole label. Not taken: Hind Siliguri for the cockpit (Noto Sans Bengali was the
+brand-22..24 font decision for the whole cockpit), station rings instead of the live dot (later, with a check history line).
