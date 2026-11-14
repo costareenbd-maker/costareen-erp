@@ -4599,3 +4599,32 @@ answers the challenge and refuses a wrong token (403), unsigned/badly signed POS
 TEST thread/reply/draft/done flows (TEST rows deleted afterwards). NOT done: every real channel needs his hand (see
 G:/bendar-brand/docs/NIGHT-SETUP.md); Meta may need App Review (Advanced Access) before strangers' messages arrive;
 Instagram DM photos and comment photos are not sent from the desk; finish review full round still open at hand-back.
+
+## brand-31 (15 Nov 2026): the Brand desk inbox grows (same look; owner: "more convenient than the ERP inbox")
+Bridge (G:/bendar-brand 23e1136; backup /opt/brand/bridge/bridge.py.before-brand31): at start `ib_migrate` adds
+inbox_threads.note / name_override, table inbox_saved and an external_id index (add-only, never drops). Ticks: WhatsApp
+webhook now also sends MESSAGES_UPDATE (set again at every bridge start via /webhook/set/personal, no new QR) ->
+DELIVERY_ACK/READ/PLAYED move his message 'sent' -> 'delivered' -> 'read' by 'wa:'+key id (wa_send and the hook use the same
+id); imported history keeps the phone's status. Messenger: Page + app subscriptions gain message_reads + message_deliveries
+(Instagram messaging_seen, falling back to the old field set if refused), re-subscribed at every start; read watermark marks
+every earlier message read. A status only moves up. ib_list: `s` = unread/done together with a channel; search also looks in
+his own names, notes, numbers and message text. ib_thread: 40 per page, `before` = oldest id, `sig` fingerprint (unchanged
+thread answers {same}), head carries note, name_override, avatar, person (People/Twenty match by email or last 10 phone digits;
+parked Twenty = none) and last_in for Messenger/Instagram. Voice notes: WhatsApp audio kept as data: if <400 KB (else fetched
+on tap through /inbox/audio from evolution-personal; the 26 older ones work the same way), Messenger audio kept the same way.
+New routes: /inbox/summary (AI, Bangla, 2-4 lines + what is open; nothing kept), /inbox/contact, /inbox/saved (GET + save/
+remove, max 100), /inbox/audio; /inbox/draft takes `base` (a saved reply to fit).
+ERP: erpBrandDeskThreadSummary / Contact / Saved / SavedSave / Audio (owner only; Saved + Audio are reads), Inbox takes `s`,
+Thread takes `before` + `sig`, ReplyDraft takes `base`. Page: search box + না-পড়া / শেষ করা chips under the channel pills;
+quiet ticks under his bubbles (WhatsApp/Messenger/Instagram only; ✓ gone, ✓✓ reached, blue ✓✓ seen); "আগের মেসেজ দেখুন";
+voice notes play (blob: URL, because the ERP page's media-src has no data:); header সারাংশ + পরিচিতি (own name, private note,
+People link) with the note shown as one line under the header; composer: সেভ করা (list, tap = into the box, AI দিয়ে মানিয়ে
+নিন, new / change / remove, save the box's text), a pen for the AI instruction; Messenger/Instagram 24-hour strip (time left,
+amber under 3 h, after that "reply from the app" + link). Live: list + open thread every 5 s while visible, at once on focus,
+no redraw when nothing changed and none while a voice note plays; শব্দ switch (localStorage bx_alert): soft two-note sound for
+a new personal message (not public comments), desktop notification when the tab is not in front (30 s background check).
+Tests: branddesk_test 236 pass. Checked: every new bridge route by curl (TEST saved reply / contact values removed), a
+simulated READ receipt moved a real message to read (put back to sent), stand-alone desk rebuilt + copied to the Mac, headless
+screenshots .impeccable/review/b31-{desktop,phone}-{list,search,thread,tools}.png, no page errors, no sideways scroll at 390.
+NOT done: Messenger receipts not seen live yet (needs a real reply); no message was sent to anyone; Telegram/email show no
+ticks by design; the summary is not saved.
