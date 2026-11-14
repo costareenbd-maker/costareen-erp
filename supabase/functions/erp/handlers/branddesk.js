@@ -144,29 +144,39 @@ export async function erpBrandDeskLiMark(ctx, payload) {
 }
 export async function erpBrandDeskLiKill(ctx, payload) { await gate(ctx); return bridge(ctx, '/li/kill', { on: !!(payload || {}).on }); }
 export async function erpBrandDeskLiPull(ctx) { await gate(ctx); return bridge(ctx, '/li/pull', {}); }
-// brand-27: "আপনার মন্তব্য" - his own critique under every piece of writing; the bridge learns lessons from them
+// brand-27: "আপনার মন্তব্য" - his own critique under every piece of writing; the bridge learns lessons from them.
+// brand-28: the critique is a comment in the post's own thread; on a waiting draft, a news story's draft or a LinkedIn
+// ticket the AI answers with the rewritten caption (and the photo he attached); erpBrandDeskCritiqueApply keeps it.
 const CRIT_TARGETS = ['draft', 'idea', 'news', 'reel', 'li', 'style'];
 export async function erpBrandDeskCritiques(ctx) { await gate(ctx); return bridge(ctx, '/critiques'); }
 export async function erpBrandDeskCritique(ctx, payload) {
   await gate(ctx);
-  const p = payload || {}, target = str(p.target), id = str(p.id), text = str(p.text);
+  const p = payload || {};
+  if (p.retry != null) {
+    const rid = parseInt(p.retry, 10);
+    if (!(rid > 0)) throw new Error('একটা মন্তব্য বাছুন।');
+    return bridge(ctx, '/critique', { retry: rid });
+  }
+  const target = str(p.target), id = str(p.id), text = str(p.text);
   if (!CRIT_TARGETS.includes(target)) throw new Error('এই লেখাটা চেনা নেই। পেজটা নতুন করে আনুন।');
   if (!(/^[0-9]{1,12}$/.test(id) || (target === 'idea' && /^(photo|text)$/.test(id)))) throw new Error('এই লেখাটা চেনা নেই। পেজটা নতুন করে আনুন।');
   if (text.length < 2) throw new Error('আগে মন্তব্যটা লিখুন।');
   if (text.length > 2000) throw new Error('মন্তব্য ২ হাজার অক্ষরের কম রাখুন।');
-  if (p.rewrite && target !== 'draft') throw new Error('শুধু ড্রাফট আবার লেখানো যায়।');
-  const quote = str(p.quote).replace(/\s+/g, ' ');
-  if (quote.length > 1000) throw new Error('বাছাই করা অংশটা ছোট করুন (১ হাজার অক্ষরের কম)।');
-  return bridge(ctx, '/critique', { target, id, text, quote: quote || undefined, rewrite: !!p.rewrite });
+  const body = { target, id, text };
+  if (p.media) {
+    if (target === 'li') throw new Error('LinkedIn-এর লেখায় ছবি লাগে না।');
+    const m = mediaRefs([p.media])[0], asset = str(p.media.asset);
+    if (asset && !/^[0-9a-f-]{20,64}$/i.test(asset)) throw new Error('ছবিটা ঠিক নেই। আবার দিন।');
+    body.media = { ...m, type: p.media.type === 'video' ? 'video' : 'image', name: str(p.media.name).slice(0, 200), asset };
+  }
+  return bridge(ctx, '/critique', body);
 }
-// "ভুল বুঝেছে": his correction of the AI's reading; the critique is read again
-export async function erpBrandDeskCritiqueFix(ctx, payload) {
+// "এটাই রাখুন": the AI's proposal from the thread replaces the caption (and photo) of the item above
+export async function erpBrandDeskCritiqueApply(ctx, payload) {
   await gate(ctx);
-  const p = payload || {}, id = parseInt(p.id, 10), text = str(p.text);
+  const id = parseInt((payload || {}).id, 10);
   if (!(id > 0)) throw new Error('একটা মন্তব্য বাছুন।');
-  if (text.length < 2) throw new Error('কী ভুল বুঝেছে, একটু লিখুন।');
-  if (text.length > 2000) throw new Error('২ হাজার অক্ষরের কম রাখুন।');
-  return bridge(ctx, '/critique/fix', { id, text });
+  return bridge(ctx, '/critique/apply', { id });
 }
 export async function erpBrandDeskLessonSet(ctx, payload) {
   await gate(ctx);
@@ -636,4 +646,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskDraftRepick, erpBrandDeskMediaKeep, erpBrandDeskReels, erpBrandDeskReelScript, erpBrandDeskReelPhoto, erpBrandDeskReelVoice, erpBrandDeskReelEdit, erpBrandDeskReelRender, erpBrandDeskReelDrafts, erpBrandDeskRoutine, erpBrandDeskRoutineSlot, erpBrandDeskRoutineLevel, erpBrandDeskRoutineReset, erpBrandDeskRoutinePlace, erpBrandDeskRoutineFill, erpBrandDeskResults, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskCritiques, erpBrandDeskCritique, erpBrandDeskCritiqueFix, erpBrandDeskLessonSet, erpBrandDeskStudy, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskDraftRepick, erpBrandDeskMediaKeep, erpBrandDeskReels, erpBrandDeskReelScript, erpBrandDeskReelPhoto, erpBrandDeskReelVoice, erpBrandDeskReelEdit, erpBrandDeskReelRender, erpBrandDeskReelDrafts, erpBrandDeskRoutine, erpBrandDeskRoutineSlot, erpBrandDeskRoutineLevel, erpBrandDeskRoutineReset, erpBrandDeskRoutinePlace, erpBrandDeskRoutineFill, erpBrandDeskResults, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskCritiques, erpBrandDeskCritique, erpBrandDeskCritiqueApply, erpBrandDeskLessonSet, erpBrandDeskStudy, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
