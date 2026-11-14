@@ -59353,6 +59353,9 @@ p.ct-cap{margin-top:6px}
 .ct-ig .ct-vr,.ct-yt .ct-vr,.ct-tt .ct-vr,.ct-gen .ct-vr{margin-left:0}
 .ct-none{margin:0;font:14px "Noto Sans Bengali",system-ui,sans-serif;color:var(--ct-mute)}
 html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
+/* the sheet sits outside .bc (fixed, above the bars): it carries the same tokens */
+.cs{--bc-ink:#16181D;--bc-ink-2:#454A55;--bc-ink-3:#5C626E;--bc-rule:#E4E6EA;--bc-ground:#FFFFFF;--bc-shelf:#F2F3F5;--bc-alert:#E0301E;--bc-alert-ink:#A8260F;--bc-wait:#F2A900;--bc-good:#14803F;color:var(--bc-ink)}
+.cs ::selection{background:#0A66C233}
 .cs{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center}
 .cs-bg{position:absolute;inset:0;background:rgba(22,24,29,.48)}
 .cs-p{position:relative;display:flex;flex-direction:column;width:min(720px,calc(100vw - 48px));max-height:min(920px,calc(100dvh - 48px));background:#fff;border-radius:16px;box-shadow:0 2px 6px rgba(22,24,29,.12),0 24px 64px rgba(22,24,29,.28);overflow:hidden;outline:none}
@@ -59366,22 +59369,25 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
 .cs-x:focus-visible{outline:2px solid #16181D;outline-offset:2px}
 .cs-x svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 .cs-b{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px 20px 20px}
-.cs-card{max-width:420px;margin:0 auto 18px}
+.cs-card{max-width:560px;margin:0 auto 18px}
+.cs-card .ph-mbox img,.cs-card .ph-pic img{max-height:42dvh;object-fit:contain;background:#000}
 .cs-card .ph{box-shadow:0 1px 2px rgba(22,24,29,.06)}
-.cs-txt{max-width:620px;margin:0 auto 18px;padding:14px 16px;border:1px solid #DADDE1;border-radius:12px;font:15px/1.55 "Noto Sans Bengali",Helvetica,system-ui,sans-serif;color:#050505;white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow-y:auto}
+.cs-txt{max-width:560px;margin:0 auto 18px;padding:14px 16px;border:1px solid #DADDE1;border-radius:12px;font:15px/1.55 "Noto Sans Bengali",Helvetica,system-ui,sans-serif;color:#050505;white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow-y:auto}
 .cs-txt b{display:block;font-size:16px;margin-bottom:8px;white-space:normal}
 .cs-txt small{display:block;font-size:12.5px;color:#65676B;margin-bottom:4px;white-space:normal}
 .cs-txt blockquote{margin:0 0 10px;padding:8px 10px;background:#F2F3F5;border-radius:8px;font-size:13.5px;color:#454A55}
 .cs-txt p{margin:0}
 .cs-net{margin:4px 0 6px;white-space:normal}
-.cs .ct{border:0;padding:0;margin:0;max-width:620px;margin-inline:auto;background:transparent}
+.cs .ct{border:0;padding:0;margin:0;max-width:560px;margin-inline:auto;background:transparent}
 .cs-f{flex:none;border-top:1px solid #E4E6EB;padding:10px 16px calc(10px + env(safe-area-inset-bottom));max-height:55vh;overflow-y:auto;background:#fff}
 @keyframes csIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
 @keyframes csUp{from{transform:translateY(100%)}to{transform:none}}
 @keyframes csFade{from{opacity:0}}
 @media (max-width:759px){
   .cs{align-items:flex-end}
-  .cs-p{width:100%;max-height:none;height:calc(100dvh - 8px);border-radius:16px 16px 0 0}
+  .cs-p{width:100%;max-height:none;height:calc(100dvh - 40px);border-radius:16px 16px 0 0}
+  .cs-p.drag{transition:none}
+  .cs-p.back{transition:transform .22s cubic-bezier(.16,1,.3,1)}
   .cs.in .cs-p{animation:csUp .3s cubic-bezier(.16,1,.3,1)}
   .cs-grab{display:block;position:absolute;top:6px;left:50%;width:40px;height:4px;margin-left:-20px;border-radius:2px;background:#CED0D4}
   .cs-h{padding:10px 8px 6px 16px}
@@ -59855,7 +59861,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     var tag = block ? '<span class="bc-tag x">আটকাবে</span>' : x._old ? '<span class="bc-tag">পুরনো</span>' : (x.pillar && RPIL[x.pillar] ? '<span class="bc-tag">' + RPIL[x.pillar][0] + '</span>' : '');
     var h = '<div class="ph-slot' + (x._old ? ' old' : '') + '" id="bc_tk_' + id + '"><div class="ph-top">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sp"></span>' + tag + '</div>' +
       phoneCard(x.platform, mine[0] || null, body, 'd' + id, { edit: editing ? 'e' + id : '', title: (x.title_options || [])[0], pic: picOf(id), npic: ((C.cards[id] || {}).pictures || []).length, media: C.media[id], ck: 'draft' + id, cn: critOf('draft', id).length }) + ctSum('draft', id) + pickWhy(x) + pickerHtml(id);
-    ctReg('draft', id, { ai: 1, net: x.platform, acc: mine[0] || null, top: function () { return '<div class="cs-card">' + phoneCard(x.platform, mine[0] || null, v('e' + id, x.body || ''), 'sd' + id, { title: (x.title_options || [])[0], pic: picOf(id), npic: ((C.cards[id] || {}).pictures || []).length, media: C.media[id] }) + '</div>'; } });
+    ctReg('draft', id, { ai: 1, net: x.platform, acc: mine[0] || null, top: function () { return '<div class="cs-card">' + phoneCard(x.platform, mine[0] || null, v('e' + id, x.body || ''), 'sd' + id, { title: (x.title_options || [])[0], pic: picOf(id), npic: ((C.cards[id] || {}).pictures || []).length, media: C.media[id], cn: critOf('draft', id).length, ck: 'draft' + id }) + '</div>'; } });
     if ((x.title_options || []).length && editing) h += '<div class="bc-ncs" style="margin-top:8px">' + x.title_options.map(function (t) { return '<button type="button" class="bc-pl" style="--c:#16181D" data-bc="tcopy" data-t="' + esc(t) + '" title="চাপলে কপি হবে" data-noi18n="1">' + esc(t) + '</button>'; }).join('') + '</div>';
     h += '<div class="ph-meta"><span>' + (v('a' + id) ? 'যাবে ' + whenWords(v('a' + id)) : 'পরের ফাঁকা সময়ে যাবে') + '</span><span id="bc_cnt_' + id + '" class="' + (body.length > lim ? 'over' : '') + '"' + (body.length > lim * .8 ? '' : ' hidden') + '>' + bn(body.length) + ' / ' + bn(lim) + ' অক্ষর</span>' + (mine.length > 1 ? '<span class="bc-sp"></span>' + mine.map(function (n) { return '<button type="button" class="bc-nc bclg' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" data-noi18n="1">' + logo(n.platform, 15) + esc(n.name || '') + '</button>'; }).join('') : '') + '</div>';
     h += '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : btn(svg('copy') + 'কপি করুন', 'data-bc="copy" data-id="' + id + '"', 'dark', '')) + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
@@ -60711,7 +60717,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     var S = SHEET[C.sheet];
     if (!S) { C.sheet = ''; return ''; }
     var o = S.o, top = o.top ? o.top() : o.text ? '<div class="cs-txt" data-noi18n="1">' + esc(String(o.text).slice(0, 1500)) + '</div>' : '';
-    return '<div class="cs' + (C.csIn ? ' in' : '') + '"><div class="cs-bg" data-bc="ctclose"></div><div class="cs-p" role="dialog" aria-modal="true" aria-labelledby="bc_cs_t" tabindex="-1">' +
+    return '<div class="cs' + (C.csIn ? ' in' : '') + '"><div class="cs-bg" data-bc="ctclose"></div><div class="cs-p" id="bc_cs_p" role="dialog" aria-modal="true" aria-labelledby="bc_cs_t" tabindex="-1">' +
       '<header class="cs-h"><span class="cs-grab" aria-hidden="true"></span><h2 id="bc_cs_t">' + (o.net ? logo(o.net, 18) : '') + 'মন্তব্য</h2>' +
       '<button type="button" class="cs-x" data-bc="ctclose" aria-label="বন্ধ করুন">' + svg('x') + '</button></header>' +
       '<div class="cs-b">' + top + ctList(S.tg, S.id, o) + '</div><div class="cs-f">' + ctComposer(S.tg, S.id, o) + '</div></div></div>';
@@ -61178,12 +61184,26 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   // brand-28: the comment sheet closes back to the control that opened it
   function closeSheet() {
     var from = C.csFrom; C.sheet = ''; C.mpk = ''; draw();
-    var r2 = el('bc_root'), b3 = from && r2 ? r2.querySelector('.ph-cm[data-id="' + from + '"], .ct-tg[data-id="' + from + '"], .ct-sum[data-id="' + from + '"]') : null;
+    var r2 = el('bc_root'), b3 = from && r2 ? r2.querySelector(from) : null;
     if (b3) try { b3.focus({ preventScroll: true }); } catch (e) {}
   }
-  var csY = null;
-  document.addEventListener('touchstart', function (e) { var h0 = e.target.closest && e.target.closest('#bc_root .cs-h'); csY = h0 ? e.touches[0].clientY : null; }, { passive: true });
-  document.addEventListener('touchend', function (e) { if (csY == null) return; var dy = e.changedTouches[0].clientY - csY; csY = null; if (dy > 70 && C.sheet) closeSheet(); }, { passive: true });
+  var csY = null, csD = 0;
+  function csPanel() { var r3 = el('bc_root'); return r3 && r3.querySelector('.cs-p'); }
+  document.addEventListener('touchstart', function (e) {
+    if (!C.sheet || !e.target.closest) { csY = null; return; }
+    var hd = e.target.closest('#bc_root .cs-h'), bd = e.target.closest('#bc_root .cs-b');
+    csY = hd || (bd && bd.scrollTop <= 0) ? e.touches[0].clientY : null; csD = 0;
+  }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    if (csY == null) return; var p3 = csPanel(); if (!p3) return;
+    csD = Math.max(0, e.touches[0].clientY - csY); p3.classList.add('drag'); p3.style.transform = csD ? 'translateY(' + csD + 'px)' : '';
+  }, { passive: true });
+  document.addEventListener('touchend', function () {
+    if (csY == null) return; csY = null; var p3 = csPanel(); if (!p3) return;
+    p3.classList.remove('drag');
+    if (csD > 90) { closeSheet(); return; }
+    p3.classList.add('back'); p3.style.transform = ''; setTimeout(function () { p3.classList.remove('back'); }, 240);
+  }, { passive: true });
   function findDraft(id) { return waitingList().filter(function (w) { return String(w.id) === String(id); })[0]; }
   function approve(id, done, bad) {
     var x = findDraft(id); if (!x) { if (bad) bad(); return; }
@@ -61293,7 +61313,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     else if (w === 'writeidea') write({ idea_id: Number(id) });
     // brand-28: comment threads
     else if (w === 'ctopen') {
-      C.sheet = id; C.csFrom = id; C.csIn = 1; C.mpk = ''; draw();
+      if (C.sheet === id) { var ta0 = el('bci_ctt' + id); if (ta0) ta0.focus(); return; }   // the post's own Comment inside the sheet goes to the composer
+      C.sheet = id; C.csFrom = '.' + String(t.className).split(' ')[0] + '[data-id="' + id + '"]'; C.csIn = 1; C.mpk = ''; if (/^draft\d+$/.test(id)) C.exp['sd' + id.slice(5)] = true; draw();
       setTimeout(function () { var r1 = el('bc_root'), pnl = r1 && r1.querySelector('.cs-p'), ta1 = el('bci_ctt' + id); if (!pnl) return; if (ta1 && matchMedia('(hover:hover) and (pointer:fine)').matches) ta1.focus({ preventScroll: true }); else pnl.focus({ preventScroll: true }); }, 30);
     }
     else if (w === 'ctclose') closeSheet();
