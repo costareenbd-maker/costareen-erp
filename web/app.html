@@ -59222,7 +59222,9 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
 .cr-b{gap:6px}
 .cr-b em{font:700 11.5px "Pretendard Variable",Pretendard,system-ui,sans-serif;font-style:normal;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--bc-shelf);color:var(--bc-ink);display:inline-grid;place-items:center;box-sizing:border-box;font-variant-numeric:tabular-nums}
 .cr.on .cr-b{color:var(--bc-ink)}
-.cr-p{margin-top:8px;padding-top:12px;border-top:1px solid var(--bc-rule)}
+.cr{container:cr/inline-size}
+.cr-p{margin-top:8px;padding-top:12px;border-top:1px solid var(--bc-rule);max-width:680px}
+@container cr (max-width:560px){.cr-ex{grid-template-columns:1fr}}
 .cr-l{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:14px}
 .cr-l.wide{margin-top:10px;gap:0;border-top:1px solid var(--bc-rule)}
 .cr-l.wide .cr-i{padding:14px 0;border-bottom:1px solid var(--bc-rule)}
@@ -59234,7 +59236,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
 .cr-ab{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--bc-ink-2);margin-bottom:4px}
 .cr-ab b{font-weight:600;color:var(--bc-ink)}
 .cr-st{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:var(--bc-ink-3)}
-.cr-st.ok{color:var(--bc-good)}
+.cr-st.ok{color:var(--bc-ink)}
 .cr-st svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.4}
 .cr-w{margin:0 0 6px;font-size:13px;line-height:1.5;color:var(--bc-ink-3);max-width:70ch;overflow-wrap:anywhere}
 .cr-u{margin-top:8px;background:var(--bc-shelf);border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.6;color:var(--bc-ink-2);display:flex;flex-direction:column;align-items:flex-start;gap:6px}
@@ -59249,13 +59251,13 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
 .cr-ex>div:first-child q{color:var(--bc-ink-2)}
 .cr-wrong{height:30px;padding:0 8px;margin-left:-8px;font-size:13px}
 .cr-fx{width:100%}
-.cr-q{display:flex;gap:6px;align-items:flex-start;border:1px dashed #C4C8CE;border-radius:10px;padding:6px 4px 6px 12px;margin-bottom:8px;font-size:13.5px;line-height:1.55;color:var(--bc-ink-2)}
+.cr-q{display:flex;gap:6px;align-items:flex-start;border:1px dashed var(--bc-ink-3);border-radius:10px;padding:6px 4px 6px 12px;margin-bottom:8px;font-size:13.5px;line-height:1.55;color:var(--bc-ink-2)}
 .cr-q q{flex:1;quotes:"«" "»";padding-top:5px;overflow-wrap:anywhere}
 .cr-q .bc-btn{width:32px;padding:0;flex:none}
 .cr-a{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.nw-cr{padding:0 2px 4px}
+.nw-cr{padding:0 19px 16px}
 .st-smp .cr{margin-top:4px}
-.ls{margin:6px 0 30px}
+.ls{margin:6px 0 30px;max-width:820px}
 .ls-st{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--bc-ink-2);margin:0 0 12px}
 .ls-l{list-style:none;margin:0;padding:0;border-top:1px solid var(--bc-rule)}
 .ls-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;padding:12px 0;border-bottom:1px solid var(--bc-rule);align-items:start}
@@ -59268,6 +59270,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
 .ls-r .cr-ex{margin-top:8px;background:var(--bc-shelf);border-radius:10px;padding:10px 12px;box-sizing:border-box}
 .ls .bc-fold{margin-top:12px}
 .ls .ls-m .bc-fold{margin-top:0}
+.ls-r .tr-sw:not(.on) i{background:#fff;box-shadow:inset 0 0 0 1.5px var(--bc-ink-3)}
 @container bc (max-width:759px){
   .cr-ex{grid-template-columns:1fr}
   .cr-wrong,.cr-b,.cr-q .bc-btn{min-height:44px}
@@ -59698,14 +59701,13 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
     var mine = accountsFor(x), sel = accSel(x, mine), id = x.id, body = v('e' + id, x.body || ''), editing = C.edit[id], block = flagsOf(x).some(function (f) { return f.severity === 'block'; }), lim = LIMIT[netOf(x.platform)] || 5000;
     // brand-24: one tag at most on top; the picture's reason sits under the picture; approve right under the card
     var tag = block ? '<span class="bc-tag x">আটকাবে</span>' : x._old ? '<span class="bc-tag">পুরনো</span>' : (x.pillar && RPIL[x.pillar] ? '<span class="bc-tag">' + RPIL[x.pillar][0] + '</span>' : '');
-    var h = '<div class="ph-slot' + (x._old ? ' old' : '') + '" id="bc_tk_' + id + '"><div class="ph-top">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sp"></span>' + tag + '</div>' +
+    var h = '<div class="ph-slot' + (x._old ? ' old' : '') + '" id="bc_tk_' + id + '" data-crk="draft' + id + '"><div class="ph-top">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sp"></span>' + tag + '</div>' +
       phoneCard(x.platform, mine[0] || null, body, 'd' + id, { edit: editing ? 'e' + id : '', title: (x.title_options || [])[0], pic: picOf(id), npic: ((C.cards[id] || {}).pictures || []).length, media: C.media[id] }) + pickWhy(x) + pickerHtml(id);
     if ((x.title_options || []).length && editing) h += '<div class="bc-ncs" style="margin-top:8px">' + x.title_options.map(function (t) { return '<button type="button" class="bc-pl" style="--c:#16181D" data-bc="tcopy" data-t="' + esc(t) + '" title="চাপলে কপি হবে" data-noi18n="1">' + esc(t) + '</button>'; }).join('') + '</div>';
     h += '<div class="ph-meta"><span>' + (v('a' + id) ? 'যাবে ' + whenWords(v('a' + id)) : 'পরের ফাঁকা সময়ে যাবে') + '</span><span id="bc_cnt_' + id + '" class="' + (body.length > lim ? 'over' : '') + '"' + (body.length > lim * .8 ? '' : ' hidden') + '>' + bn(body.length) + ' / ' + bn(lim) + ' অক্ষর</span>' + (mine.length > 1 ? '<span class="bc-sp"></span>' + mine.map(function (n) { return '<button type="button" class="bc-nc bclg' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" data-noi18n="1">' + logo(n.platform, 15) + esc(n.name || '') + '</button>'; }).join('') : '') + '</div>';
     h += '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : btn(svg('copy') + 'কপি করুন', 'data-bc="copy" data-id="' + id + '"', 'dark', '')) + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
       '<button type="button" class="bc-btn ghost" data-bc="pedit" data-id="' + id + '" aria-pressed="' + !!editing + '">' + (editing ? 'বদল শেষ' : 'লেখা বদলান') + '</button>' + (pickWhy(x) ? '' : mediaButton(id)) +
       '<button type="button" class="bc-btn ghost" data-bc="more" data-id="' + id + '" aria-expanded="' + !!C.open[id] + '">আরও' + svg('right') + '</button></div>';
-    h += critBox('draft', id, { redo: x.idea_id != null });
     // brand-19 decision inline (was a 9-second toast): no lived detail in this text
     if (C.fold['lv' + id] && !String(v('qa' + id)).trim()) h += '<div class="bc-call ph-lv"><span>নিজের কোনো ঘটনা নেই</span><span class="bc-sp"></span>' + ((x.questions || []).length ? '<button type="button" class="bc-btn sm" data-bc="lvans" data-id="' + id + '">প্রশ্নের উত্তর দিন</button>' : '') + btn('তবুও পাঠান', 'data-bc="approve" data-id="' + id + '"', 'dark sm', 'ap' + id, !sel.length) + '</div>';
     h += flagsHtml(x);
@@ -59725,6 +59727,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
         '<div class="bc-row">' + (mine.length ? '<button type="button" class="bc-btn sm" data-bc="copy" data-id="' + id + '">' + svg('copy') + 'কপি করুন</button> ' : '') + btn(c && c.state === 'making' ? 'ছবি বানানো হচ্ছে…' : 'ছবি কার্ড বানান', 'data-bc="cards" data-id="' + id + '"', 'sm', '', c && c.state === 'making') + '</div>' +
         '<div class="bc-row">' + inp('u' + id, 'পোস্টের লিংক, না দিলেও চলে', ' style="flex:1;min-width:150px"') + btn('নিজে পোস্ট করেছি', 'data-bc="manual" data-id="' + id + '"', 'sm', 'mn' + id) + '</div>' + cardsHtml(id) + '</div>';
     }
+    h += critBox('draft', id, { redo: x.idea_id != null });
     return h + '</div>';
   }
   // the writer's photo/video plan (from the viral playbook): format, the first 3 seconds, the shots he films himself
@@ -59950,7 +59953,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
     var A = n.analysis || {}, K = NKIND[A.kind] || NKIND.watch, src = A.sources || [], ck = A.checked || {}, probs = ck.problems || [];
     var li = function (arr) { return (arr || []).map(function (t) { return '<li data-noi18n="1">' + esc(t) + '</li>'; }).join(''); };
     var fb = ds.filter(function (x) { return x.platform === 'facebook'; })[0], ln = ds.filter(function (x) { return x.platform === 'linkedin'; })[0];
-    var h = '<article class="nw" style="--k:' + K[1] + '"><header class="nw-h"><span class="nw-k">' + esc(K[0]) + '</span><span class="bc-sub">' + esc(NREG[A.region || n.region] || '') + (n.published_at ? ' · ' + dDate(new Date(n.published_at)) : '') + '</span><span class="bc-sp"></span>' +
+    var h = '<article class="nw" style="--k:' + K[1] + '" data-crk="news' + n.id + '"><header class="nw-h"><span class="nw-k">' + esc(K[0]) + '</span><span class="bc-sub">' + esc(NREG[A.region || n.region] || '') + (n.published_at ? ' · ' + dDate(new Date(n.published_at)) : '') + '</span><span class="bc-sp"></span>' +
       '<span class="nw-ck" title="' + esc(probs.length ? 'যাচাইয়ে ' + bn(probs.length) + 'টা প্রশ্ন উঠেছিল, ঠিক করা হয়েছে: ' + probs.join(' | ') : 'সব সংখ্যা সূত্রে মিলেছে') + '">' + svg('check') + 'যাচাই করা</span>' + '</header>' +
       '<h3 data-noi18n="1">' + esc(A.headline_bn || n.title) + '</h3><p class="nw-o" data-noi18n="1">' + esc(n.title) + ' — ' + esc(n.source || '') + '</p>';
     h += '<div class="nw-b"><section><h4>খবরে যা আছে</h4><ol class="nw-f">' + (A.facts || []).map(function (f) { return '<li><span data-noi18n="1">' + esc(f.text || '') + '</span>' + (f.n ? '<sup>[' + bn(f.n) + ']</sup>' : '') + '</li>'; }).join('') + '</ol></section>' +
@@ -59987,7 +59990,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
         var d = pl[p], f = d && d.media_plan ? (FMTW[String(d.media_plan.format || '').toLowerCase()] || d.media_plan.format) : '';
         return '<span class="ic-p' + (d ? ' on' : '') + '" style="--c:' + netCol(p) + '" title="' + esc(netName(p) + (d ? ': অপেক্ষায়' : ': লেখা হয়নি')) + '">' + logo(p, 14) + (d && f ? '<em>' + esc(f) + '</em>' : '') + '</span>';
       }).join('');
-      return '<article class="ic' + (ds.length ? ' has' : '') + '" style="--c:' + topicCol(i.topic) + '"><div class="ic-t"><i></i><span>' + esc(topicName(i.topic || 'other')) + '</span>' + (story ? '<b class="ic-s">আপনার গল্প</b>' : '') + '</div>' +
+      return '<article class="ic' + (ds.length ? ' has' : '') + '" style="--c:' + topicCol(i.topic) + '" data-crk="idea' + i.id + '"><div class="ic-t"><i></i><span>' + esc(topicName(i.topic || 'other')) + '</span>' + (story ? '<b class="ic-s">আপনার গল্প</b>' : '') + '</div>' +
         '<h3 data-noi18n="1">' + esc(i.title_working) + '</h3>' + ((i.audience && i.audience !== 'mixed') || i.is_example ? '<small>' + esc([i.audience && i.audience !== 'mixed' ? (AUD[i.audience] || String(i.audience).replace(/_/g, ' ')) : '', i.is_example ? 'নমুনা' : ''].filter(Boolean).join(' · ')) + '</small>' : '') +
         '<div class="ic-n">' + chips + '</div><div class="ic-a">' + (ds.length ? '<button type="button" class="bc-btn sm" data-bc="ptab" data-id="wait">' + bn(ds.length) + 'টা দেখুন</button>' : '') + btn(ds.length ? 'আবার লিখুন' : 'পোস্ট লেখান', 'data-bc="writeidea" data-id="' + i.id + '"', ds.length ? 'sm ghost' : 'sm dark', 'write') + '</div>' + critBox('idea', i.id) + '</article>';
     }).join('') + '</div>';
@@ -60494,7 +60497,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
   }
   function critItem(c, about) {
     var d = new Date(c.created_at);
-    return '<li class="cr-i">' + (about ? '<div class="cr-ab"><b>' + esc(CRT[c.target] || c.target) + '</b>' + (critNet(c.platform) ? '<span>' + esc(critNet(c.platform)) + '</span>' : '') +
+    return '<li class="cr-i">' + (about ? '<div class="cr-ab"><b>' + esc(CRT[c.target] || c.target) + '</b>' + (c.target === 'li' ? (c.kind ? '<span>' + esc(likName(c.kind)) + '</span>' : '') : critNet(c.platform) ? '<span>' + esc(critNet(c.platform)) + '</span>' : '') +
       '<span class="bc-sp"></span><span class="cr-st' + (c.studied_at ? ' ok' : '') + '">' + (c.studied_at ? svg('check') + 'শেখা হয়েছে' : 'শেখা বাকি') + '</span></div>' +
       (c.writing ? '<p class="cr-w" data-noi18n="1">' + esc(String(c.writing).slice(0, 140)) + (String(c.writing).length > 140 ? '…' : '') + '</p>' : '') : '') +
       (c.quote ? '<blockquote data-noi18n="1">' + esc(c.quote) + '</blockquote>' : '') + '<p class="cr-t" data-noi18n="1">' + esc(c.critique) + '</p>' +
@@ -60505,7 +60508,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
     o = o || {};
     var key = tg + id, list = critOf(tg, id), open = !!C.fold['cr' + key], q = C.crq[key];
     var h = '<div class="cr' + (open ? ' on' : '') + '"><button type="button" class="bc-btn ghost sm cr-b" data-bc="cropen" data-id="' + esc(key) + '" aria-expanded="' + open + '">' + svg('note') +
-      (o.general ? 'এভাবে লেখা নিয়ে মন্তব্য' : 'মন্তব্য') + (list.length ? '<em>' + bn(list.length) + '</em>' : '') + '</button>';
+      (o.label || (o.general ? 'এভাবে লেখা নিয়ে মন্তব্য' : 'মন্তব্য')) + (list.length ? '<em>' + bn(list.length) + '</em>' : '') + '</button>';
     if (!open) return h + '</div>';
     h += '<div class="cr-p">' + (list.length ? '<ol class="cr-l">' + list.slice(0, 3).map(function (c) { return critItem(c); }).join('') + '</ol>' : '') +
       (q ? '<div class="cr-q"><q data-noi18n="1">' + esc(q) + '</q><button type="button" class="bc-btn ghost sm" data-bc="crqx" data-id="' + esc(key) + '" aria-label="বাছাই করা অংশ সরান">' + svg('x') + '</button></div>' : '') +
@@ -60533,9 +60536,10 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
     if (!C.d.crit) return h + '</div>' + skel(120) + '</section>';
     var d = C.d.crit, les = d.lessons || [], onl = les.filter(function (l) { return l.active; }), offl = les.filter(function (l) { return !l.active; }), jobs = d.jobs || {}, jk = Object.keys(jobs).sort();
     var stud = jk.some(function (k) { return jobs[k].state === 'studying'; }), lastJ = jk.length ? jobs[jk[jk.length - 1]] : null, crs = d.critiques || [], last = d.last_study ? String(d.last_study).replace(/^"|"$/g, '') : '';
-    h += (onl.length ? '<span>' + bn(onl.length) + 'টা মেনে লিখছে</span>' : '') + '</div>';
-    h += '<div class="ls-st"><span>' + (d.total ? bn(d.total) + 'টা মন্তব্য' + (d.unstudied ? ' · ' + bn(d.unstudied) + 'টা এখনো শেখা বাকি' : ' · সব শেখা হয়েছে') + (last ? ' · শেষ শেখা ' + dDate(new Date(last)) : '') : 'এখনো কোনো মন্তব্য নেই') + '</span><span class="bc-sp"></span>' +
-      (stud ? '<span class="tr-busy"><span class="bc-spin"></span>শিখছে… ১-২ মিনিট</span>' : btn('এখন শিখুন', 'data-bc="lsstudy"', 'dark', 'lsstudy', !d.total)) + '</div>';
+    var cnt = [onl.length ? bn(onl.length) + 'টা মেনে লিখছে' : '', d.total ? bn(d.total) + 'টা মন্তব্য' : 'এখনো কোনো মন্তব্য নেই', d.unstudied ? bn(d.unstudied) + 'টা শেখা বাকি' : ''].filter(Boolean);
+    h += '<span>' + cnt.join(' · ') + '</span></div>';
+    h += '<div class="ls-st"><span>' + (last ? 'শেষ শেখা ' + dDate(new Date(last)) : '') + '</span><span class="bc-sp"></span>' +
+      (stud ? '<span class="tr-busy"><span class="bc-spin"></span>শিখছে… ১-২ মিনিট</span>' : btn('এখন শিখুন', 'data-bc="lsstudy"', d.unstudied > 0 ? 'dark' : 'ghost', 'lsstudy', !d.total)) + '</div>';
     if (!stud && lastJ && lastJ.state === 'failed' && !C.fold['lsj' + jk[jk.length - 1]]) h += '<div class="bc-call"><span>' + esc(hasBn(lastJ.error) ? lastJ.error : 'শেখা গেল না। আবার চেষ্টা করুন।') + '</span><span class="bc-sp"></span><button class="bc-btn ghost sm" type="button" data-bc="fold" data-id="lsj' + jk[jk.length - 1] + '">ঠিক আছে</button></div>';
     if (!d.total) h += '<p class="tr-empty">যেকোনো ড্রাফট, আইডিয়া, খবর, Reels বা LinkedIn লেখার নিচে “মন্তব্য” চাপুন। AI আগে বলবে কী বুঝল; ৫টা জমলে নিজে শিখে নেবে।</p>';
     h += onl.length ? '<ol class="ls-l">' + onl.map(lessonRow).join('') + '</ol>' : (d.total ? '<p class="tr-empty sm">এখনো কোনো শেখা কথা চালু নেই।</p>' : '');
@@ -60548,7 +60552,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
     var mine = ex.filter(function (e) { return e.profile_id === p.id && e.state === 'done'; }), best = mine.slice().sort(function (a, b) { return (b.views || b.reactions || 0) - (a.views || a.reactions || 0); })[0];
     var why = (best && best.why_bn) || p.why_bn || [], sug = p.status === 'suggested', rf = !!C.fold['r' + p.id], sf = !!C.fold['s' + p.id];
     var dots = mine.slice(0, 12).map(function (e) { return '<i class="' + (e.reactions || e.views ? 'f' : '') + '"></i>'; }).join('');
-    var h = '<article class="st' + (p.weak ? ' weak' : '') + (sug ? ' sug' : '') + '" id="bc_st' + p.id + '">' +
+    var h = '<article class="st' + (p.weak ? ' weak' : '') + (sug ? ' sug' : '') + '" id="bc_st' + p.id + '" data-crk="style' + p.id + '">' +
       '<div class="st-h"><div class="st-nm"><h3>' + esc(p.name_bn || p.name) + '</h3></div>' +
       '<div class="st-ex" title="যত লেখা থেকে শিখেছে">' + dots + '<span>' + bn(p.n_examples || mine.length || 1) + 'টা লেখা থেকে</span></div></div>' +
       (p.weak ? '<p class="st-weak">অনেক দিন নতুন কিছু মেলেনি; এই ধরন পুরোনো হয়ে যাচ্ছে।</p>' : '') +
@@ -60620,7 +60624,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
   function likName(k) { var x = LIK.filter(function (q) { return q[0] === k; })[0]; return x ? x[1] : k; }
   function liTicket(t, L) {
     var k = t.kind, cap = L.caps[k], n = (L.today || {})[k] || 0, full = (cap != null && n >= cap) || L.paused, key = 'lt' + t.id, txt = v(key, t.draft || '');
-    var cf = !!C.fold['lc' + t.id], h = '<article class="lt ' + t.state + '"><div class="lt-h"><span class="lt-k">' + likName(k) + '</span>' + (t.name ? '<b data-noi18n="1">' + esc(t.name) + '</b>' : '') + '<span class="bc-sp"></span>' +
+    var cf = !!C.fold['lc' + t.id], h = '<article class="lt ' + t.state + '" data-crk="li' + t.id + '"><div class="lt-h"><span class="lt-k">' + likName(k) + '</span>' + (t.name ? '<b data-noi18n="1">' + esc(t.name) + '</b>' : '') + '<span class="bc-sp"></span>' +
       (t.url ? '<a href="' + esc(t.url) + '" target="_blank" rel="noopener">খুলুন</a>' : '') + '</div>';
     if (t.context) h += '<div class="lt-their' + (cf ? ' open' : '') + '" data-noi18n="1"><span>' + esc(t.context) + '</span></div>' + (String(t.context).length > 220 ? '<button type="button" class="bc-fold' + (cf ? ' on' : '') + '" data-bc="fold" data-id="lc' + t.id + '" style="margin-top:4px">' + svg('right') + (cf ? 'কম দেখান' : 'পুরোটা দেখুন') + '</button>' : '');
     if (t.state === 'drafting') return h + '<p class="tr-busy"><span class="bc-spin"></span>লেখা হচ্ছে…</p></article>';
@@ -60785,12 +60789,12 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
     var h = '<div class="rl"><button type="button" class="bc-fold' + (open ? ' on' : '') + '" data-bc="rlfold" data-id="' + id + '">' + svg('right') + 'Reels' + (r.state === 'done' && !r.silent ? ' · ভিডিও তৈরি' : r.voice ? ' · গলা দেওয়া আছে' : ' · স্ক্রিপ্ট তৈরি') + '</button>';
     if (!open) return h + '</div>';
     if ((sp.warn || []).length) h += '<div class="bc-flag"><span class="bc-tag w">দেখে নিন</span><span>' + sp.warn.map(esc).join(' ') + '</span></div>';
-    h += '<div class="rl-g"><section><h4>১. যা পড়বেন <small>প্রায় ' + bn(Math.round(words / 2.3)) + ' সেকেন্ড · ' + bn(sc.length) + 'টা দৃশ্য</small></h4>' +
+    h += '<div class="rl-g"><section data-crk="reel' + id + '"><h4>১. যা পড়বেন <small>প্রায় ' + bn(Math.round(words / 2.3)) + ' সেকেন্ড · ' + bn(sc.length) + 'টা দৃশ্য</small></h4>' +
       '<ol class="rl-sc">' + sc.map(function (x, i) {
         var what = { hook: 'শুরু', number: 'সংখ্যা', bars: 'চার্ট', chart: 'চার্ট', line: 'চার্ট', compare: 'তুলনা', text: 'লেখা', quote: 'উক্তি', map: 'ম্যাপ', photo: 'ছবি', image: 'ছবি', list: 'তালিকা', outro: 'শেষ' }[x.type] || 'দৃশ্য';
         return '<li><span class="bc-tag">' + what + '</span><textarea class="bc-ta" data-bcin="rls' + id + '_' + i + '" id="bci_rls' + id + '_' + i + '" data-noi18n="1" rows="2" aria-label="দৃশ্য ' + bn(i + 1) + '-এ যা বলবেন">' + esc(v('rls' + id + '_' + i, x.say || '')) + '</textarea></li>';
       }).join('') + '</ol><div class="lt-a">' + btn(svg('check') + 'সেভ করুন', 'data-bc="rledit" data-id="' + id + '"', 'sm', 'rle' + id) +
-      '<button type="button" class="bc-btn ghost sm" data-bc="tcopy" data-t="' + esc(sc.map(function (x) { return x.say; }).join('\n\n')) + '">' + svg('copy') + 'কপি করুন</button></div>' + critBox('reel', id) + '</section>';
+      '<button type="button" class="bc-btn ghost sm" data-bc="tcopy" data-t="' + esc(sc.map(function (x) { return x.say; }).join('\n\n')) + '">' + svg('copy') + 'কপি করুন</button></div>' + critBox('reel', id, { label: 'স্ক্রিপ্ট নিয়ে মন্তব্য' }) + '</section>';
     h += '<section><h4>২. শুরুর ছবি</h4>' + (ph ? mediaChip(k) : '<div class="uc-drop">' + mediaButton(k) + '<span class="bc-sub">না দিলে লেখা দিয়ে শুরু হবে</span></div>') + pickerHtml(k) +
       (C.media[k] && (!r.photo || r.photo.id !== C.media[k].id) ? '<div class="lt-a">' + btn('এই ছবিটা রাখুন', 'data-bc="rlphoto" data-id="' + id + '"', 'sm', 'rlp' + id) + '</div>' : '') +
       '<h4 style="margin-top:16px">৩. আপনার গলা</h4>' +
@@ -60887,7 +60891,8 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
       if (tx.length < 3) return;
       var n0 = sl.anchorNode, e0 = n0 && (n0.nodeType === 1 ? n0 : n0.parentElement);
       if (!e0 || !e0.closest || !e0.closest('#bc_root') || e0.closest('.cr-p')) return;
-      C.lastSel = { t: tx.replace(/\s+/g, ' ').slice(0, 1000), at: Date.now() };
+      var it0 = e0.closest('[data-crk]'); if (!it0) return;
+      C.lastSel = { t: tx.replace(/\s+/g, ' ').slice(0, 1000), at: Date.now(), k: it0.getAttribute('data-crk') };
     } catch (e) {}
   });
   document.addEventListener('change', function (e) {
@@ -61066,11 +61071,11 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
     else if (w === 'writeidea') write({ idea_id: Number(id) });
     else if (w === 'cropen') {
       var ok0 = !C.fold['cr' + id]; C.fold['cr' + id] = ok0;
-      if (ok0 && C.lastSel && Date.now() - C.lastSel.at < 30000 && !C.crq[id]) { C.crq[id] = C.lastSel.t; C.lastSel = null; }
+      if (ok0 && C.lastSel && C.lastSel.k === id && Date.now() - C.lastSel.at < 30000 && !C.crq[id]) { C.crq[id] = C.lastSel.t; C.lastSel = null; }
       draw(); if (ok0) setTimeout(function () { var b = el('bci_crt' + id); if (b) b.focus({ preventScroll: true }); }, 30);
     }
     else if (w === 'crquote') {
-      if (!C.lastSel || Date.now() - C.lastSel.at > 300000) return toast('লেখার যে অংশ নিয়ে বলছেন, আগে সেটা বাছাই করুন (টেনে নীল করুন), তারপর এখানে চাপুন।', true, 7000);
+      if (!C.lastSel || C.lastSel.k !== id || Date.now() - C.lastSel.at > 300000) return toast('লেখার যে অংশ নিয়ে বলছেন, আগে সেটা বাছাই করুন (টেনে নীল করুন), তারপর এখানে চাপুন।', true, 7000);
       C.crq[id] = C.lastSel.t; C.lastSel = null; draw();
     }
     else if (w === 'crqx') { delete C.crq[id]; draw(); }
