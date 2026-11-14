@@ -4484,3 +4484,33 @@ a new Home picked from Pinterest; the system is slow and the last two rail tabs 
   Bangla, bn_err hides raw errors; claim-check reasons, positioning and topic labels in Bangla (data).
 - NOT done: AI-written cluster labels and comment summaries on Listen still come back in English (the page prefers *_bn
   fields when present); "?" help buttons not built; one topic list for Rules and Routine is the owner's choice.
+
+## brand-25 (14 Nov 2026, owner-only Brand Cockpit): plan and reality match + results dashboard
+
+Shape brief: `.impeccable/shape/brand-25-results-coherence.md`.
+- Owner: "Routine says medium, but Home and Posts show fewer Reels and Stories than planned." Cause: the 21 waiting drafts
+  had no planned time (written before brand-19), Home hid Story and comment slots, and an empty slot was hidden when
+  another empty slot of the same network sat within 45 minutes (Facebook face 21:00 hid the Reel 21:30). Now:
+  bridge `routine_place()` gives every waiting draft without a time the next free fitting slot (pillar first, oldest
+  first; at bridge start and before every fill) - all 21 were placed; ERP erpBrandDeskRoutinePlace.
+- Bridge `/routine/fill` + ERP erpBrandDeskRoutineFill + Routine button "ফাঁকা ঘর ভরান" (in-page confirm with the counts,
+  never automatic): for the coming 7 days every empty text/news/album/face/photo/carousel/post slot of the plan in use on a
+  connected network gets a draft from the best unused idea of that slot's pillar (news slots: the newest checked news
+  story not yet written for that network), at most 8 per press, background job with progress; empty Reels/video/Shorts
+  slots are counted only ("ভিডিও লাগবে").
+- Home: every slot of the plan in use: drafts and posts fill their slot (25 minutes, one post per slot), empty text slots
+  "ফাঁকা ঘর", empty video slots "ভিডিও লাগবে" (amber outline), Story / LinkedIn comments / Live as quiet reminder rows
+  ("Story · নিজে দিন", Facebook+Instagram merged in one row); one count line for the chosen day (ঘর / লেখা তৈরি / ফাঁকা /
+  ভিডিও লাগবে / Story n বার নিজে / কমেন্ট নিজে).
+- Results (owner: "how many views and how much reach each post got; a dashboard would be better"): bridge metrics
+  collector every 6 hours (`channel_metrics` table: Postiz per-channel daily series; a `metrics_snapshots` row per
+  published post of the last 60 days, posts row linked by `postiz_post_id` or created; YouTube video numbers from the Data
+  API; NULL = not measured). GET `/results?days=7|30|90` + ERP erpBrandDeskResults (read). Page rebuilt: period pills,
+  network tiles (followers, views, page impressions, engagement, change vs the period before; Facebook "Page followers"
+  is new follows per day), "মাপা যায় না" list with the reason (LinkedIn personal profile, X, Bluesky, Telegram, YouTube
+  channel), per-post ledger (দেখা · রিচ · লাইক · কমেন্ট · শেয়ার, "—" when missing, open link, total row), best posts and
+  pillar bars only when there is something to compare. প্রশ্ন / লিড links kept.
+- NOT done: no click or sales attribution; per-post numbers come only where the network gives them (today Postiz returns
+  "missing" for the one TikTok post); Instagram/Threads are not connected, so their slots are not filled; the network
+  line strip on Results was dropped (Home carries the week). serverfinal_test still fails on erpCrmAi (no activity-log
+  words; not from this stage).

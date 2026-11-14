@@ -59124,10 +59124,10 @@ select.bc-in{padding-right:28px}
 .hm-r:hover{background:rgba(22,24,29,.05);color:var(--bc-ink-2)}
 .hm-r time{font:600 12px "Pretendard Variable",Pretendard,system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--bc-ink-3);margin-right:2px}
 .hm-r span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hm-c.v{background:transparent;box-shadow:inset 0 0 0 1.5px #E8C766}
+.hm-c.v{background:transparent;box-shadow:none;border:1.5px dashed #D9B84A}
 .hm-c.v .hm-m b{color:#7A5A00}.hm-c.v .hm-x{color:var(--bc-ink-3)}
-.hm-cnt{margin:0 0 10px;font:14px/1.55 "Noto Sans Bengali","Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-2)}
-.hm-cnt b{color:var(--bc-ink);font-weight:700}.hm-cnt em{font-style:normal;color:#7A5A00;font-weight:600}
+.hm-cnt{margin:14px 0 10px;font:14px/1.55 "Noto Sans Bengali","Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-2)}
+.hm-cnt b{color:var(--bc-ink);font-weight:700}.hm-cnt small{font-size:12px;color:var(--bc-ink-3);margin-left:8px}.hm-cnt em{font-style:normal;color:#7A5A00;font-weight:600}
 .rt-ask{border:1px solid var(--bc-rule);border-radius:14px;padding:12px 14px;margin:0 0 14px;background:var(--bc-ground)}
 .rt-ask p,.rt-fj p{margin:0 0 10px;font-size:14px;line-height:1.6;color:var(--bc-ink-2);max-width:72ch}.rt-ask b,.rt-fj b{color:var(--bc-ink)}
 .rt-fj{margin:0 0 14px}.rt-fj.done{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.rt-fj.done p{margin:0}
@@ -59146,7 +59146,7 @@ select.bc-in{padding-right:28px}
 .rs-nom{list-style:none;margin:12px 0 0;padding:0;border-top:1px solid var(--bc-rule)}
 .rs-nom li{display:grid;grid-template-columns:auto auto auto minmax(0,1fr);align-items:center;gap:4px 8px;padding:10px 2px;border-bottom:1px solid var(--bc-rule)}
 .rs-nom b{font-size:14px}.rs-nom small{font-size:13px;color:var(--bc-ink-3);line-height:1.5}
-.rs-tag{font:600 11.5px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-2);background:var(--bc-shelf);border-radius:6px;padding:2px 7px;white-space:nowrap}
+.rs-tag{justify-self:start;font:600 11.5px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-2);background:var(--bc-shelf);border-radius:6px;padding:2px 7px;white-space:nowrap}
 .rs-empty{font-size:14px;color:var(--bc-ink-2);margin:0}.rs-empty p{margin:0 0 10px}
 .rs-list{border-top:1px solid var(--bc-rule)}
 .rs-row{display:grid;grid-template-columns:minmax(0,1fr) repeat(5,72px) 76px;align-items:center;gap:8px;padding:10px 2px;border-bottom:1px solid var(--bc-rule)}
@@ -59176,7 +59176,8 @@ select.bc-in{padding-right:28px}
   .rs-tot>span:last-child{display:none}
   .rs-nom li{grid-template-columns:auto auto minmax(0,1fr)}.rs-nom small{grid-column:1/-1}
   .rs-pils div{grid-template-columns:72px minmax(0,1fr) auto}.rs-pils small{display:none}
-  .hm-r{min-height:40px;font-size:13.5px}.hm-cnt{font-size:14.5px}
+  .hm-r{min-height:44px;font-size:13.5px}
+  .bc-head>.bc-sp{display:none}.bc-head h1{flex:1 1 auto}.bc-head .bc-reload{order:1}.bc-head>.bc-pills,.bc-head>.bc-btn:not(.bc-reload){order:2}.bc-head>.bc-pills{flex:1 0 100%}.hm-cnt{font-size:14.5px}
 }
 @container bc (max-width:759px){.hm-days{display:flex}.hm-wk{display:block}.hm-col{display:none}.hm-col.cur{display:flex;min-height:0;background:transparent;box-shadow:none;padding:0}.hm-col.cur>header{display:none}
   .hm-c{padding:12px 14px}.hm-x{font-size:15px}.hm-m{font-size:13px}}
@@ -60005,13 +60006,15 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
   var HMST = { go: 'গেছে', q: 'যাবে', x: 'আটকে', w: 'অপেক্ষায়', e: 'ফাঁকা ঘর', v: 'ভিডিও লাগবে' };
   // brand-25: Story, LinkedIn comments and Live are his by hand (Postiz does not post them): quiet reminder rows, so the day
   // matches the routine. A slot holds one post; a draft or post within 25 minutes on that network fills it (as the Mac does).
-  var HMHAND = { story: 'Story', engage: 'কমেন্ট ও রিপ্লাই', live: 'লাইভ' }, RVID = /^(reel|video|short|long|trial)$/;
+  var HMHAND = { story: 'স্টোরি', engage: 'কমেন্ট', live: 'লাইভ' }, RVID = /^(reel|video|short|long|trial)$/;
+  // a Date whose local getters read Dhaka wall time (UTC+6), whatever the phone's clock is set to
+  function bdt(v) { var d = v == null ? new Date() : new Date(v); return new Date(d.getTime() + (d.getTimezoneOffset() + 360) * 60000); }
   function hmLevel() { var R = C.d.routine; return (R && R.status && R.status.effective) || 2; }
   function hmItems(day0) {
     var d1 = new Date(day0), out = []; d1.setDate(d1.getDate() + 7);
-    stations().forEach(function (s) { var t = new Date(s.at); if (t >= day0 && t < d1) out.push({ at: t, net: s.net, st: s.st, text: s.text, key: s.key, act: 'st', id: s.key }); });
-    waitingList().forEach(function (x) { if (!x.planned_at) return; var t = new Date(x.planned_at); if (t >= day0 && t < d1) out.push({ at: t, net: netOf(x.platform), st: 'w', text: strip(x.hook || x.body || ''), act: 'ndraft', id: x.id, pic: x.media && x.media.type !== 'video' ? x.media.path : '' }); });
-    var R = C.d.routine, now = new Date();
+    stations().forEach(function (s) { var t = bdt(s.at); if (t >= day0 && t < d1) out.push({ at: t, net: s.net, st: s.st, text: s.text, key: s.key, act: 'st', id: s.key }); });
+    waitingList().forEach(function (x) { if (!x.planned_at) return; var t = bdt(x.planned_at); if (t >= day0 && t < d1) out.push({ at: t, net: netOf(x.platform), st: 'w', text: strip(x.hook || x.body || ''), act: 'ndraft', id: x.id, pic: x.media && x.media.type !== 'video' ? x.media.path : '' }); });
+    var R = C.d.routine, now = bdt();
     if (R) {
       var lvl = hmLevel(), used = [];
       (R.slots || []).slice().sort(function (p1, q1) { return p1.dow - q1.dow || (p1.at < q1.at ? -1 : 1); }).forEach(function (sl) {
@@ -60036,14 +60039,14 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
   function hmCount(i, td, day0, items) {
     var R = C.d.routine; if (!R) return '';
     var d = new Date(day0); d.setDate(d.getDate() + i);
-    var lvl = hmLevel(), sl = (R.slots || []).filter(function (x) { return x.active && x.level <= lvl && x.dow === i; });
+    var lvl = hmLevel(), sl = (R.slots || []).filter(function (x) { return x.active && x.level <= lvl && x.dow === i; }), ps = sl.filter(function (x) { return !HMHAND[x.format]; });
     if (!sl.length) return '';
     var di = items.filter(function (it) { return it.at.getDate() === d.getDate() && it.at.getMonth() === d.getMonth(); });
     var ready = di.filter(function (it) { return /^(go|q|w)$/.test(it.st); }).length, vneed = di.filter(function (it) { return it.st === 'v'; }).length, empty = di.filter(function (it) { return it.st === 'e'; }).length;
     var st = {}, en = 0; sl.forEach(function (x) { if (x.format === 'story') st[x.at] = 1; if (x.format === 'engage') en++; });
     var nst = Object.keys(st).length, DF = ['শনিবার', 'রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার'];
-    return '<p class="hm-cnt"><b>' + (i === td ? 'আজ' : DF[i]) + ':</b> ঘর ' + bn(sl.length) + ' · লেখা তৈরি ' + bn(ready) + (empty ? ' · ফাঁকা ' + bn(empty) : '') +
-      (vneed ? ' · <em>ভিডিও লাগবে ' + bn(vneed) + '</em>' : '') + (nst ? ' · Story ' + bn(nst) + ' বার নিজে' : '') + (en ? ' · কমেন্ট নিজে' : '') + '</p>';
+    return '<p class="hm-cnt"><b>' + (i === td ? 'আজ' : DF[i]) + ':</b> পোস্টের ঘর ' + bn(ps.length) + ' · লেখা তৈরি ' + bn(ready) + (empty ? ' · ফাঁকা ' + bn(empty) : '') +
+      (vneed ? ' · <em>ভিডিও লাগবে ' + bn(vneed) + '</em>' : '') + (nst ? ' · স্টোরি ' + bn(nst) + ' বার নিজে' : '') + (en ? ' · কমেন্ট নিজে' : '') + '<small>সময় ঢাকার</small></p>';
   }
   function hmCard(it) {
     if (it.st === 'r') return '<button type="button" class="hm-r" data-bc="sec" data-id="routine"><time>' + dTime(it.at).replace(/ (সকাল|দুপুর|সন্ধ্যা)$/, '') + '</time>' + it.nets.map(function (n) { return logo(n, 13); }).join('') + '<span>' + esc(it.text) + '</span></button>';
@@ -60060,10 +60063,10 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
     var n = counts();
     if (n.waiting) h += '<div class="bc-wait"><b>' + bn(n.waiting) + '<em>টা</em></b><p>পোস্ট আপনার অপেক্ষায়</p><span class="bc-sp"></span><button class="bc-btn amber" type="button" data-bc="ptab" data-id="wait">দেখুন</button></div>';
     n.stuck.filter(function (s) { return s.key !== C.pick; }).slice(0, 3).forEach(function (s) { var t = new Date(s.at); h += '<div class="bc-call"><span><b>' + esc(netName(s.net)) + '</b> · ' + DAY[t.getDay()] + ' ' + dDate(t) + ' · ' + (s.ask ? 'দেরি হয়েছে' : 'আটকে গেছে') + '</span><span class="bc-sp"></span>' + stActs(s) + '<button class="bc-btn ghost sm" type="button" data-bc="st" data-id="' + esc(s.key) + '">দেখুন</button></div>'; });
-    var day0 = new Date(); day0.setHours(0, 0, 0, 0); var td = (day0.getDay() + 1) % 7; day0.setDate(day0.getDate() - td);
+    var day0 = bdt(); day0.setHours(0, 0, 0, 0); var td = (day0.getDay() + 1) % 7; day0.setDate(day0.getDate() - td);
     var items = hmItems(day0), RD = ['শনি', 'রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র'];
     if (C.hday == null) C.hday = td;
-    h += '<div class="hm-days" role="group" aria-label="দিন">' + RD.map(function (dn, i) { var d = new Date(day0); d.setDate(d.getDate() + i); var k = items.filter(function (it) { return it.st !== 'r' && it.at.getDay() === d.getDay(); }).length;
+    h += '<div class="hm-days" role="group" aria-label="দিন">' + RD.map(function (dn, i) { var d = new Date(day0); d.setDate(d.getDate() + i); var k = ((C.d.routine && C.d.routine.slots) || []).filter(function (x) { return x.active && x.level <= hmLevel() && x.dow === i && !HMHAND[x.format]; }).length;
       return '<button type="button" data-bc="hday" data-id="' + i + '" aria-pressed="' + (C.hday === i) + '"' + (C.hday === i ? ' class="on' + (i === td ? ' today' : '') + '"' : i === td ? ' class="today"' : '') + '><span>' + dn + '</span><b>' + bn(d.getDate()) + '</b>' + (k ? '<i>' + bn(k) + '</i>' : '') + '</button>'; }).join('') + '</div>';
     h += hmCount(C.hday, td, day0, items);
     h += '<div class="hm-wk">' + RD.map(function (dn, i) {
@@ -60223,7 +60226,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
     var per = '<div class="bc-pills" role="group" aria-label="সময়">' + [7, 30, 90].map(function (d) { return '<button type="button" data-bc="rsdays" data-id="' + d + '" aria-pressed="' + (days === d) + '"' + (days === d ? ' class="on"' : '') + '>' + bn(d) + ' দিন</button>'; }).join('') + '</div>';
     var h = headHtml('ফলাফল', '', per); var g = gate(['cockpit', 'results']); if (g) return h + g;
     var R = C.d.results, n = counts(), L = n.listen, T = R.totals || {}, posts = R.posts || [], best = R.best || [], lr = R.last_run ? new Date(R.last_run) : null;
-    h += '<p class="bc-lede">' + bn(days) + ' দিনে ' + (T.posts ? '<b>' + bn(T.posts) + 'টা</b> পোস্ট গেছে' + (T.measured ? ', <b>' + bn(T.measured) + 'টার</b> সংখ্যা এসেছে' : ', কোনোটার সংখ্যা এখনো আসেনি') : 'কোনো পোস্ট যায়নি') + '।' +
+    h += '<p class="bc-lede">' + bn(days) + ' দিনে ' + (T.posts ? '<b>' + bn(T.posts) + 'টা</b> পোস্ট গেছে' + (T.measured ? ', <b>' + bn(T.measured) + 'টার</b> সংখ্যা এসেছে' : (T.posts === 1 ? ', তার সংখ্যা এখনো আসেনি' : ', কোনোটার সংখ্যা এখনো আসেনি')) : 'কোনো পোস্ট যায়নি') + '।' +
       '<small>' + (lr && !isNaN(lr) ? 'শেষ হিসাব ' + dDate(lr) + ', ' + dTime(lr) + '। প্রতি ৬ ঘণ্টায় নতুন হিসাব আসে।' : 'প্রথম হিসাব ৬ ঘণ্টার মধ্যে আসবে।') + '</small></p>';
     h += '<div class="bc-line rs-back"><button type="button" data-bc="sec" data-id="listen">প্রশ্ন <b>' + bnN(L.questions) + '</b></button><button type="button" data-bc="sec" data-id="people">লিড <b>' + bnN(L.leads) + '</b></button></div>';
     // the networks: measured ones as tiles, the rest as one list with the reason
@@ -60570,7 +60573,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
         (em.text ? btn(svg('check') + 'হ্যাঁ, লিখুন', 'data-bc="rfillgo"', 'dark sm', 'rfill') : '') + btn(em.text ? 'না' : 'ঠিক আছে', 'data-bc="fold" data-id="rfill"', 'ghost sm', '') + '</div></div>';
     }
     if (frun) h += '<p class="tr-busy rt-fj"><span class="bc-spin"></span>ফাঁকা ঘরের ড্রাফট লেখা হচ্ছে' + (fj.of ? ' · ' + bn(fj.done || 0) + '/' + bn(fj.of) : '') + '… একেকটায় ১-২ মিনিট</p>';
-    else if (fj && fj.state === 'failed') h += '<div class="bc-call"><span>' + esc(hasBn(fj.error) ? fj.error : 'ড্রাফট লেখা গেল না।') + '</span></div>';
+    else if (fj && fj.state === 'failed' && Date.now() - new Date(fj.at) < 12 * 36e5 && !C.fold.rfill) h += '<div class="bc-call"><span>' + esc(hasBn(fj.error) ? fj.error : 'ড্রাফট লেখা গেল না।') + '</span><span class="bc-sp"></span>' + btn('আবার চেষ্টা করুন', 'data-bc="fold" data-id="rfill"', 'sm', '') + '</div>';
     else if (fj && fj.state === 'done' && Date.now() - new Date(fj.at) < 12 * 36e5) {
       h += '<div class="rt-fj done"><p>' + (fj.made ? '<b>' + bn(fj.made) + 'টা</b> ড্রাফট লেখা হলো, আপনার অপেক্ষায়।' : 'নতুন কোনো ড্রাফট লেখা হয়নি।') +
         (fj.video ? ' ভিডিও লাগবে <b>' + bn(fj.video) + 'টা</b> ঘরে।' : '') + (fj.no_idea ? ' ' + bn(fj.no_idea) + 'টা ঘরের জন্য আইডিয়া নেই।' : '') + (fj.no_account ? ' ' + bn(fj.no_account) + 'টা ঘরের নেটওয়ার্ক যুক্ত নেই।' : '') + '</p>' +
@@ -60581,10 +60584,10 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
   function routineHtml() {
     var g = gate(['routine']); if (g) return headHtml('রুটিন', '') + g;
     var d = C.d.routine, st = d.status || {}, lvl = st.level || 2, eff = st.effective || lvl, fills = d.fills || {}, slots = d.slots || [];
-    if (C.rday == null) C.rday = (new Date().getDay() + 1) % 7;
+    if (C.rday == null) C.rday = (bdt().getDay() + 1) % 7;
     if (!C.rp) { C.rp = {}; RNET.forEach(function (n) { C.rp[n] = 1; }); }
     var fj = d.fill, frun = !!(fj && fj.state === 'writing'), em = d.empty || {};
-    var h = headHtml('রুটিন', '', btn(svg('pen') + 'ফাঁকা ঘর ভরান', 'data-bc="fold" data-id="rfill"' + (C.fold.rfill ? ' aria-expanded="true"' : ''), '', 'rfill', frun) + btn(svg('plus') + 'ঘর যোগ করুন', 'data-bc="rnew"', 'dark', ''));
+    var h = headHtml('রুটিন', '', btn(svg('pen') + 'ফাঁকা ঘর ভরান', 'data-bc="fold" data-id="rfill"' + (C.fold.rfill ? ' aria-expanded="true"' : ''), 'dark', 'rfill', frun) + btn(svg('plus') + 'ঘর যোগ করুন', 'data-bc="rnew"', '', ''));
     h += rFillHtml(fj, frun, em);
     // backup status: the stock of photos, what is queued, and whether the week stepped down
     var need = st.need || {}, have = st.have || {}, shortP = have.photos != null && have.photos < need.photos, shortV = have.videos != null && have.videos < need.videos;
@@ -60599,7 +60602,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
       var n = fb.filter(function (x) { return x.pillar === k; }).length, pc = fb.length ? Math.round(100 * n / fb.length) : 0;
       return '<div><b>' + bn(pc) + '%</b><small>লক্ষ্য ' + bn(RPIL[k][1]) + '%</small><strong>' + RPIL[k][0] + '</strong><span>' + RPIL[k][2] + ' · ' + bn(n) + 'টা</span><span class="rt-bar"><i style="width:' + Math.min(100, pc) + '%"></i><u style="left:' + RPIL[k][1] + '%" title="লক্ষ্য"></u></span></div>';
     }).join('') + '</div><p class="rt-note">Facebook-এ সপ্তাহে ' + bn(fb.length) + 'টা পোস্ট, ' + bn(faceN) + 'টায় আপনার মুখ। শতাংশগুলো অনুমান।</p>';
-    var today = (new Date().getDay() + 1) % 7;
+    var today = (bdt().getDay() + 1) % 7;
     // brand-24: supply shows once: at the top when it is short, at the bottom when all is well
     var shortAll = eff < lvl || shortP || shortV, supH = '<div class="bc-block" id="bc_rtst"' + (shortAll ? ' style="margin-top:0"' : '') + '><div class="bc-h2"><h2>এ সপ্তাহের জোগান</h2></div>' + stH + '</div>';
     if (shortAll) h += supH;
@@ -60608,7 +60611,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
       '<div class="rt-nets">' + RNET.map(function (n) { return '<button type="button" class="st-net' + (C.rp[n] ? ' on' : '') + '" style="--c:' + netCol(n) + '" aria-pressed="' + !!C.rp[n] + '" data-bc="rplat" data-id="' + n + '">' + logo(n, 14) + esc(netName(n)) + '</button>'; }).join('') + '</div></div>';
     if (C.redit === 'new') h += '<section class="rt-new"><div class="bc-h2"><h2>নতুন ঘর</h2></div>' + rEditor(null) + '</section>';
     var show = slots.filter(function (x) { return C.rp[x.platform] && (x.level <= lvl || C.redit === String(x.id)); });
-    h += '<div class="rt-days" role="group" aria-label="দিন">' + RDAY.map(function (dn, i) { var n = show.filter(function (x) { return x.dow === i && x.active; }).length; return '<button type="button" data-bc="rday" data-id="' + i + '" aria-label="' + dn[1] + ', ' + bn(n) + 'টা"' + (C.rday === i ? ' class="on' + (i === today ? ' today' : '') + '" aria-pressed="true"' : (i === today ? ' class="today"' : '') + ' aria-pressed="false"') + '>' + dn[0] + '<small>' + (i === today ? 'আজ · ' : '') + bn(n) + '</small></button>'; }).join('') + '</div>' +
+    h += '<div class="rt-days" role="group" aria-label="দিন">' + RDAY.map(function (dn, i) { var n = show.filter(function (x) { return x.dow === i && x.active && x.level <= eff; }).length; return '<button type="button" data-bc="rday" data-id="' + i + '" aria-label="' + dn[1] + ', ' + bn(n) + 'টা"' + (C.rday === i ? ' class="on' + (i === today ? ' today' : '') + '" aria-pressed="true"' : (i === today ? ' class="today"' : '') + ' aria-pressed="false"') + '>' + dn[0] + '<small>' + (i === today ? 'আজ · ' : '') + bn(n) + '</small></button>'; }).join('') + '</div>' +
       (RNET.some(function (nn) { return C.rp[nn]; }) ? '' : '<p class="tr-empty">উপরে অন্তত একটা নেটওয়ার্ক বাছুন।</p>');
     var BANDS = ['সকাল', 'দুপুর ও বিকেল', 'রাত'];
     h += '<div class="rt-week">' + RDAY.map(function (dn, i) {
@@ -60618,8 +60621,8 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
         col += '<div class="rt-band"><h3>' + BANDS[b] + '</h3>' + (bi.length ? '' : '<p class="rt-none">' + (i === 6 && b === 1 ? 'জুমার সময় ফাঁকা' : 'কিছু নেই') + '</p>');
         bi.forEach(function (x) {
           var f = fills[x.id], op = C.redit === String(x.id);
-          col += '<button type="button" class="rt-dep' + (x.active ? '' : ' cut') + '" style="--c:' + netCol(x.platform) + '" data-bc="redit" data-id="' + x.id + '" aria-expanded="' + op + '"><time>' + rtime(x.at) + '</time><span class="f">' + (RFMT[x.format] || x.format) + '</span>' +
-            '<span class="p">' + esc(netName(x.platform)) + (x.pillar && RPIL[x.pillar] ? ' <em>· ' + RPIL[x.pillar][0] + '</em>' : '') + (x.face ? ' <em>·</em> <b>মুখসহ</b>' : '') + (x.active ? '' : ' <em>· বন্ধ</em>') + '</span>' +
+          col += '<button type="button" class="rt-dep' + (x.active && x.level <= eff ? '' : ' cut') + '" style="--c:' + netCol(x.platform) + '" data-bc="redit" data-id="' + x.id + '" aria-expanded="' + op + '"><time>' + rtime(x.at) + '</time><span class="f">' + (RFMT[x.format] || x.format) + '</span>' +
+            '<span class="p">' + esc(netName(x.platform)) + (x.pillar && RPIL[x.pillar] ? ' <em>· ' + RPIL[x.pillar][0] + '</em>' : '') + (x.face ? ' <em>·</em> <b>মুখসহ</b>' : '') + (x.active ? (x.level > eff ? ' <em>· এ সপ্তাহে বাদ</em>' : '') : ' <em>· বন্ধ</em>') + '</span>' +
             (x.topic_bn && !op ? '<span class="tp">' + esc(x.topic_bn) + '</span>' : '') + (f && f.draft ? '<span class="fill' + (f.state === 'approved' ? ' ok' : '') + '" data-noi18n="1">' + (f.state === 'approved' ? 'যাবে: ' : 'অপেক্ষায়: ') + esc(f.hook) + '</span>' : '') + '</button>';
           if (op) col += rEditor(x);
         });
