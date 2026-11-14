@@ -60882,8 +60882,9 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
   document.addEventListener('selectionchange', function () {
     if (!on()) return;
     try {
-      var sl = window.getSelection(), tx = sl ? String(sl).trim() : '', ae = document.activeElement;
-      if (tx.length < 3 || (ae && /^(TEXTAREA|INPUT)$/.test(ae.tagName))) return;
+      // a selection inside a textarea is not part of window.getSelection(), so typing in his own box never counts
+      var sl = window.getSelection(), tx = sl ? String(sl).trim() : '';
+      if (tx.length < 3) return;
       var n0 = sl.anchorNode, e0 = n0 && (n0.nodeType === 1 ? n0 : n0.parentElement);
       if (!e0 || !e0.closest || !e0.closest('#bc_root') || e0.closest('.cr-p')) return;
       C.lastSel = { t: tx.replace(/\s+/g, ' ').slice(0, 1000), at: Date.now() };
