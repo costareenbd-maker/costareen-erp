@@ -59674,6 +59674,12 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
 .bx-ask .bc-in{width:100%;height:42px;box-sizing:border-box}
 .bx-cp .sh{display:none}
 .bx-nt[aria-pressed="false"]{color:var(--bc-ink-3)}
+/* with the card, the summary and the saved list open the messages keep a readable height; the column scrolls instead */
+.bx-t{overflow:auto}
+.bx-ms{min-height:200px}
+.bx-th,.bx-card,.bx-note,.bx-sum,.bx-win,.bx-cp{flex:none}
+.bx-card .bc-ta{min-height:60px}
+.bx-sv{max-height:240px}
 @container bc (max-width:759px){
   .bx-th .lb,.bx-cp .lb,.bx-nt .lb{display:none}
   .bx-cp .sh{display:inline}
@@ -59687,6 +59693,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   .bx-sv-a{padding:0 6px 8px 12px}
   .bx-sv-a .bc-btn,.bx-sv-h .bc-btn,.bx-older .bc-btn,.bx-aub{min-height:44px}
   .bx-sv-i{min-height:44px}
+  .bx-ms{min-height:0}
+  .bx-sv{max-height:34vh}
 }
 
 </style>
