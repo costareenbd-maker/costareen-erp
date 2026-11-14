@@ -61405,7 +61405,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     var k = 'ibtx_' + id, ph = C.ibPh[id], chk = C.ibChk[id];
     if (T.can_reply) {
       h += '<div class="bx-cp"><label class="bc-vh" for="bci_' + k + '">আপনার উত্তর</label>' + ta(k, T.kind === 'comment' ? 'সবার সামনে উত্তর লিখুন…' : 'উত্তর লিখুন…', '', ' rows="3"').replace('class="bc-ta" id', 'class="bc-ta bx-ta" id') +
-        (chk ? '<div class="bx-chk">পাঠানোর আগে দেখুন: ' + esc(chk) + '</div>' : '') +
+        (chk ? '<div class="bx-chk">' + (/আগে/.test(chk) ? '' : 'পাঠানোর আগে: ') + esc(chk) + '</div>' : '') +
         (ph ? '<div class="bx-ph"><img src="' + esc(ph.thumb) + '" alt="বাছাই করা ছবি"><button type="button" class="bc-btn ghost sm" data-bc="ibphx" data-id="' + id + '" aria-label="ছবিটা সরান">' + svg('x') + '</button></div>' : '') +
         '<div class="bc-row">' + (T.photo ? '<label class="bc-btn ghost bx-pick" title="ছবি দিন">' + svg('photo') + '<span>ছবি</span><input type="file" accept="image/jpeg,image/png,image/webp" data-bcibph="' + id + '" aria-label="ছবি দিন"></label>' : '') +
         btn(svg('spark') + 'AI দিয়ে উত্তর লিখুন', 'data-bc="ibdraft" data-id="' + id + '"', 'ghost', 'ibd' + id) + '<span class="bc-sp"></span>' +
@@ -61413,7 +61413,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     } else {
       h += '<div class="bx-ro"><p style="margin:0 0 8px">' + esc(T.why || 'এখান থেকে উত্তর যায় না।') + '</p>' +
         (T.channel === 'youtube' ? (C.v[k] ? ta(k, '', '', ' rows="3"') + '<div class="bc-row">' + btn(svg('copy') + 'কপি করুন', 'data-bc="ibcopy" data-id="' + id + '"', 'dark') + '</div>' : '') +
-          (chk ? '<div class="bx-chk">দেখে নিন: ' + esc(chk) + '</div>' : '') + '<div class="bc-row">' + btn(svg('spark') + 'AI দিয়ে উত্তর লিখুন', 'data-bc="ibdraft" data-id="' + id + '"', 'ghost', 'ibd' + id) + '</div>'
+          (chk ? '<div class="bx-chk">' + esc(chk) + '</div>' : '') + '<div class="bc-row">' + btn(svg('spark') + 'AI দিয়ে উত্তর লিখুন', 'data-bc="ibdraft" data-id="' + id + '"', 'ghost', 'ibd' + id) + '</div>'
           : '<div class="bc-row"><button type="button" class="bc-btn" data-bc="ibadd">যুক্ত করুন</button></div>') + '</div>';
     }
     return h + '</div>';
@@ -61512,6 +61512,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   }
   // the chosen filter stays in sight in the sideways pill row on the phone
   function ibPillView() { requestAnimationFrame(function () { [].forEach.call(el('bc_root').querySelectorAll('.bx-bar .on, .bx-sub .on'), function (x) { var r = x.parentNode; r.scrollLeft = x.offsetLeft - (r.clientWidth - x.offsetWidth) / 2; }); }); }
+  // a setup error is shown inside its form, so the toast for it closes (ERP page: #toast; stand-alone desk: .bd-toast)
+  function ibToastOff() { var a = el('toast'); if (a) a.className = ''; var b = document.querySelector('.bd-toast'); if (b) b.className = 'bd-toast'; }
   function ibLoad(force) { C.d.inbox = force ? C.d.inbox : null; C.err.inbox = ''; get('inbox', true); }
   function ibOpen(id) {
     C.ibOpen = String(id); C.err.ibt = ''; if (!C.ibT || String(C.ibT.thread.id) !== String(id)) C.ibT = null; draw();
@@ -61607,11 +61609,11 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       if (C.ibPre === 'custom') { a.imap_host = String(v('icm_ih')).trim(); a.imap_port = String(v('icm_ip') || '993').trim(); a.smtp_host = String(v('icm_sh')).trim(); a.smtp_port = String(v('icm_sp') || '465').trim(); }
       if (!a.address) return toast('ইমেইল ঠিকানাটা দিন।', true); if (!a.password) return toast('App password-টা দিন।', true);
       act('icmsave', 'erpBrandDeskChannelSave', a, function (r) { C.d.ichan = r; ['icm_addr', 'icm_pw', 'icm_ih', 'icm_ip', 'icm_sh', 'icm_sp', 'icm_from'].forEach(function (q) { delete C.v[q]; }); C.ibForm = ''; toast('ইমেইল যুক্ত হলো। এক মিনিটের মধ্যে মেইল আসা শুরু হবে।'); setTimeout(function () { get('inbox', true); }, 20000); },
-        function (e) { C.v.icm_pw = ''; C.icErr = { k: 'mail', t: (e && e.message) || String(e) }; var tt = el('toast'); if (tt) tt.className = ''; }); C.icErr = null; return;
+        function (e) { C.v.icm_pw = ''; C.icErr = { k: 'mail', t: (e && e.message) || String(e) }; ibToastOff(); }); C.icErr = null; return;
     }
     if (w === 'ictsave') {
       var tok = String(v('ict_tok')).trim(); if (!tok) return toast('টোকেনটা বসান।', true);
-      act('ictsave', 'erpBrandDeskChannelSave', { action: 'save', kind: 'telegram', token: tok }, function (r) { C.d.ichan = r; delete C.v.ict_tok; C.ibForm = ''; toast('Telegram বট যুক্ত হলো। কেউ বটকে লিখলে এখানে আসবে।'); }, function (e) { C.icErr = { k: 'tg', t: (e && e.message) || String(e) }; var tt = el('toast'); if (tt) tt.className = ''; }); C.icErr = null; return;
+      act('ictsave', 'erpBrandDeskChannelSave', { action: 'save', kind: 'telegram', token: tok }, function (r) { C.d.ichan = r; delete C.v.ict_tok; C.ibForm = ''; toast('Telegram বট যুক্ত হলো। কেউ বটকে লিখলে এখানে আসবে।'); }, function (e) { C.icErr = { k: 'tg', t: (e && e.message) || String(e) }; ibToastOff(); }); C.icErr = null; return;
     }
     if (w === 'icwa') { act('icwa', 'erpBrandDeskWaQr', {}, function (r) { if (r.state === 'open') { C.ibQr = null; toast('WhatsApp যুক্ত আছে।'); get('ichan', true); } else { C.ibQr = r; ibQrPoll(); } }); return; }
     if (w === 'icfb') {

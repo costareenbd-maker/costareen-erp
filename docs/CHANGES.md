@@ -4577,3 +4577,25 @@ layout; ERP খুলুন is a neutral button (black = waits for you); no grey
 "তালিকা বদলান" icon-only 44 px on phone inside the heading row; "এখন পরীক্ষা করুন" got its own icon; "tracker" -> "গোনার
 ছোট কোড"; the remove confirm shows its whole label. Not taken: Hind Siliguri for the cockpit (Noto Sans Bengali was the
 brand-22..24 font decision for the whole cockpit), station rings instead of the live dot (later, with a check history line).
+
+## brand-30 (14 Nov 2026): ইনবক্স in the Brand desk (owner's personal channels; never any ERP inbox)
+Bridge (G:/bendar-brand 0dfd7d0): inbox_channels / inbox_threads / inbox_messages (+ inbox_oauth) in brand-core-db; secrets
+Fernet-sealed with INBOX_KEY (bridge .env, generated on the Mac, never printed or sent to the page). Email: IMAP read every
+minute (BODY.PEEK, first run = last 15 mails, newsletters/auto-mail skipped) + SMTP reply with In-Reply-To/References;
+presets Gmail/Outlook/Yahoo + custom; save = live test first, Bangla reason on failure. Telegram: his own new bot
+(getUpdates every 6 s; Postiz's bot never used). WhatsApp: separate evolution-personal server (/opt/brand/evolution-personal,
+same local image 966625532d90 tagged evolution-personal-local:2.3.7, own Postgres, 127.0.0.1:8082, network
+evolution-personal_net 10.250.30.0/24 because Docker's address pools are full; webhook to the bridge with ?t=WA_HOOK_TOKEN;
+business evolution/evolution2/evo-db untouched). Facebook Page + Instagram: Postiz's Meta app (ids copied into the bridge
+env unprinted), one-tap OAuth connect (state nonce, 15 min), public /inbox/meta/hook (hub.verify_token + X-Hub-Signature-256)
+and /inbox/meta/callback; the bridge subscribes the page and sets the app's page/instagram webhooks at connect time (the app
+had none, so Postiz is unaffected). YouTube comments imported from Listen (questions/price/authenticity/problem/complaint,
+14 days), reply opens YouTube. AI reply drafts in his voice (voice guide + story bank + owner_lessons), never sent by the AI.
+ERP: erpBrandDeskInbox/Thread/Reply/ReplyDraft/ThreadDone/Channels/ChannelSave/ChannelTest/WaQr/FbConnect (owner only;
+reads in ERP_READS + SRV_READS; activity log keeps only the action and the kind, never a password). Page: rail "ইনবক্স"
+second (phone bar too) with unread badge; list + chat thread + composer (photo, AI draft, send, done); "যুক্ত করুন" panel.
+Classes bx-/bxc- (the ERP inbox owns ib-). Tests: branddesk_test 218 pass. Live checks: QR returned, verify handshake
+answers the challenge and refuses a wrong token (403), unsigned/badly signed POST 403, fake email host -> Bangla error,
+TEST thread/reply/draft/done flows (TEST rows deleted afterwards). NOT done: every real channel needs his hand (see
+G:/bendar-brand/docs/NIGHT-SETUP.md); Meta may need App Review (Advanced Access) before strangers' messages arrive;
+Instagram DM photos and comment photos are not sent from the desk; finish review full round still open at hand-back.
