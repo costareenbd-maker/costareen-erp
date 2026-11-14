@@ -4530,3 +4530,25 @@ his_media note and media_pick's why line, and stored as the first built-in lesso
 erpBrandDeskCritiqueFix, erpBrandDeskLessonSet ({id, active|text}), erpBrandDeskStudy; branddesk_test 163 pass. Study tested
 with 4 TEST critiques (3 lessons made, correction re-read worked), then deleted. NOT done: the rewrite-from-critique path was
 not run on a real draft (it would replace one of his waiting drafts); finish review round 2 was still running at hand-back.
+brand-28 (14 Nov 2026, dev + Mac bridge): brand-27's critique box was too complex; comments now work like the networks'
+own comment threads. Every phone card's own Comment control (Facebook/LinkedIn footer, Instagram icon, Reels/TikTok rail,
+YouTube "Comments" row, X/Threads icon) opens a sheet: phone = bottom sheet (40px of page left to tap), desktop = centred
+720px panel; the post as it looks now (whole caption, photo capped on phone) on top, the thread under it in that network's
+comment look (FB bubbles, IG inline, LinkedIn grey box, YouTube, TikTok, generic), composer pinned at the bottom (text,
+phone photo or Brand album photo, send arrow). X, tap outside, swipe down (follows the finger), Esc; focus trap, aria-modal,
+body scroll locked, focus back to the opener. The card itself only gets one quiet line ("মন্তব্য ২ · নতুন caption তৈরি" /
+"AI লিখছে…"). On a waiting draft, a news story's post (its Facebook draft, else LinkedIn) or a LinkedIn ticket the bridge
+rewrites THAT item as a proposal (writer + editor rules + lessons + style + his comment + earlier thread; his photo = the
+photo to use, seen with media_seen; unknown details become [..]); while writing the thread shows typing dots; the answer
+folds under his comment as "১টা উত্তর দেখুন" -> "আপনার মন্তব্যের পর নতুন caption:" + caption + photo + "এটাই রাখুন" + heart.
+Keeping replaces body/hook (+ media, lived, flags) in place, accepted=true; a second comment rewrites the latest proposal he
+has not kept. Approval flow unchanged. Ideas, the two universal cards, Reels scripts, style samples: plain thread (no AI
+answer). Removed: আমি যা বুঝলাম, ভুল বুঝেছে, quote selection + selectionchange listener, data-crk markers, the old box.
+Study: the silent reading stays; it now also gets writing + proposal + kept (kept = strong, not kept = weak). Schema:
+owner_critiques + media, draft_id, reply_text, reply_hook, reply_media, state, reply_error, replied_at, accepted, applied_at.
+Bridge: /critique (new shape, retry), /critique/apply; /critique/fix gone. ERP: erpBrandDeskCritique({target,id,text,media?}
+or {retry}), erpBrandDeskCritiqueApply({id}) new, erpBrandDeskCritiqueFix removed; branddesk_test 168 pass. Tested end to end
+on draft 36 (comment + photo -> reply in 36 s -> second comment from the page -> "এটাই রাখুন" replaced caption and photo),
+and on draft 37 (LinkedIn look); draft 36 put back exactly, test comments and the one lesson they made deleted. NOT done:
+news-card and LinkedIn-ticket sheets not captured (no made news / open ticket on dev right then); no AI answer on Instagram/
+YouTube/TikTok threads captured; the auto-study that ran during the test moved settings.lessons_last_study to today.
