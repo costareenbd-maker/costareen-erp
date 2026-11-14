@@ -646,4 +646,40 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskDraftRepick, erpBrandDeskMediaKeep, erpBrandDeskReels, erpBrandDeskReelScript, erpBrandDeskReelPhoto, erpBrandDeskReelVoice, erpBrandDeskReelEdit, erpBrandDeskReelRender, erpBrandDeskReelDrafts, erpBrandDeskRoutine, erpBrandDeskRoutineSlot, erpBrandDeskRoutineLevel, erpBrandDeskRoutineReset, erpBrandDeskRoutinePlace, erpBrandDeskRoutineFill, erpBrandDeskResults, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskCritiques, erpBrandDeskCritique, erpBrandDeskCritiqueApply, erpBrandDeskLessonSet, erpBrandDeskStudy, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+// brand-29 (owner 14 Nov 2026): ব্যবসা ও ওয়েবসাইট. His websites' health and visitors come from the sites themselves and the
+// Mac's own tools (Umami); his businesses are only a name, a note and the ERP's address to open in a new tab. Nothing here
+// reads or writes any ERP's business data.
+const LIST_ACTS = ['save', 'remove', 'move'];
+const httpsUrl = (u, what) => { const v = str(u).replace(/\/+$/, ''); if (!/^https:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/\S*)?$/i.test(v) || v.length > 300) throw new Error(what + ' https:// দিয়ে শুরু হওয়া পুরো ঠিকানা দিন।'); return v; };
+function listArgs(p) {
+  const act = str(p.action || 'save');
+  if (!LIST_ACTS.includes(act)) throw new Error('এই কাজটা চেনা নেই। পেজটা নতুন করে আনুন।');
+  const b = { action: act };
+  if (p.id != null && p.id !== '') { const id = parseInt(p.id, 10); if (!(id > 0)) throw new Error('তালিকাটা নতুন করে আনুন।'); b.id = id; }
+  if (act !== 'save' && !b.id) throw new Error('কোনটা, বাছুন।');
+  if (act === 'move') { if (!['up', 'down'].includes(str(p.dir))) throw new Error('ওপরে না নিচে, বাছুন।'); b.dir = str(p.dir); }
+  return b;
+}
+export async function erpBrandDeskSites(ctx) { await gate(ctx); return bridge(ctx, '/sites', undefined, 30000); }
+export async function erpBrandDeskSitesRun(ctx) { await gate(ctx); return bridge(ctx, '/sites/run', { full: true }); }
+export async function erpBrandDeskSiteSave(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, b = listArgs(p);
+  if (b.action === 'save') {
+    b.name = str(p.name).slice(0, 60); if (!b.name) throw new Error('সাইটের নাম দিন।');
+    b.url = httpsUrl(p.url, 'সাইটের');
+  }
+  return bridge(ctx, '/sites', b);
+}
+export async function erpBrandDeskBizSave(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, b = listArgs(p);
+  if (b.action === 'save') {
+    b.name = str(p.name).slice(0, 60); if (!b.name) throw new Error('ব্যবসার নাম দিন।');
+    b.erp_url = httpsUrl(p.erp_url, 'ERP-র');
+    b.note = str(p.note).slice(0, 140);
+  }
+  return bridge(ctx, '/businesses', b);
+}
+
+export const HANDLERS = { erpBrandDesk, erpBrandDeskSites, erpBrandDeskSitesRun, erpBrandDeskSiteSave, erpBrandDeskBizSave, erpBrandDeskCockpit, erpBrandDeskDraftRepick, erpBrandDeskMediaKeep, erpBrandDeskReels, erpBrandDeskReelScript, erpBrandDeskReelPhoto, erpBrandDeskReelVoice, erpBrandDeskReelEdit, erpBrandDeskReelRender, erpBrandDeskReelDrafts, erpBrandDeskRoutine, erpBrandDeskRoutineSlot, erpBrandDeskRoutineLevel, erpBrandDeskRoutineReset, erpBrandDeskRoutinePlace, erpBrandDeskRoutineFill, erpBrandDeskResults, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskCritiques, erpBrandDeskCritique, erpBrandDeskCritiqueApply, erpBrandDeskLessonSet, erpBrandDeskStudy, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

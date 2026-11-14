@@ -39,6 +39,8 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (url.endsWith('/ideas') || url.endsWith('/ideas/board')) return { body: { ideas: [{ id: 'abcd1234', content: 'Why I started', at: '2026-11-03T00:00:00Z', tags: [] }] } };
   if (/\/board(\/(card|move|done))?$/.test(url)) return { body: { columns: [{ id: 1, title: 'Idea', cards: [{ id: 7, title: 'Why I started', tags: ['story'] }] }, { id: 2, title: 'Script', cards: [] }] } };
   if (/\/(critiques|critique|critique\/apply|lessons\/set|lessons\/study)$/.test(url)) return { body: { critiques: [{ id: 1, target: 'draft', target_id: '5', critique: 'Too long', state: 'writing' }], lessons: [{ id: 2, lesson_bn: 'ছোট লিখুন', active: true, n: 1 }], unstudied: 1, total: 1, jobs: {}, items: [{ id: 1, state: 'writing' }], drafts: url.endsWith('/apply') ? { waiting: [{ id: 5, body: 'New' }] } : undefined } };
+  // brand-29: websites and business links live on the bridge only
+  if (/\/(sites|sites\/run|businesses)$/.test(url)) return { body: { sites: [{ id: 1, name: 'Costareen', url: 'https://costareen.com', up: true, ms: 500, ssl_days: 38, speed: null, speed_why: 'quota', broken: 0, visitors: { state: 'no_login' } }], businesses: [{ id: 1, name: 'Costareen', erp_url: 'https://erp.costareen.com', note: '' }], job: { state: url.endsWith('/run') ? 'running' : 'idle' }, umami: { state: 'no_login' } } };
   return { status: 404, body: {} };
 });
 
@@ -428,6 +430,40 @@ r = await owner('erpBrandDeskMakeShorts', [{ id: '18181596-5276-4153-9412-2f441e
 check('shorts are asked of the PC', r.ok && r.result.jobs['18181596-5276-4153-9412-2f441efac82b'].state === 'making', r);
 r = await owner('erpBrandDeskShorts', []);
 check('the shorts state comes back', r.ok && !!r.result.jobs, r);
+
+// 4g. brand-29: websites and business links (no ERP data read or written)
+const salesBefore = await sql`select count(*)::int as n from invoices`;
+r = await owner('erpBrandDeskSites', []);
+const sg = seen.filter((x) => x.url.endsWith('/sites')).pop();
+check('the websites summary is read from the bridge', r.ok && sg && !sg.body && r.result.sites[0].name === 'Costareen' && r.result.sites[0].speed === null, r);
+r = await owner('erpBrandDeskSitesRun', []);
+check('check now goes to the bridge as a write', r.ok && seen.some((x) => x.url.endsWith('/sites/run') && x.body), r);
+r = await owner('erpBrandDeskSiteSave', [{ name: 'Test', url: 'http://plain.example.com' }]);
+check('a site without https is refused', !r.ok && /https/.test(r.error), r);
+r = await owner('erpBrandDeskSiteSave', [{ name: '', url: 'https://x.example.com' }]);
+check('a site without a name is refused', !r.ok, r);
+r = await owner('erpBrandDeskSiteSave', [{ name: 'Test shop', url: 'https://shop.example.com/' }]);
+const ss = seen.filter((x) => x.url.endsWith('/sites') && x.body).pop();
+check('a new site goes to the bridge, trailing slash dropped', r.ok && ss.body.action === 'save' && ss.body.url === 'https://shop.example.com' && ss.body.name === 'Test shop', ss);
+r = await owner('erpBrandDeskSiteSave', [{ action: 'move', id: 2, dir: 'sideways' }]);
+check('a strange move is refused', !r.ok, r);
+r = await owner('erpBrandDeskSiteSave', [{ action: 'remove' }]);
+check('removing needs an id', !r.ok, r);
+r = await owner('erpBrandDeskSiteSave', [{ action: 'drop', id: 2 }]);
+check('an unknown action is refused', !r.ok, r);
+r = await owner('erpBrandDeskBizSave', [{ name: 'Oliareen', erp_url: 'https://erp.oliareen.com', note: 'বিউটি' }]);
+const bs = seen.filter((x) => x.url.endsWith('/businesses')).pop();
+check('a business card goes to the bridge with its ERP address', r.ok && bs.body.erp_url === 'https://erp.oliareen.com' && bs.body.note === 'বিউটি', bs);
+r = await owner('erpBrandDeskBizSave', [{ name: 'X', erp_url: 'javascript:alert(1)' }]);
+check('a business link that is not https is refused', !r.ok, r);
+r = await owner('erpBrandDeskBizSave', [{ action: 'move', id: 1, dir: 'up' }]);
+check('a business card moves up', r.ok && seen.filter((x) => x.url.endsWith('/businesses')).pop().body.dir === 'up', r);
+for (const n of ['erpBrandDeskSites', 'erpBrandDeskSitesRun', 'erpBrandDeskSiteSave', 'erpBrandDeskBizSave']) {
+  r = await mgr(n, [{ name: 'X', url: 'https://x.example.com', erp_url: 'https://x.example.com' }]);
+  check('staff cannot use ' + n, !r.ok, r);
+}
+const salesAfter = await sql`select count(*)::int as n from invoices`;
+check('the websites page touches no ERP data', salesAfter[0].n === salesBefore[0].n, { salesBefore, salesAfter });
 
 // 5. the PC goes quiet: closed after 3 minutes
 await sql`update business_config set value = ${JSON.stringify({ url: URL, seen: new Date(Date.now() - 4 * 60e3).toISOString() })} where business_id = ${B} and key = 'brand_bridge'`;

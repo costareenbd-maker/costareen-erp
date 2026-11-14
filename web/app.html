@@ -8545,7 +8545,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrandDeskCritiques|erpBrandDeskResults|erpBrandDeskCockpit|erpBrandDeskReels|erpBrandDeskRoutine|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrandDeskSites|erpBrandDeskCritiques|erpBrandDeskResults|erpBrandDeskCockpit|erpBrandDeskReels|erpBrandDeskRoutine|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 // crit8-nav (10 Nov 2026): these calls only read when they are sent without a change (the list form) and write with one.
 // The same rule as the server's ERP_READ_WHEN (allow.js): the list form runs beside other reads, sends no one-time key
 // and drops no caches; the changing form stays a write. erpTool and erpBrainFact always write (every branch changes data).
@@ -59431,12 +59431,77 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   .ls-st .bc-btn{min-height:44px}
 }
 
+/* brand-29 (owner 14 Nov 2026): ব্যবসা ও সাইট - his websites (health + visitors from the sites and the Mac's tools) and the
+   doors to each business's ERP. Flat rows on rules, colour only for alive / down / needs work. */
+.sx-lede{margin:-6px 0 18px;font-size:15px}
+.sx-lede small{display:block;color:var(--bc-ink-3);font-size:13px;margin-top:2px}
+.sx-sites{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:0 28px;border-top:1px solid var(--bc-rule)}
+.sx-site{padding:16px 0 18px;border-bottom:1px solid var(--bc-rule);min-width:0}
+.sx-top{display:flex;align-items:center;gap:10px;min-width:0}
+.sx-top h3{margin:0;font:700 17px/1.25 "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sx-top .sx-st{font:600 13px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-good)}
+.sx-top .sx-st.x{color:var(--bc-alert-ink)}
+.sx-top .sx-st.q{color:var(--bc-ink-3)}
+.sx-dot{width:10px;height:10px;border-radius:50%;background:#1EA35A;flex:none;box-shadow:0 0 0 3px #1EA35A26}
+.sx-dot.x{background:var(--bc-alert);box-shadow:0 0 0 3px #E0301E26}
+.sx-dot.q{background:#C9CDD4;box-shadow:none}
+.sx-host{font-size:12.5px;color:var(--bc-ink-3);margin:2px 0 0 20px}
+.sx-vis{display:flex;align-items:flex-end;gap:18px;margin:12px 0 10px;flex-wrap:wrap}
+.sx-big b{display:block;font:800 36px/1 "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;letter-spacing:-.02em}
+.sx-big span{font-size:13px;color:var(--bc-ink-2)}
+.sx-big.none b{color:#B4B9C1}
+.sx-wk{font-size:13.5px;color:var(--bc-ink-2);display:flex;gap:4px 14px;flex-wrap:wrap;padding-bottom:3px}
+.sx-wk b{color:var(--bc-ink);font-weight:700}
+.sx-ch{display:inline-flex;align-items:center;gap:2px;font-weight:700}
+.sx-ch svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.sx-ch.up{color:var(--bc-good)}.sx-ch.dn{color:var(--bc-alert-ink)}.sx-ch.eq{color:var(--bc-ink-3)}
+.sx-nov{font-size:13.5px;color:var(--bc-ink-2);margin:12px 0 10px;padding:10px 12px;background:var(--bc-shelf);border-radius:10px}
+.sx-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0;padding:10px 0 0;border-top:1px dashed var(--bc-rule)}
+.sx-facts div{min-width:0}
+.sx-facts dt{font-size:12px;color:var(--bc-ink-3);white-space:nowrap}
+.sx-facts dd{margin:1px 0 0;font:700 14.5px "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sx-facts dd.bad{color:var(--bc-alert-ink)}.sx-facts dd.warn{color:#7A5200}
+.sx-facts dd small{font:500 12px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-3)}
+.sx-need{margin:10px 0 0;font-size:13.5px;color:var(--bc-alert-ink);background:#FDECEA;border-radius:10px;padding:8px 12px}
+.sx-need b{font-weight:700}
+.sx-top3{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;font-size:13px}
+.sx-top3 h4{margin:0 0 2px;font:600 12px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-3)}
+.sx-top3 ol{margin:0;padding:0;list-style:none}
+.sx-top3 li{display:flex;gap:8px;min-width:0}
+.sx-top3 li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sx-top3 li b{font-weight:600}
+.sx-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.sx-acts a.bc-btn{text-decoration:none}
+.sx-ed{display:flex;gap:2px;margin-left:auto}
+.sx-ed .bc-btn{width:36px;padding:0}
+.sx-biz{border-top:1px solid var(--bc-rule)}
+.sx-b{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--bc-rule);flex-wrap:wrap}
+.sx-b>div{flex:1;min-width:180px}
+.sx-b h3{margin:0;font:700 16px/1.3 "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif}
+.sx-b p{margin:2px 0 0;font-size:13.5px;color:var(--bc-ink-2)}
+.sx-b small{display:block;font-size:12.5px;color:var(--bc-ink-3)}
+.sx-b a.bc-btn{text-decoration:none}
+.sx-form{background:var(--bc-shelf);border-radius:14px;padding:4px 16px 16px;margin-top:14px;max-width:560px}
+.sx-form .bc-in{width:100%;box-sizing:border-box}
+.sx-form .bc-row{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.sx-empty{padding:18px 0;color:var(--bc-ink-2);font-size:14px;border-bottom:1px solid var(--bc-rule)}
+.sx-empty p{margin:0 0 10px}
+.sx-umami{margin:0 0 14px}
+@container bc (max-width:759px){
+  .sx-sites{grid-template-columns:1fr}
+  .sx-facts{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:10px}
+  .sx .bc-btn{min-height:44px}
+  .sx-ed .bc-btn{width:44px}
+  .sx-acts .bc-btn{flex:1 1 auto}
+  .sx-b a.bc-btn{width:100%}
+}
+
 </style>
 
 <script>
 (function () {
   try { ['erpBrandDeskCockpit', 'erpBrandDeskDrafts', 'erpBrandDeskListen', 'erpBrandDeskDraftDecide', 'erpBrandDeskMakeDrafts', 'erpBrandDeskSettings', 'erpBrandDeskBoard', 'erpBrandDeskIdeas', 'erpBrandDeskPeople', 'erpBrandDeskPost', 'erpBrandDeskLint', 'erpBrandDeskCards', 'erpBrandDeskMakeCards'].forEach(function (n) { SRV_SLOW[n] = 45000; });
-    SRV_SLOW.erpBrandDeskVideos = 60000; SRV_SLOW.erpBrandDeskListenPull = 90000; SRV_SLOW.erpBrandDeskListenIdeas = 90000; SRV_SLOW.erpBrandDeskListenPaste = 90000; } catch (e) {}
+    SRV_SLOW.erpBrandDeskVideos = 60000; SRV_SLOW.erpBrandDeskSites = 45000; SRV_SLOW.erpBrandDeskSiteSave = 45000; SRV_SLOW.erpBrandDeskBizSave = 45000; SRV_SLOW.erpBrandDeskListenPull = 90000; SRV_SLOW.erpBrandDeskListenIdeas = 90000; SRV_SLOW.erpBrandDeskListenPaste = 90000; } catch (e) {}
   var C = { media: {}, ar: {}, mpk: '', exp: {}, edit: {}, sec: 'home', wk: 0, pick: '', node: '', ptab: '', dep: '', d: {}, busy: {}, err: {}, v: {}, acc: {}, open: {}, cards: {}, plats: { linkedin: 1, facebook: 1 }, lf: 'all', lopen: {}, fold: {}, rw: {}, nk: 'customer', paste: false, t: 0 };
   try { var s0 = localStorage.getItem('bc_sec'); if (s0) C.sec = s0; } catch (e) {}
   var NET = {
@@ -59469,6 +59534,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function v(k, dflt) { return C.v[k] != null ? C.v[k] : (dflt == null ? '' : dflt); }
   var ICO = {
     home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+    biz: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.4 2.5 3.6 5.5 3.6 9s-1.2 6.5-3.6 9M12 3C9.6 5.5 8.4 8.5 8.4 12s1.2 6.5 3.6 9"/>',
+    out: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>', up: '<path d="M12 19V5M6 11l6-6 6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>', trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
     posts: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
     ideas: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>',
     media: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/>',
@@ -59496,8 +59563,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function btn(label, data, cls, bk, dis) { var b = bk && C.busy[bk]; return '<button type="button" class="bc-btn' + (cls ? ' ' + cls : '') + '" ' + data + (b || dis ? ' disabled' : '') + '>' + (b ? '<span class="bc-spin"></span>' : '') + label + '</button>'; }
   function inp(key, ph, extra, type) { return '<input class="bc-in" id="bci_' + key + '" data-bcin="' + key + '" type="' + (type || 'text') + '" data-noi18n="1" placeholder="' + esc(ph || '') + '" value="' + esc(v(key)) + '"' + (extra || '') + '>'; }
   function ta(key, ph, dflt, extra) { return '<textarea class="bc-ta" id="bci_' + key + '" data-bcin="' + key + '" data-noi18n="1" placeholder="' + esc(ph || '') + '"' + (extra || '') + '>' + esc(v(key, dflt)) + '</textarea>'; }
-  var SECS = [['home', 'হোম'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ'], ['routine', 'রুটিন'], ['train', 'লেখার ধরন'], ['linkedin', 'LinkedIn']];
-  var NEED = { home: ['cockpit', 'drafts', 'settings', 'routine'], posts: ['cockpit', 'drafts', 'settings', 'crit'], ideas: ['drafts', 'memos', 'board', 'settings', 'news', 'reels', 'crit'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen', 'results'], rules: ['settings', 'mlib'], map: ['cockpit'], train: ['styles', 'crit'], linkedin: ['li', 'crit'], routine: ['routine'] };
+  var SECS = [['home', 'হোম'], ['biz', 'ব্যবসা ও সাইট'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ'], ['routine', 'রুটিন'], ['train', 'লেখার ধরন'], ['linkedin', 'LinkedIn']];
+  var NEED = { biz: ['cockpit', 'sites'], home: ['cockpit', 'drafts', 'settings', 'routine'], posts: ['cockpit', 'drafts', 'settings', 'crit'], ideas: ['drafts', 'memos', 'board', 'settings', 'news', 'reels', 'crit'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen', 'results'], rules: ['settings', 'mlib'], map: ['cockpit'], train: ['styles', 'crit'], linkedin: ['li', 'crit'], routine: ['routine'] };
   function on() { return typeof VIEW !== 'undefined' && VIEW === 'branddesk' && typeof ME !== 'undefined' && ME && ME.role === 'owner'; }
   function fonts() {
     if (document.getElementById('bc_font')) return;
@@ -59505,7 +59572,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     l.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Anek+Bangla:wght@600;700&display=swap'; document.head.appendChild(l);
   }
   // ---------- data: one store, one loader per read; bridge reads wait until the cockpit says the Mac is on
-  var CALL = { mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', li: 'erpBrandDeskLi', routine: 'erpBrandDeskRoutine', reels: 'erpBrandDeskReels', results: 'erpBrandDeskResults', crit: 'erpBrandDeskCritiques' };
+  var CALL = { sites: 'erpBrandDeskSites', mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', li: 'erpBrandDeskLi', routine: 'erpBrandDeskRoutine', reels: 'erpBrandDeskReels', results: 'erpBrandDeskResults', crit: 'erpBrandDeskCritiques' };
   function ready() { var d = C.d.cockpit; return !!(d && d.online && d.keySet); }
   function get(k, force) {
     if (C.busy['g_' + k] || (C.d[k] && !force)) return;
@@ -59521,6 +59588,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     if (k === 'drafts') { var mj = r.mjobs || {}, pk = Object.keys(mj).some(function (x) { return mj[x].state === 'picking'; }); if (C.picking && !pk) { C.media = Object.keys(C.media).reduce(function (a, q) { if (!/^\d+$/.test(q) || (C.keepm || {})[q]) a[q] = C.media[q]; return a; }, {}); } C.picking = pk;
       run = pk || ks.some(function (x) { return jobs[x].state === 'writing' || jobs[x].state === 'researching'; }); }
     if (k === 'listen') run = ks.some(function (x) { return jobs[x].state === 'reading'; });
+    if (k === 'sites') { run = !!(r.job && r.job.state === 'running'); if (run) C.srun = 1; else if (C.srun) { C.srun = 0; toast('পরীক্ষা শেষ হলো।'); } }
     if (k === 'routine') { run = !!(r.fill && r.fill.state === 'writing'); if (run) C.frun = 1; else if (C.frun) { C.frun = 0; get('drafts', true); get('cockpit', true); } }
     if (k === 'reels') run = ks.some(function (x) { return /^(writing|drawing|joining)$/.test(jobs[x].state); });
     if (k === 'styles') run = ks.some(function (x) { return /^(reading|scouting)$/.test(jobs[x].state); });
@@ -59530,7 +59598,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     // brand-27: his critiques are read by the AI one by one (a few seconds each); the study merges them into lessons
     if (k === 'crit') { var stj = ks.filter(function (x) { return jobs[x].state === 'studying'; }).length; run = !!r.replying || !!stj; if (stj) C.lstudy = 1;
       else if (C.lstudy) { C.lstudy = 0; var dj = ks.filter(function (x) { return jobs[x].state === 'done' || jobs[x].state === 'failed'; }).sort().pop(); if (dj && jobs[dj].state === 'done') toast('শেখা হলো' + (jobs[dj].summary_bn ? ': ' + jobs[dj].summary_bn : '।'), false, 9000); } }
-    clearTimeout(POLL[k]); if (run) POLL[k] = setTimeout(function () { if (on()) get(k, true); }, k === 'drafts' ? 12000 : k === 'reels' ? 7000 : k === 'crit' ? 8000 : 20000);
+    clearTimeout(POLL[k]); if (run) POLL[k] = setTimeout(function () { if (on()) get(k, true); }, k === 'sites' ? 6000 : k === 'drafts' ? 12000 : k === 'reels' ? 7000 : k === 'crit' ? 8000 : 20000);
   }
   function need() { (NEED[C.sec] || []).forEach(function (k) { if (k === 'cockpit' || ready()) get(k); }); }
   function has(k) { return !!C.d[k]; }
@@ -60312,6 +60380,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function railHtml() {
     var n = C.d.cockpit && C.d.cockpit.cockpit ? counts() : null, narrow = narrowNow();
     function badge(id) {
+      if (id === 'biz' && C.d.sites) { var sdn = (C.d.sites.sites || []).filter(function (q) { return q.up === false; }).length; return sdn ? '<em class="x" title="' + bn(sdn) + 'টা সাইট বন্ধ">' + bn(sdn) + '</em>' : ''; }
       if (!n) return '';
       if (id === 'posts' && (n.waiting || n.stuck.length)) return (n.waiting ? '<em>' + bn(n.waiting) + '</em>' : '') + (n.stuck.length ? '<i class="bc-rdot" title="' + bn(n.stuck.length) + 'টা আটকে"><span class="bc-vh">' + bn(n.stuck.length) + 'টা আটকে</span></i>' : '');
       if (id === 'people' && n.listen.leads) return '<em>' + bn(n.listen.leads) + '</em>';
@@ -60325,7 +60394,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
         '<nav class="bc-rail" aria-label="ব্র্যান্ড ডেস্ক">' + SECS.filter(function (s) { return MAIN.indexOf(s[0]) >= 0; }).map(b).join('') +
         '<button type="button" data-bc="railmore" aria-expanded="' + !!C.railMore + '"' + (inRest || C.railMore ? ' class="on"' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>আরও</span>' + (n && n.down.length ? '<i class="bc-rdot" title="' + bn(n.down.length) + 'টা টুল বন্ধ"><span class="bc-vh">' + bn(n.down.length) + 'টা টুল বন্ধ</span></i>' : '') + '</button></nav>';
     }
-    return '<nav class="bc-rail" aria-label="ব্র্যান্ড ডেস্ক"><div class="bc-me"><b data-noi18n="1">' + esc(myName()) + '</b></div>' + SECS.map(function (s, i) { return (i === 6 ? '<hr>' : '') + b(s); }).join('') +
+    return '<nav class="bc-rail" aria-label="ব্র্যান্ড ডেস্ক"><div class="bc-me"><b data-noi18n="1">' + esc(myName()) + '</b></div>' + SECS.map(function (s) { return (s[0] === 'results' ? '<hr>' : '') + b(s); }).join('') +
       '' +
       '<div class="bc-health" data-bc="sec" data-id="map" role="button" tabindex="0">' + healthLine() + '</div></nav>';
   }
@@ -61030,6 +61099,140 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     }
     return h + '</div>';
   }
+
+  // ---------- brand-29: ব্যবসা ও সাইট. Websites: facts from the sites and the Mac's own tools; a missing number is "—" with
+  // its reason, never 0. Businesses: a door to each ERP (new tab, its own login); nothing is read from any ERP.
+  function hostOf(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return String(u || ''); } }
+  function sxWhen(v) { var d = v ? new Date(v) : null; return d && !isNaN(d) ? dDate(d) + ', ' + dTime(d) : ''; }
+  var SPEED_WHY = { quota: 'চাবি লাগবে', key: 'চাবি ঠিক নেই', down: 'সাইট বন্ধ ছিল', no_answer: 'Google সাড়া দেয়নি', no_score: 'মাপ আসেনি' };
+  function sxNeeds(x) {
+    var w = [];
+    if (x.up === false) w.push('সাইট খুলছে না' + (x.status ? ' (উত্তর ' + bn(x.status) + ')' : ' (কোনো উত্তর নেই)'));
+    if (x.up && x.ms > 3000) w.push('খুলতে ৩ সেকেন্ডের বেশি লাগছে');
+    if (x.ssl_days != null && x.ssl_days < 0) w.push('HTTPS সার্টিফিকেট ঠিক নেই');
+    else if (x.ssl_days != null && x.ssl_days < 21) w.push('HTTPS সার্টিফিকেট ' + bn(x.ssl_days) + ' দিনে শেষ হবে');
+    if (x.speed != null && x.speed < 50) w.push('মোবাইলে গতি কম (' + bn(x.speed) + '/১০০)');
+    if (x.broken) w.push('হোম পেজে ' + bn(x.broken) + 'টা লিংক ভাঙা');
+    return w;
+  }
+  function sxChange(a, b) {
+    if (a == null || b == null) return '';
+    if (!b) return a ? '<span class="sx-ch up">' + svg('up') + 'নতুন</span>' : '';
+    var pc = Math.round(100 * (a - b) / b);
+    if (!pc) return '<span class="sx-ch eq">আগের মতো</span>';
+    return '<span class="sx-ch ' + (pc > 0 ? 'up' : 'dn') + '" title="আগের ৭ দিনের তুলনায়">' + svg(pc > 0 ? 'up' : 'down') + bn(Math.abs(pc)) + '%</span>';
+  }
+  function sxVisitors(x, um) {
+    var v = x.visitors || {}, st = v.state;
+    if (st === 'ok' && v.week === 0 && !v.prev_week) return '<div class="sx-nov">ভিজিটর গোনা শুরু হয়নি: সাইটে tracker বসানো বাকি।</div>';
+    if (st !== 'ok') {
+      var why = st === 'no_site' ? 'Umami-তে সাইটটা এখনো যোগ হয়নি' : st === 'error' || st === 'no_answer' ? 'Umami এবার সাড়া দেয়নি' : 'Umami-র লগইন Mac-এ বসানো বাকি';
+      return '<div class="sx-vis"><div class="sx-big none"><b>—</b><span>আজকের ভিজিটর</span></div><div class="sx-wk">' + why + '</div></div>';
+    }
+    var h = '<div class="sx-vis"><div class="sx-big"><b>' + (v.today == null ? '—' : bnN(v.today)) + '</b><span>আজকের ভিজিটর</span></div>' +
+      '<div class="sx-wk"><span>গতকাল <b>' + (v.yesterday == null ? '—' : bnN(v.yesterday)) + '</b></span><span>৭ দিনে <b>' + (v.week == null ? '—' : bnN(v.week)) + '</b> ' + sxChange(v.week, v.prev_week) + '</span></div></div>';
+    var pg = v.pages || [], rf = v.refs || [];
+    if (pg.length || rf.length) {
+      var li = function (a) { return a.map(function (q) { return '<li><span data-noi18n="1">' + esc(q.x) + '</span><b>' + bnN(q.n) + '</b></li>'; }).join(''); };
+      h += '<div class="sx-top3">' + (pg.length ? '<div><h4>বেশি দেখা পাতা</h4><ol>' + li(pg) + '</ol></div>' : '<div></div>') + (rf.length ? '<div><h4>কোথা থেকে এলেন</h4><ol>' + li(rf) + '</ol></div>' : '') + '</div>';
+    }
+    return h;
+  }
+  function sxSite(x, i, all) {
+    var ed = C.sxEdit, nd = sxNeeds(x), never = !x.checked_at;
+    if (ed && C.sxForm === String(x.id)) return '<div class="sx-site">' + sxSiteForm(x) + '</div>';
+    var dotc = never ? 'q' : x.up ? '' : 'x', word = never ? 'দেখা হচ্ছে' : x.up ? 'চালু' : 'বন্ধ';
+    var spd = x.speed != null ? '<dd class="' + (x.speed < 50 ? 'bad' : x.speed < 90 ? 'warn' : '') + '">' + bn(x.speed) + '<small>/১০০</small></dd>' : '<dd>—' + (x.daily_at ? ' <small>' + (SPEED_WHY[x.speed_why] || '') + '</small>' : ' <small>আজ মাপা হবে</small>') + '</dd>';
+    var ssl = x.ssl_days == null ? '<dd>—</dd>' : x.ssl_days < 0 ? '<dd class="bad">ঠিক নেই</dd>' : '<dd class="' + (x.ssl_days < 21 ? 'bad' : x.ssl_days < 30 ? 'warn' : '') + '">' + bn(x.ssl_days) + ' দিন</dd>';
+    var brk = x.broken == null ? '<dd>—' + (x.daily_at ? '' : ' <small>আজ দেখা হবে</small>') + '</dd>' : '<dd class="' + (x.broken ? 'bad' : '') + '">' + bn(x.broken) + '<small> / ' + bn(x.links || 0) + '</small></dd>';
+    var ms = x.up && x.ms != null ? '<dd class="' + (x.ms > 3000 ? 'bad' : x.ms > 1500 ? 'warn' : '') + '">' + bn((x.ms / 1000).toFixed(1)) + '<small> সেকেন্ড</small></dd>' : '<dd>—</dd>';
+    var h = '<div class="sx-site"><div class="sx-top"><span class="sx-dot ' + dotc + '" aria-hidden="true"></span><h3 data-noi18n="1">' + esc(x.name) + '</h3><span class="sx-st ' + dotc + '">' + word + '</span>' +
+      (ed ? '<span class="sx-ed">' + btn(svg('up'), 'data-bc="sxmove" data-id="' + x.id + '" data-d="up" aria-label="ওপরে নিন"', 'ghost sm', 'sxm' + x.id, !i) + btn(svg('down'), 'data-bc="sxmove" data-id="' + x.id + '" data-d="down" aria-label="নিচে নিন"', 'ghost sm', 'sxm' + x.id, i === all - 1) + '</span>' : '') + '</div>' +
+      '<div class="sx-host" data-noi18n="1">' + esc(hostOf(x.url)) + (x.up === false && x.last_up ? ' · শেষ চালু দেখা ' + sxWhen(x.last_up) : '') + '</div>';
+    h += sxVisitors(x) +
+      '<dl class="sx-facts"><div><dt>গতি (মোবাইল)</dt>' + spd + '</div><div><dt>খুলতে লাগে</dt>' + ms + '</div><div><dt>HTTPS বাকি</dt>' + ssl + '</div><div><dt>ভাঙা লিংক</dt>' + brk + '</div></dl>';
+    if (nd.length) h += '<p class="sx-need"><b>কাজ লাগবে:</b> ' + nd.join('; ') + '।' + (x.broken && (x.broken_list || []).length ? ' <button type="button" class="bc-lnk" data-bc="fold" data-id="sxb' + x.id + '" aria-expanded="' + !!C.fold['sxb' + x.id] + '">কোনগুলো</button>' : '') + '</p>' +
+      (C.fold['sxb' + x.id] ? '<ul class="sx-host" data-noi18n="1" style="margin-left:0;padding-left:18px">' + (x.broken_list || []).map(function (b) { return '<li>' + esc(b.url.replace(/^https?:\/\/[^/]+/, '') || '/') + ' (' + (b.status || 'উত্তর নেই') + ')</li>'; }).join('') + '</ul>' : '');
+    h += '<div class="sx-acts">' + (ed ? btn(svg('pen') + 'বদলান', 'data-bc="sxform" data-id="' + x.id + '"', 'sm') + (C.sxDel === 'sxdel' + x.id ? btn('নিশ্চিত, সরান', 'data-bc="sxdel" data-id="' + x.id + '"', 'red sm', 'sxd' + x.id) + '<button type="button" class="bc-btn ghost sm" data-bc="sxnodel">থাক</button>' : btn(svg('trash') + 'সরান', 'data-bc="sxdel" data-id="' + x.id + '"', 'ghost sm', 'sxd' + x.id))
+      : '<a class="bc-btn sm" href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + svg('out') + 'সাইট খুলুন</a><a class="bc-btn ghost sm" href="' + esc(x.stats_url || 'https://stats.costareen.com') + '" target="_blank" rel="noopener noreferrer">' + svg('results') + 'পরিসংখ্যান</a>') + '</div></div>';
+    return h;
+  }
+  function sxSiteForm(x) {
+    var k = x ? 'e' + x.id : 'n';
+    if (x && C.v['sxn_' + k] == null) { C.v['sxn_' + k] = x.name; C.v['sxu_' + k] = x.url; }
+    return '<div class="sx-form"><div class="bc-h2" style="margin:12px 0 0"><h2>' + (x ? 'সাইট বদলান' : 'নতুন সাইট') + '</h2></div>' +
+      '<label class="bc-lbl" for="bci_sxn_' + k + '">নাম</label>' + inp('sxn_' + k, 'যেমন: Oliareen', ' maxlength="60" autocomplete="off"') +
+      '<label class="bc-lbl" for="bci_sxu_' + k + '">ঠিকানা</label>' + inp('sxu_' + k, 'https://…', ' inputmode="url" autocomplete="off"', 'url') +
+      '<div class="bc-row">' + btn(svg('check') + 'সেভ করুন', 'data-bc="sxsave" data-id="' + (x ? x.id : '') + '"', 'dark', 'sxs' + k) + '<button type="button" class="bc-btn ghost" data-bc="sxcancel">বাতিল</button></div></div>';
+  }
+  function bzForm(x) {
+    var k = x ? 'e' + x.id : 'n';
+    if (x && C.v['bzn_' + k] == null) { C.v['bzn_' + k] = x.name; C.v['bzu_' + k] = x.erp_url; C.v['bzo_' + k] = x.note; }
+    return '<div class="sx-form"><div class="bc-h2" style="margin:12px 0 0"><h2>' + (x ? 'ব্যবসা বদলান' : 'নতুন ব্যবসা') + '</h2></div>' +
+      '<label class="bc-lbl" for="bci_bzn_' + k + '">নাম</label>' + inp('bzn_' + k, 'যেমন: Oliareen', ' maxlength="60" autocomplete="off"') +
+      '<label class="bc-lbl" for="bci_bzu_' + k + '">ERP-র ঠিকানা</label>' + inp('bzu_' + k, 'https://…', ' inputmode="url" autocomplete="off"', 'url') +
+      '<label class="bc-lbl" for="bci_bzo_' + k + '">ছোট নোট</label>' + inp('bzo_' + k, 'যেমন: বিউটি প্রোডাক্টের দোকান', ' maxlength="140" autocomplete="off"') +
+      '<div class="bc-row">' + btn(svg('check') + 'সেভ করুন', 'data-bc="bzsave" data-id="' + (x ? x.id : '') + '"', 'dark', 'bzs' + k) + '<button type="button" class="bc-btn ghost" data-bc="bzcancel">বাতিল</button></div></div>';
+  }
+  function bizHtml() {
+    var h = headHtml('ব্যবসা ও সাইট', ''), g = gate(['sites'], 200); if (g) return h + g;
+    var D = C.d.sites, S = D.sites || [], B = D.businesses || [], run = (D.job && D.job.state === 'running') || C.busy.sxrun;
+    var down = S.filter(function (x) { return x.up === false; }).length, warn = S.filter(function (x) { return x.up !== false && sxNeeds(x).length; }).length;
+    var last = S.map(function (x) { return x.checked_at; }).filter(Boolean).sort().pop();
+    h += '<div class="sx">';
+    h += '<p class="sx-lede">' + (!S.length ? 'কোনো সাইট যোগ করা নেই।' : bn(S.length) + 'টা সাইট' + (down ? ', <b>' + bn(down) + 'টা বন্ধ</b>' : S.some(function (x) { return x.checked_at; }) ? ', সব চালু' : '') + (warn ? ', ' + bn(warn) + 'টায় কাজ লাগবে' : '') + '।') +
+      '<small>' + (run ? 'এখন পরীক্ষা চলছে…' : last ? 'শেষ পরীক্ষা ' + sxWhen(last) + '। প্রতি ৩০ মিনিটে নিজে থেকে পরীক্ষা হয়।' : 'প্রথম পরীক্ষা এক মিনিটের মধ্যে হবে।') + '</small></p>';
+    // (a) websites
+    h += '<div class="bc-h2"><h2>ওয়েবসাইট</h2><span class="bc-sp"></span>' +
+      (C.sxEdit ? '<button type="button" class="bc-btn dark sm" data-bc="sxedit">হয়ে গেছে</button>' : btn(run ? 'পরীক্ষা চলছে' : svg('reload') + 'এখন পরীক্ষা করুন', 'data-bc="sxrun"', 'sm', 'sxrun', run) + '<button type="button" class="bc-btn ghost sm" data-bc="sxedit">' + svg('pen') + 'তালিকা বদলান</button>') + '</div>';
+    if (D.umami && D.umami.state !== 'ok' && S.length) h += '<div class="bc-wait calm sx-umami"><p>ভিজিটর গোনা শুরু হয়নি<small>' + (D.umami.state === 'login_refused' ? 'Mac-এ বসানো Umami-র লগইন কাজ করছে না। ঠিক করলে সাইটগুলো Umami-তে নিজে থেকে যোগ হবে।' : 'Umami-র লগইন Mac-এ বসানো বাকি। বসালে সাইটগুলো Umami-তে নিজে থেকে যোগ হবে, তারপর প্রতিটা সাইটে tracker বসাতে হবে।') + '</small></p></div>';
+    if (!S.length) h += '<div class="sx-empty"><p>এখনো কোনো সাইট নেই। সাইট যোগ করলে প্রতি ৩০ মিনিটে তার খবর এখানে আসবে।</p>' + (C.sxForm === 'new' ? '' : '<button type="button" class="bc-btn dark" data-bc="sxform" data-id="new">' + svg('plus') + 'সাইট যোগ করুন</button>') + '</div>';
+    else h += '<div class="sx-sites">' + S.map(function (x, i) { return sxSite(x, i, S.length); }).join('') + '</div>';
+    if (C.sxForm === 'new') h += sxSiteForm(null);
+    else if (C.sxEdit && S.length) h += '<div class="sx-acts">' + '<button type="button" class="bc-btn" data-bc="sxform" data-id="new">' + svg('plus') + 'সাইট যোগ করুন</button></div>';
+    // (b) businesses: doors only
+    h += '<div class="bc-block"><div class="bc-h2"><h2>ব্যবসা</h2><span>ERP খুলবে নতুন ট্যাবে, নিজের লগইনে</span><span class="bc-sp"></span>' +
+      (C.bzEdit ? '<button type="button" class="bc-btn dark sm" data-bc="bzedit">হয়ে গেছে</button>' : '<button type="button" class="bc-btn ghost sm" data-bc="bzedit">' + svg('pen') + 'তালিকা বদলান</button>') + '</div>';
+    if (!B.length) h += '<div class="sx-empty"><p>কোনো ব্যবসা যোগ করা নেই। যোগ করলে এখান থেকে এক চাপে তার ERP খুলবে।</p>' + (C.bzForm === 'new' ? '' : '<button type="button" class="bc-btn dark" data-bc="bzform" data-id="new">' + svg('plus') + 'ব্যবসা যোগ করুন</button>') + '</div>';
+    else h += '<div class="sx-biz">' + B.map(function (x, i) {
+      if (C.bzEdit && C.bzForm === String(x.id)) return '<div class="sx-b"><div>' + bzForm(x) + '</div></div>';
+      return '<div class="sx-b"><div><h3 data-noi18n="1">' + esc(x.name) + '</h3>' + (x.note ? '<p data-noi18n="1">' + esc(x.note) + '</p>' : '') + '<small data-noi18n="1">' + esc(hostOf(x.erp_url)) + '</small></div>' +
+        (C.bzEdit ? '<span class="sx-ed">' + btn(svg('up'), 'data-bc="bzmove" data-id="' + x.id + '" data-d="up" aria-label="ওপরে নিন"', 'ghost sm', 'bzm' + x.id, !i) + btn(svg('down'), 'data-bc="bzmove" data-id="' + x.id + '" data-d="down" aria-label="নিচে নিন"', 'ghost sm', 'bzm' + x.id, i === B.length - 1) +
+          btn(svg('pen'), 'data-bc="bzform" data-id="' + x.id + '" aria-label="বদলান"', 'ghost sm') + (C.sxDel === 'bzdel' + x.id ? btn('নিশ্চিত, সরান', 'data-bc="bzdel" data-id="' + x.id + '"', 'red sm', 'bzd' + x.id) + '<button type="button" class="bc-btn ghost sm" data-bc="sxnodel">থাক</button>' : btn(svg('trash'), 'data-bc="bzdel" data-id="' + x.id + '" aria-label="সরান"', 'ghost sm', 'bzd' + x.id)) + '</span>'
+          : (x.erp_url ? '<a class="bc-btn dark" href="' + esc(x.erp_url) + '" target="_blank" rel="noopener noreferrer">ERP খুলুন' + svg('out') + '</a>' : '')) + '</div>';
+    }).join('') + '</div>';
+    if (C.bzForm === 'new') h += bzForm(null);
+    else if (C.bzEdit && B.length) h += '<div class="sx-acts"><button type="button" class="bc-btn" data-bc="bzform" data-id="new">' + svg('plus') + 'ব্যবসা যোগ করুন</button></div>';
+    h += '</div><div class="bc-note" style="margin-top:22px">সব সংখ্যা সাইট থেকে আর Mac-এর নিজের টুল থেকে আসে, কোনো ERP থেকে নয়। — মানে সংখ্যাটা এখনো পাওয়া যায়নি।</div></div>';
+    return h;
+  }
+  function sxDone(r, keys) { C.d.sites = r; keys.forEach(function (k) { Object.keys(C.v).forEach(function (q) { if (q.indexOf(k) === 0) delete C.v[q]; }); }); }
+  document.addEventListener('click', function (e) {
+    if (!on()) return;
+    var t = e.target.closest && e.target.closest('[data-bc]'); if (!t || !el('bc_root') || !el('bc_root').contains(t)) return;
+    var w = t.getAttribute('data-bc'), id = t.getAttribute('data-id') || '';
+    if (!/^(sx|bz)/.test(w)) return;
+    if (w === 'sxrun') { act('sxrun', 'erpBrandDeskSitesRun', {}, function (r) { C.d.sites = C.d.sites || {}; C.d.sites.job = (r && r.job) || { state: 'running' }; C.srun = 1; toast('পরীক্ষা শুরু হলো। এক-দুই মিনিট লাগবে।'); poll('sites'); }); return; }
+    if (w === 'sxnodel') { C.sxDel = ''; draw(); return; }
+    if (w === 'sxedit') { C.sxEdit = !C.sxEdit; C.sxForm = ''; draw(); return; }
+    if (w === 'bzedit') { C.bzEdit = !C.bzEdit; C.bzForm = ''; draw(); return; }
+    if (w === 'sxform' || w === 'bzform') {
+      var pre = w === 'sxform' ? 'sx' : 'bz'; C[pre + 'Form'] = id; if (id !== 'new') C[pre + 'Edit'] = true; draw();
+      setTimeout(function () { var b = el('bci_' + pre + 'n_' + (id === 'new' ? 'n' : 'e' + id)); if (b) { b.focus({ preventScroll: true }); b.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }, 30); return;
+    }
+    if (w === 'sxcancel' || w === 'bzcancel') { var p2 = w === 'sxcancel' ? 'sx' : 'bz'; Object.keys(C.v).forEach(function (q) { if (q.indexOf(p2) === 0) delete C.v[q]; }); C[p2 + 'Form'] = ''; draw(); return; }
+    if (w === 'sxsave') { var k = id ? 'e' + id : 'n';
+      act('sxs' + k, 'erpBrandDeskSiteSave', { action: 'save', id: id ? Number(id) : null, name: String(v('sxn_' + k)).trim(), url: String(v('sxu_' + k)).trim() }, function (r) { sxDone(r, ['sx']); C.sxForm = ''; toast(id ? 'সাইট বদলানো হলো।' : 'সাইট যোগ হলো। প্রথম পরীক্ষা চলছে।'); if (!id) { C.srun = 1; setTimeout(function () { get('sites', true); }, 4000); } }); return; }
+    if (w === 'bzsave') { var k2 = id ? 'e' + id : 'n';
+      act('bzs' + k2, 'erpBrandDeskBizSave', { action: 'save', id: id ? Number(id) : null, name: String(v('bzn_' + k2)).trim(), erp_url: String(v('bzu_' + k2)).trim(), note: String(v('bzo_' + k2)).trim() }, function (r) { sxDone(r, ['bz']); C.bzForm = ''; toast(id ? 'ব্যবসা বদলানো হলো।' : 'ব্যবসা যোগ হলো।'); }); return; }
+    if (w === 'sxmove' || w === 'bzmove') { act((w === 'sxmove' ? 'sxm' : 'bzm') + id, w === 'sxmove' ? 'erpBrandDeskSiteSave' : 'erpBrandDeskBizSave', { action: 'move', id: Number(id), dir: t.getAttribute('data-d') }, function (r) { C.d.sites = r; }); return; }
+    if (w === 'sxdel' || w === 'bzdel') {
+      var L = w === 'sxdel' ? (C.d.sites.sites || []) : (C.d.sites.businesses || []), x = L.filter(function (q) { return String(q.id) === id; })[0]; if (!x) return;
+      if (C.sxDel !== w + id) { C.sxDel = w + id; draw(); return; }
+      C.sxDel = '';
+      act((w === 'sxdel' ? 'sxd' : 'bzd') + id, w === 'sxdel' ? 'erpBrandDeskSiteSave' : 'erpBrandDeskBizSave', { action: 'remove', id: Number(id) }, function (r) { C.d.sites = r; toast('সরানো হলো।'); }); return;
+    }
+  });
   function sideHtml(narrow) {
     if (C.sec === 'home') return '';
     if (C.sec === 'posts') return '';
@@ -61039,7 +61242,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function mainHtml(narrow) {
     switch (C.sec) {
       case 'posts': return postsHtml(); case 'ideas': return ideasHtml(); case 'media': return mediaHtml(); case 'listen': return listenHtml();
-      case 'people': return peopleHtml(); case 'results': return resultsHtml(); case 'rules': return rulesHtml(); case 'map': return mapPageHtml(); case 'train': return trainHtml(); case 'linkedin': return liHtml(); case 'routine': return routineHtml();
+      case 'biz': return bizHtml(); case 'people': return peopleHtml(); case 'results': return resultsHtml(); case 'rules': return rulesHtml(); case 'map': return mapPageHtml(); case 'train': return trainHtml(); case 'linkedin': return liHtml(); case 'routine': return routineHtml();
       default: return homeHtml(narrow);
     }
   }
