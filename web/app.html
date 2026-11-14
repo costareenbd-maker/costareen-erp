@@ -59510,8 +59510,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
 .ib-alert{display:flex;gap:10px;align-items:flex-start;border:2px solid var(--bc-alert);border-radius:14px;padding:10px 12px;margin-bottom:14px;font-size:14px}
 .ib-alert b{font-weight:700}
 .ib-alert .bc-sp{flex:1}
-.ib{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);border-top:1px solid var(--bc-rule);min-height:420px}
-.ib-l{border-right:1px solid var(--bc-rule);min-width:0}
+.ib{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);border-top:1px solid var(--bc-rule);height:calc(100vh - 240px);min-height:460px}
+.ib-l{border-right:1px solid var(--bc-rule);min-width:0;overflow:auto;overscroll-behavior:contain}
 .ib-r{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:2px 10px;align-items:start;width:100%;padding:12px 12px 12px 4px;border-bottom:1px solid var(--bc-rule);min-height:64px;transition:background .15s ease-out}
 .ib-r:hover{background:#F7F8F9}
 .ib-r.on{background:var(--bc-shelf)}
@@ -59526,14 +59526,14 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
 .ib-more{padding:12px 4px}
 .ib-none{padding:28px 6px;color:var(--bc-ink-2);font-size:14.5px}
 .ib-none b{display:block;font:700 17px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink);margin-bottom:4px}
-.ib-t{min-width:0;display:flex;flex-direction:column}
+.ib-t{min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 .ib-th{display:flex;align-items:center;gap:10px;padding:12px 4px 12px 18px;border-bottom:1px solid var(--bc-rule);flex-wrap:wrap}
 .ib-th .nm{flex:1 1 180px;min-width:0}
 .ib-th .nm b{display:block;font:700 17px/1.3 "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ib-th .nm small{display:block;font-size:13px;color:var(--bc-ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ib-th .ac{display:flex;gap:6px;flex-wrap:wrap}
 .ib-th a.bc-btn{text-decoration:none}
-.ib-ms{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 360px);min-height:220px;background:#FCFCFD}
+.ib-ms{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-height:0;background:#FCFCFD;overscroll-behavior:contain}
 .ib-day{align-self:center;font:600 12.5px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-3);background:#fff;border:1px solid var(--bc-rule);border-radius:999px;padding:2px 10px;margin:4px 0}
 .ib-b{max-width:min(78%,560px);display:flex;flex-direction:column;gap:3px}
 .ib-b.in{align-self:flex-start}
@@ -59586,7 +59586,9 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
 .ic-qr ol{margin:0;padding-left:20px;font-size:14.5px;line-height:1.6;flex:1 1 220px}
 @container bc (max-width:900px){.ib{grid-template-columns:minmax(240px,300px) minmax(0,1fr)}}
 @container bc (max-width:759px){
-  .ib{display:block;border-top:0}
+  .ib{display:block;border-top:0;height:auto;min-height:0}
+  .ib-l{overflow:visible}
+  .ib-t{overflow:visible}
   .ib-l{border-right:0;border-top:1px solid var(--bc-rule)}
   .ib-r{padding:12px 2px;min-height:68px}
   .ib-th{padding:4px 0 10px;position:sticky;top:0;background:#fff;z-index:2}
@@ -61424,12 +61426,12 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     if (bad.length) h += '<div class="ib-alert" role="status"><div><b>' + bad.map(function (c) { return '<span data-noi18n="1">' + esc(c.name || c.address) + '</span>'; }).join(', ') + ' কাজ করছে না।</b> ' + esc(bad[0].error || '') + '</div><span class="bc-sp"></span><button type="button" class="bc-btn sm" data-bc="ibadd">ঠিক করুন</button></div>';
     if (!real.length && C.d.ichan && !C.ibNoNag) h += '<div class="bc-wait calm"><p>আপনার কোনো ইমেইল, WhatsApp বা Telegram এখনো যুক্ত হয়নি<small>এখন শুধু YouTube-এর কমেন্ট আসছে। যুক্ত করলে সব বার্তা এখানে এক জায়গায় আসবে।</small></p><span class="bc-sp"></span><button type="button" class="bc-btn dark" data-bc="ibadd">' + svg('plus') + 'যুক্ত করুন</button></div>';
     if (!(narrow && C.ibOpen)) {
-      h += '<div class="ib-bar"><div class="bc-pills big" role="tablist" aria-label="কোন চ্যানেল">' + IB_F.map(function (f) {
+      h += '<div class="ib-bar"><div class="bc-pills big" role="group" aria-label="কোন চ্যানেল">' + IB_F.map(function (f) {
         var c = f[0] === 'all' ? n.all : f[0] === 'comments' ? n.comments : n[f[0]];
-        return '<button type="button" role="tab" data-bc="ibf" data-id="' + f[0] + '"' + (C.ibf === f[0] ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + (f[0] !== 'all' && f[0] !== 'comments' ? logo(f[0], 15) : '') + f[1] + ibEm(c) + '</button>';
+        return '<button type="button" data-bc="ibf" data-id="' + f[0] + '"' + (C.ibf === f[0] ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + (f[0] !== 'all' && f[0] !== 'comments' ? logo(f[0], 15) : '') + f[1] + ibEm(c) + '</button>';
       }).join('') + '</div></div>';
-      if (C.ibf === 'comments') h += '<div class="ib-sub"><div class="bc-pills" role="tablist" aria-label="কোথাকার কমেন্ট">' + IB_CP.map(function (f) {
-        return '<button type="button" role="tab" data-bc="ibp" data-id="' + f[0] + '"' + (C.ibp === f[0] ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + (f[0] ? logo(f[0], 14) : '') + f[1] + ibEm(f[0] ? n['c_' + f[0]] : 0) + '</button>';
+      if (C.ibf === 'comments') h += '<div class="ib-sub"><div class="bc-pills" role="group" aria-label="কোথাকার কমেন্ট">' + IB_CP.map(function (f) {
+        return '<button type="button" data-bc="ibp" data-id="' + f[0] + '"' + (C.ibp === f[0] ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + (f[0] ? logo(f[0], 14) : '') + f[1] + ibEm(f[0] ? n['c_' + f[0]] : 0) + '</button>';
       }).join('') + '</div></div>';
     }
     var L = D.threads || [], list;
@@ -61453,14 +61455,15 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function icField(key, label, ph, type, extra) { return '<label class="bc-lbl" for="bci_' + key + '">' + label + '</label>' + inp(key, ph, (extra || '') + ' autocomplete="off" spellcheck="false"', type); }
   function icMailForm() {
     var pre = C.ibPre, steps = IB_HELP[pre] || [];
-    var h = '<div class="ic-form"><div class="bc-h2" style="margin:12px 0 4px"><h2>নতুন ইমেইল</h2></div><div class="bc-pills" role="tablist" aria-label="কোন ইমেইল">' +
-      [['gmail', 'Gmail'], ['outlook', 'Outlook'], ['yahoo', 'Yahoo'], ['custom', 'অন্য']].map(function (p) { return '<button type="button" role="tab" data-bc="icpre" data-id="' + p[0] + '"' + (pre === p[0] ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + p[1] + '</button>'; }).join('') + '</div>' +
+    var h = '<div class="ic-form"><div class="bc-h2" style="margin:12px 0 4px"><h2>নতুন ইমেইল</h2></div><div class="bc-pills" role="group" aria-label="কোন ইমেইল">' +
+      [['gmail', 'Gmail'], ['outlook', 'Outlook'], ['yahoo', 'Yahoo'], ['custom', 'অন্য']].map(function (p) { return '<button type="button" data-bc="icpre" data-id="' + p[0] + '"' + (pre === p[0] ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + p[1] + '</button>'; }).join('') + '</div>' +
       '<ol class="ic-steps">' + steps.map(function (s) { return '<li>' + s + '</li>'; }).join('') + '</ol>' +
       icField('icm_addr', 'ইমেইল ঠিকানা', 'you@example.com', 'email', ' inputmode="email"') +
       icField('icm_pw', pre === 'custom' ? 'পাসওয়ার্ড' : 'App password', '', 'password', ' autocomplete="new-password"');
     if (pre === 'custom') h += '<div class="ic-two"><div>' + icField('icm_ih', 'IMAP সার্ভার', 'imap.example.com') + '</div><div>' + icField('icm_ip', 'পোর্ট', '993', 'text', ' inputmode="numeric"') + '</div></div>' +
       '<div class="ic-two"><div>' + icField('icm_sh', 'SMTP সার্ভার', 'smtp.example.com') + '</div><div>' + icField('icm_sp', 'পোর্ট', '465', 'text', ' inputmode="numeric"') + '</div></div>';
     h += icField('icm_from', 'পাঠানোর নাম', myName()) +
+      (C.icErr && C.icErr.k === 'mail' ? '<div class="ib-alert" role="alert" style="margin:12px 0 0">' + esc(C.icErr.t) + '</div>' : '') +
       '<div class="bc-row">' + btn(svg('check') + 'পরীক্ষা করে যুক্ত করুন', 'data-bc="icmsave"', 'dark', 'icmsave') + '<button type="button" class="bc-btn ghost" data-bc="icform" data-id="">বাতিল</button></div></div>';
     return h;
   }
@@ -61479,7 +61482,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     h += '<section class="ic-sec"><header>' + logo('telegram', 22) + '<h2>Telegram</h2><span class="bc-sp"></span>' + (tgc.length && C.ibForm !== 'tg' ? '<button type="button" class="bc-btn ghost sm" data-bc="icform" data-id="tg">অন্য বট</button>' : '') + '</header>' +
       '<p>আপনার নিজের নতুন একটা বট। মানুষ বটকে লিখলে বার্তা এখানে আসে, উত্তর যায় বট থেকে। Postiz-এর বট এখানে ব্যবহার হয় না।</p>' + tgc.map(function (c) { return icRow(c); }).join('');
     if (!tgc.length || C.ibForm === 'tg') h += '<div class="ic-form"><ol class="ic-steps"><li>Telegram-এ <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer">@BotFather</a> খুলুন, <b>/newbot</b> পাঠান।</li><li>বটের নাম দিন, তারপর username দিন (শেষে <b>bot</b> থাকবে, যেমন rahman_desk_bot)।</li><li>BotFather যে লম্বা টোকেন দেয় (সংখ্যা:অক্ষর), পুরোটা কপি করে নিচে বসান।</li></ol>' +
-      icField('ict_tok', 'বটের টোকেন', '123456789:AA…', 'password', ' autocomplete="new-password"') + '<div class="bc-row">' + btn(svg('check') + 'যুক্ত করুন', 'data-bc="ictsave"', 'dark', 'ictsave') + (tgc.length ? '<button type="button" class="bc-btn ghost" data-bc="icform" data-id="">বাতিল</button>' : '') + '</div></div>';
+      icField('ict_tok', 'বটের টোকেন', '123456789:AA…', 'password', ' autocomplete="new-password"') + (C.icErr && C.icErr.k === 'tg' ? '<div class="ib-alert" role="alert" style="margin:12px 0 0">' + esc(C.icErr.t) + '</div>' : '') + '<div class="bc-row">' + btn(svg('check') + 'যুক্ত করুন', 'data-bc="ictsave"', 'dark', 'ictsave') + (tgc.length ? '<button type="button" class="bc-btn ghost" data-bc="icform" data-id="">বাতিল</button>' : '') + '</div></div>';
     h += '</section>';
     // whatsapp
     var wa = of('whatsapp')[0], q = C.ibQr;
@@ -61602,11 +61605,11 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       if (C.ibPre === 'custom') { a.imap_host = String(v('icm_ih')).trim(); a.imap_port = String(v('icm_ip') || '993').trim(); a.smtp_host = String(v('icm_sh')).trim(); a.smtp_port = String(v('icm_sp') || '465').trim(); }
       if (!a.address) return toast('ইমেইল ঠিকানাটা দিন।', true); if (!a.password) return toast('App password-টা দিন।', true);
       act('icmsave', 'erpBrandDeskChannelSave', a, function (r) { C.d.ichan = r; ['icm_addr', 'icm_pw', 'icm_ih', 'icm_ip', 'icm_sh', 'icm_sp', 'icm_from'].forEach(function (q) { delete C.v[q]; }); C.ibForm = ''; toast('ইমেইল যুক্ত হলো। এক মিনিটের মধ্যে মেইল আসা শুরু হবে।'); setTimeout(function () { get('inbox', true); }, 20000); },
-        function () { C.v.icm_pw = ''; }); return;
+        function (e) { C.v.icm_pw = ''; C.icErr = { k: 'mail', t: (e && e.message) || String(e) }; }); C.icErr = null; return;
     }
     if (w === 'ictsave') {
       var tok = String(v('ict_tok')).trim(); if (!tok) return toast('টোকেনটা বসান।', true);
-      act('ictsave', 'erpBrandDeskChannelSave', { action: 'save', kind: 'telegram', token: tok }, function (r) { C.d.ichan = r; delete C.v.ict_tok; C.ibForm = ''; toast('Telegram বট যুক্ত হলো। কেউ বটকে লিখলে এখানে আসবে।'); }); return;
+      act('ictsave', 'erpBrandDeskChannelSave', { action: 'save', kind: 'telegram', token: tok }, function (r) { C.d.ichan = r; delete C.v.ict_tok; C.ibForm = ''; toast('Telegram বট যুক্ত হলো। কেউ বটকে লিখলে এখানে আসবে।'); }, function (e) { C.icErr = { k: 'tg', t: (e && e.message) || String(e) }; }); C.icErr = null; return;
     }
     if (w === 'icwa') { act('icwa', 'erpBrandDeskWaQr', {}, function (r) { if (r.state === 'open') { C.ibQr = null; toast('WhatsApp যুক্ত আছে।'); get('ichan', true); } else { C.ibQr = r; ibQrPoll(); } }); return; }
     if (w === 'icfb') {
