@@ -19,6 +19,7 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (url.endsWith('/drafts/repick')) return { body: { job: 'mp1', waiting: [], ideas: [], jobs: {}, mjobs: {} } };
   if (url.endsWith('/media/keep')) return { body: { keep_days: 60 } };
   if (url.includes('/reels')) return { body: { reels: [], jobs: {} } };
+  if (url.includes('/results?days=')) return { body: { days: Number(url.split('days=')[1]), channels: [{ platform: 'facebook', integration: 'n1', metrics: { views: { value: 12, prev: null, kind: 'flow' } }, why: null }, { platform: 'linkedin', integration: 'n2', metrics: {}, why: 'not measured' }], posts: [{ id: 1, platform: 'facebook', views: null, likes: 2 }], totals: { posts: 1, measured: 1, views: null, likes: 2 }, best: [1], by_pillar: [], not_measured: [], last_run: null } };
   if (url.includes('/routine')) return { body: { slots: [], status: { level: 2, effective: 2 }, fills: {} } };
   if (url.endsWith('/media/upload')) return { body: { id: 'up9', path: 'https://social.example.com/uploads/p.jpg', type: 'image', asset: '5d23777f-eda4-40ef-9b8d-8065d7a9a896' } };
   if (url.endsWith('/drafts/idea')) return { body: { job: 'i1', waiting: [], ideas: [], jobs: {} } };
@@ -249,6 +250,23 @@ r = await owner('erpBrandDeskRoutineLevel', [{ level: 3 }]);
 check('the plan can be raised', r.ok, r);
 r = await mgr('erpBrandDeskRoutineSlot', [{ dow: 1, at: '09:30', platform: 'facebook', format: 'text' }]);
 check('staff cannot change the routine', !r.ok, r);
+// brand-25: waiting drafts take their slots; the fill button; the results dashboard
+r = await owner('erpBrandDeskRoutinePlace', []);
+check('placing the waiting drafts goes to the bridge', r.ok && seen.some((x) => x.url.endsWith('/routine/place')), r);
+r = await owner('erpBrandDeskRoutineFill', []);
+check('filling the empty slots goes to the bridge as a write', r.ok && seen.some((x) => x.url.endsWith('/routine/fill') && x.body), r);
+r = await mgr('erpBrandDeskRoutineFill', []);
+check('staff cannot fill the routine', !r.ok, r);
+r = await owner('erpBrandDeskResults', [{ days: 14 }]);
+check('a results period that is not 7, 30 or 90 days is refused', !r.ok, r);
+r = await owner('erpBrandDeskResults', [{ days: 90 }]);
+const rr = seen.filter((x) => x.url.includes('/results?days=')).pop();
+check('the results of 90 days are read from the bridge', r.ok && rr.url.endsWith('days=90') && !rr.body && r.result.days === 90, r);
+check('a missing number stays empty, never 0', r.ok && r.result.posts[0].views === null && r.result.totals.views === null, r.result);
+r = await owner('erpBrandDeskResults', []);
+check('results default to 30 days', r.ok && r.result.days === 30, r);
+r = await mgr('erpBrandDeskResults', [{ days: 7 }]);
+check('staff cannot read the results', !r.ok, r);
 // brand-17: Train + LinkedIn lane
 r = await owner('erpBrandDeskStyleAdd', [{ text: 'too short' }]);
 check('a too-short style piece is refused', !r.ok, r);

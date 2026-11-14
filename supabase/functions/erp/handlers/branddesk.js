@@ -170,6 +170,16 @@ export async function erpBrandDeskRoutineLevel(ctx, payload) {
   return bridge(ctx, '/routine/level', { level });
 }
 export async function erpBrandDeskRoutineReset(ctx) { await gate(ctx); return bridge(ctx, '/routine/reset', {}); }
+// brand-25: plan and reality match - waiting drafts take their slots; the owner's button writes drafts for empty text/photo slots
+export async function erpBrandDeskRoutinePlace(ctx) { await gate(ctx); return bridge(ctx, '/routine/place', {}); }
+export async function erpBrandDeskRoutineFill(ctx) { await gate(ctx); return bridge(ctx, '/routine/fill', {}); }
+// brand-25: the results dashboard - only numbers the networks gave; a missing number stays empty
+export async function erpBrandDeskResults(ctx, payload) {
+  await gate(ctx);
+  const days = parseInt((payload || {}).days || 30, 10);
+  if (![7, 30, 90].includes(days)) throw new Error('৭, ৩০ বা ৯০ দিন বাছুন।');
+  return bridge(ctx, '/results?days=' + days, undefined, 30000);
+}
 // brand-20: news Reels - script from the checked facts, his own voice, scenes drawn and joined on the Mac
 const REEL_NETS = ['facebook', 'instagram', 'tiktok', 'youtube'];
 const reelId = (p) => { const id = parseInt((p || {}).id, 10); if (!(id > 0)) throw new Error('একটা Reel বাছুন।'); return id; };
@@ -592,4 +602,4 @@ export async function erpBrandDeskHello(ctx, payload) {
   return { ok: true };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskDraftRepick, erpBrandDeskMediaKeep, erpBrandDeskReels, erpBrandDeskReelScript, erpBrandDeskReelPhoto, erpBrandDeskReelVoice, erpBrandDeskReelEdit, erpBrandDeskReelRender, erpBrandDeskReelDrafts, erpBrandDeskRoutine, erpBrandDeskRoutineSlot, erpBrandDeskRoutineLevel, erpBrandDeskRoutineReset, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskCockpit, erpBrandDeskDraftRepick, erpBrandDeskMediaKeep, erpBrandDeskReels, erpBrandDeskReelScript, erpBrandDeskReelPhoto, erpBrandDeskReelVoice, erpBrandDeskReelEdit, erpBrandDeskReelRender, erpBrandDeskReelDrafts, erpBrandDeskRoutine, erpBrandDeskRoutineSlot, erpBrandDeskRoutineLevel, erpBrandDeskRoutineReset, erpBrandDeskRoutinePlace, erpBrandDeskRoutineFill, erpBrandDeskResults, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

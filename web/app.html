@@ -8545,7 +8545,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrandDeskCockpit|erpBrandDeskReels|erpBrandDeskRoutine|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrandDeskResults|erpBrandDeskCockpit|erpBrandDeskReels|erpBrandDeskRoutine|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 // crit8-nav (10 Nov 2026): these calls only read when they are sent without a change (the list form) and write with one.
 // The same rule as the server's ERP_READ_WHEN (allow.js): the list form runs beside other reads, sends no one-time key
 // and drops no caches; the changing form stays a write. erpTool and erpBrainFact always write (every branch changes data).
@@ -59119,6 +59119,65 @@ select.bc-in{padding-right:28px}
 .hm-days button.on{background:var(--bc-ink)}.hm-days button.on span,.hm-days button.on b,.hm-days button.on i{color:#fff}
 .bc .bc-line{margin-top:18px}
 @container bc (max-width:1180px){.hm-wk{grid-template-columns:repeat(4,minmax(0,1fr))}}
+/* brand-25: reminders, the day's count line, the routine fill, the results dashboard */
+.hm-r{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:5px;min-height:30px;padding:2px 6px;border-radius:8px;font:500 12px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-3);min-width:0}
+.hm-r:hover{background:rgba(22,24,29,.05);color:var(--bc-ink-2)}
+.hm-r time{font:600 12px "Pretendard Variable",Pretendard,system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--bc-ink-3);margin-right:2px}
+.hm-r span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hm-c.v{background:transparent;box-shadow:inset 0 0 0 1.5px #E8C766}
+.hm-c.v .hm-m b{color:#7A5A00}.hm-c.v .hm-x{color:var(--bc-ink-3)}
+.hm-cnt{margin:0 0 10px;font:14px/1.55 "Noto Sans Bengali","Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-2)}
+.hm-cnt b{color:var(--bc-ink);font-weight:700}.hm-cnt em{font-style:normal;color:#7A5A00;font-weight:600}
+.rt-ask{border:1px solid var(--bc-rule);border-radius:14px;padding:12px 14px;margin:0 0 14px;background:var(--bc-ground)}
+.rt-ask p,.rt-fj p{margin:0 0 10px;font-size:14px;line-height:1.6;color:var(--bc-ink-2);max-width:72ch}.rt-ask b,.rt-fj b{color:var(--bc-ink)}
+.rt-fj{margin:0 0 14px}.rt-fj.done{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.rt-fj.done p{margin:0}
+.bc-lede small{display:block;font-size:13px;color:var(--bc-ink-3);margin-top:4px}
+.rs-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.rs-tile{border:1px solid var(--bc-rule);border-top:3px solid var(--c);border-radius:14px;padding:12px 14px 14px;background:var(--bc-ground);min-width:0}
+.rs-tile header{display:flex;align-items:center;gap:7px;margin-bottom:10px;min-width:0}.rs-tile header b{font-size:15px}
+.rs-tile header small{font-size:12px;color:var(--bc-ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.rs-tile dl{margin:0;display:grid;gap:8px}.rs-tile dl div{display:flex;align-items:baseline;gap:8px}
+.rs-tile dt{font-size:13px;color:var(--bc-ink-2);flex:1}
+.rs-tile dd{margin:0;font:700 18px "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:6px}
+.rs-d{font:600 12px "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-3);display:inline-flex;align-items:center;gap:2px}
+.rs-d svg{width:10px;height:10px;fill:currentColor}.rs-d.up{color:var(--bc-good)}.rs-d.dn{color:var(--bc-alert-ink)}
+.rs-why{margin:10px 0 0;font-size:12.5px;line-height:1.5;color:var(--bc-ink-3)}
+.rs-na{color:var(--bc-ink-3);font-weight:500}
+.rs-nom{list-style:none;margin:12px 0 0;padding:0;border-top:1px solid var(--bc-rule)}
+.rs-nom li{display:grid;grid-template-columns:auto auto auto minmax(0,1fr);align-items:center;gap:4px 8px;padding:10px 2px;border-bottom:1px solid var(--bc-rule)}
+.rs-nom b{font-size:14px}.rs-nom small{font-size:13px;color:var(--bc-ink-3);line-height:1.5}
+.rs-tag{font:600 11.5px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-2);background:var(--bc-shelf);border-radius:6px;padding:2px 7px;white-space:nowrap}
+.rs-empty{font-size:14px;color:var(--bc-ink-2);margin:0}.rs-empty p{margin:0 0 10px}
+.rs-list{border-top:1px solid var(--bc-rule)}
+.rs-row{display:grid;grid-template-columns:minmax(0,1fr) repeat(5,72px) 76px;align-items:center;gap:8px;padding:10px 2px;border-bottom:1px solid var(--bc-rule)}
+.rs-hd{padding:8px 2px;font-size:12.5px;color:var(--bc-ink-3);font-weight:600}
+.rs-n{text-align:right;font:600 15px "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.rs-hd .rs-n{font:600 12.5px "Noto Sans Bengali",system-ui,sans-serif}
+.rs-p{display:flex;gap:10px;align-items:flex-start;min-width:0}.rs-p>span{min-width:0;display:flex;flex-direction:column;gap:2px}
+.rs-p small{font-size:12px;color:var(--bc-ink-3)}.rs-p em{font-style:normal;font-size:14px;line-height:1.45;color:var(--bc-ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.rs-dot{flex:none;width:11px;height:11px;border-radius:50%;box-shadow:inset 0 0 0 3px var(--c);margin-top:4px}
+.rs-best{color:var(--bc-ink);font-weight:700}
+.rs-a{text-align:right}.rs-tot{background:var(--bc-shelf);border-bottom:0}
+.rs-top{margin:0;padding:0;list-style:none;counter-reset:rs}
+.rs-top li{display:grid;grid-template-columns:22px auto minmax(0,1fr) auto;align-items:center;gap:8px;padding:10px 2px;border-bottom:1px solid var(--bc-rule);counter-increment:rs}
+.rs-top li::before{content:counter(rs);font:700 15px "Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-3)}
+.rs-top em{font-style:normal;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rs-top b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.rs-pils{display:grid;gap:10px;max-width:640px}
+.rs-pils div{display:grid;grid-template-columns:88px minmax(0,1fr) auto auto;align-items:center;gap:10px;font-size:14px}
+.rs-pils small{color:var(--bc-ink-3);font-size:12.5px}.rs-pils b{font-variant-numeric:tabular-nums}
+.rs-bar{height:8px;border-radius:999px;background:var(--bc-shelf);overflow:hidden}.rs-bar i{display:block;height:100%;background:var(--bc-ink);border-radius:999px}
+@container bc (max-width:759px){
+  .rs-tiles{grid-template-columns:1fr}
+  .rs-hd{display:none}
+  .rs-row{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px 4px;padding:12px 2px}
+  .rs-row .rs-p{grid-column:1/-1}.rs-row .rs-a{grid-column:1/-1;text-align:left}.rs-row .rs-a:empty{display:none}
+  .rs-n{text-align:left;font-size:14px;display:flex;flex-direction:column}
+  .rs-n::before{content:attr(data-k);font:500 11.5px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-3)}
+  .rs-tot>span:last-child{display:none}
+  .rs-nom li{grid-template-columns:auto auto minmax(0,1fr)}.rs-nom small{grid-column:1/-1}
+  .rs-pils div{grid-template-columns:72px minmax(0,1fr) auto}.rs-pils small{display:none}
+  .hm-r{min-height:40px;font-size:13.5px}.hm-cnt{font-size:14.5px}
+}
 @container bc (max-width:759px){.hm-days{display:flex}.hm-wk{display:block}.hm-col{display:none}.hm-col.cur{display:flex;min-height:0;background:transparent;box-shadow:none;padding:0}.hm-col.cur>header{display:none}
   .hm-c{padding:12px 14px}.hm-x{font-size:15px}.hm-m{font-size:13px}}
 /* brand-24 (owner 14 Nov: critique every page, button and text): shared pieces, then the phone overrides LAST so they win */
@@ -59224,7 +59283,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
   function inp(key, ph, extra, type) { return '<input class="bc-in" id="bci_' + key + '" data-bcin="' + key + '" type="' + (type || 'text') + '" data-noi18n="1" placeholder="' + esc(ph || '') + '" value="' + esc(v(key)) + '"' + (extra || '') + '>'; }
   function ta(key, ph, dflt, extra) { return '<textarea class="bc-ta" id="bci_' + key + '" data-bcin="' + key + '" data-noi18n="1" placeholder="' + esc(ph || '') + '"' + (extra || '') + '>' + esc(v(key, dflt)) + '</textarea>'; }
   var SECS = [['home', 'হোম'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ'], ['routine', 'রুটিন'], ['train', 'লেখার ধরন'], ['linkedin', 'LinkedIn']];
-  var NEED = { home: ['cockpit', 'drafts', 'settings', 'routine'], posts: ['cockpit', 'drafts', 'settings'], ideas: ['drafts', 'memos', 'board', 'settings', 'news', 'reels'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen'], rules: ['settings', 'mlib'], map: ['cockpit'], train: ['styles'], linkedin: ['li'], routine: ['routine'] };
+  var NEED = { home: ['cockpit', 'drafts', 'settings', 'routine'], posts: ['cockpit', 'drafts', 'settings'], ideas: ['drafts', 'memos', 'board', 'settings', 'news', 'reels'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen', 'results'], rules: ['settings', 'mlib'], map: ['cockpit'], train: ['styles'], linkedin: ['li'], routine: ['routine'] };
   function on() { return typeof VIEW !== 'undefined' && VIEW === 'branddesk' && typeof ME !== 'undefined' && ME && ME.role === 'owner'; }
   function fonts() {
     if (document.getElementById('bc_font')) return;
@@ -59232,13 +59291,13 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
     l.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Anek+Bangla:wght@600;700&display=swap'; document.head.appendChild(l);
   }
   // ---------- data: one store, one loader per read; bridge reads wait until the cockpit says the Mac is on
-  var CALL = { mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', li: 'erpBrandDeskLi', routine: 'erpBrandDeskRoutine', reels: 'erpBrandDeskReels' };
+  var CALL = { mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', li: 'erpBrandDeskLi', routine: 'erpBrandDeskRoutine', reels: 'erpBrandDeskReels', results: 'erpBrandDeskResults' };
   function ready() { var d = C.d.cockpit; return !!(d && d.online && d.keySet); }
   function get(k, force) {
     if (C.busy['g_' + k] || (C.d[k] && !force)) return;
     if (k !== 'cockpit' && !ready()) return;
     C.busy['g_' + k] = 1;
-    var args = k === 'videos' ? [{ q: C.vq || '' }] : [];
+    var args = k === 'videos' ? [{ q: C.vq || '' }] : k === 'results' ? [{ days: C.rdays || 30 }] : [];
     srv(CALL[k], args, function (r) { C.busy['g_' + k] = 0; C.d[k] = r; C.err[k] = ''; if (k === 'cockpit') C.t = Date.now(); poll(k); draw(); },
       function (e) { C.busy['g_' + k] = 0; C.err[k] = (e && e.message) || String(e); draw(); });
   }
@@ -59248,6 +59307,7 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
     if (k === 'drafts') { var mj = r.mjobs || {}, pk = Object.keys(mj).some(function (x) { return mj[x].state === 'picking'; }); if (C.picking && !pk) { C.media = Object.keys(C.media).reduce(function (a, q) { if (!/^\d+$/.test(q) || (C.keepm || {})[q]) a[q] = C.media[q]; return a; }, {}); } C.picking = pk;
       run = pk || ks.some(function (x) { return jobs[x].state === 'writing' || jobs[x].state === 'researching'; }); }
     if (k === 'listen') run = ks.some(function (x) { return jobs[x].state === 'reading'; });
+    if (k === 'routine') { run = !!(r.fill && r.fill.state === 'writing'); if (run) C.frun = 1; else if (C.frun) { C.frun = 0; get('drafts', true); get('cockpit', true); } }
     if (k === 'reels') run = ks.some(function (x) { return /^(writing|drawing|joining)$/.test(jobs[x].state); });
     if (k === 'styles') run = ks.some(function (x) { return /^(reading|scouting)$/.test(jobs[x].state); });
     if (k === 'li') run = ks.some(function (x) { return jobs[x].state === 'reading'; }) || (r.tasks || []).some(function (q) { return q.state === 'drafting'; });
@@ -59670,6 +59730,8 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
     var jobs = (C.d.drafts && C.d.drafts.jobs) || {}, ks = Object.keys(jobs).sort(); if (!ks.length) return '';
     var j = jobs[ks[ks.length - 1]];
     if (j.state === 'researching') return '<div class="bc-jobs"><span class="bc-spin"></span>খোঁজখবর চলছে… ৫-১০ মিনিট</div>';
+    if (j.kind === 'fill' && j.state === 'writing') return '<div class="bc-jobs"><span class="bc-spin"></span>ফাঁকা ঘরের ড্রাফট লেখা হচ্ছে' + (j.of ? ' ' + bn(j.done || 0) + '/' + bn(j.of) : '') + '…</div>';
+    if (j.kind === 'fill') return '';
     if (j.state === 'writing') return '<div class="bc-jobs"><span class="bc-spin"></span>AI লিখছে… ১-২ মিনিট</div>';
     if (j.state === 'failed' || j.error) return '<div class="bc-jobs bad">লেখা হয়নি' + (j.error ? ': <span data-noi18n="1">' + (hasBn(j.error) ? esc(j.error) : 'আবার চেষ্টা করুন') + '</span>' : '') + '</div>';
     return '';
@@ -59940,25 +60002,51 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
   // brand-22 (owner 14 Nov: "change Home; pick a nice one from Pinterest"): the week as a board, one column per day
   // (Saturday..Friday), every post as a card in its network's tint: gone, in line, stuck, waiting for him, or an empty slot of
   // the routine. Today's column is marked. On the phone: a day strip and that day's cards.
-  var HMST = { go: 'গেছে', q: 'যাবে', x: 'আটকে', w: 'অপেক্ষায়', e: 'ফাঁকা ঘর' };
+  var HMST = { go: 'গেছে', q: 'যাবে', x: 'আটকে', w: 'অপেক্ষায়', e: 'ফাঁকা ঘর', v: 'ভিডিও লাগবে' };
+  // brand-25: Story, LinkedIn comments and Live are his by hand (Postiz does not post them): quiet reminder rows, so the day
+  // matches the routine. A slot holds one post; a draft or post within 25 minutes on that network fills it (as the Mac does).
+  var HMHAND = { story: 'Story', engage: 'কমেন্ট ও রিপ্লাই', live: 'লাইভ' }, RVID = /^(reel|video|short|long|trial)$/;
+  function hmLevel() { var R = C.d.routine; return (R && R.status && R.status.effective) || 2; }
   function hmItems(day0) {
     var d1 = new Date(day0), out = []; d1.setDate(d1.getDate() + 7);
     stations().forEach(function (s) { var t = new Date(s.at); if (t >= day0 && t < d1) out.push({ at: t, net: s.net, st: s.st, text: s.text, key: s.key, act: 'st', id: s.key }); });
     waitingList().forEach(function (x) { if (!x.planned_at) return; var t = new Date(x.planned_at); if (t >= day0 && t < d1) out.push({ at: t, net: netOf(x.platform), st: 'w', text: strip(x.hook || x.body || ''), act: 'ndraft', id: x.id, pic: x.media && x.media.type !== 'video' ? x.media.path : '' }); });
     var R = C.d.routine, now = new Date();
     if (R) {
-      var lvl = (R.status && R.status.effective) || 2;
-      (R.slots || []).forEach(function (sl) {
-        if (!sl.active || sl.level > lvl || /^(story|engage)$/.test(sl.format)) return;
+      var lvl = hmLevel(), used = [];
+      (R.slots || []).slice().sort(function (p1, q1) { return p1.dow - q1.dow || (p1.at < q1.at ? -1 : 1); }).forEach(function (sl) {
+        if (!sl.active || sl.level > lvl) return;
         var t = new Date(day0); t.setDate(t.getDate() + sl.dow); t.setHours(+sl.at.slice(0, 2), +sl.at.slice(3, 5), 0, 0);
         if (t < now) return;
-        if (out.some(function (o) { return o.net === sl.platform && Math.abs(o.at - t) < 45 * 60000; })) return;
-        out.push({ at: t, net: sl.platform, st: 'e', text: (RFMT[sl.format] || sl.format) + (sl.pillar && RPIL[sl.pillar] ? ' · ' + RPIL[sl.pillar][0] : ''), act: 'sec', id: 'ideas' });
+        if (HMHAND[sl.format]) {
+          var same = out.filter(function (o) { return o.st === 'r' && o.fmt === sl.format && +o.at === +t; })[0];
+          if (same) { if (same.nets.indexOf(sl.platform) < 0) same.nets.push(sl.platform); return; }
+          out.push({ at: t, net: sl.platform, nets: [sl.platform], st: 'r', fmt: sl.format, text: HMHAND[sl.format] + ' · নিজে দিন', act: 'sec', id: 'routine' });
+          return;
+        }
+        var hit = out.filter(function (o) { return /^(go|q|x|w)$/.test(o.st) && used.indexOf(o) < 0 && o.net === sl.platform && Math.abs(o.at - t) < 25 * 60000; })[0];
+        if (hit) { used.push(hit); return; }
+        var vid = RVID.test(sl.format);
+        out.push({ at: t, net: sl.platform, st: vid ? 'v' : 'e', fmt: sl.format, text: (RFMT[sl.format] || sl.format) + (sl.pillar && RPIL[sl.pillar] ? ' · ' + RPIL[sl.pillar][0] : ''), act: 'sec', id: vid ? 'media' : 'ideas' });
       });
     }
-    return out.sort(function (p1, q1) { return p1.at - q1.at; });
+    return out.sort(function (p1, q1) { return p1.at - q1.at || (p1.st === 'r' ? 1 : 0) - (q1.st === 'r' ? 1 : 0); });
+  }
+  // the chosen day in one line: the plan's slots against what is ready
+  function hmCount(i, td, day0, items) {
+    var R = C.d.routine; if (!R) return '';
+    var d = new Date(day0); d.setDate(d.getDate() + i);
+    var lvl = hmLevel(), sl = (R.slots || []).filter(function (x) { return x.active && x.level <= lvl && x.dow === i; });
+    if (!sl.length) return '';
+    var di = items.filter(function (it) { return it.at.getDate() === d.getDate() && it.at.getMonth() === d.getMonth(); });
+    var ready = di.filter(function (it) { return /^(go|q|w)$/.test(it.st); }).length, vneed = di.filter(function (it) { return it.st === 'v'; }).length, empty = di.filter(function (it) { return it.st === 'e'; }).length;
+    var st = {}, en = 0; sl.forEach(function (x) { if (x.format === 'story') st[x.at] = 1; if (x.format === 'engage') en++; });
+    var nst = Object.keys(st).length, DF = ['শনিবার', 'রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার'];
+    return '<p class="hm-cnt"><b>' + (i === td ? 'আজ' : DF[i]) + ':</b> ঘর ' + bn(sl.length) + ' · লেখা তৈরি ' + bn(ready) + (empty ? ' · ফাঁকা ' + bn(empty) : '') +
+      (vneed ? ' · <em>ভিডিও লাগবে ' + bn(vneed) + '</em>' : '') + (nst ? ' · Story ' + bn(nst) + ' বার নিজে' : '') + (en ? ' · কমেন্ট নিজে' : '') + '</p>';
   }
   function hmCard(it) {
+    if (it.st === 'r') return '<button type="button" class="hm-r" data-bc="sec" data-id="routine"><time>' + dTime(it.at).replace(/ (সকাল|দুপুর|সন্ধ্যা)$/, '') + '</time>' + it.nets.map(function (n) { return logo(n, 13); }).join('') + '<span>' + esc(it.text) + '</span></button>';
     return '<button type="button" class="hm-c ' + it.st + '" style="--c:' + netCol(it.net) + '" data-bc="' + it.act + '" data-id="' + esc(it.id) + '">' +
       '<span class="hm-m"><time>' + dTime(it.at).replace(/ (সকাল|দুপুর|সন্ধ্যা)$/, '') + '</time>' + logo(it.net, 14) + '<b>' + HMST[it.st] + '</b></span>' +
       (it.pic ? '<img alt="" loading="lazy" src="' + esc(it.pic) + '">' : '') + '<span class="hm-x" data-noi18n="1">' + esc(String(it.text || '').slice(0, 110)) + '</span></button>';
@@ -59975,8 +60063,9 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
     var day0 = new Date(); day0.setHours(0, 0, 0, 0); var td = (day0.getDay() + 1) % 7; day0.setDate(day0.getDate() - td);
     var items = hmItems(day0), RD = ['শনি', 'রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র'];
     if (C.hday == null) C.hday = td;
-    h += '<div class="hm-days" role="group" aria-label="দিন">' + RD.map(function (dn, i) { var d = new Date(day0); d.setDate(d.getDate() + i); var k = items.filter(function (it) { return it.at.getDay() === d.getDay(); }).length;
+    h += '<div class="hm-days" role="group" aria-label="দিন">' + RD.map(function (dn, i) { var d = new Date(day0); d.setDate(d.getDate() + i); var k = items.filter(function (it) { return it.st !== 'r' && it.at.getDay() === d.getDay(); }).length;
       return '<button type="button" data-bc="hday" data-id="' + i + '" aria-pressed="' + (C.hday === i) + '"' + (C.hday === i ? ' class="on' + (i === td ? ' today' : '') + '"' : i === td ? ' class="today"' : '') + '><span>' + dn + '</span><b>' + bn(d.getDate()) + '</b>' + (k ? '<i>' + bn(k) + '</i>' : '') + '</button>'; }).join('') + '</div>';
+    h += hmCount(C.hday, td, day0, items);
     h += '<div class="hm-wk">' + RD.map(function (dn, i) {
       var d = new Date(day0); d.setDate(d.getDate() + i);
       var di = items.filter(function (it) { return it.at.getDate() === d.getDate() && it.at.getMonth() === d.getMonth(); });
@@ -60106,27 +60195,72 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
       '<label class="bc-lbl" for="bci_ltarget">কোন ব্যবসার লিড</label>' + bizSel('ltarget', biz).replace('class="bc-in"', 'class="bc-in" style="width:100%"') +
       '<div class="bc-row" style="margin-top:16px">' + btn('লিড যোগ করুন', 'data-bc="npadd"', 'dark', 'npadd') + '</div>';
   }
+  // brand-25 (owner: "how many views and how much reach each post got; a dashboard would be better"). Only numbers the
+  // networks gave (the Mac reads them every 6 hours); a missing number is "—", a network that gives none says why.
+  var RSM = [['followers', 'ফলোয়ার'], ['new_followers', 'নতুন ফলোয়ার'], ['views', 'দেখা'], ['impressions', 'পেজ দেখানো'], ['engagement', 'সাড়া'], ['likes_total', 'মোট লাইক'], ['videos', 'ভিডিও']];
+  var RSK = [['views', 'দেখা'], ['reach', 'রিচ'], ['likes', 'লাইক'], ['comments', 'কমেন্ট'], ['shares', 'শেয়ার']];
+  function rsNum(v) { return v == null ? '<span class="rs-na" title="মাপা হয়নি">—</span>' : bnN(Math.round(v)); }
+  function rsDelta(m) {
+    if (m.prev == null || m.value == null) return '';
+    var d = Math.round(m.value - m.prev);
+    if (!d) return '<span class="rs-d">আগের মতো</span>';
+    return '<span class="rs-d ' + (d > 0 ? 'up' : 'dn') + '"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="' + (d > 0 ? 'M6 2.5 10 8H2z' : 'M6 9.5 2 4h8z') + '"/></svg>' + (d > 0 ? '+' : '−') + bnN(Math.abs(d)) + '</span>';
+  }
+  function rsTile(c) {
+    var ms = c.metrics || {};
+    return '<section class="rs-tile" style="--c:' + netCol(c.platform) + '"><header>' + logo(c.platform, 18) + '<b>' + esc(netName(c.platform)) + '</b><small data-noi18n="1">' + esc(c.name || '') + '</small></header><dl>' +
+      RSM.filter(function (k) { return ms[k[0]]; }).map(function (k) { return '<div><dt>' + k[1] + '</dt><dd>' + rsNum(ms[k[0]].value) + rsDelta(ms[k[0]]) + '</dd></div>'; }).join('') + '</dl>' +
+      (c.note ? '<p class="rs-why">' + esc(c.note) + '</p>' : '') + '</section>';
+  }
+  function rsRow(p, best) {
+    var t = new Date(p.published_at);
+    return '<div class="rs-row" role="row" style="--c:' + netCol(p.platform) + '"><span class="rs-p" role="cell"><i class="rs-dot" aria-hidden="true"></i><span><small>' + esc(netName(p.platform)) + ' · ' + (isNaN(t) ? '' : dDate(t)) + (best ? ' · <b class="rs-best">সেরা</b>' : '') + '</small>' +
+      '<em data-noi18n="1">' + esc(strip(p.head || '') || 'লেখা নেই') + '</em></span></span>' + RSK.map(function (k) { return '<span class="rs-n" role="cell" data-k="' + k[1] + '">' + rsNum(p[k[0]]) + '</span>'; }).join('') +
+      '<span class="rs-a" role="cell">' + (p.url ? '<a class="bc-btn ghost sm" href="' + esc(p.url) + '" target="_blank" rel="noopener">খুলুন</a>' : '') + '</span></div>';
+  }
   function resultsHtml() {
-    var h = headHtml('ফলাফল', ''); var g = gate(['cockpit']); if (g) return h + g;
-    var n = counts(), all = stations(), L = n.listen;
-    h += '<p class="bc-lede">এ সপ্তাহে <b>' + bn(n.gone) + 'টা</b> পোস্ট গেছে, <b>' + bn(n.queued) + 'টা</b> যাবে' + (n.stuck.length ? ', মোট <b class="x">' + bn(n.stuck.length) + 'টা আটকে</b>' : '') + '।</p>';
-    // brand-24: what came back, each a door to its page (the bar chart of the same days is gone: the lines carry them)
-    h += '<div class="bc-line rs-back"><button type="button" data-bc="sec" data-id="listen">প্রশ্ন <b>' + bnN(L.questions) + '</b></button><button type="button" data-bc="sec" data-id="people">লিড <b>' + bnN(L.leads) + '</b></button>' + '' + '</div>';
-    var d0 = new Date(); d0.setHours(0, 0, 0, 0); d0.setDate(d0.getDate() - 7);
-    var days = []; for (var i = 0; i < 15; i++) { var d = new Date(d0); d.setDate(d0.getDate() + i); days.push({ d: d, go: 0, q: 0, x: 0 }); }
-    function dayIx(s) { var t = new Date(s.at); t.setHours(0, 0, 0, 0); return Math.round((t - d0) / 864e5); }
-    all.forEach(function (s) { var ix = dayIx(s); if (ix >= 0 && ix < 15) days[ix][s.st]++; });
-    var mx = Math.max(3, Math.max.apply(null, days.map(function (x) { return x.go + x.q + x.x; }))), today = new Date().toDateString();
-    // each network as its line over the same 15 days, stations on the days it carried a post
-    var RANK = { go: 0, q: 1, x: 2 }, tpc = (7.5 / 15 * 100);
-    h += '<div class="bc-block"><div class="bc-h2"><h2>নেটওয়ার্ক ধরে</h2></div><div class="bc-rl-days"><span></span>' + days.map(function (x) { return '<span class="' + (x.d.toDateString() === today ? 't' : '') + '">' + bn(x.d.getDate()) + '</span>'; }).join('') + '</div>' + lines().map(function (l) {
-      var per = {}, tot = { go: 0, q: 0, x: 0 };
-      all.forEach(function (s) { if (s.net !== l.net) return; var ix = dayIx(s); if (ix < 0 || ix > 14) return; var p = per[ix] || (per[ix] = { n: 0, st: 'go' }); p.n++; tot[s.st]++; if (RANK[s.st] > RANK[p.st]) p.st = s.st; });
-      var st = Object.keys(per).map(function (ix) { var p = per[ix]; return '<span class="bc-st ' + (p.st === 'go' ? '' : p.st) + '" style="left:' + ((Number(ix) + .5) / 15 * 100).toFixed(2) + '%">' + (p.n > 1 ? '<span class="n">' + bn(p.n) + '</span>' : '') + '</span>'; }).join('');
-      var any = tot.go + tot.q + tot.x;
-      return '<div class="bc-ln bc-rl' + (any ? '' : ' bcidle') + '" style="--c:' + netCol(l.net) + '"><label>' + logo(l.net, 18) + '<span>' + esc(netName(l.net)) + '<i>' + (any ? 'গেছে ' + bn(tot.go) + (tot.q ? ' · যাবে ' + bn(tot.q) : '') + (tot.x ? ' · আটকে ' + bn(tot.x) : '') : 'কিছু যায়নি') + '</i></span></label><div class="bc-track"><span class="fut" style="left:' + tpc.toFixed(2) + '%"></span>' + st + '</div></div>';
-    }).join('') + '<div class="bc-key"><span><i></i>গেছে</span><span><i class="q"></i>যাবে</span><span><i class="x"></i>আটকে</span></div></div>';
-    h += '<div class="bc-note" style="margin-top:20px">ক্লিক আর বিক্রির হিসাব এখনো যুক্ত হয়নি।</div>';
+    var days = C.rdays || 30;
+    var per = '<div class="bc-pills" role="group" aria-label="সময়">' + [7, 30, 90].map(function (d) { return '<button type="button" data-bc="rsdays" data-id="' + d + '" aria-pressed="' + (days === d) + '"' + (days === d ? ' class="on"' : '') + '>' + bn(d) + ' দিন</button>'; }).join('') + '</div>';
+    var h = headHtml('ফলাফল', '', per); var g = gate(['cockpit', 'results']); if (g) return h + g;
+    var R = C.d.results, n = counts(), L = n.listen, T = R.totals || {}, posts = R.posts || [], best = R.best || [], lr = R.last_run ? new Date(R.last_run) : null;
+    h += '<p class="bc-lede">' + bn(days) + ' দিনে ' + (T.posts ? '<b>' + bn(T.posts) + 'টা</b> পোস্ট গেছে' + (T.measured ? ', <b>' + bn(T.measured) + 'টার</b> সংখ্যা এসেছে' : ', কোনোটার সংখ্যা এখনো আসেনি') : 'কোনো পোস্ট যায়নি') + '।' +
+      '<small>' + (lr && !isNaN(lr) ? 'শেষ হিসাব ' + dDate(lr) + ', ' + dTime(lr) + '। প্রতি ৬ ঘণ্টায় নতুন হিসাব আসে।' : 'প্রথম হিসাব ৬ ঘণ্টার মধ্যে আসবে।') + '</small></p>';
+    h += '<div class="bc-line rs-back"><button type="button" data-bc="sec" data-id="listen">প্রশ্ন <b>' + bnN(L.questions) + '</b></button><button type="button" data-bc="sec" data-id="people">লিড <b>' + bnN(L.leads) + '</b></button></div>';
+    // the networks: measured ones as tiles, the rest as one list with the reason
+    var ch = R.channels || [], meas = ch.filter(function (c) { return Object.keys(c.metrics || {}).length; }), nom = ch.filter(function (c) { return !Object.keys(c.metrics || {}).length; });
+    h += '<div class="bc-block"><div class="bc-h2"><h2>নেটওয়ার্ক</h2>' + (meas.length ? '<span>পাশের সংখ্যা: আগের ' + bn(days) + ' দিনের তুলনায়</span>' : '') + '</div>' +
+      (meas.length ? '<div class="rs-tiles">' + meas.map(rsTile).join('') + '</div>' : '<p class="rs-empty">কোনো নেটওয়ার্কের সংখ্যা এখনো আসেনি।</p>') +
+      (nom.length ? '<ul class="rs-nom">' + nom.map(function (c) { return '<li style="--c:' + netCol(c.platform) + '">' + logo(c.platform, 16) + '<b>' + esc(netName(c.platform)) + '</b><span class="rs-tag">মাপা যায় না</span><small>' + esc(c.why || '') + '</small></li>'; }).join('') + '</ul>' : '') + '</div>';
+    // every post, newest first
+    h += '<div class="bc-block"><div class="bc-h2"><h2>পোস্ট ধরে</h2>' + (posts.length ? '<span>নতুন আগে</span>' : '') + '</div>';
+    if (!posts.length) h += '<div class="rs-empty"><p>এই ' + bn(days) + ' দিনে কোনো পোস্ট যায়নি, তাই দেখানোর মতো সংখ্যা নেই।</p><button type="button" class="bc-btn sm" data-bc="ptab" data-id="wait">অপেক্ষার পোস্ট দেখুন</button></div>';
+    else {
+      var lim = C.fold.rsall ? 200 : 20, showBest = (T.measured || 0) > 1;
+      h += '<div class="rs-list" role="table" aria-label="পোস্ট ধরে সংখ্যা"><div class="rs-row rs-hd" role="row"><span role="columnheader">পোস্ট</span>' + RSK.map(function (k) { return '<span class="rs-n" role="columnheader">' + k[1] + '</span>'; }).join('') + '<span role="columnheader"><span class="bc-vh">লিংক</span></span></div>' +
+        posts.slice(0, lim).map(function (p) { return rsRow(p, showBest && best.indexOf(p.id) >= 0); }).join('') +
+        (posts.length > 1 ? '<div class="rs-row rs-tot" role="row"><span class="rs-p" role="cell"><b>মোট · ' + bn(posts.length) + 'টা পোস্ট</b></span>' + RSK.map(function (k) { return '<span class="rs-n" role="cell" data-k="' + k[1] + '">' + rsNum(T[k[0]]) + '</span>'; }).join('') + '<span></span></div>' : '') + '</div>' +
+        (posts.length > lim ? '<button type="button" class="bc-btn ghost" data-bc="fold" data-id="rsall" style="margin-top:10px">আরও ' + bn(posts.length - lim) + 'টা পোস্ট</button>' : '');
+    }
+    h += '</div>';
+    // best posts and the pillars, only when there is something to compare
+    if (showBest && best.length) {
+      var bp = best.map(function (id) { return posts.filter(function (p) { return p.id === id; })[0]; }).filter(Boolean);
+      h += '<div class="bc-block"><div class="bc-h2"><h2>সেরা পোস্ট</h2><span>সবচেয়ে বেশি দেখা</span></div><ol class="rs-top">' + bp.map(function (p) {
+        return '<li style="--c:' + netCol(p.platform) + '">' + logo(p.platform, 16) + '<em data-noi18n="1">' + esc(strip(p.head || '') || 'লেখা নেই') + '</em><b>' + (p.views != null ? bnN(p.views) + ' দেখা' : bnN((p.likes || 0) + (p.comments || 0) + (p.shares || 0)) + ' সাড়া') + '</b></li>';
+      }).join('') + '</ol></div>';
+    }
+    var bpl = R.by_pillar || [];
+    h += '<div class="bc-block"><div class="bc-h2"><h2>বিষয় ধরে</h2></div>';
+    if (!bpl.length) h += '<p class="rs-empty">ককপিট থেকে অনুমোদন করা পোস্ট গেলে বিষয় ধরে হিসাব এখানে আসবে।</p>';
+    else {
+      var vmax = Math.max.apply(null, bpl.map(function (x) { return x.views || 0; }).concat([1])), pmax = Math.max.apply(null, bpl.map(function (x) { return x.posts; }));
+      h += '<div class="rs-pils">' + Object.keys(RPIL).map(function (k) {
+        var x = bpl.filter(function (q) { return q.pillar === k; })[0]; if (!x) return '';
+        var w = x.views != null ? 100 * x.views / vmax : 100 * x.posts / pmax;
+        return '<div><span>' + RPIL[k][0] + '</span><span class="rs-bar"><i style="width:' + Math.max(2, w).toFixed(1) + '%"></i></span><b>' + (x.views != null ? bnN(x.views) + ' দেখা' : '—') + '</b><small>' + bn(x.posts) + 'টা পোস্ট</small></div>';
+      }).join('') + '</div>';
+    }
+    h += '</div><div class="bc-note" style="margin-top:20px">— মানে নেটওয়ার্ক সংখ্যাটা দেয়নি। ক্লিক আর বিক্রির হিসাব এখনো যুক্ত হয়নি।</div>';
     return h;
   }
   var RISK = { low: 'কম', medium: 'মাঝারি', high: 'বেশি' };
@@ -60427,12 +60561,31 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
       '<div class="lt-a">' + btn(svg('check') + (isNew ? 'যোগ করুন' : 'সেভ করুন'), 'data-bc="rsave"', 'dark', 'rsave') + (isNew ? '' : (C.fold['rdel' + x.id] ? '' : '<button type="button" class="bc-btn ghost" data-bc="fold" data-id="rdel' + x.id + '">মুছে দিন</button>')) + btn('বাতিল', 'data-bc="rclose"', 'ghost', '') + '</div>' +
       (!isNew && C.fold['rdel' + x.id] ? '<div class="bc-call" style="margin-top:10px"><span>ঘরটা মুছবেন?</span><span class="bc-sp"></span>' + btn('হ্যাঁ, মুছুন', 'data-bc="rdel" data-id="' + x.id + '"', 'red sm', 'rdel') + '<button type="button" class="bc-btn ghost sm" data-bc="fold" data-id="rdel' + x.id + '">না</button></div>' : '') + '</div>';
   }
+  // brand-25: the owner's button writes drafts for the empty text and photo slots of the coming 7 days (never by itself)
+  function rFillHtml(fj, frun, em) {
+    var h = '';
+    if (C.fold.rfill && !frun) {
+      h += '<div class="rt-ask"><p>' + (em.text ? 'সামনের ৭ দিনে লেখা বা ছবির <b>' + bn(em.text) + 'টা</b> ঘর ফাঁকা। AI এখন <b>' + bn(Math.min(8, em.text)) + 'টা</b> ড্রাফট লিখবে; প্রতিটা আপনার অনুমোদনের অপেক্ষায় থাকবে।' : 'সামনের ৭ দিনে লেখা বা ছবির কোনো ঘর ফাঁকা নেই।') +
+        (em.video ? ' ভিডিওর <b>' + bn(em.video) + 'টা</b> ঘরে আপনার ভিডিও লাগবে; ওগুলো AI ভরবে না।' : '') + '</p><div class="lt-a">' +
+        (em.text ? btn(svg('check') + 'হ্যাঁ, লিখুন', 'data-bc="rfillgo"', 'dark sm', 'rfill') : '') + btn(em.text ? 'না' : 'ঠিক আছে', 'data-bc="fold" data-id="rfill"', 'ghost sm', '') + '</div></div>';
+    }
+    if (frun) h += '<p class="tr-busy rt-fj"><span class="bc-spin"></span>ফাঁকা ঘরের ড্রাফট লেখা হচ্ছে' + (fj.of ? ' · ' + bn(fj.done || 0) + '/' + bn(fj.of) : '') + '… একেকটায় ১-২ মিনিট</p>';
+    else if (fj && fj.state === 'failed') h += '<div class="bc-call"><span>' + esc(hasBn(fj.error) ? fj.error : 'ড্রাফট লেখা গেল না।') + '</span></div>';
+    else if (fj && fj.state === 'done' && Date.now() - new Date(fj.at) < 12 * 36e5) {
+      h += '<div class="rt-fj done"><p>' + (fj.made ? '<b>' + bn(fj.made) + 'টা</b> ড্রাফট লেখা হলো, আপনার অপেক্ষায়।' : 'নতুন কোনো ড্রাফট লেখা হয়নি।') +
+        (fj.video ? ' ভিডিও লাগবে <b>' + bn(fj.video) + 'টা</b> ঘরে।' : '') + (fj.no_idea ? ' ' + bn(fj.no_idea) + 'টা ঘরের জন্য আইডিয়া নেই।' : '') + (fj.no_account ? ' ' + bn(fj.no_account) + 'টা ঘরের নেটওয়ার্ক যুক্ত নেই।' : '') + '</p>' +
+        (fj.made ? '<button type="button" class="bc-btn sm" data-bc="ptab" data-id="wait">দেখুন</button>' : '') + '</div>';
+    }
+    return h;
+  }
   function routineHtml() {
     var g = gate(['routine']); if (g) return headHtml('রুটিন', '') + g;
     var d = C.d.routine, st = d.status || {}, lvl = st.level || 2, eff = st.effective || lvl, fills = d.fills || {}, slots = d.slots || [];
     if (C.rday == null) C.rday = (new Date().getDay() + 1) % 7;
     if (!C.rp) { C.rp = {}; RNET.forEach(function (n) { C.rp[n] = 1; }); }
-    var h = headHtml('রুটিন', '', btn(svg('plus') + 'ঘর যোগ করুন', 'data-bc="rnew"', 'dark', ''));
+    var fj = d.fill, frun = !!(fj && fj.state === 'writing'), em = d.empty || {};
+    var h = headHtml('রুটিন', '', btn(svg('pen') + 'ফাঁকা ঘর ভরান', 'data-bc="fold" data-id="rfill"' + (C.fold.rfill ? ' aria-expanded="true"' : ''), '', 'rfill', frun) + btn(svg('plus') + 'ঘর যোগ করুন', 'data-bc="rnew"', 'dark', ''));
+    h += rFillHtml(fj, frun, em);
     // backup status: the stock of photos, what is queued, and whether the week stepped down
     var need = st.need || {}, have = st.have || {}, shortP = have.photos != null && have.photos < need.photos, shortV = have.videos != null && have.videos < need.videos;
     var stH = '<div class="rt-st' + (eff < lvl ? ' down' : '') + '">' + (eff < lvl ? '<p><b>ছবি আর পোস্ট কম, তাই এ সপ্তাহে হালকা পরিকল্পনা চলছে।</b> ছবি এলে নিজে থেকে ' + RLV[lvl - 1][1] + '-তে ফিরবে।</p>' : '') +
@@ -60812,6 +60965,8 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
     else if (w === 'rplat') { C.rp[id] = C.rp[id] ? 0 : 1; draw(); }
     else if (w === 'rlvl') act('rlvl', 'erpBrandDeskRoutineLevel', { level: Number(id) }, function (r) { C.d.routine = r; toast('পরিকল্পনা বদলানো হলো।'); });
     else if (w === 'rclose') { C.redit = ''; draw(); }
+    else if (w === 'rfillgo') act('rfill', 'erpBrandDeskRoutineFill', {}, function (r) { C.d.routine = r; C.fold.rfill = false; poll('routine'); toast('AI লিখছে। কয়েক মিনিট লাগবে; পেজ বন্ধ করলেও চলবে।'); });
+    else if (w === 'rsdays') { C.rdays = Number(id); C.d.results = null; C.err.results = ''; get('results'); draw(); }
     else if (w === 'rnew') { C.redit = 'new'; C.v.r_dow = C.rday || 0; C.v.r_at = '21:00'; C.v.r_plat = 'facebook'; C.v.r_fmt = 'text'; C.v.r_pil = 'teach'; C.v.r_lvl = (C.d.routine && C.d.routine.status && C.d.routine.status.level) || 2; C.v.r_tp = ''; C.v.r_face = false; C.v.r_on = true; draw(); }
     else if (w === 'redit') {
       if (C.redit === String(id)) { C.redit = ''; draw(); return; }
