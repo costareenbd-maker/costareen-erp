@@ -682,4 +682,80 @@ export async function erpBrandDeskBizSave(ctx, payload) {
   return bridge(ctx, '/businesses', b);
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskSites, erpBrandDeskSitesRun, erpBrandDeskSiteSave, erpBrandDeskBizSave, erpBrandDeskCockpit, erpBrandDeskDraftRepick, erpBrandDeskMediaKeep, erpBrandDeskReels, erpBrandDeskReelScript, erpBrandDeskReelPhoto, erpBrandDeskReelVoice, erpBrandDeskReelEdit, erpBrandDeskReelRender, erpBrandDeskReelDrafts, erpBrandDeskRoutine, erpBrandDeskRoutineSlot, erpBrandDeskRoutineLevel, erpBrandDeskRoutineReset, erpBrandDeskRoutinePlace, erpBrandDeskRoutineFill, erpBrandDeskResults, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskCritiques, erpBrandDeskCritique, erpBrandDeskCritiqueApply, erpBrandDeskLessonSet, erpBrandDeskStudy, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+// brand-30 (owner 14 Nov 2026): ইনবক্স - his PERSONAL channels (email, Telegram, WhatsApp on its own server, Facebook
+// Page + Instagram, YouTube comments from Listen) live in the Mac's bridge, never in any ERP: these calls only carry the
+// page's wishes there. Passwords and tokens pass through to the bridge once and are never kept, logged or sent back
+// (the activity log keeps only the action word and the channel kind).
+const IB_FILTERS = ['all', 'unread', 'email', 'whatsapp', 'telegram', 'facebook', 'instagram', 'comments', 'done'];
+const IB_PLATS = ['', 'facebook', 'instagram', 'youtube'];
+const IB_PRESETS = ['gmail', 'outlook', 'yahoo', 'custom'];
+function ibId(v, what) { const n = parseInt(v, 10); if (!(n > 0) || String(n) !== str(v)) throw new Error((what || 'কথোপকথনটা') + ' খুঁজে পাওয়া গেল না। তালিকাটা নতুন করে আনুন।'); return n; }
+export async function erpBrandDeskInbox(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, f = str(p.f || 'all'), pl = str(p.p);
+  if (!IB_FILTERS.includes(f) || !IB_PLATS.includes(pl)) throw new Error('এই ছাঁকনিটা চেনা নেই। পেজটা নতুন করে আনুন।');
+  const q = new URLSearchParams({ f });
+  if (pl) q.set('p', pl);
+  if (str(p.q)) q.set('q', str(p.q).slice(0, 60));
+  if (str(p.before)) { const d = new Date(str(p.before)); if (isNaN(d)) throw new Error('তালিকাটা নতুন করে আনুন।'); q.set('before', d.toISOString()); }
+  return bridge(ctx, '/inbox?' + q.toString(), undefined, 30000);
+}
+export async function erpBrandDeskThread(ctx, payload) { await gate(ctx); return bridge(ctx, '/inbox/thread', { id: ibId((payload || {}).id) }, 30000); }
+const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+export async function erpBrandDeskReply(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, b = { thread: ibId(p.thread), text: str(p.text).slice(0, 8000) };
+  if (p.photo) {
+    const ph = p.photo || {}, data = str(ph.data);
+    if (!PHOTO_TYPES.includes(str(ph.type))) throw new Error('শুধু JPG, PNG বা WebP ছবি পাঠানো যায়।');
+    if (!/^[A-Za-z0-9+/=]+$/.test(data) || data.length > 8e6) throw new Error('ছবিটা খুব বড় বা পড়া গেল না। অন্য ছবি দিন।');
+    b.photo = { type: str(ph.type), data, name: str(ph.name).slice(0, 80) || 'photo.jpg', thumb: /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(str(ph.thumb)) ? str(ph.thumb).slice(0, 120000) : '' };
+  }
+  if (!b.text && !b.photo) throw new Error('আগে উত্তরটা লিখুন।');
+  return bridge(ctx, '/inbox/reply', b, 90000);
+}
+export async function erpBrandDeskReplyDraft(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {};
+  return bridge(ctx, '/inbox/draft', { thread: ibId(p.thread), ask: str(p.ask).slice(0, 400) }, 120000);
+}
+export async function erpBrandDeskThreadDone(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {};
+  return bridge(ctx, '/inbox/done', { thread: ibId(p.thread), done: p.done !== false });
+}
+export async function erpBrandDeskChannels(ctx) { await gate(ctx); return bridge(ctx, '/inbox/channels', undefined, 30000); }
+export async function erpBrandDeskChannelSave(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, act = str(p.action || 'save');
+  if (act === 'remove') return bridge(ctx, '/inbox/channel', { action: 'remove', id: ibId(p.id, 'চ্যানেলটা') });
+  if (act !== 'save') throw new Error('এই কাজটা চেনা নেই। পেজটা নতুন করে আনুন।');
+  const kind = str(p.kind);
+  if (kind === 'email') {
+    const address = str(p.address).toLowerCase(), preset = str(p.preset || 'gmail');
+    if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(address)) throw new Error('ইমেইল ঠিকানাটা ঠিক নেই।');
+    if (!IB_PRESETS.includes(preset)) throw new Error('ইমেইলের ধরনটা বাছুন।');
+    const b = { action: 'save', kind, address, preset, name: str(p.name).slice(0, 60), from_name: str(p.from_name).slice(0, 80), password: String(p.password == null ? '' : p.password).slice(0, 200) };
+    if (preset === 'custom') {
+      for (const k of ['imap_host', 'smtp_host']) { b[k] = str(p[k]).toLowerCase(); if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(b[k])) throw new Error('IMAP আর SMTP সার্ভারের নাম ঠিক নেই, যেমন imap.example.com'); }
+      for (const k of ['imap_port', 'smtp_port']) { b[k] = parseInt(p[k], 10); if (!(b[k] > 0 && b[k] < 65536)) throw new Error('পোর্ট একটা সংখ্যা হবে, যেমন ৯৯৩ আর ৪৬৫।'); }
+    }
+    return bridge(ctx, '/inbox/channel', b, 60000);
+  }
+  if (kind === 'telegram') {
+    const token = str(p.token).replace(/\s+/g, '');
+    if (!/^\d{5,}:[A-Za-z0-9_-]{30,}$/.test(token)) throw new Error('টোকেনটা ঠিক মনে হচ্ছে না। BotFather যে লম্বা লেখা দেয় (সংখ্যা:অক্ষর), পুরোটা কপি করে বসান।');
+    return bridge(ctx, '/inbox/channel', { action: 'save', kind, token }, 30000);
+  }
+  throw new Error('এই ধরনের চ্যানেল এভাবে যোগ হয় না।');
+}
+export async function erpBrandDeskChannelTest(ctx, payload) { await gate(ctx); return bridge(ctx, '/inbox/channel/test', { id: ibId((payload || {}).id, 'চ্যানেলটা') }, 60000); }
+export async function erpBrandDeskWaQr(ctx) { await gate(ctx); return bridge(ctx, '/inbox/wa/qr', {}, 40000); }
+export async function erpBrandDeskFbConnect(ctx) {
+  await gate(ctx);
+  const r = await bridge(ctx, '/inbox/fb/connect', {});
+  if (!/^https:\/\/www\.facebook\.com\//.test(str(r && r.url))) throw new Error('Facebook-এর লগইন ঠিকানা আসেনি। একটু পরে আবার চেষ্টা করুন।');
+  return { url: r.url, redirect: str(r.redirect) };
+}
+
+export const HANDLERS = { erpBrandDesk, erpBrandDeskInbox, erpBrandDeskThread, erpBrandDeskReply, erpBrandDeskReplyDraft, erpBrandDeskThreadDone, erpBrandDeskChannels, erpBrandDeskChannelSave, erpBrandDeskChannelTest, erpBrandDeskWaQr, erpBrandDeskFbConnect, erpBrandDeskSites, erpBrandDeskSitesRun, erpBrandDeskSiteSave, erpBrandDeskBizSave, erpBrandDeskCockpit, erpBrandDeskDraftRepick, erpBrandDeskMediaKeep, erpBrandDeskReels, erpBrandDeskReelScript, erpBrandDeskReelPhoto, erpBrandDeskReelVoice, erpBrandDeskReelEdit, erpBrandDeskReelRender, erpBrandDeskReelDrafts, erpBrandDeskRoutine, erpBrandDeskRoutineSlot, erpBrandDeskRoutineLevel, erpBrandDeskRoutineReset, erpBrandDeskRoutinePlace, erpBrandDeskRoutineFill, erpBrandDeskResults, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskCritiques, erpBrandDeskCritique, erpBrandDeskCritiqueApply, erpBrandDeskLessonSet, erpBrandDeskStudy, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

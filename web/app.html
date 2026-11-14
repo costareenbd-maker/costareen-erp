@@ -8545,7 +8545,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrandDeskSites|erpBrandDeskCritiques|erpBrandDeskResults|erpBrandDeskCockpit|erpBrandDeskReels|erpBrandDeskRoutine|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrandDeskInbox|erpBrandDeskThread|erpBrandDeskChannels|erpBrandDeskSites|erpBrandDeskCritiques|erpBrandDeskResults|erpBrandDeskCockpit|erpBrandDeskReels|erpBrandDeskRoutine|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 // crit8-nav (10 Nov 2026): these calls only read when they are sent without a change (the list form) and write with one.
 // The same rule as the server's ERP_READ_WHEN (allow.js): the list form runs beside other reads, sends no one-time key
 // and drops no caches; the changing form stays a write. erpTool and erpBrainFact always write (every branch changes data).
@@ -59502,11 +59502,113 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   .sx-acts .bc-btn{flex:1 1 auto}
 }
 
+/* brand-30 (owner 14 Nov 2026): ইনবক্স - his personal channels in one list (bridge only, never an ERP inbox). PC: list left,
+   the open conversation right; phone: list, then the conversation with a back button and the composer at the bottom. */
+.ib-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.ib-bar .bc-pills{flex:0 1 auto}
+.ib-sub{margin:-2px 0 12px}
+.ib-alert{display:flex;gap:10px;align-items:flex-start;border:2px solid var(--bc-alert);border-radius:14px;padding:10px 12px;margin-bottom:14px;font-size:14px}
+.ib-alert b{font-weight:700}
+.ib-alert .bc-sp{flex:1}
+.ib{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);border-top:1px solid var(--bc-rule);min-height:420px}
+.ib-l{border-right:1px solid var(--bc-rule);min-width:0}
+.ib-r{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:2px 10px;align-items:start;width:100%;padding:12px 12px 12px 4px;border-bottom:1px solid var(--bc-rule);min-height:64px;transition:background .15s ease-out}
+.ib-r:hover{background:#F7F8F9}
+.ib-r.on{background:var(--bc-shelf)}
+.ib-r .lg{grid-row:1/3;padding-top:2px}
+.ib-r b{font:600 15px/1.35 "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.ib-r.un b{font-weight:800}
+.ib-r time{font:500 12.5px "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-3);white-space:nowrap;padding-top:2px}
+.ib-r.un time{color:var(--bc-ink);font-weight:700}
+.ib-r p{margin:0;grid-column:2/3;font-size:14px;line-height:1.4;color:var(--bc-ink-2);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+.ib-r p small{color:var(--bc-ink-3);font-size:12.5px}
+.ib-r .dt{grid-column:3;grid-row:2;justify-self:end;align-self:center;width:10px;height:10px;border-radius:50%;background:var(--bc-wait)}
+.ib-more{padding:12px 4px}
+.ib-none{padding:28px 6px;color:var(--bc-ink-2);font-size:14.5px}
+.ib-none b{display:block;font:700 17px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink);margin-bottom:4px}
+.ib-t{min-width:0;display:flex;flex-direction:column}
+.ib-th{display:flex;align-items:center;gap:10px;padding:12px 4px 12px 18px;border-bottom:1px solid var(--bc-rule);flex-wrap:wrap}
+.ib-th .nm{flex:1 1 180px;min-width:0}
+.ib-th .nm b{display:block;font:700 17px/1.3 "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ib-th .nm small{display:block;font-size:13px;color:var(--bc-ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ib-th .ac{display:flex;gap:6px;flex-wrap:wrap}
+.ib-th a.bc-btn{text-decoration:none}
+.ib-ms{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 360px);min-height:220px;background:#FCFCFD}
+.ib-day{align-self:center;font:600 12.5px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-3);background:#fff;border:1px solid var(--bc-rule);border-radius:999px;padding:2px 10px;margin:4px 0}
+.ib-b{max-width:min(78%,560px);display:flex;flex-direction:column;gap:3px}
+.ib-b.in{align-self:flex-start}
+.ib-b.out{align-self:flex-end;align-items:flex-end}
+.ib-b .tx{border-radius:18px;padding:9px 13px;font-size:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;box-sizing:border-box;max-width:100%}
+.ib-b.in .tx{background:var(--bc-shelf);color:var(--bc-ink);border-bottom-left-radius:6px}
+.ib-b.out .tx{background:var(--bc-ink);color:#fff;border-bottom-right-radius:6px}
+.ib-b.fail .tx{background:#FDECEA;color:var(--bc-ink);border:1px solid #F3B8B0}
+.ib-b img{display:block;max-width:240px;max-height:240px;border-radius:14px;border:1px solid var(--bc-rule);object-fit:cover}
+.ib-b .fl{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;background:#fff;border:1px solid var(--bc-rule);border-radius:10px;padding:6px 10px;color:var(--bc-ink-2)}
+.ib-b small{font:500 12px "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-3);padding:0 6px}
+.ib-b .why{font-size:13px;color:var(--bc-alert-ink);display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.ib-cp{border-top:1px solid var(--bc-rule);padding:12px 0 4px 18px;background:#fff}
+.ib-cp .bc-ta{min-height:76px;max-height:240px;resize:vertical}
+.ib-cp .bc-row{justify-content:flex-end;margin-top:8px}
+.ib-ph{display:inline-flex;align-items:center;gap:8px;margin-top:8px;background:var(--bc-shelf);border-radius:12px;padding:6px 6px 6px 6px}
+.ib-ph img{width:52px;height:52px;object-fit:cover;border-radius:8px;display:block}
+.ib-pick{position:relative;overflow:hidden}
+.ib-pick input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.ib-chk{font-size:13.5px;color:#7A5200;background:#FFF4D6;border-radius:10px;padding:7px 11px;margin-top:8px}
+.ib-ro{padding:12px 0 4px 18px;border-top:1px solid var(--bc-rule);font-size:14px;color:var(--bc-ink-2)}
+.ib-empty{display:grid;place-items:center;text-align:center;color:var(--bc-ink-3);font-size:14.5px;padding:40px 20px}
+.ib-empty b{display:block;color:var(--bc-ink);font:700 17px "Noto Sans Bengali",system-ui,sans-serif;margin-bottom:4px}
+/* যুক্ত করুন: one row per channel, its form inline under it */
+.ic{max-width:760px}
+.ic-sec{border-top:2px solid var(--bc-ink);padding:14px 0 6px;margin-top:22px}
+.ic-sec:first-of-type{margin-top:6px}
+.ic-sec>header{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.ic-sec>header h2{margin:0;font:700 17px "Noto Sans Bengali","Pretendard Variable",Pretendard,system-ui,sans-serif}
+.ic-sec>p{margin:0 0 10px;font-size:14px;color:var(--bc-ink-2);max-width:62ch}
+.ic-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--bc-rule);flex-wrap:wrap}
+.ic-row .c{flex:1 1 220px;min-width:0}
+.ic-row .c b{display:block;font:600 15px/1.35 "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ic-row .c small{display:block;font-size:13px;color:var(--bc-ink-3)}
+.ic-row .c small.x{color:var(--bc-alert-ink)}
+.ic-row .a{display:flex;gap:6px;flex-wrap:wrap}
+.ic-row a.bc-btn{text-decoration:none}
+.ic-st{font:700 12.5px "Noto Sans Bengali",system-ui,sans-serif;padding:3px 10px;border-radius:999px;white-space:nowrap;background:#E3F3E9;color:#0E6B33}
+.ic-st.x{background:#FDECEA;color:var(--bc-alert-ink)}
+.ic-st.w{background:#FFF4D6;color:#7A5200}
+.ic-st.o{background:var(--bc-shelf);color:var(--bc-ink-2)}
+.ic-form{background:var(--bc-shelf);border-radius:14px;padding:4px 16px 16px;margin:8px 0 6px}
+.ic-form .bc-in{width:100%;height:44px}
+.ic-two{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:0 10px}
+.ic-steps{margin:10px 0 0;padding-left:20px;font-size:14px;color:var(--bc-ink-2)}
+.ic-steps li{margin:3px 0}
+.ic-steps a{color:var(--bc-ink);text-underline-offset:3px}
+.ic-qr{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;background:var(--bc-shelf);border-radius:14px;padding:16px;margin:8px 0}
+.ic-qr img{width:236px;height:236px;background:#fff;border-radius:10px;padding:8px;box-sizing:content-box;image-rendering:pixelated}
+.ic-qr ol{margin:0;padding-left:20px;font-size:14.5px;line-height:1.6;flex:1 1 220px}
+@container bc (max-width:900px){.ib{grid-template-columns:minmax(240px,300px) minmax(0,1fr)}}
+@container bc (max-width:759px){
+  .ib{display:block;border-top:0}
+  .ib-l{border-right:0;border-top:1px solid var(--bc-rule)}
+  .ib-r{padding:12px 2px;min-height:68px}
+  .ib-th{padding:4px 0 10px;position:sticky;top:0;background:#fff;z-index:2}
+  .ib-ms{max-height:none;min-height:0;padding:14px 0 18px;background:#fff}
+  .ib-b{max-width:86%}
+  .ib-cp{position:sticky;bottom:calc(64px + env(safe-area-inset-bottom));padding:10px 0 10px;z-index:2;box-shadow:0 -8px 16px -12px rgba(22,24,29,.18)}
+  .ib-cp .bc-ta{min-height:56px;max-height:30vh}
+  .ib-cp .bc-btn,.ib-th .bc-btn,.ic .bc-btn{min-height:44px}
+  .ib-cp .bc-row .bc-btn.dark{flex:1 1 auto}
+  .ib-ro{padding-left:0}
+  .ic-two{grid-template-columns:minmax(0,1fr) 92px}
+  .ic-qr img{width:200px;height:200px}
+  .ib-bar .bc-btn{min-height:44px}
+  .ib-bar .bc-pills button,.ib-sub .bc-pills button,.ic-form .bc-pills button{min-height:44px;box-sizing:border-box}
+}
+
 </style>
 
 <script>
 (function () {
   try { ['erpBrandDeskCockpit', 'erpBrandDeskDrafts', 'erpBrandDeskListen', 'erpBrandDeskDraftDecide', 'erpBrandDeskMakeDrafts', 'erpBrandDeskSettings', 'erpBrandDeskBoard', 'erpBrandDeskIdeas', 'erpBrandDeskPeople', 'erpBrandDeskPost', 'erpBrandDeskLint', 'erpBrandDeskCards', 'erpBrandDeskMakeCards'].forEach(function (n) { SRV_SLOW[n] = 45000; });
+    SRV_SLOW.erpBrandDeskInbox = 35000; SRV_SLOW.erpBrandDeskThread = 35000; SRV_SLOW.erpBrandDeskChannels = 35000; SRV_SLOW.erpBrandDeskReply = 95000; SRV_SLOW.erpBrandDeskReplyDraft = 125000; SRV_SLOW.erpBrandDeskChannelSave = 65000; SRV_SLOW.erpBrandDeskChannelTest = 65000; SRV_SLOW.erpBrandDeskWaQr = 45000; SRV_SLOW.erpBrandDeskThreadDone = 30000; SRV_SLOW.erpBrandDeskFbConnect = 30000;
     SRV_SLOW.erpBrandDeskVideos = 60000; SRV_SLOW.erpBrandDeskSites = 45000; SRV_SLOW.erpBrandDeskSiteSave = 45000; SRV_SLOW.erpBrandDeskBizSave = 45000; SRV_SLOW.erpBrandDeskListenPull = 90000; SRV_SLOW.erpBrandDeskListenIdeas = 90000; SRV_SLOW.erpBrandDeskListenPaste = 90000; } catch (e) {}
   var C = { media: {}, ar: {}, mpk: '', exp: {}, edit: {}, sec: 'home', wk: 0, pick: '', node: '', ptab: '', dep: '', d: {}, busy: {}, err: {}, v: {}, acc: {}, open: {}, cards: {}, plats: { linkedin: 1, facebook: 1 }, lf: 'all', lopen: {}, fold: {}, rw: {}, nk: 'customer', paste: false, t: 0 };
   try { var s0 = localStorage.getItem('bc_sec'); if (s0) C.sec = s0; } catch (e) {}
@@ -59569,8 +59671,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function btn(label, data, cls, bk, dis) { var b = bk && C.busy[bk]; return '<button type="button" class="bc-btn' + (cls ? ' ' + cls : '') + '" ' + data + (b || dis ? ' disabled' : '') + '>' + (b ? '<span class="bc-spin"></span>' : '') + label + '</button>'; }
   function inp(key, ph, extra, type) { return '<input class="bc-in" id="bci_' + key + '" data-bcin="' + key + '" type="' + (type || 'text') + '" data-noi18n="1" placeholder="' + esc(ph || '') + '" value="' + esc(v(key)) + '"' + (extra || '') + '>'; }
   function ta(key, ph, dflt, extra) { return '<textarea class="bc-ta" id="bci_' + key + '" data-bcin="' + key + '" data-noi18n="1" placeholder="' + esc(ph || '') + '"' + (extra || '') + '>' + esc(v(key, dflt)) + '</textarea>'; }
-  var SECS = [['home', 'হোম'], ['biz', 'ব্যবসা ও সাইট'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ'], ['routine', 'রুটিন'], ['train', 'লেখার ধরন'], ['linkedin', 'LinkedIn']];
-  var NEED = { biz: ['cockpit', 'sites'], home: ['cockpit', 'drafts', 'settings', 'routine'], posts: ['cockpit', 'drafts', 'settings', 'crit'], ideas: ['drafts', 'memos', 'board', 'settings', 'news', 'reels', 'crit'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen', 'results'], rules: ['settings', 'mlib'], map: ['cockpit'], train: ['styles', 'crit'], linkedin: ['li', 'crit'], routine: ['routine'] };
+  var SECS = [['home', 'হোম'], ['inbox', 'ইনবক্স'], ['biz', 'ব্যবসা ও সাইট'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ'], ['routine', 'রুটিন'], ['train', 'লেখার ধরন'], ['linkedin', 'LinkedIn']];
+  var NEED = { inbox: ['cockpit', 'inbox', 'ichan'], biz: ['cockpit', 'sites'], home: ['cockpit', 'drafts', 'settings', 'routine'], posts: ['cockpit', 'drafts', 'settings', 'crit'], ideas: ['drafts', 'memos', 'board', 'settings', 'news', 'reels', 'crit'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen', 'results'], rules: ['settings', 'mlib'], map: ['cockpit'], train: ['styles', 'crit'], linkedin: ['li', 'crit'], routine: ['routine'] };
   function on() { return typeof VIEW !== 'undefined' && VIEW === 'branddesk' && typeof ME !== 'undefined' && ME && ME.role === 'owner'; }
   function fonts() {
     if (document.getElementById('bc_font')) return;
@@ -59578,13 +59680,13 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     l.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Anek+Bangla:wght@600;700&display=swap'; document.head.appendChild(l);
   }
   // ---------- data: one store, one loader per read; bridge reads wait until the cockpit says the Mac is on
-  var CALL = { sites: 'erpBrandDeskSites', mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', li: 'erpBrandDeskLi', routine: 'erpBrandDeskRoutine', reels: 'erpBrandDeskReels', results: 'erpBrandDeskResults', crit: 'erpBrandDeskCritiques' };
+  var CALL = { inbox: 'erpBrandDeskInbox', ichan: 'erpBrandDeskChannels', sites: 'erpBrandDeskSites', mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', li: 'erpBrandDeskLi', routine: 'erpBrandDeskRoutine', reels: 'erpBrandDeskReels', results: 'erpBrandDeskResults', crit: 'erpBrandDeskCritiques' };
   function ready() { var d = C.d.cockpit; return !!(d && d.online && d.keySet); }
   function get(k, force) {
     if (C.busy['g_' + k] || (C.d[k] && !force)) return;
     if (k !== 'cockpit' && !ready()) return;
     C.busy['g_' + k] = 1;
-    var args = k === 'videos' ? [{ q: C.vq || '' }] : k === 'results' ? [{ days: C.rdays || 30 }] : [];
+    var args = k === 'inbox' ? [{ f: C.ibf || 'all', p: C.ibp || '' }] : k === 'videos' ? [{ q: C.vq || '' }] : k === 'results' ? [{ days: C.rdays || 30 }] : [];
     srv(CALL[k], args, function (r) { C.busy['g_' + k] = 0; C.d[k] = r; C.err[k] = ''; if (k === 'cockpit') C.t = Date.now(); poll(k); draw(); },
       function (e) { C.busy['g_' + k] = 0; C.err[k] = (e && e.message) || String(e); draw(); });
   }
@@ -59594,6 +59696,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     if (k === 'drafts') { var mj = r.mjobs || {}, pk = Object.keys(mj).some(function (x) { return mj[x].state === 'picking'; }); if (C.picking && !pk) { C.media = Object.keys(C.media).reduce(function (a, q) { if (!/^\d+$/.test(q) || (C.keepm || {})[q]) a[q] = C.media[q]; return a; }, {}); } C.picking = pk;
       run = pk || ks.some(function (x) { return jobs[x].state === 'writing' || jobs[x].state === 'researching'; }); }
     if (k === 'listen') run = ks.some(function (x) { return jobs[x].state === 'reading'; });
+    if (k === 'inbox') run = C.sec === 'inbox' && !C.ibAdd;   // brand-30: new messages come in while he looks
     if (k === 'sites') { run = !!(r.job && r.job.state === 'running'); if (run) C.srun = 1; else if (C.srun) { C.srun = 0; toast('পরীক্ষা শেষ হলো।'); } }
     if (k === 'routine') { run = !!(r.fill && r.fill.state === 'writing'); if (run) C.frun = 1; else if (C.frun) { C.frun = 0; get('drafts', true); get('cockpit', true); } }
     if (k === 'reels') run = ks.some(function (x) { return /^(writing|drawing|joining)$/.test(jobs[x].state); });
@@ -59604,7 +59707,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     // brand-27: his critiques are read by the AI one by one (a few seconds each); the study merges them into lessons
     if (k === 'crit') { var stj = ks.filter(function (x) { return jobs[x].state === 'studying'; }).length; run = !!r.replying || !!stj; if (stj) C.lstudy = 1;
       else if (C.lstudy) { C.lstudy = 0; var dj = ks.filter(function (x) { return jobs[x].state === 'done' || jobs[x].state === 'failed'; }).sort().pop(); if (dj && jobs[dj].state === 'done') toast('শেখা হলো' + (jobs[dj].summary_bn ? ': ' + jobs[dj].summary_bn : '।'), false, 9000); } }
-    clearTimeout(POLL[k]); if (run) POLL[k] = setTimeout(function () { if (on()) get(k, true); }, k === 'sites' ? 6000 : k === 'drafts' ? 12000 : k === 'reels' ? 7000 : k === 'crit' ? 8000 : 20000);
+    clearTimeout(POLL[k]); if (run) POLL[k] = setTimeout(function () { if (on()) { get(k, true); if (k === 'inbox' && C.sec === 'inbox') ibRefresh(); } }, k === 'sites' ? 6000 : k === 'drafts' ? 12000 : k === 'reels' ? 7000 : k === 'crit' ? 8000 : 20000);
   }
   function need() { (NEED[C.sec] || []).forEach(function (k) { if (k === 'cockpit' || ready()) get(k); }); }
   function has(k) { return !!C.d[k]; }
@@ -60386,6 +60489,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function railHtml() {
     var n = C.d.cockpit && C.d.cockpit.cockpit ? counts() : null, narrow = narrowNow();
     function badge(id) {
+      if (id === 'inbox') { var ic = ibCounts(); return ic.all ? '<em title="' + bn(ic.all) + 'টা নতুন বার্তা">' + bn(ic.all) + '</em>' : ic.errors ? '<i class="bc-rdot" title="একটা চ্যানেল কাজ করছে না"><span class="bc-vh">একটা চ্যানেল কাজ করছে না</span></i>' : ''; }
       if (id === 'biz' && C.d.sites) { var sdn = (C.d.sites.sites || []).filter(function (q) { return q.up === false; }).length; return sdn ? '<em class="x" title="' + bn(sdn) + 'টা সাইট বন্ধ">' + bn(sdn) + '</em>' : ''; }
       if (!n) return '';
       if (id === 'posts' && (n.waiting || n.stuck.length)) return (n.waiting ? '<em>' + bn(n.waiting) + '</em>' : '') + (n.stuck.length ? '<i class="bc-rdot" title="' + bn(n.stuck.length) + 'টা আটকে"><span class="bc-vh">' + bn(n.stuck.length) + 'টা আটকে</span></i>' : '');
@@ -60395,7 +60499,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     }
     function b(s) { return '<button type="button" data-bc="sec" data-id="' + s[0] + '"' + (C.sec === s[0] ? ' class="on" aria-current="page"' : '') + '>' + svg(s[0]) + '<span>' + s[1] + '</span>' + badge(s[0]) + '</button>'; }
     if (narrow) {
-      var MAIN = ['home', 'posts', 'ideas', 'people'], rest = SECS.filter(function (s) { return MAIN.indexOf(s[0]) < 0; }), inRest = rest.some(function (s) { return s[0] === C.sec; });
+      var MAIN = ['home', 'inbox', 'posts', 'ideas', 'people'], rest = SECS.filter(function (s) { return MAIN.indexOf(s[0]) < 0; }), inRest = rest.some(function (s) { return s[0] === C.sec; });
       return (C.railMore ? '<div class="bc-sheet" role="menu">' + rest.map(b).join('') + '</div>' : '') +
         '<nav class="bc-rail" aria-label="ব্র্যান্ড ডেস্ক">' + SECS.filter(function (s) { return MAIN.indexOf(s[0]) >= 0; }).map(b).join('') +
         '<button type="button" data-bc="railmore" aria-expanded="' + !!C.railMore + '"' + (inRest || C.railMore ? ' class="on"' : '') + '><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>আরও</span>' + (n && n.down.length ? '<i class="bc-rdot" title="' + bn(n.down.length) + 'টা টুল বন্ধ"><span class="bc-vh">' + bn(n.down.length) + 'টা টুল বন্ধ</span></i>' : '') + '</button></nav>';
@@ -61239,6 +61343,286 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       act((w === 'sxdel' ? 'sxd' : 'bzd') + id, w === 'sxdel' ? 'erpBrandDeskSiteSave' : 'erpBrandDeskBizSave', { action: 'remove', id: Number(id) }, function (r) { C.d.sites = r; toast('সরানো হলো।'); }); return;
     }
   });
+
+  // ---------- brand-30: ইনবক্স. His personal channels in one list, from the Mac's bridge only (never an ERP's inbox).
+  // People's own words (names, messages, subjects) are never translated: data-noi18n. The AI only drafts; he sends.
+  NET.whatsapp = ['WhatsApp', '#25D366']; NET.email = ['Email', '#454A55'];
+  LOGO.whatsapp = ['0 0 16 16', 'M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z'];
+  LOGO.email = ['0 0 16 16', 'M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555ZM0 4.697v7.104l5.803-3.558L0 4.697ZM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586l-1.239-.757Zm3.436-.586L16 11.801V4.697l-5.803 3.546Z'];
+  ICO.inbox = '<path d="M3 13l2.5-8h13L21 13v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 13h5l1.5 2.5h5L16 13h5"/>';
+  ICO.back = '<path d="M15 6l-6 6 6 6"/>'; ICO.photo = '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/>';
+  ICO.spark = '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>';
+  ICO.done = '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>';
+  var IB_F = [['all', 'সব'], ['email', 'Email'], ['whatsapp', 'WhatsApp'], ['telegram', 'Telegram'], ['facebook', 'Facebook'], ['instagram', 'Instagram'], ['comments', 'কমেন্ট']];
+  var IB_CP = [['', 'সব'], ['facebook', 'Facebook'], ['instagram', 'Instagram'], ['youtube', 'YouTube']];
+  var IB_ST = { ok: ['চালু', ''], error: ['ভুল', 'x'], waiting: ['বাকি', 'w'], 'new': ['বাকি', 'w'] };
+  var IB_HELP = {
+    gmail: ['Google Account খুলুন: <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer">myaccount.google.com/apppasswords</a> (আগে Security › 2-Step Verification চালু থাকতে হবে)।', 'নাম দিন, যেমন “Brand desk”, তারপর Create চাপুন।', 'যে ১৬ অক্ষরের পাসওয়ার্ড দেখায়, সেটা নিচের ঘরে বসান। আপনার সাধারণ Gmail পাসওয়ার্ড নয়।'],
+    outlook: ['<a href="https://account.microsoft.com/security" target="_blank" rel="noopener noreferrer">account.microsoft.com/security</a> › Advanced security options-এ যান (Two-step verification চালু থাকতে হবে)।', 'App passwords › Create a new app password চাপুন।', 'পাসওয়ার্ডটা নিচে বসান। Microsoft কিছু ব্যক্তিগত Outlook অ্যাকাউন্টে app password আর নেয় না; তখন এখানে “ভুল” দেখাবে।'],
+    yahoo: ['<a href="https://login.yahoo.com/account/security" target="_blank" rel="noopener noreferrer">login.yahoo.com/account/security</a> খুলুন।', 'Generate app password চাপুন, নাম দিন “Brand desk”।', 'যে পাসওয়ার্ড দেয়, সেটা নিচে বসান।'],
+    custom: ['আপনার ইমেইল কোম্পানির IMAP (পড়ার) আর SMTP (পাঠানোর) সার্ভারের নাম আর পোর্ট নিচে দিন।', 'সাধারণত IMAP পোর্ট ৯৯৩ আর SMTP পোর্ট ৪৬৫ বা ৫৮৭।']
+  };
+  C.ibf = 'all'; C.ibp = ''; C.ibOpen = ''; C.ibT = null; C.ibChk = {}; C.ibPh = {}; C.ibAdd = false; C.ibForm = ''; C.ibPre = 'gmail'; C.ibQr = null;
+  function ibWhen(v) {
+    var d = v ? new Date(v) : null; if (!d || isNaN(d)) return '';
+    var now = new Date(), days = Math.floor((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
+    return days <= 0 ? dTime(d) : days === 1 ? 'গতকাল' : days < 7 ? DAY[d.getDay()] + 'বার' : dDate(d);
+  }
+  function ibDay(d) { var now = new Date(), days = Math.floor((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5); return days <= 0 ? 'আজ' : days === 1 ? 'গতকাল' : DAY[d.getDay()] + 'বার, ' + dDate(d); }
+  function ibCounts() { return (C.d.inbox && C.d.inbox.counts) || (C.d.cockpit && C.d.cockpit.cockpit && C.d.cockpit.cockpit.inbox) || {}; }
+  function ibChans() { return (C.d.ichan && C.d.ichan.channels) || []; }
+  function ibEm(n) { return n ? '<em class="w">' + bn(n) + '</em>' : ''; }
+  function ibRow(t) {
+    var un = t.unread > 0, last = (t.dir === 'out' ? '<small>আপনি: </small>' : '') + '<span data-noi18n="1">' + esc(t.last || '') + '</span>';
+    var sub = t.kind === 'comment' ? '<small>কমেন্ট' + (t.subject ? ' · <span data-noi18n="1">' + esc(t.subject) + '</span>' : '') + ' · </small>' : (t.channel === 'email' && t.subject ? '<small data-noi18n="1">' + esc(t.subject) + ' · </small>' : '');
+    return '<button type="button" class="ib-r' + (un ? ' un' : '') + (String(C.ibOpen) === String(t.id) ? ' on' : '') + '" data-bc="ibopen" data-id="' + t.id + '" aria-label="' + esc(t.name) + ', ' + esc(netName(t.channel)) + (un ? ', নতুন বার্তা' : '') + '">' +
+      '<span class="lg">' + logo(t.channel, 20) + '</span><b data-noi18n="1">' + esc(t.name) + '</b><time>' + ibWhen(t.at) + '</time><p>' + sub + last + '</p>' + (un ? '<i class="dt" aria-hidden="true"></i>' : '') + '</button>';
+  }
+  function ibMedia(m) {
+    return (m || []).map(function (x) {
+      if (x.kind === 'image' && x.src && /^data:image\//.test(x.src)) return '<img src="' + esc(x.src) + '" alt="ছবি" loading="lazy">';
+      return '<span class="fl">' + svg('photo') + '<span data-noi18n="1">' + esc(x.name || 'ফাইল') + '</span>' + (x.big ? ' · বড়, app-এ দেখুন' : '') + '</span>';
+    }).join('');
+  }
+  function ibThreadHtml(narrow) {
+    var D = C.ibT;
+    if (!D) return '<div class="ib-t">' + (C.err.ibt ? errCall(C.err.ibt, '<button class="bc-btn" type="button" data-bc="ibopen" data-id="' + esc(C.ibOpen) + '">আবার চেষ্টা করুন</button>') : skel(60) + skel(260)) + '</div>';
+    var T = D.thread, id = T.id, h = '<div class="ib-t" aria-label="কথোপকথন">';
+    var open = T.url ? '<a class="bc-btn ghost sm" href="' + esc(T.url) + '" target="_blank" rel="noopener noreferrer">' + svg('out') + (T.channel === 'youtube' ? 'YouTube-এ খুলুন' : 'app-এ খুলুন') + '</a>' : '';
+    h += '<div class="ib-th">' + (narrow ? '<button type="button" class="bc-btn ghost sm" data-bc="ibback" aria-label="তালিকায় ফিরুন">' + svg('back') + '</button>' : '') + logo(T.channel, 22) +
+      '<div class="nm"><b data-noi18n="1">' + esc(T.name) + '</b><small>' + (T.handle ? '<span data-noi18n="1">' + esc(T.handle) + '</span> · ' : '') + esc(netName(T.channel)) + (T.kind === 'comment' ? ' কমেন্ট' : '') +
+      (T.subject ? ' · <span data-noi18n="1">' + esc(T.subject) + '</span>' : '') + '</small></div><div class="ac">' + open +
+      btn(svg('done') + (T.done ? 'আবার খুলুন' : 'শেষ'), 'data-bc="ibdone" data-id="' + id + '"', 'ghost sm', 'ibdone') + '</div></div>';
+    var M = D.messages || [], lastDay = '';
+    h += '<div class="ib-ms" id="bc_ibms">' + (M.length ? M.map(function (m) {
+      var d = new Date(m.at), dk = isNaN(d) ? '' : d.toDateString(), sep = dk && dk !== lastDay ? '<span class="ib-day">' + ibDay(d) + '</span>' : ''; lastDay = dk || lastDay;
+      var fail = m.status === 'failed', sending = m.status === 'sending';
+      return sep + '<div class="ib-b ' + (m.direction === 'out' ? 'out' : 'in') + (fail ? ' fail' : '') + '">' + ibMedia(m.media) + (m.text ? '<div class="tx" data-noi18n="1">' + esc(m.text) + '</div>' : '') +
+        (fail ? '<div class="why"><span>যায়নি: ' + esc(m.error || 'কারণ জানা নেই') + '</span><button type="button" class="bc-lnk" data-bc="ibretry" data-id="' + m.id + '">আবার লিখুন</button></div>' : '<small>' + (sending ? 'পাঠানো হচ্ছে…' : isNaN(d) ? '' : dTime(d)) + '</small>') + '</div>';
+    }).join('') : '<div class="ib-empty">এখানে এখনো কোনো বার্তা নেই।</div>') + '</div>';
+    var k = 'ibtx_' + id, ph = C.ibPh[id], chk = C.ibChk[id];
+    if (T.can_reply) {
+      h += '<div class="ib-cp"><label class="bc-vh" for="bci_' + k + '">আপনার উত্তর</label>' + ta(k, T.kind === 'comment' ? 'সবার সামনে উত্তর লিখুন…' : 'উত্তর লিখুন…', '', ' rows="3"').replace('class="bc-ta" id', 'class="bc-ta ib-ta" id') +
+        (chk ? '<div class="ib-chk">পাঠানোর আগে দেখুন: ' + esc(chk) + '</div>' : '') +
+        (ph ? '<div class="ib-ph"><img src="' + esc(ph.thumb) + '" alt="বাছাই করা ছবি"><button type="button" class="bc-btn ghost sm" data-bc="ibphx" data-id="' + id + '" aria-label="ছবিটা সরান">' + svg('x') + '</button></div>' : '') +
+        '<div class="bc-row">' + (T.photo ? '<label class="bc-btn ghost ib-pick" title="ছবি দিন">' + svg('photo') + '<span>ছবি</span><input type="file" accept="image/jpeg,image/png,image/webp" data-bcibph="' + id + '" aria-label="ছবি দিন"></label>' : '') +
+        btn(svg('spark') + 'AI দিয়ে উত্তর লিখুন', 'data-bc="ibdraft" data-id="' + id + '"', 'ghost', 'ibd' + id) + '<span class="bc-sp"></span>' +
+        btn(svg('send') + 'পাঠান', 'data-bc="ibsend" data-id="' + id + '"', 'dark ct-send', 'ibs' + id, !String(v(k)).trim() && !ph) + '</div></div>';
+    } else {
+      h += '<div class="ib-ro"><p style="margin:0 0 8px">' + esc(T.why || 'এখান থেকে উত্তর যায় না।') + '</p>' +
+        (T.channel === 'youtube' ? (C.v[k] ? ta(k, '', '', ' rows="3"') + '<div class="bc-row">' + btn(svg('copy') + 'কপি করুন', 'data-bc="ibcopy" data-id="' + id + '"', 'dark') + '</div>' : '') +
+          (chk ? '<div class="ib-chk">দেখে নিন: ' + esc(chk) + '</div>' : '') + '<div class="bc-row">' + btn(svg('spark') + 'AI দিয়ে উত্তর লিখুন', 'data-bc="ibdraft" data-id="' + id + '"', 'ghost', 'ibd' + id) + '</div>'
+          : '<div class="bc-row"><button type="button" class="bc-btn" data-bc="ibadd">যুক্ত করুন</button></div>') + '</div>';
+    }
+    return h + '</div>';
+  }
+  function inboxHtml() {
+    var narrow = narrowNow();
+    if (C.ibAdd) return connectHtml();
+    var h = headHtml('ইনবক্স', '', '<button type="button" class="bc-btn sm" data-bc="ibadd">' + svg('plus') + 'যুক্ত করুন</button>'), g = gate(['inbox'], 90); if (g) return h + g;
+    var D = C.d.inbox, n = D.counts || {}, chans = ibChans(), real = chans.filter(function (c) { return c.kind !== 'youtube'; }), bad = chans.filter(function (c) { return c.state === 'error'; });
+    if (bad.length) h += '<div class="ib-alert" role="status"><div><b>' + bad.map(function (c) { return '<span data-noi18n="1">' + esc(c.name || c.address) + '</span>'; }).join(', ') + ' কাজ করছে না।</b> ' + esc(bad[0].error || '') + '</div><span class="bc-sp"></span><button type="button" class="bc-btn sm" data-bc="ibadd">ঠিক করুন</button></div>';
+    if (!real.length && C.d.ichan && !C.ibNoNag) h += '<div class="bc-wait calm"><p>আপনার কোনো ইমেইল, WhatsApp বা Telegram এখনো যুক্ত হয়নি<small>এখন শুধু YouTube-এর কমেন্ট আসছে। যুক্ত করলে সব বার্তা এখানে এক জায়গায় আসবে।</small></p><span class="bc-sp"></span><button type="button" class="bc-btn dark" data-bc="ibadd">' + svg('plus') + 'যুক্ত করুন</button></div>';
+    if (!(narrow && C.ibOpen)) {
+      h += '<div class="ib-bar"><div class="bc-pills big" role="tablist" aria-label="কোন চ্যানেল">' + IB_F.map(function (f) {
+        var c = f[0] === 'all' ? n.all : f[0] === 'comments' ? n.comments : n[f[0]];
+        return '<button type="button" role="tab" data-bc="ibf" data-id="' + f[0] + '"' + (C.ibf === f[0] ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + (f[0] !== 'all' && f[0] !== 'comments' ? logo(f[0], 15) : '') + f[1] + ibEm(c) + '</button>';
+      }).join('') + '</div></div>';
+      if (C.ibf === 'comments') h += '<div class="ib-sub"><div class="bc-pills" role="tablist" aria-label="কোথাকার কমেন্ট">' + IB_CP.map(function (f) {
+        return '<button type="button" role="tab" data-bc="ibp" data-id="' + f[0] + '"' + (C.ibp === f[0] ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + (f[0] ? logo(f[0], 14) : '') + f[1] + ibEm(f[0] ? n['c_' + f[0]] : 0) + '</button>';
+      }).join('') + '</div></div>';
+    }
+    var L = D.threads || [], list;
+    if (!L.length) {
+      var fname = (IB_F.filter(function (f) { return f[0] === C.ibf; })[0] || ['', ''])[1];
+      var ch = C.ibf !== 'all' && C.ibf !== 'comments' && !chans.some(function (c) { return c.kind === C.ibf; });
+      list = '<div class="ib-none">' + (ch ? '<b>' + esc(fname) + ' যুক্ত নেই</b>যুক্ত করলে এখানে তার বার্তা আসবে।<div class="bc-row"><button type="button" class="bc-btn dark" data-bc="ibadd">' + svg('plus') + esc(fname) + ' যুক্ত করুন</button></div>'
+        : '<b>' + (C.ibf === 'all' ? 'কোনো বার্তা নেই' : 'এখানে কিছু নেই') + '</b>' + (C.ibf === 'all' ? 'নতুন বার্তা এলে এখানে সবার ওপরে আসবে।' : 'শেষ করা কথোপকথন এখানে দেখায় না; নতুন বার্তা এলে আবার উঠে আসে।')) + '</div>';
+    } else list = L.map(ibRow).join('') + (D.more ? '<div class="ib-more">' + btn('আরও দেখুন', 'data-bc="ibmore"', 'ghost', 'ibmore') + '</div>' : '');
+    if (narrow) return h + (C.ibOpen ? ibThreadHtml(true) : '<div class="ib-l">' + list + '</div>');
+    return h + '<div class="ib"><div class="ib-l">' + list + '</div>' + (C.ibOpen ? ibThreadHtml(false) : '<div class="ib-empty"><div><b>একটা কথোপকথন বাছুন</b>বাঁ দিকের তালিকা থেকে যেকোনো একটা খুলুন।</div></div>') + '</div>';
+  }
+  // ---------- যুক্ত করুন: every channel with its state and its form
+  function icState(c) { var s = IB_ST[c.state] || ['বাকি', 'w']; return '<span class="ic-st ' + s[1] + '">' + s[0] + '</span>'; }
+  function icRow(c, extra) {
+    var sub = c.state === 'error' && c.error ? '<small class="x">' + esc(c.error) + '</small>' : c.last_ok ? '<small>শেষ ঠিক ছিল ' + ibWhen(c.last_ok) + '</small>' : '';
+    return '<div class="ic-row">' + logo(c.kind, 20) + '<div class="c"><b data-noi18n="1">' + esc(c.address && c.address !== c.name ? c.name + ' · ' + c.address : c.name || c.address) + '</b>' + sub + '</div>' + icState(c) + '<div class="a">' +
+      (c.kind !== 'youtube' && c.kind !== 'whatsapp' ? btn('পরীক্ষা করুন', 'data-bc="ictest" data-id="' + c.id + '"', 'ghost sm', 'ict' + c.id) : '') + (extra || '') +
+      (c.kind === 'youtube' ? '' : C.icDel === String(c.id) ? btn('নিশ্চিত, সরান', 'data-bc="icdel" data-id="' + c.id + '"', 'red sm', 'icd' + c.id) + '<button type="button" class="bc-btn ghost sm" data-bc="icnodel">থাক</button>' : btn(svg('trash') + 'সরান', 'data-bc="icdel" data-id="' + c.id + '"', 'ghost sm', 'icd' + c.id)) + '</div></div>';
+  }
+  function icField(key, label, ph, type, extra) { return '<label class="bc-lbl" for="bci_' + key + '">' + label + '</label>' + inp(key, ph, (extra || '') + ' autocomplete="off" spellcheck="false"', type); }
+  function icMailForm() {
+    var pre = C.ibPre, steps = IB_HELP[pre] || [];
+    var h = '<div class="ic-form"><div class="bc-h2" style="margin:12px 0 4px"><h2>নতুন ইমেইল</h2></div><div class="bc-pills" role="tablist" aria-label="কোন ইমেইল">' +
+      [['gmail', 'Gmail'], ['outlook', 'Outlook'], ['yahoo', 'Yahoo'], ['custom', 'অন্য']].map(function (p) { return '<button type="button" role="tab" data-bc="icpre" data-id="' + p[0] + '"' + (pre === p[0] ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + p[1] + '</button>'; }).join('') + '</div>' +
+      '<ol class="ic-steps">' + steps.map(function (s) { return '<li>' + s + '</li>'; }).join('') + '</ol>' +
+      icField('icm_addr', 'ইমেইল ঠিকানা', 'you@example.com', 'email', ' inputmode="email"') +
+      icField('icm_pw', pre === 'custom' ? 'পাসওয়ার্ড' : 'App password', '', 'password', ' autocomplete="new-password"');
+    if (pre === 'custom') h += '<div class="ic-two"><div>' + icField('icm_ih', 'IMAP সার্ভার', 'imap.example.com') + '</div><div>' + icField('icm_ip', 'পোর্ট', '993', 'text', ' inputmode="numeric"') + '</div></div>' +
+      '<div class="ic-two"><div>' + icField('icm_sh', 'SMTP সার্ভার', 'smtp.example.com') + '</div><div>' + icField('icm_sp', 'পোর্ট', '465', 'text', ' inputmode="numeric"') + '</div></div>';
+    h += icField('icm_from', 'পাঠানোর নাম', myName()) +
+      '<div class="bc-row">' + btn(svg('check') + 'পরীক্ষা করে যুক্ত করুন', 'data-bc="icmsave"', 'dark', 'icmsave') + '<button type="button" class="bc-btn ghost" data-bc="icform" data-id="">বাতিল</button></div></div>';
+    return h;
+  }
+  function connectHtml() {
+    var h = headHtml('চ্যানেল যুক্ত করুন', '', '<button type="button" class="bc-btn sm" data-bc="ibadd">' + svg('back') + 'ইনবক্সে ফিরুন</button>'), g = gate(['ichan'], 120); if (g) return h + g;
+    var D = C.d.ichan, chans = D.channels || [], rd = D.ready || {}, of = function (k) { return chans.filter(function (c) { return c.kind === k; }); };
+    h += '<div class="ic">';
+    if (!rd.key) h += '<div class="ib-alert"><div><b>Mac-এ গোপন চাবি (INBOX_KEY) নেই।</b> পাসওয়ার্ড বা টোকেন রাখা যাবে না।</div></div>';
+    // email
+    var em = of('email');
+    h += '<section class="ic-sec"><header>' + logo('email', 22) + '<h2>ইমেইল</h2><span class="bc-sp"></span>' + (C.ibForm === 'mail' ? '' : '<button type="button" class="bc-btn sm" data-bc="icform" data-id="mail">' + svg('plus') + 'email যোগ করুন</button>') + '</header>' +
+      '<p>প্রতি মিনিটে নতুন মেইল পড়ে, এখান থেকে উত্তর যায় একই থ্রেডে। নিউজলেটার আর অটো-মেইল আসে না। যত খুশি ঠিকানা যোগ করুন।</p>' +
+      em.map(function (c) { return icRow(c); }).join('') + (C.ibForm === 'mail' ? icMailForm() : !em.length ? '<div class="ic-row"><div class="c"><b>কোনো ইমেইল যুক্ত নেই</b></div><span class="ic-st w">বাকি</span></div>' : '') + '</section>';
+    // telegram
+    var tgc = of('telegram');
+    h += '<section class="ic-sec"><header>' + logo('telegram', 22) + '<h2>Telegram</h2><span class="bc-sp"></span>' + (tgc.length && C.ibForm !== 'tg' ? '<button type="button" class="bc-btn ghost sm" data-bc="icform" data-id="tg">অন্য বট</button>' : '') + '</header>' +
+      '<p>আপনার নিজের নতুন একটা বট। মানুষ বটকে লিখলে বার্তা এখানে আসে, উত্তর যায় বট থেকে। Postiz-এর বট এখানে ব্যবহার হয় না।</p>' + tgc.map(function (c) { return icRow(c); }).join('');
+    if (!tgc.length || C.ibForm === 'tg') h += '<div class="ic-form"><ol class="ic-steps"><li>Telegram-এ <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer">@BotFather</a> খুলুন, <b>/newbot</b> পাঠান।</li><li>বটের নাম দিন, তারপর username দিন (শেষে <b>bot</b> থাকবে, যেমন rahman_desk_bot)।</li><li>BotFather যে লম্বা টোকেন দেয় (সংখ্যা:অক্ষর), পুরোটা কপি করে নিচে বসান।</li></ol>' +
+      icField('ict_tok', 'বটের টোকেন', '123456789:AA…', 'password', ' autocomplete="new-password"') + '<div class="bc-row">' + btn(svg('check') + 'যুক্ত করুন', 'data-bc="ictsave"', 'dark', 'ictsave') + (tgc.length ? '<button type="button" class="bc-btn ghost" data-bc="icform" data-id="">বাতিল</button>' : '') + '</div></div>';
+    h += '</section>';
+    // whatsapp
+    var wa = of('whatsapp')[0], q = C.ibQr;
+    h += '<section class="ic-sec"><header>' + logo('whatsapp', 22) + '<h2>WhatsApp (আপনার নিজের নম্বর)</h2></header><p>আলাদা একটা সার্ভারে চলে, ব্যবসার WhatsApp-এর সাথে কোনো যোগ নেই। গ্রুপ আর স্ট্যাটাস আসে না।</p>';
+    if (wa && wa.state === 'ok') h += icRow({ id: wa.id, kind: 'whatsapp', name: 'WhatsApp', address: wa.address ? '+' + wa.address : '', state: 'ok', last_ok: wa.last_ok });
+    else {
+      if (wa) h += icRow(wa);
+      if (q && q.qr) h += '<div class="ic-qr"><img src="' + esc(q.qr) + '" alt="WhatsApp যুক্ত করার QR কোড"><ol><li>ফোনে WhatsApp খুলুন।</li><li>⋮ বা Settings › <b>Linked devices</b> › <b>Link a device</b>।</li><li>এই QR-এর দিকে ফোন ধরুন। QR কিছুক্ষণ পরপর বদলায়, পাতা নিজে থেকে নতুনটা আনে।</li></ol></div>';
+      else if (q && q.state === 'starting') h += '<div class="ic-qr"><span class="bc-spin" style="color:var(--bc-ink)"></span> QR তৈরি হচ্ছে…</div>';
+      h += '<div class="bc-row">' + btn(q ? svg('reload') + 'নতুন QR' : 'QR দেখান', 'data-bc="icwa"', q ? 'ghost' : 'dark', 'icwa', !rd.wa) + '</div>';
+      if (!rd.wa) h += '<p class="bc-note">Mac-এ ব্যক্তিগত WhatsApp সার্ভারের চাবি নেই।</p>';
+    }
+    h += '</section>';
+    // facebook + instagram
+    var fb = of('facebook'), ig = of('instagram');
+    h += '<section class="ic-sec"><header>' + logo('facebook', 22) + logo('instagram', 22) + '<h2>Facebook Page ও Instagram</h2></header><p>Page “Rahman Najir”-এর মেসেজ আর কমেন্ট, তার সাথে যুক্ত Instagram-এর DM আর কমেন্ট। এক চাপে Facebook-এ অনুমতি দিলেই চালু।</p>' +
+      fb.concat(ig).map(function (c) { return icRow(c); }).join('') +
+      '<div class="bc-row">' + btn(fb.length ? svg('reload') + 'আবার যুক্ত করুন' : 'Facebook যুক্ত করুন', 'data-bc="icfb"', fb.length ? 'ghost' : 'dark', 'icfb', !rd.meta) + '</div>' +
+      (rd.meta ? '<ol class="ic-steps"><li>নতুন ট্যাবে Facebook খুলবে: Page <b>Rahman Najir</b> বাছুন, সব অনুমতিতে হ্যাঁ দিন।</li><li>Instagram-কে আগে professional account করে Page-এর সাথে যুক্ত রাখুন, তাহলে সেটাও আসবে।</li><li>“যুক্ত হলো” দেখলে ট্যাবটা বন্ধ করে এখানে “নতুন করে আনুন” চাপুন।</li></ol>' : '<p class="bc-note">Mac-এ Meta app-এর চাবি নেই।</p>') + '</section>';
+    // youtube + not possible
+    var yt = of('youtube');
+    h += '<section class="ic-sec"><header>' + logo('youtube', 22) + '<h2>YouTube কমেন্ট</h2></header><p>“শোনা” থেকে আসে: অন্যের ভিডিওতে যেখানে মানুষ প্রশ্ন, দাম বা আসল-নকল নিয়ে লেখেন। উত্তর দিতে হয় YouTube-এ; AI লেখাটা বানিয়ে দেয়।</p>' + yt.map(function (c) { return icRow(c); }).join('') + '</section>';
+    h += '<section class="ic-sec"><header><h2>যেগুলো এখানে আনা যায় না</h2></header>' + (D.no_api || []).map(function (x) {
+      return '<div class="ic-row">' + logo(x.kind, 20) + '<div class="c"><b>' + esc(x.name) + '</b><small>' + esc(x.why) + '</small></div><div class="a"><a class="bc-btn sm" href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">' + svg('out') + 'app-এ খুলুন</a></div></div>';
+    }).join('') + '</section></div>';
+    return h;
+  }
+  function ibLoad(force) { C.d.inbox = force ? C.d.inbox : null; C.err.inbox = ''; get('inbox', true); }
+  function ibOpen(id) {
+    C.ibOpen = String(id); C.err.ibt = ''; if (!C.ibT || String(C.ibT.thread.id) !== String(id)) C.ibT = null; draw();
+    srv('erpBrandDeskThread', [{ id: Number(id) }], function (r) {
+      if (String(C.ibOpen) !== String(id)) return;
+      C.ibT = r; if (C.d.inbox) { C.d.inbox.counts = r.counts || C.d.inbox.counts; (C.d.inbox.threads || []).forEach(function (t) { if (String(t.id) === String(id)) t.unread = 0; }); }
+      draw(); ibEnd();
+    }, function (e) { C.err.ibt = (e && e.message) || String(e); draw(); });
+  }
+  function ibEnd() { requestAnimationFrame(function () { var m = el('bc_ibms'); if (m) m.scrollTop = m.scrollHeight; if (narrowNow() && m) { var cp = el('bc_root').querySelector('.ib-cp'); if (cp && C.ibJump) { cp.scrollIntoView({ block: 'end' }); } } C.ibJump = 0; }); }
+  function ibQrPoll() {
+    clearTimeout(C.ibQrT); if (!C.ibQr || C.sec !== 'inbox' || !C.ibAdd) return;
+    C.ibQrT = setTimeout(function () {
+      if (!C.ibQr || !on()) return;
+      srv('erpBrandDeskWaQr', [{}], function (r) { if (!C.ibQr) return; if (r.state === 'open') { C.ibQr = null; toast('WhatsApp যুক্ত হলো।'); C.d.ichan = null; get('ichan', true); } else { C.ibQr = r; ibQrPoll(); } draw(); }, function () { ibQrPoll(); });
+    }, 5000);
+  }
+  document.addEventListener('change', function (e) {
+    var x = e.target, id = x && x.getAttribute && x.getAttribute('data-bcibph'); if (!on() || !id || !x.files || !x.files[0]) return;
+    var f = x.files[0]; if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return toast('শুধু JPG, PNG বা WebP ছবি দিন।', true);
+    var rd = new FileReader();
+    rd.onload = function () {
+      var im = new Image();
+      im.onload = function () {
+        var sc = Math.min(1, 1600 / Math.max(im.naturalWidth, im.naturalHeight)), cv = document.createElement('canvas');
+        cv.width = Math.round(im.naturalWidth * sc); cv.height = Math.round(im.naturalHeight * sc); cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+        var big = cv.toDataURL('image/jpeg', 0.85), sm = document.createElement('canvas'), s2 = 360 / Math.max(cv.width, cv.height);
+        sm.width = Math.round(cv.width * Math.min(1, s2)); sm.height = Math.round(cv.height * Math.min(1, s2)); sm.getContext('2d').drawImage(cv, 0, 0, sm.width, sm.height);
+        C.ibPh[id] = { type: 'image/jpeg', data: big.split(',')[1], name: (f.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg', thumb: sm.toDataURL('image/jpeg', 0.8) }; draw();
+      };
+      im.onerror = function () { toast('এই ছবিটা খোলা যাচ্ছে না। JPG বা PNG দিন।', true); };
+      im.src = rd.result;
+    };
+    rd.readAsDataURL(f);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (!on() || C.sec !== 'inbox') return;
+    var t = e.target;
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && t.classList && t.classList.contains('ib-ta')) { e.preventDefault(); var b = el('bc_root').querySelector('[data-bc="ibsend"]'); if (b && !b.disabled) b.click(); }
+    if (e.key === 'Escape' && C.ibOpen && narrowNow() && !/^(INPUT|TEXTAREA)$/.test(t.tagName)) { C.ibOpen = ''; draw(); }
+  });
+  document.addEventListener('input', function (e) {
+    var x = e.target; if (!on() || !x.getAttribute) return; var k = x.getAttribute('data-bcin') || '';
+    if (k.indexOf('ibtx_') === 0) { var sb = el('bc_root').querySelector('[data-bc="ibsend"]'), id = k.slice(5); if (sb && !C.busy['ibs' + id]) sb.disabled = !x.value.trim() && !C.ibPh[id]; }
+  });
+  document.addEventListener('click', function (e) {
+    if (!on()) return;
+    var t = e.target.closest && e.target.closest('[data-bc]'); if (!t || !el('bc_root') || !el('bc_root').contains(t)) return;
+    var w = t.getAttribute('data-bc'), id = t.getAttribute('data-id') || '';
+    if (!/^(ib|ic)/.test(w)) return;
+    if (w === 'ibf') { C.ibf = id; C.ibp = ''; C.ibOpen = narrowNow() ? '' : C.ibOpen; ibLoad(); draw(); return; }
+    if (w === 'ibp') { C.ibp = id; ibLoad(); draw(); return; }
+    if (w === 'ibopen') { C.ibJump = 1; ibOpen(id); return; }
+    if (w === 'ibback') { C.ibOpen = ''; C.ibT = null; draw(); var r0 = el('bc_root').querySelector('.ib-r.on'); if (r0) r0.focus(); return; }
+    if (w === 'ibmore') {
+      var L = (C.d.inbox && C.d.inbox.threads) || [], last = L[L.length - 1]; if (!last) return;
+      act('ibmore', 'erpBrandDeskInbox', { f: C.ibf, p: C.ibp, before: last.at }, function (r) { C.d.inbox.threads = L.concat(r.threads || []); C.d.inbox.more = r.more; }); return;
+    }
+    if (w === 'ibadd') { C.ibAdd = !C.ibAdd; C.ibForm = ''; C.ibQr = null; if (C.ibAdd) get('ichan', true); draw(); window.scrollTo(0, 0); return; }
+    if (w === 'ibphx') { delete C.ibPh[id]; draw(); return; }
+    if (w === 'ibdraft') {
+      act('ibd' + id, 'erpBrandDeskReplyDraft', { thread: Number(id) }, function (r) { C.v['ibtx_' + id] = r.reply; C.ibChk[id] = r.check || ''; toast('AI খসড়া লিখেছে। দেখে, বদলে, তারপর পাঠান।');
+        setTimeout(function () { var x = el('bci_ibtx_' + id); if (x) { x.focus(); x.style.height = 'auto'; x.style.height = Math.min(240, x.scrollHeight + 2) + 'px'; } }, 30); }); return;
+    }
+    if (w === 'ibcopy') { var tx = String(v('ibtx_' + id)); try { navigator.clipboard.writeText(tx).then(function () { toast('কপি হলো। YouTube-এ গিয়ে বসান।'); }); } catch (er) { toast('কপি করা গেল না। লেখাটা হাতে বেছে নিন।', true); } return; }
+    if (w === 'ibsend') {
+      var text = String(v('ibtx_' + id)).trim(), ph = C.ibPh[id]; if (!text && !ph) return toast('আগে উত্তরটা লিখুন।', true);
+      act('ibs' + id, 'erpBrandDeskReply', { thread: Number(id), text: text, photo: ph || null }, function (r) {
+        C.ibT = r; var lm = (r.messages || []).slice(-1)[0];
+        if (lm && lm.status === 'failed') toast('যায়নি: ' + esc(lm.error || ''), true, 9000); else { C.v['ibtx_' + id] = ''; delete C.ibPh[id]; delete C.ibChk[id]; toast('পাঠানো হলো।'); }
+        get('inbox', true); ibEnd();
+      }); return;
+    }
+    if (w === 'ibretry') { var M = (C.ibT && C.ibT.messages) || [], m = M.filter(function (q) { return String(q.id) === id; })[0]; if (m && C.ibT) { C.v['ibtx_' + C.ibT.thread.id] = m.text; draw(); var x2 = el('bci_ibtx_' + C.ibT.thread.id); if (x2) x2.focus(); } return; }
+    if (w === 'ibdone') {
+      var T = C.ibT && C.ibT.thread; if (!T) return; var nd = !T.done;
+      act('ibdone', 'erpBrandDeskThreadDone', { thread: T.id, done: nd }, function (r) {
+        T.done = nd; if (C.d.inbox) { C.d.inbox.counts = r.counts || C.d.inbox.counts; if (nd) C.d.inbox.threads = (C.d.inbox.threads || []).filter(function (q) { return String(q.id) !== String(T.id); }); }
+        if (nd) { C.ibOpen = ''; C.ibT = null; toast('শেষ হলো। নতুন বার্তা এলে আবার তালিকায় উঠে আসবে।'); } else get('inbox', true);
+      }); return;
+    }
+    // ---- যুক্ত করুন
+    if (w === 'icform') { C.ibForm = id; draw(); setTimeout(function () { var b = el(id === 'mail' ? 'bci_icm_addr' : 'bci_ict_tok'); if (b) b.focus(); }, 30); return; }
+    if (w === 'icpre') { C.ibPre = id; draw(); return; }
+    if (w === 'icnodel') { C.icDel = ''; draw(); return; }
+    if (w === 'icdel') {
+      if (C.icDel !== id) { C.icDel = id; draw(); return; } C.icDel = '';
+      act('icd' + id, 'erpBrandDeskChannelSave', { action: 'remove', id: Number(id) }, function (r) { C.d.ichan = r; toast('সরানো হলো। তার কথোপকথনগুলোও মুছে গেল।'); get('inbox', true); }); return;
+    }
+    if (w === 'ictest') { act('ict' + id, 'erpBrandDeskChannelTest', { id: Number(id) }, function (r) { C.d.ichan = r; toast(esc(r.line || ''), !r.ok, 9000); }); return; }
+    if (w === 'icmsave') {
+      var a = { action: 'save', kind: 'email', preset: C.ibPre, address: String(v('icm_addr')).trim(), password: String(v('icm_pw')), from_name: String(v('icm_from')).trim() };
+      if (C.ibPre === 'custom') { a.imap_host = String(v('icm_ih')).trim(); a.imap_port = String(v('icm_ip') || '993').trim(); a.smtp_host = String(v('icm_sh')).trim(); a.smtp_port = String(v('icm_sp') || '465').trim(); }
+      if (!a.address) return toast('ইমেইল ঠিকানাটা দিন।', true); if (!a.password) return toast('App password-টা দিন।', true);
+      act('icmsave', 'erpBrandDeskChannelSave', a, function (r) { C.d.ichan = r; ['icm_addr', 'icm_pw', 'icm_ih', 'icm_ip', 'icm_sh', 'icm_sp', 'icm_from'].forEach(function (q) { delete C.v[q]; }); C.ibForm = ''; toast('ইমেইল যুক্ত হলো। এক মিনিটের মধ্যে মেইল আসা শুরু হবে।'); setTimeout(function () { get('inbox', true); }, 20000); },
+        function () { C.v.icm_pw = ''; }); return;
+    }
+    if (w === 'ictsave') {
+      var tok = String(v('ict_tok')).trim(); if (!tok) return toast('টোকেনটা বসান।', true);
+      act('ictsave', 'erpBrandDeskChannelSave', { action: 'save', kind: 'telegram', token: tok }, function (r) { C.d.ichan = r; delete C.v.ict_tok; C.ibForm = ''; toast('Telegram বট যুক্ত হলো। কেউ বটকে লিখলে এখানে আসবে।'); }); return;
+    }
+    if (w === 'icwa') { act('icwa', 'erpBrandDeskWaQr', {}, function (r) { if (r.state === 'open') { C.ibQr = null; toast('WhatsApp যুক্ত আছে।'); get('ichan', true); } else { C.ibQr = r; ibQrPoll(); } }); return; }
+    if (w === 'icfb') {
+      var tab = null; try { tab = window.open('', '_blank'); if (tab) tab.document.write('<p style="font:16px system-ui;padding:24px">Facebook খুলছে…</p>'); } catch (er2) { tab = null; }
+      act('icfb', 'erpBrandDeskFbConnect', {}, function (r) { if (tab && !tab.closed) tab.location.href = r.url; else location.href = r.url; toast('Facebook-এ অনুমতি দিন, তারপর এখানে ফিরে “নতুন করে আনুন” চাপুন।', false, 9000); }, function () { if (tab && !tab.closed) tab.close(); }); return;
+    }
+  });
+  // the open conversation refreshes with the list (every 20 s while the inbox is open), without losing what he types
+  function ibRefresh() {
+    var id = C.ibOpen; if (!id || C.busy.ibr) return; C.busy.ibr = 1;
+    srv('erpBrandDeskThread', [{ id: Number(id) }], function (r) {
+      C.busy.ibr = 0; if (String(C.ibOpen) !== String(id) || !C.ibT) return;
+      var a = (C.ibT.messages || []).length, b = (r.messages || []).length, ch = a !== b || JSON.stringify((C.ibT.messages || []).map(function (m) { return m.status; })) !== JSON.stringify((r.messages || []).map(function (m) { return m.status; }));
+      if (ch) { C.ibT = r; draw(); if (b > a) ibEnd(); }
+    }, function () { C.busy.ibr = 0; });
+  }
   function sideHtml(narrow) {
     if (C.sec === 'home') return '';
     if (C.sec === 'posts') return '';
@@ -61248,7 +61632,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function mainHtml(narrow) {
     switch (C.sec) {
       case 'posts': return postsHtml(); case 'ideas': return ideasHtml(); case 'media': return mediaHtml(); case 'listen': return listenHtml();
-      case 'biz': return bizHtml(); case 'people': return peopleHtml(); case 'results': return resultsHtml(); case 'rules': return rulesHtml(); case 'map': return mapPageHtml(); case 'train': return trainHtml(); case 'linkedin': return liHtml(); case 'routine': return routineHtml();
+      case 'inbox': return inboxHtml(); case 'biz': return bizHtml(); case 'people': return peopleHtml(); case 'results': return resultsHtml(); case 'rules': return rulesHtml(); case 'map': return mapPageHtml(); case 'train': return trainHtml(); case 'linkedin': return liHtml(); case 'routine': return routineHtml();
       default: return homeHtml(narrow);
     }
   }

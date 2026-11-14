@@ -10,6 +10,15 @@ const seen = [];
 web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   seen.push({ url, key: opts.headers && opts.headers['X-Bridge-Key'], body: opts.body ? JSON.parse(opts.body) : null });
   if (opts.headers['X-Bridge-Key'] !== KEY) return { status: 401, body: { error: 'wrong key' } };
+  // brand-30: the personal inbox lives in the bridge
+  if (/\/inbox\?/.test(url)) return { body: { threads: [{ id: 7, kind: 'message', name: 'Kim', channel: 'email', last: 'Hello', unread: 1 }], more: false, counts: { all: 1, email: 1 }, f: (url.match(/[?&]f=([a-z]+)/) || [])[1] } };
+  if (url.endsWith('/inbox/thread') || url.endsWith('/inbox/reply')) return { body: { thread: { id: 7, channel: 'email', can_reply: true }, messages: [{ id: 1, direction: 'in', text: 'Hello' }], counts: { all: 0 } } };
+  if (url.endsWith('/inbox/draft')) return { body: { reply: 'Thank you, Kim.', check: 'দাম দেখুন' } };
+  if (url.endsWith('/inbox/done')) return { body: { ok: true, counts: { all: 0 } } };
+  if (url.endsWith('/inbox/channels') || url.endsWith('/inbox/channel')) { const b = opts.body ? JSON.parse(opts.body) : {}; if (b.kind === 'email' && b.password === 'wrong-pass') return { status: 400, body: { error: 'ইমেইল সার্ভার পাসওয়ার্ড নিল না।' } }; return { body: { channels: [{ id: 2, kind: 'email', address: 'me@example.com', state: 'ok' }], no_api: [], ready: { key: true } } }; }
+  if (url.endsWith('/inbox/channel/test')) return { body: { ok: false, line: 'সার্ভার পাওয়া গেল না।', channels: [] } };
+  if (url.endsWith('/inbox/wa/qr')) return { body: { state: 'qr', qr: 'data:image/png;base64,AAAA' } };
+  if (url.endsWith('/inbox/fb/connect')) return { body: { url: 'https://www.facebook.com/v21.0/dialog/oauth?client_id=1&state=n', redirect: 'https://social.example.com/__brand-bridge/inbox/meta/callback' } };
   if (url.endsWith('/today')) return { body: { pacer: { lines: { linkedin: { waiting: 1 } } }, posts: { posts: [] }, networks: [{ id: 'n1', platform: 'linkedin', name: 'Rahman' }] } };
   if (url.endsWith('/post')) return { body: { queued: ['a', 'b'] } };
   if (/\/media\/library(\?q=.*)?$/.test(url)) return { body: { items: [{ id: '5d23777f-eda4-40ef-9b8d-8065d7a9a896', type: 'image', name: 'a.jpg', thumb: 'data:image/webp;base64,AAAA' }], q: '' } };
@@ -464,6 +473,64 @@ for (const n of ['erpBrandDeskSites', 'erpBrandDeskSitesRun', 'erpBrandDeskSiteS
 }
 const salesAfter = await sql`select count(*)::int as n from invoices`;
 check('the websites page touches no ERP data', salesAfter[0].n === salesBefore[0].n, { salesBefore, salesAfter });
+
+// 4h. brand-30: the personal inbox (bridge only; nothing written to the ERP but the activity word; secrets pass through)
+const sysBefore = await sql`select (select count(*)::int from business_config) as c`;
+r = await owner('erpBrandDeskInbox', [{ f: 'email' }]);
+check('the inbox list is read from the bridge with its filter', r.ok && r.result.threads[0].name === 'Kim' && r.result.f === 'email', r);
+r = await owner('erpBrandDeskInbox', [{ f: 'spam' }]);
+check('an unknown filter is refused', !r.ok, r);
+r = await owner('erpBrandDeskInbox', [{ f: 'comments', p: 'tiktok' }]);
+check('an unknown comment platform is refused', !r.ok, r);
+r = await owner('erpBrandDeskThread', [{ id: 7 }]);
+check('a thread opens through the bridge', r.ok && r.result.messages.length === 1 && seen.filter((x) => x.url.endsWith('/inbox/thread')).pop().body.id === 7, r);
+r = await owner('erpBrandDeskThread', [{ id: '7; drop' }]);
+check('a strange thread id is refused', !r.ok, r);
+r = await owner('erpBrandDeskReply', [{ thread: 7, text: '' }]);
+check('an empty reply is refused', !r.ok, r);
+r = await owner('erpBrandDeskReply', [{ thread: 7, text: 'Thanks', photo: { type: 'image/gif', data: 'AAAA' } }]);
+check('a GIF photo is refused', !r.ok, r);
+r = await owner('erpBrandDeskReply', [{ thread: 7, text: 'Thanks', photo: { type: 'image/jpeg', data: 'AAAA', name: 'a.jpg', thumb: 'javascript:x' } }]);
+const rp = seen.filter((x) => x.url.endsWith('/inbox/reply')).pop();
+check('a reply with a photo goes to the bridge, a bad thumb is dropped', r.ok && rp.body.photo.data === 'AAAA' && rp.body.photo.thumb === '' && rp.body.text === 'Thanks', rp);
+const repliesBefore = seen.filter((x) => x.url.endsWith('/inbox/reply')).length;
+r = await owner('erpBrandDeskReplyDraft', [{ thread: 7 }]);
+check('the AI draft comes back to the box, nothing is sent', r.ok && r.result.reply === 'Thank you, Kim.' && seen.filter((x) => x.url.endsWith('/inbox/reply')).length === repliesBefore, r);
+r = await owner('erpBrandDeskThreadDone', [{ thread: 7 }]);
+check('mark done goes to the bridge', r.ok && seen.filter((x) => x.url.endsWith('/inbox/done')).pop().body.done === true, r);
+r = await owner('erpBrandDeskChannels', []);
+check('the channels list comes back', r.ok && r.result.channels[0].kind === 'email', r);
+r = await owner('erpBrandDeskChannelSave', [{ kind: 'email', address: 'not-an-email', password: 'x' }]);
+check('a wrong email address is refused', !r.ok, r);
+r = await owner('erpBrandDeskChannelSave', [{ kind: 'email', address: 'me@example.com', preset: 'custom', imap_host: 'bad host', smtp_host: 'smtp.example.com', imap_port: 993, smtp_port: 465, password: 'x' }]);
+check('a custom host that is not a host name is refused', !r.ok, r);
+r = await owner('erpBrandDeskChannelSave', [{ kind: 'email', address: 'me@example.com', preset: 'gmail', password: 'wrong-pass' }]);
+check('a password the mail server refuses comes back as a plain Bangla line', !r.ok && /পাসওয়ার্ড/.test(r.error), r);
+r = await owner('erpBrandDeskChannelSave', [{ kind: 'email', address: 'Me@Example.com', preset: 'gmail', password: 'abcd efgh ijkl mnop' }]);
+const cs = seen.filter((x) => x.url.endsWith('/inbox/channel')).pop();
+check('an email channel goes to the bridge with its password once', r.ok && cs.body.address === 'me@example.com' && cs.body.password === 'abcd efgh ijkl mnop' && !JSON.stringify(r.result).includes('abcd efgh'), cs);
+const act = await sql`select action, detail from erp_activity where action = 'erpBrandDeskChannelSave' order by at desc limit 3`;
+check('the activity log never holds the password', act.length > 0 && act.every((x) => !String(x.detail || '').includes('abcd')), act);
+r = await owner('erpBrandDeskChannelSave', [{ kind: 'telegram', token: 'POSTIZ_TOKEN' }]);
+check('a token that is not a bot token is refused', !r.ok, r);
+r = await owner('erpBrandDeskChannelSave', [{ kind: 'telegram', token: '1234567:' + 'A'.repeat(35) }]);
+check('a Telegram bot token goes to the bridge', r.ok && seen.filter((x) => x.url.endsWith('/inbox/channel')).pop().body.kind === 'telegram', r);
+r = await owner('erpBrandDeskChannelSave', [{ kind: 'whatsapp' }]);
+check('WhatsApp is not added by a form (it is the QR)', !r.ok, r);
+r = await owner('erpBrandDeskChannelSave', [{ action: 'remove', id: 2 }]);
+check('a channel is removed by id', r.ok && seen.filter((x) => x.url.endsWith('/inbox/channel')).pop().body.action === 'remove', r);
+r = await owner('erpBrandDeskChannelTest', [{ id: 2 }]);
+check('a channel test answers with its plain line', r.ok && r.result.ok === false && !!r.result.line, r);
+r = await owner('erpBrandDeskWaQr', []);
+check('the WhatsApp QR comes from the bridge', r.ok && r.result.qr.indexOf('data:image/png') === 0, r);
+r = await owner('erpBrandDeskFbConnect', []);
+check('Facebook connect gives the Facebook login address', r.ok && /^https:\/\/www\.facebook\.com\//.test(r.result.url), r);
+for (const n of ['erpBrandDeskInbox', 'erpBrandDeskThread', 'erpBrandDeskReply', 'erpBrandDeskReplyDraft', 'erpBrandDeskThreadDone', 'erpBrandDeskChannels', 'erpBrandDeskChannelSave', 'erpBrandDeskChannelTest', 'erpBrandDeskWaQr', 'erpBrandDeskFbConnect']) {
+  r = await mgr(n, [{ id: 7, thread: 7, text: 'x', kind: 'telegram', token: '1234567:' + 'A'.repeat(35) }]);
+  check('staff cannot use ' + n, !r.ok, r);
+}
+const sysAfter = await sql`select (select count(*)::int from business_config) as c`;
+check('the inbox keeps nothing in the ERP settings', sysAfter[0].c === sysBefore[0].c, { sysBefore, sysAfter });
 
 // 5. the PC goes quiet: closed after 3 minutes
 await sql`update business_config set value = ${JSON.stringify({ url: URL, seen: new Date(Date.now() - 4 * 60e3).toISOString() })} where business_id = ${B} and key = 'brand_bridge'`;
