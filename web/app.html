@@ -59435,7 +59435,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
    doors to each business's ERP. Flat rows on rules, colour only for alive / down / needs work. */
 .sx-lede{margin:-6px 0 18px;font-size:15px}
 .sx-lede small{display:block;color:var(--bc-ink-3);font-size:13px;margin-top:2px}
-.sx-sites{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:0 28px;border-top:1px solid var(--bc-rule)}
+.sx-sites{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px;border-top:1px solid var(--bc-rule)}
 .sx-site{padding:16px 0 18px;border-bottom:1px solid var(--bc-rule);min-width:0}
 .sx-top{display:flex;align-items:center;gap:10px;min-width:0}
 .sx-top h3{margin:0;font:700 17px/1.25 "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -59472,6 +59472,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
 .sx-top3 li b{font-weight:600}
 .sx-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;align-items:center}
 .sx-acts a.bc-btn{text-decoration:none}
+.bc .sx a.bc-btn,.bc .sx a.bc-btn:visited,.bc .sx a.bc-btn:hover{color:var(--bc-ink)}
+.bc .sx a.bc-btn.dark,.bc .sx a.bc-btn.dark:visited,.bc .sx a.bc-btn.dark:hover{color:#fff}
 .sx-ed{display:flex;gap:2px;margin-left:auto}
 .sx-ed .bc-btn{width:36px;padding:0}
 .sx-biz{border-top:1px solid var(--bc-rule)}
@@ -61127,7 +61129,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     if (st === 'ok' && v.week === 0 && !v.prev_week) return '<div class="sx-nov">ভিজিটর গোনা শুরু হয়নি: সাইটে tracker বসানো বাকি।</div>';
     if (st !== 'ok') {
       var why = st === 'no_site' ? 'Umami-তে সাইটটা এখনো যোগ হয়নি' : st === 'error' || st === 'no_answer' ? 'Umami এবার সাড়া দেয়নি' : 'Umami-র লগইন Mac-এ বসানো বাকি';
-      return '<div class="sx-vis"><div class="sx-big none"><b>—</b><span>আজকের ভিজিটর</span></div><div class="sx-wk">' + why + '</div></div>';
+      return '<div class="sx-nov">ভিজিটর গোনা শুরু হয়নি: ' + why + '।</div>';
     }
     var h = '<div class="sx-vis"><div class="sx-big"><b>' + (v.today == null ? '—' : bnN(v.today)) + '</b><span>আজকের ভিজিটর</span></div>' +
       '<div class="sx-wk"><span>গতকাল <b>' + (v.yesterday == null ? '—' : bnN(v.yesterday)) + '</b></span><span>৭ দিনে <b>' + (v.week == null ? '—' : bnN(v.week)) + '</b> ' + sxChange(v.week, v.prev_week) + '</span></div></div>';
