@@ -61510,6 +61510,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     }).join('') + '</section></div>';
     return h;
   }
+  // the chosen filter stays in sight in the sideways pill row on the phone
+  function ibPillView() { requestAnimationFrame(function () { [].forEach.call(el('bc_root').querySelectorAll('.bx-bar .on, .bx-sub .on'), function (x) { var r = x.parentNode; r.scrollLeft = x.offsetLeft - (r.clientWidth - x.offsetWidth) / 2; }); }); }
   function ibLoad(force) { C.d.inbox = force ? C.d.inbox : null; C.err.inbox = ''; get('inbox', true); }
   function ibOpen(id) {
     C.ibOpen = String(id); C.err.ibt = ''; if (!C.ibT || String(C.ibT.thread.id) !== String(id)) C.ibT = null; draw();
@@ -61560,8 +61562,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     var t = e.target.closest && e.target.closest('[data-bc]'); if (!t || !el('bc_root') || !el('bc_root').contains(t)) return;
     var w = t.getAttribute('data-bc'), id = t.getAttribute('data-id') || '';
     if (!/^(ib|ic)/.test(w)) return;
-    if (w === 'ibf') { C.ibf = id; C.ibp = ''; C.ibOpen = narrowNow() ? '' : C.ibOpen; ibLoad(); draw(); return; }
-    if (w === 'ibp') { C.ibp = id; ibLoad(); draw(); return; }
+    if (w === 'ibf') { C.ibf = id; C.ibp = ''; C.ibOpen = narrowNow() ? '' : C.ibOpen; ibLoad(); draw(); ibPillView(); return; }
+    if (w === 'ibp') { C.ibp = id; ibLoad(); draw(); ibPillView(); return; }
     if (w === 'ibopen') { C.ibJump = 1; ibOpen(id); return; }
     if (w === 'ibback') { C.ibOpen = ''; C.ibT = null; draw(); var r0 = el('bc_root').querySelector('.bx-r.on'); if (r0) r0.focus(); return; }
     if (w === 'ibmore') {
@@ -61605,11 +61607,11 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       if (C.ibPre === 'custom') { a.imap_host = String(v('icm_ih')).trim(); a.imap_port = String(v('icm_ip') || '993').trim(); a.smtp_host = String(v('icm_sh')).trim(); a.smtp_port = String(v('icm_sp') || '465').trim(); }
       if (!a.address) return toast('ইমেইল ঠিকানাটা দিন।', true); if (!a.password) return toast('App password-টা দিন।', true);
       act('icmsave', 'erpBrandDeskChannelSave', a, function (r) { C.d.ichan = r; ['icm_addr', 'icm_pw', 'icm_ih', 'icm_ip', 'icm_sh', 'icm_sp', 'icm_from'].forEach(function (q) { delete C.v[q]; }); C.ibForm = ''; toast('ইমেইল যুক্ত হলো। এক মিনিটের মধ্যে মেইল আসা শুরু হবে।'); setTimeout(function () { get('inbox', true); }, 20000); },
-        function (e) { C.v.icm_pw = ''; C.icErr = { k: 'mail', t: (e && e.message) || String(e) }; }); C.icErr = null; return;
+        function (e) { C.v.icm_pw = ''; C.icErr = { k: 'mail', t: (e && e.message) || String(e) }; var tt = el('toast'); if (tt) tt.className = ''; }); C.icErr = null; return;
     }
     if (w === 'ictsave') {
       var tok = String(v('ict_tok')).trim(); if (!tok) return toast('টোকেনটা বসান।', true);
-      act('ictsave', 'erpBrandDeskChannelSave', { action: 'save', kind: 'telegram', token: tok }, function (r) { C.d.ichan = r; delete C.v.ict_tok; C.ibForm = ''; toast('Telegram বট যুক্ত হলো। কেউ বটকে লিখলে এখানে আসবে।'); }, function (e) { C.icErr = { k: 'tg', t: (e && e.message) || String(e) }; }); C.icErr = null; return;
+      act('ictsave', 'erpBrandDeskChannelSave', { action: 'save', kind: 'telegram', token: tok }, function (r) { C.d.ichan = r; delete C.v.ict_tok; C.ibForm = ''; toast('Telegram বট যুক্ত হলো। কেউ বটকে লিখলে এখানে আসবে।'); }, function (e) { C.icErr = { k: 'tg', t: (e && e.message) || String(e) }; var tt = el('toast'); if (tt) tt.className = ''; }); C.icErr = null; return;
     }
     if (w === 'icwa') { act('icwa', 'erpBrandDeskWaQr', {}, function (r) { if (r.state === 'open') { C.ibQr = null; toast('WhatsApp যুক্ত আছে।'); get('ichan', true); } else { C.ibQr = r; ibQrPoll(); } }); return; }
     if (w === 'icfb') {
