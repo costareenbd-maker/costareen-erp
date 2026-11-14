@@ -697,10 +697,19 @@ export async function erpBrandDeskInbox(ctx, payload) {
   const q = new URLSearchParams({ f });
   if (pl) q.set('p', pl);
   if (str(p.q)) q.set('q', str(p.q).slice(0, 60));
+  // brand-31: Unread / Done work together with the channel filter
+  if (str(p.s)) { if (!['unread', 'done'].includes(str(p.s))) throw new Error('এই ছাঁকনিটা চেনা নেই। পেজটা নতুন করে আনুন।'); q.set('s', str(p.s)); }
   if (str(p.before)) { const d = new Date(str(p.before)); if (isNaN(d)) throw new Error('তালিকাটা নতুন করে আনুন।'); q.set('before', d.toISOString()); }
   return bridge(ctx, '/inbox?' + q.toString(), undefined, 30000);
 }
-export async function erpBrandDeskThread(ctx, payload) { await gate(ctx); return bridge(ctx, '/inbox/thread', { id: ibId((payload || {}).id) }, 30000); }
+export async function erpBrandDeskThread(ctx, payload) {
+  await gate(ctx);
+  // brand-31: `before` = the oldest message he has (older page of 40); `sig` = what he sees now (an unchanged thread answers {same})
+  const p = payload || {}, b = { id: ibId(p.id) };
+  if (p.before != null && p.before !== '') b.before = ibId(p.before, 'বার্তাটা');
+  if (/^[0-9a-f]{16}$/.test(str(p.sig))) b.sig = str(p.sig);
+  return bridge(ctx, '/inbox/thread', b, 30000);
+}
 const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 export async function erpBrandDeskReply(ctx, payload) {
   await gate(ctx);
@@ -717,8 +726,31 @@ export async function erpBrandDeskReply(ctx, payload) {
 export async function erpBrandDeskReplyDraft(ctx, payload) {
   await gate(ctx);
   const p = payload || {};
-  return bridge(ctx, '/inbox/draft', { thread: ibId(p.thread), ask: str(p.ask).slice(0, 400) }, 120000);
+  return bridge(ctx, '/inbox/draft', { thread: ibId(p.thread), ask: str(p.ask).slice(0, 400), base: str(p.base).slice(0, 4000) }, 120000);
 }
+// brand-31: a short Bangla summary of one conversation (AI reads, nothing is sent or kept)
+export async function erpBrandDeskThreadSummary(ctx, payload) { await gate(ctx); return bridge(ctx, '/inbox/summary', { thread: ibId((payload || {}).thread) }, 120000); }
+// brand-31: his private note and his own name for a person (kept in the bridge only)
+export async function erpBrandDeskContact(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {};
+  return bridge(ctx, '/inbox/contact', { thread: ibId(p.thread), note: str(p.note).slice(0, 2000), name: str(p.name).slice(0, 120) });
+}
+// brand-31: his saved replies (title + text), inserted into the reply box by the page
+export async function erpBrandDeskSaved(ctx) { await gate(ctx); return bridge(ctx, '/inbox/saved', undefined, 30000); }
+export async function erpBrandDeskSavedSave(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {}, act = str(p.action || 'save');
+  if (!['save', 'remove'].includes(act)) throw new Error('এই কাজটা চেনা নেই। পেজটা নতুন করে আনুন।');
+  const b = { action: act };
+  if (p.id != null && p.id !== '') b.id = ibId(p.id, 'উত্তরটা');
+  if (act === 'remove') { if (!b.id) throw new Error('কোনটা, বাছুন।'); return bridge(ctx, '/inbox/saved', b); }
+  b.title = str(p.title).slice(0, 60); b.body = str(p.body).slice(0, 4000);
+  if (!b.body) throw new Error('উত্তরের লেখাটা দিন।');
+  return bridge(ctx, '/inbox/saved', b);
+}
+// brand-31: a WhatsApp voice note that is not in the desk yet, fetched from his WhatsApp server to play
+export async function erpBrandDeskAudio(ctx, payload) { await gate(ctx); return bridge(ctx, '/inbox/audio', { id: ibId((payload || {}).id, 'ভয়েসটা') }, 60000); }
 export async function erpBrandDeskThreadDone(ctx, payload) {
   await gate(ctx);
   const p = payload || {};
@@ -758,4 +790,4 @@ export async function erpBrandDeskFbConnect(ctx) {
   return { url: r.url, redirect: str(r.redirect) };
 }
 
-export const HANDLERS = { erpBrandDesk, erpBrandDeskInbox, erpBrandDeskThread, erpBrandDeskReply, erpBrandDeskReplyDraft, erpBrandDeskThreadDone, erpBrandDeskChannels, erpBrandDeskChannelSave, erpBrandDeskChannelTest, erpBrandDeskWaQr, erpBrandDeskFbConnect, erpBrandDeskSites, erpBrandDeskSitesRun, erpBrandDeskSiteSave, erpBrandDeskBizSave, erpBrandDeskCockpit, erpBrandDeskDraftRepick, erpBrandDeskMediaKeep, erpBrandDeskReels, erpBrandDeskReelScript, erpBrandDeskReelPhoto, erpBrandDeskReelVoice, erpBrandDeskReelEdit, erpBrandDeskReelRender, erpBrandDeskReelDrafts, erpBrandDeskRoutine, erpBrandDeskRoutineSlot, erpBrandDeskRoutineLevel, erpBrandDeskRoutineReset, erpBrandDeskRoutinePlace, erpBrandDeskRoutineFill, erpBrandDeskResults, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskCritiques, erpBrandDeskCritique, erpBrandDeskCritiqueApply, erpBrandDeskLessonSet, erpBrandDeskStudy, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };
+export const HANDLERS = { erpBrandDesk, erpBrandDeskInbox, erpBrandDeskThread, erpBrandDeskThreadSummary, erpBrandDeskContact, erpBrandDeskSaved, erpBrandDeskSavedSave, erpBrandDeskAudio, erpBrandDeskReply, erpBrandDeskReplyDraft, erpBrandDeskThreadDone, erpBrandDeskChannels, erpBrandDeskChannelSave, erpBrandDeskChannelTest, erpBrandDeskWaQr, erpBrandDeskFbConnect, erpBrandDeskSites, erpBrandDeskSitesRun, erpBrandDeskSiteSave, erpBrandDeskBizSave, erpBrandDeskCockpit, erpBrandDeskDraftRepick, erpBrandDeskMediaKeep, erpBrandDeskReels, erpBrandDeskReelScript, erpBrandDeskReelPhoto, erpBrandDeskReelVoice, erpBrandDeskReelEdit, erpBrandDeskReelRender, erpBrandDeskReelDrafts, erpBrandDeskRoutine, erpBrandDeskRoutineSlot, erpBrandDeskRoutineLevel, erpBrandDeskRoutineReset, erpBrandDeskRoutinePlace, erpBrandDeskRoutineFill, erpBrandDeskResults, erpBrandDeskStyles, erpBrandDeskStyleAdd, erpBrandDeskStyleSet, erpBrandDeskStyleCreator, erpBrandDeskStyleScout, erpBrandDeskLi, erpBrandDeskLiAdd, erpBrandDeskLiMark, erpBrandDeskLiKill, erpBrandDeskLiPull, erpBrandDeskCritiques, erpBrandDeskCritique, erpBrandDeskCritiqueApply, erpBrandDeskLessonSet, erpBrandDeskStudy, erpBrandDeskUpload, erpBrandDeskIdeaPost, erpBrandDeskMedia, erpBrandDeskNews, erpBrandDeskNewsRun, erpBrandDeskNewsMake, erpBrandDeskAttach, erpBrandDeskListen, erpBrandDeskListenPull, erpBrandDeskListenPaste, erpBrandDeskListenIdeas, erpBrandDeskListenChannel, erpBrandDeskListenToLead, erpBrandDeskMakeCards, erpBrandDeskCards, erpBrandDeskDrafts, erpBrandDeskMakeDrafts, erpBrandDeskDraftDecide, erpBrandDeskSettings, erpBrandDeskWeights, erpBrandDeskCadence, erpBrandDeskLint, erpBrandDeskShorts, erpBrandDeskMakeShorts, erpBrandDeskVideos, erpBrandDeskPeople, erpBrandDeskPerson, erpBrandDeskToLeads, erpBrandDeskAddLead, erpBrandDeskIdeas, erpBrandDeskNotes, erpBrandDeskIdea, erpBrandDeskIdeaToBoard, erpBrandDeskBoard, erpBrandDeskCard, erpBrandDeskMove, erpBrandDeskDone, erpBrandDeskPost, erpBrandDeskDecide, erpBrandDeskSetup, erpBrandDeskHello };

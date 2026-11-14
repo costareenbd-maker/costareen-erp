@@ -15,6 +15,11 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (url.endsWith('/inbox/thread') || url.endsWith('/inbox/reply')) return { body: { thread: { id: 7, channel: 'email', can_reply: true }, messages: [{ id: 1, direction: 'in', text: 'Hello' }], counts: { all: 0 } } };
   if (url.endsWith('/inbox/draft')) return { body: { reply: 'Thank you, Kim.', check: 'দাম দেখুন' } };
   if (url.endsWith('/inbox/done')) return { body: { ok: true, counts: { all: 0 } } };
+  // brand-31
+  if (url.endsWith('/inbox/summary')) return { body: { summary: 'দাম জানতে চেয়েছেন।', next: '' } };
+  if (url.endsWith('/inbox/contact')) return { body: { thread: { id: 7, channel: 'email', name: 'Kim Lee', note: 'Seoul shop' }, messages: [], counts: {} } };
+  if (url.endsWith('/inbox/saved')) return { body: { saved: [{ id: 1, title: 'Price', body: 'Our price list…' }] } };
+  if (url.endsWith('/inbox/audio')) return { body: { id: 3, src: 'data:audio/ogg;base64,T2dn' } };
   if (url.endsWith('/inbox/channels') || url.endsWith('/inbox/channel')) { const b = opts.body ? JSON.parse(opts.body) : {}; if (b.kind === 'email' && b.password === 'wrong-pass') return { status: 400, body: { error: 'ইমেইল সার্ভার পাসওয়ার্ড নিল না।' } }; return { body: { channels: [{ id: 2, kind: 'email', address: 'me@example.com', state: 'ok' }], no_api: [], ready: { key: true } } }; }
   if (url.endsWith('/inbox/channel/test')) return { body: { ok: false, line: 'সার্ভার পাওয়া গেল না।', channels: [] } };
   if (url.endsWith('/inbox/wa/qr')) return { body: { state: 'qr', qr: 'data:image/png;base64,AAAA' } };
@@ -496,6 +501,37 @@ check('a reply with a photo goes to the bridge, a bad thumb is dropped', r.ok &&
 const repliesBefore = seen.filter((x) => x.url.endsWith('/inbox/reply')).length;
 r = await owner('erpBrandDeskReplyDraft', [{ thread: 7 }]);
 check('the AI draft comes back to the box, nothing is sent', r.ok && r.result.reply === 'Thank you, Kim.' && seen.filter((x) => x.url.endsWith('/inbox/reply')).length === repliesBefore, r);
+// brand-31: Unread/Done with a channel, search, older page, fingerprint, summary, contact card, saved replies, voice
+r = await owner('erpBrandDeskInbox', [{ f: 'whatsapp', s: 'unread', q: 'kim' }]);
+const il = seen.filter((x) => /\/inbox\?/.test(x.url)).pop().url;
+check('Unread works with a channel and a search', r.ok && /f=whatsapp/.test(il) && /s=unread/.test(il) && /q=kim/.test(il), il);
+r = await owner('erpBrandDeskInbox', [{ f: 'all', s: 'spam' }]);
+check('an unknown state filter is refused', !r.ok, r);
+r = await owner('erpBrandDeskThread', [{ id: 7, before: 40, sig: '0123456789abcdef' }]);
+const tb = seen.filter((x) => x.url.endsWith('/inbox/thread')).pop().body;
+check('older messages and the fingerprint go to the bridge', r.ok && tb.before === 40 && tb.sig === '0123456789abcdef', tb);
+r = await owner('erpBrandDeskThread', [{ id: 7, sig: '<script>' }]);
+check('a strange fingerprint is dropped', r.ok && !('sig' in seen.filter((x) => x.url.endsWith('/inbox/thread')).pop().body), r);
+r = await owner('erpBrandDeskThread', [{ id: 7, before: 'x' }]);
+check('a strange older-page id is refused', !r.ok, r);
+r = await owner('erpBrandDeskThreadSummary', [{ thread: 7 }]);
+check('the summary comes from the bridge, nothing is sent', r.ok && r.result.summary === 'দাম জানতে চেয়েছেন।' && seen.filter((x) => x.url.endsWith('/inbox/reply')).length === repliesBefore, r);
+r = await owner('erpBrandDeskContact', [{ thread: 7, name: 'Kim Lee', note: 'Seoul shop' }]);
+const cb = seen.filter((x) => x.url.endsWith('/inbox/contact')).pop().body;
+check('the contact name and note go to the bridge', r.ok && cb.name === 'Kim Lee' && cb.note === 'Seoul shop' && cb.thread === 7, cb);
+r = await owner('erpBrandDeskSaved', []);
+check('saved replies are read from the bridge', r.ok && r.result.saved[0].title === 'Price', r);
+r = await owner('erpBrandDeskSavedSave', [{ title: 'Price', body: '' }]);
+check('an empty saved reply is refused', !r.ok, r);
+r = await owner('erpBrandDeskSavedSave', [{ action: 'remove' }]);
+check('removing needs which one', !r.ok, r);
+r = await owner('erpBrandDeskSavedSave', [{ title: 'Price', body: 'Our price list…' }]);
+check('a saved reply goes to the bridge', r.ok && seen.filter((x) => x.url.endsWith('/inbox/saved')).pop().body.body === 'Our price list…', r);
+r = await owner('erpBrandDeskReplyDraft', [{ thread: 7, base: 'Our price list…', ask: 'short' }]);
+const db = seen.filter((x) => x.url.endsWith('/inbox/draft')).pop().body;
+check('the AI fits a saved reply with his instruction', r.ok && db.base === 'Our price list…' && db.ask === 'short', db);
+r = await owner('erpBrandDeskAudio', [{ id: 3 }]);
+check('a voice note is fetched through the bridge', r.ok && /^data:audio\//.test(r.result.src), r);
 r = await owner('erpBrandDeskThreadDone', [{ thread: 7 }]);
 check('mark done goes to the bridge', r.ok && seen.filter((x) => x.url.endsWith('/inbox/done')).pop().body.done === true, r);
 r = await owner('erpBrandDeskChannels', []);
@@ -525,7 +561,7 @@ r = await owner('erpBrandDeskWaQr', []);
 check('the WhatsApp QR comes from the bridge', r.ok && r.result.qr.indexOf('data:image/png') === 0, r);
 r = await owner('erpBrandDeskFbConnect', []);
 check('Facebook connect gives the Facebook login address', r.ok && /^https:\/\/www\.facebook\.com\//.test(r.result.url), r);
-for (const n of ['erpBrandDeskInbox', 'erpBrandDeskThread', 'erpBrandDeskReply', 'erpBrandDeskReplyDraft', 'erpBrandDeskThreadDone', 'erpBrandDeskChannels', 'erpBrandDeskChannelSave', 'erpBrandDeskChannelTest', 'erpBrandDeskWaQr', 'erpBrandDeskFbConnect']) {
+for (const n of ['erpBrandDeskThreadSummary', 'erpBrandDeskContact', 'erpBrandDeskSaved', 'erpBrandDeskSavedSave', 'erpBrandDeskAudio', 'erpBrandDeskInbox', 'erpBrandDeskThread', 'erpBrandDeskReply', 'erpBrandDeskReplyDraft', 'erpBrandDeskThreadDone', 'erpBrandDeskChannels', 'erpBrandDeskChannelSave', 'erpBrandDeskChannelTest', 'erpBrandDeskWaQr', 'erpBrandDeskFbConnect']) {
   r = await mgr(n, [{ id: 7, thread: 7, text: 'x', kind: 'telegram', token: '1234567:' + 'A'.repeat(35) }]);
   check('staff cannot use ' + n, !r.ok, r);
 }

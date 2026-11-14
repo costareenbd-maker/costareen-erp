@@ -8545,7 +8545,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrandDeskInbox|erpBrandDeskThread|erpBrandDeskChannels|erpBrandDeskSites|erpBrandDeskCritiques|erpBrandDeskResults|erpBrandDeskCockpit|erpBrandDeskReels|erpBrandDeskRoutine|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpBrandDeskInbox|erpBrandDeskThread|erpBrandDeskSaved|erpBrandDeskAudio|erpBrandDeskChannels|erpBrandDeskSites|erpBrandDeskCritiques|erpBrandDeskResults|erpBrandDeskCockpit|erpBrandDeskReels|erpBrandDeskRoutine|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 // crit8-nav (10 Nov 2026): these calls only read when they are sent without a change (the list form) and write with one.
 // The same rule as the server's ERP_READ_WHEN (allow.js): the list form runs beside other reads, sends no one-time key
 // and drops no caches; the changing form stays a write. erpTool and erpBrainFact always write (every branch changes data).
@@ -59625,6 +59625,69 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   .bx-cp .bc-ta{max-height:140px}
   .bx-b .why .bc-btn{min-height:44px;height:44px}
 }
+/* brand-31 (15 Nov 2026): search + Unread/Done, ticks, older messages, voice notes, contact card + note, summary,
+   Meta's 24-hour window, saved replies, AI instruction, sound switch. Same calm language as brand-30. */
+.bx-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:-2px 0 12px}
+.bx-q{position:relative;flex:1 1 220px;max-width:420px;display:flex;align-items:center;margin:0}
+.bx-q svg{position:absolute;left:12px;width:17px;height:17px;fill:none;stroke:var(--bc-ink-3);stroke-width:2;stroke-linecap:round;pointer-events:none}
+.bx-q input{width:100%;height:40px;box-sizing:border-box;border:1px solid var(--bc-rule);border-radius:999px;padding:0 14px 0 36px;font:15px "Noto Sans Bengali","Pretendard Variable",Pretendard,system-ui,sans-serif;background:#fff;color:var(--bc-ink);-webkit-appearance:none;appearance:none}
+.bx-q input:focus{outline:2px solid var(--bc-ink);outline-offset:1px;border-color:transparent}
+.bx-tk{display:inline-flex;margin-left:4px;vertical-align:-1px;color:var(--bc-ink-3)}
+.bx-tk svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.bx-tk.rd{color:#1877F2}
+.bx-older{align-self:center;margin-bottom:4px}
+.bx-au{display:block;width:260px;max-width:100%;height:40px}
+.bx-aub svg{width:14px;height:14px}
+.bx-th img.bx-av{width:32px;height:32px;border-radius:50%;object-fit:cover;flex:none;border:1px solid var(--bc-rule)}
+.bx-note{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;padding:8px 18px;border-bottom:1px solid var(--bc-rule);font-size:13.5px;color:var(--bc-ink-2);background:#FFFBEF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bx-note b{color:var(--bc-ink);font-weight:600}
+.bx-note:focus-visible{outline:2px solid var(--bc-ink);outline-offset:-2px}
+.bx-card{padding:4px 18px 14px;border-bottom:1px solid var(--bc-rule);background:var(--bc-shelf)}
+.bx-card .bc-in{width:100%;height:42px;box-sizing:border-box}
+.bx-card-p{margin:10px 0 0;font-size:14px;color:var(--bc-ink-2);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.bx-sum{display:flex;gap:10px;align-items:flex-start;padding:10px 6px 10px 18px;border-bottom:1px solid var(--bc-rule);background:#F4F7FC;font-size:14.5px}
+.bx-sum>div{flex:1;min-width:0}
+.bx-sum p{margin:2px 0;line-height:1.55}
+.bx-sum .nx{color:var(--bc-ink-2);margin-top:6px}
+.bx-win{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13.5px;color:var(--bc-ink-3);padding:7px 8px 7px 18px;border-top:1px solid var(--bc-rule)}
+.bx-win.w{color:#7A5200;background:#FFF8E6}
+.bx-win.x{color:var(--bc-alert-ink);background:#FDF1EF}
+.bx-win span{flex:1 1 220px}
+.bx-win a{text-decoration:none}
+.bx-sv{border:1px solid var(--bc-rule);border-radius:14px;margin:0 0 10px;background:#fff;max-height:300px;overflow:auto;overscroll-behavior:contain}
+.bx-sv-h{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 12px;border-bottom:1px solid var(--bc-rule);position:sticky;top:0;background:#fff;z-index:1}
+.bx-sv-h b{font-weight:700;font-size:14.5px}
+.bx-sv-l{list-style:none;margin:0;padding:0}
+.bx-sv-l li{display:flex;align-items:center;gap:4px;border-bottom:1px solid var(--bc-rule);padding-right:6px}
+.bx-sv-l li:last-child{border-bottom:0}
+.bx-sv-i{all:unset;box-sizing:border-box;cursor:pointer;flex:1 1 160px;min-width:0;padding:9px 12px;display:flex;flex-direction:column}
+.bx-sv-i:hover{background:#F7F8F9}
+.bx-sv-i:focus-visible{outline:2px solid var(--bc-ink);outline-offset:-2px}
+.bx-sv-i b{font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bx-sv-i span{font-size:13px;color:var(--bc-ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bx-sv-a{display:flex;gap:4px;flex:none}
+.bx-sv-f{padding:4px 12px 12px}
+.bx-sv-f .bc-in{width:100%;height:42px;box-sizing:border-box}
+.bx-sv-e{margin:0;padding:12px;font-size:14px;color:var(--bc-ink-2)}
+.bx-sv .bc-fold{margin:8px 12px}
+.bx-ask{margin-top:8px}
+.bx-ask .bc-in{width:100%;height:42px;box-sizing:border-box}
+.bx-cp .sh{display:none}
+.bx-nt[aria-pressed="false"]{color:var(--bc-ink-3)}
+@container bc (max-width:759px){
+  .bx-th .lb,.bx-cp .lb,.bx-nt .lb{display:none}
+  .bx-cp .sh{display:inline}
+  .bx-q{max-width:none;flex-basis:100%}
+  .bx-q input{height:44px}
+  .bx-tools .bc-pills button,.bx-nt{min-height:44px;box-sizing:border-box}
+  .bx-note,.bx-sum{padding-left:2px;padding-right:0}
+  .bx-card{padding:4px 12px 14px;border-radius:12px;margin:8px 0}
+  .bx-win{padding-left:2px}
+  .bx-sv-l li{flex-wrap:wrap}
+  .bx-sv-a{padding:0 6px 8px 12px}
+  .bx-sv-a .bc-btn,.bx-sv-h .bc-btn,.bx-older .bc-btn,.bx-aub{min-height:44px}
+  .bx-sv-i{min-height:44px}
+}
 
 </style>
 
@@ -59709,7 +59772,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     if (C.busy['g_' + k] || (C.d[k] && !force)) return;
     if (k !== 'cockpit' && !ready()) return;
     C.busy['g_' + k] = 1;
-    var args = k === 'inbox' ? [{ f: C.ibf || 'all', p: C.ibp || '' }] : k === 'videos' ? [{ q: C.vq || '' }] : k === 'results' ? [{ days: C.rdays || 30 }] : [];
+    var args = k === 'inbox' ? [ibArgs()] : k === 'videos' ? [{ q: C.vq || '' }] : k === 'results' ? [{ days: C.rdays || 30 }] : [];
     srv(CALL[k], args, function (r) { C.busy['g_' + k] = 0; C.d[k] = r; C.err[k] = ''; if (k === 'cockpit') C.t = Date.now(); poll(k); draw(); },
       function (e) { C.busy['g_' + k] = 0; C.err[k] = (e && e.message) || String(e); draw(); });
   }
@@ -59719,7 +59782,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     if (k === 'drafts') { var mj = r.mjobs || {}, pk = Object.keys(mj).some(function (x) { return mj[x].state === 'picking'; }); if (C.picking && !pk) { C.media = Object.keys(C.media).reduce(function (a, q) { if (!/^\d+$/.test(q) || (C.keepm || {})[q]) a[q] = C.media[q]; return a; }, {}); } C.picking = pk;
       run = pk || ks.some(function (x) { return jobs[x].state === 'writing' || jobs[x].state === 'researching'; }); }
     if (k === 'listen') run = ks.some(function (x) { return jobs[x].state === 'reading'; });
-    if (k === 'inbox') run = C.sec === 'inbox' && !C.ibAdd;   // brand-30: new messages come in while he looks
+    if (k === 'inbox') { run = false; ibLive(); }   // brand-31: the inbox has its own 5-second live loop (ibPulse)
     if (k === 'sites') { run = !!(r.job && r.job.state === 'running'); if (run) C.srun = 1; else if (C.srun) { C.srun = 0; toast('পরীক্ষা শেষ হলো।'); } }
     if (k === 'routine') { run = !!(r.fill && r.fill.state === 'writing'); if (run) C.frun = 1; else if (C.frun) { C.frun = 0; get('drafts', true); get('cockpit', true); } }
     if (k === 'reels') run = ks.some(function (x) { return /^(writing|drawing|joining)$/.test(jobs[x].state); });
@@ -61386,6 +61449,131 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     custom: ['আপনার ইমেইল কোম্পানির IMAP (পড়ার) আর SMTP (পাঠানোর) সার্ভারের নাম আর পোর্ট নিচে দিন।', 'সাধারণত IMAP পোর্ট <span data-noi18n="1">993</span> আর SMTP পোর্ট <span data-noi18n="1">465</span> বা <span data-noi18n="1">587</span>।']
   };
   C.ibf = 'all'; C.ibp = ''; C.ibOpen = ''; C.ibT = null; C.ibChk = {}; C.ibPh = {}; C.ibAdd = false; C.ibForm = ''; C.ibPre = 'gmail'; C.ibQr = null;
+  // ---------- brand-31 (15 Nov 2026): ticks, search + Unread/Done, older messages, voice notes, saved replies, summary,
+  // contact card, Meta's 24-hour window, a 5-second live refresh and an optional sound + desktop alert (his choice, this device).
+  C.ibs = ''; C.ibq = ''; C.ibSum = {}; C.ibCard = ''; C.ibSv = ''; C.ibSvEd = ''; C.ibSvList = null; C.ibAsk = {}; C.ibAud = {}; C.ibNt = false;
+  try { C.ibNt = localStorage.getItem('bx_alert') === '1'; } catch (e) {}
+  ICO.bell = '<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>';
+  ICO.belloff = ICO.bell + '<path d="M4 4l16 16"/>';
+  ICO.search = '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/>';
+  ICO.saved = '<path d="M7 4h10a1 1 0 0 1 1 1v15l-6-4-6 4V5a1 1 0 0 1 1-1z"/>';
+  ICO.user = '<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/>';
+  ICO.sum = '<path d="M5 6h14M5 10h14M5 14h9M5 18h6"/>';
+  ICO.play = '<path d="M8 5.5v13l10.5-6.5z"/>';
+  function ibArgs() { var a = { f: C.ibf || 'all', p: C.ibp || '' }; if (C.ibs) a.s = C.ibs; if (C.ibq) a.q = C.ibq; return a; }
+  // his own messages: one grey tick sent, two delivered, two blue read (only where the network tells us: WhatsApp, Messenger, Instagram)
+  var IB_TICK = { whatsapp: 1, facebook: 1, instagram: 1 };
+  function ibTick(m, ch) {
+    if (m.direction !== 'out' || !IB_TICK[ch] || !/^(sent|delivered|read)$/.test(m.status)) return '';
+    var two = m.status !== 'sent', lb = m.status === 'read' ? 'দেখেছেন' : two ? 'পৌঁছেছে' : 'গেছে';
+    return '<span class="bx-tk' + (m.status === 'read' ? ' rd' : '') + '" role="img" aria-label="' + lb + '" title="' + lb + '"><svg viewBox="0 0 18 12" width="17" height="11" aria-hidden="true">' +
+      '<path d="M1.5 6.2l3.1 3.3L10.5 2.5"/>' + (two ? '<path d="M7.6 8.7l.9.8L14.5 2.5"/>' : '') + '</svg></span>';
+  }
+  // a voice note comes as a data: address; the ERP page's media rules allow blob: only, so it plays from a blob
+  function ibBlob(k, src) {
+    if (C.ibAud[k]) return C.ibAud[k];
+    try {
+      var m = /^data:([^;,]+)(?:;[^,]*)?;base64,(.*)$/.exec(src || ''); if (!m) return '';
+      var bin = atob(m[2]), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+      return (C.ibAud[k] = URL.createObjectURL(new Blob([u], { type: m[1] })));
+    } catch (e) { return ''; }
+  }
+  function ibSecs(n) { n = Math.round(n || 0); return n ? bn(Math.floor(n / 60) + ':' + ('0' + n % 60).slice(-2)) : ''; }
+  function ibPlaying() { var r = el('bc_root'); return !!(r && [].some.call(r.querySelectorAll('audio'), function (a) { return !a.paused && !a.ended; })); }
+  // Messenger / Instagram: a reply may go from here only within 24 hours of the person's last message
+  function ibWin(T) {
+    if (!T.last_in || T.kind !== 'message' || !/^(facebook|instagram)$/.test(T.channel)) return '';
+    var left = Date.parse(T.last_in) + 864e5 - Date.now(), ig = T.channel === 'instagram';
+    if (isNaN(left)) return '';
+    if (left <= 0) return '<div class="bx-win x" role="status"><span>২৪ ঘণ্টা পার হয়ে গেছে। Meta এখন এখান থেকে উত্তর যেতে দেয় না; উত্তর দিন ' + (ig ? 'Instagram' : 'Facebook') + ' app থেকে।</span>' +
+      '<a class="bc-btn sm" href="' + (ig ? 'https://www.instagram.com/direct/inbox/' : 'https://business.facebook.com/latest/inbox/all') + '" target="_blank" rel="noopener noreferrer">' + svg('out') + 'app খুলুন</a></div>';
+    var h = Math.floor(left / 36e5), mn = Math.floor(left % 36e5 / 6e4);
+    return '<div class="bx-win' + (left < 3 * 36e5 ? ' w' : '') + '"><span>এখান থেকে উত্তর দেওয়া যাবে আর ' + (h ? bn(h) + ' ঘণ্টা ' : '') + bn(mn) + ' মিনিট।</span></div>';
+  }
+  // ---- live: every 5 s while the inbox is in front, at once on focus; in the background only when the alert is on (30 s)
+  function ibVis() { return document.visibilityState !== 'hidden'; }
+  function ibLive(now) { clearTimeout(C.ibLiveT); C.ibLiveT = setTimeout(ibPulse, now ? 0 : ibVis() ? 5000 : 30000); }
+  function ibListSig(r) { return JSON.stringify([(r.threads || []).map(function (t) { return [t.id, t.at, t.unread, t.dir, t.last, t.name]; }), r.counts || {}, !!r.more]); }
+  function ibPulse() {
+    clearTimeout(C.ibLiveT);
+    if (!on() || !ready()) return ibLive();
+    var here = C.sec === 'inbox' && !C.ibAdd && ibVis();
+    if ((!here && !C.ibNt) || C.busy.ibpl || C.busy.g_inbox) return ibLive();
+    var a = here ? ibArgs() : { f: 'all', p: '' }, key = JSON.stringify(a); C.busy.ibpl = 1;
+    srv('erpBrandDeskInbox', [a], function (r) {
+      C.busy.ibpl = 0; ibNotify(r);
+      var D = C.d.inbox;
+      if (here && D && C.sec === 'inbox' && key === JSON.stringify(ibArgs())) {
+        var L = D.threads || [], N = r.threads || [];
+        if (L.length > N.length && N.length) {   // he opened "আরও দেখুন": keep the older part under the fresh first page
+          var ids = {}; N.forEach(function (t) { ids[t.id] = 1; }); var lastAt = String(N[N.length - 1].at);
+          r.threads = N.concat(L.filter(function (t) { return !ids[t.id] && String(t.at) < lastAt; })); r.more = D.more;
+        }
+        if (ibListSig(r) !== ibListSig(D)) { C.d.inbox = r; if (!ibPlaying()) draw(); }
+      } else if (D && r.counts && JSON.stringify(r.counts) !== JSON.stringify(D.counts)) { D.counts = r.counts; if (!ibPlaying()) draw(); }
+      ibLive();
+    }, function () { C.busy.ibpl = 0; ibLive(); });
+    if (here && C.ibOpen) ibRefresh();
+  }
+  addEventListener('focus', function () { if (on()) ibLive(true); });
+  document.addEventListener('visibilitychange', function () { if (on() && ibVis()) ibLive(true); });
+  setTimeout(function () { ibLive(); }, 4000);
+  // ---- a new message from a person (not a public comment): soft two-note sound; a desktop alert when he is elsewhere
+  var IBAC = null;
+  function ibChime() {
+    try {
+      IBAC = IBAC || new (window.AudioContext || window.webkitAudioContext)(); if (IBAC.state === 'suspended') IBAC.resume();
+      var t = IBAC.currentTime;
+      [[660, 0], [880, 0.15]].forEach(function (f) {
+        var o = IBAC.createOscillator(), g = IBAC.createGain(); o.type = 'sine'; o.frequency.value = f[0];
+        g.gain.setValueAtTime(0.0001, t + f[1]); g.gain.exponentialRampToValueAtTime(0.05, t + f[1] + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + f[1] + 0.4);
+        o.connect(g); g.connect(IBAC.destination); o.start(t + f[1]); o.stop(t + f[1] + 0.45);
+      });
+    } catch (e) {}
+  }
+  function ibNotify(r) {
+    var n = r.counts || {}, cnt = Math.max(0, (n.all || 0) - (n.comments || 0)), prev = C.ibPrev;
+    var nw = (r.threads || []).filter(function (t) { return t.kind === 'message' && t.dir === 'in' && t.unread > 0; }).sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); })[0];
+    var at = nw ? String(nw.at) : '';
+    C.ibPrev = { n: cnt, at: prev && prev.at > at ? prev.at : at };
+    if (!prev || !C.ibNt || !(cnt > prev.n || (at && at > prev.at))) return;
+    var focus = ibVis() && (!document.hasFocus || document.hasFocus());
+    if (focus && C.sec === 'inbox' && nw && String(C.ibOpen) === String(nw.id)) return;   // he is looking at it
+    ibChime();
+    if (!focus && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      try {
+        var nt = new Notification(nw ? nw.name + ' · ' + ibNet(nw.channel) : 'নতুন বার্তা', { body: nw ? String(nw.last || '').slice(0, 140) : 'ইনবক্সে নতুন বার্তা এসেছে।', tag: 'bx-' + (nw ? nw.id : 'n'), silent: true });
+        nt.onclick = function () { try { window.focus(); } catch (e) {} if (nw) { C.sec = 'inbox'; C.ibAdd = false; ibOpen(nw.id); } nt.close(); };
+      } catch (e) {}
+    }
+  }
+  // ---- saved replies (inside the composer)
+  function ibSavedHtml(id) {
+    var S = C.ibSvList, ed = C.ibSvEd;
+    var h = '<div class="bx-sv" role="region" aria-label="সেভ করা উত্তর"><div class="bx-sv-h"><b>সেভ করা উত্তর</b><span class="bc-sp"></span>' +
+      (ed || !S ? '' : '<button type="button" class="bc-btn ghost sm" data-bc="ibsvnew" data-id="' + id + '">' + svg('plus') + 'নতুন</button>') +
+      '<button type="button" class="bc-btn ghost sm" data-bc="ibsv" data-id="' + id + '" aria-label="বন্ধ করুন">' + svg('x') + '</button></div>';
+    if (!S) return h + (C.err.ibsv ? '<p class="bx-sv-e">' + esc(C.err.ibsv) + '</p>' : '<p class="bx-sv-e"><span class="bc-spin"></span> আনছে…</p>') + '</div>';
+    if (ed) return h + '<div class="bx-sv-f"><label class="bc-lbl" for="bci_ibsvt">নাম (শুধু আপনার জন্য)</label>' + inp('ibsvt', 'যেমন: দাম জানতে চাইলে') +
+      '<label class="bc-lbl" for="bci_ibsvb">উত্তর</label>' + ta('ibsvb', 'যে কথাটা বারবার লেখেন…', '', ' rows="4"') +
+      '<div class="bc-row">' + btn(svg('check') + 'সেভ করুন', 'data-bc="ibsvsave" data-id="' + esc(ed) + '"', 'dark sm', 'ibsvsave') + '<button type="button" class="bc-btn ghost sm" data-bc="ibsvcancel">বাতিল</button>' +
+      (ed !== 'new' ? '<span class="bc-sp"></span>' + btn(svg('trash') + 'সরান', 'data-bc="ibsvdel" data-id="' + esc(ed) + '"', 'ghost sm', 'ibsvdel') : '') + '</div></div></div>';
+    var fromBox = String(v('ibtx_' + id)).trim() ? '<button type="button" class="bc-fold" data-bc="ibsvnew" data-id="' + id + '" data-from="1">' + svg('plus') + 'বাক্সের লেখাটা সেভ করে রাখুন</button>' : '';
+    if (!S.length) return h + '<p class="bx-sv-e">এখনো কিছু সেভ করা নেই। যে উত্তর বারবার লেখেন (দাম, ঠিকানা, ডেলিভারি), “নতুন” চেপে রেখে দিন।</p>' + fromBox + '</div>';
+    return h + '<ul class="bx-sv-l">' + S.map(function (x) {
+      return '<li><button type="button" class="bx-sv-i" data-bc="ibsvuse" data-id="' + x.id + '" data-t="' + id + '" title="বাক্সে বসান"><b data-noi18n="1">' + esc(x.title) + '</b><span data-noi18n="1">' + esc(String(x.body).slice(0, 160)) + '</span></button>' +
+        '<div class="bx-sv-a">' + btn(svg('spark') + 'AI দিয়ে মানিয়ে নিন', 'data-bc="ibsvai" data-id="' + x.id + '" data-t="' + id + '"', 'ghost sm', 'ibsvai' + x.id) +
+        '<button type="button" class="bc-btn ghost sm" data-bc="ibsved" data-id="' + x.id + '" aria-label="বদলান">' + svg('pen') + '</button></div></li>';
+    }).join('') + '</ul>' + fromBox + '</div>';
+  }
+  function ibCardHtml(T) {
+    var id = T.id;
+    return '<div class="bx-card"><label class="bc-lbl" for="bci_ibcn_' + id + '">নাম (শুধু আপনি দেখবেন)</label>' + inp('ibcn_' + id, T.peer_name || T.handle || 'নাম') +
+      '<label class="bc-lbl" for="bci_ibcno_' + id + '">নোট (শুধু আপনি দেখবেন)</label>' + ta('ibcno_' + id, 'যেমন: ঢাকার দোকান, প্রতি মাসে ৫০টা নেন', '', ' rows="3"') +
+      (T.handle ? '<p class="bx-card-p">' + logo(T.channel, 15) + '<span data-noi18n="1">' + esc(T.handle) + '</span></p>' : '') +
+      (T.person ? '<p class="bx-card-p">' + svg('user') + 'মানুষ পাতায় আছেন: <b data-noi18n="1">' + esc(T.person.name) + '</b><button type="button" class="bc-btn ghost sm" data-bc="sec" data-id="people">মানুষ পাতা খুলুন</button></p>' : '') +
+      '<div class="bc-row">' + btn(svg('check') + 'সেভ করুন', 'data-bc="ibcsave" data-id="' + id + '"', 'dark sm', 'ibcs' + id) + '<button type="button" class="bc-btn ghost sm" data-bc="ibcard" data-id="' + id + '">বন্ধ</button></div></div>';
+  }
   function ibWhen(v) {
     var d = v ? new Date(v) : null; if (!d || isNaN(d)) return '';
     var now = new Date(), days = Math.floor((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
@@ -61417,9 +61605,15 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     return '<button type="button" class="bx-r' + (un ? ' un' : '') + (String(C.ibOpen) === String(t.id) ? ' on' : '') + '" data-bc="ibopen" data-id="' + t.id + '" aria-label="' + esc(t.name) + ', ' + esc(ibNet(t.channel)) + (un ? ', নতুন বার্তা' : '') + '">' +
       '<span class="lg">' + logo(t.channel, 20) + '</span><b data-noi18n="1">' + esc(t.name) + '</b><time>' + ibWhen(t.at) + '</time><p>' + sub + last + '</p>' + (un ? '<i class="dt" aria-hidden="true"></i>' : '') + '</button>';
   }
-  function ibMedia(m) {
-    return (m || []).map(function (x) {
+  function ibMedia(m, mid, ch) {
+    return (m || []).map(function (x, i) {
       if (x.kind === 'image' && x.src && /^data:image\//.test(x.src)) return '<img src="' + esc(x.src) + '" alt="ছবি" loading="lazy">';
+      // brand-31: voice notes play here; one that came in before (or too long to keep) is fetched on tap (WhatsApp only)
+      if (x.kind === 'audio' || (ch === 'whatsapp' && x.name === 'ভয়েস মেসেজ')) {
+        var u = x.src && /^data:audio\//.test(x.src) ? ibBlob(mid + '_' + i, x.src) : '';
+        if (u) return '<audio class="bx-au" controls preload="metadata" data-m="' + mid + '" src="' + esc(u) + '"></audio>';
+        if (ch === 'whatsapp') return btn(svg('play') + 'ভয়েস শুনুন' + (x.secs ? ' · ' + ibSecs(x.secs) : ''), 'data-bc="ibaudio" data-id="' + mid + '"', 'ghost sm bx-aub', 'iba' + mid);
+      }
       return '<span class="fl">' + svg('photo') + '<span data-noi18n="1">' + esc(x.name || 'ফাইল') + '</span>' + (x.big ? ' · বড়, অ্যাপে দেখুন' : '') + '</span>';
     }).join('');
   }
@@ -61428,25 +61622,38 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     if (!D) return '<div class="bx-t">' + (C.err.ibt ? errCall(C.err.ibt, '<button class="bc-btn" type="button" data-bc="ibopen" data-id="' + esc(C.ibOpen) + '">আবার চেষ্টা করুন</button>') : skel(60) + skel(260)) + '</div>';
     var T = D.thread, id = T.id, h = '<div class="bx-t" aria-label="কথোপকথন">';
     var open = T.url ? '<a class="bc-btn ghost sm" href="' + esc(T.url) + '" target="_blank" rel="noopener noreferrer">' + svg('out') + (T.channel === 'youtube' ? 'YouTube-এ খুলুন' : 'অ্যাপে খুলুন') + '</a>' : '';
-    h += '<div class="bx-th">' + (narrow ? '<button type="button" class="bc-btn ghost sm" data-bc="ibback" aria-label="তালিকায় ফিরুন">' + svg('back') + '</button>' : '') + logo(T.channel, 22) +
-      '<div class="nm"><b data-noi18n="1">' + esc(T.name) + '</b><small>' + (T.handle ? '<span data-noi18n="1">' + esc(T.handle) + '</span> · ' : '') + esc(ibNet(T.channel)) + (T.kind === 'comment' ? ' কমেন্ট' : '') +
+    var cardOn = C.ibCard === String(id), sm = C.ibSum[id], sb = C.busy['ibsum' + id];
+    h += '<div class="bx-th">' + (narrow ? '<button type="button" class="bc-btn ghost sm" data-bc="ibback" aria-label="তালিকায় ফিরুন">' + svg('back') + '</button>' : '') +
+      (T.avatar && /^data:image\//.test(T.avatar) ? '<img class="bx-av" src="' + esc(T.avatar) + '" alt="">' : logo(T.channel, 22)) +
+      '<div class="nm"><b data-noi18n="1">' + esc(T.name) + '</b><small>' + (T.name_override && T.peer_name && T.peer_name !== T.name_override ? '<span data-noi18n="1">' + esc(T.peer_name) + '</span> · ' : '') +
+      (T.handle ? '<span data-noi18n="1">' + esc(T.handle) + '</span> · ' : '') + esc(ibNet(T.channel)) + (T.kind === 'comment' ? ' কমেন্ট' : '') +
       (T.subject ? ' · <span data-noi18n="1">' + esc(T.subject) + '</span>' : '') + '</small></div><div class="ac">' + open +
+      btn(svg('sum') + '<span class="lb">সারাংশ</span>', 'data-bc="ibsum" data-id="' + id + '" aria-label="সারাংশ" aria-pressed="' + !!sm + '"', 'ghost sm', 'ibsum' + id) +
+      '<button type="button" class="bc-btn ghost sm" data-bc="ibcard" data-id="' + id + '" aria-label="পরিচিতি আর নোট" aria-expanded="' + cardOn + '">' + svg('user') + '<span class="lb">পরিচিতি</span></button>' +
       btn(svg('done') + (T.done ? 'আবার খুলুন' : 'শেষ'), 'data-bc="ibdone" data-id="' + id + '"', 'ghost sm', 'ibdone') + '</div></div>';
+    if (cardOn) h += ibCardHtml(T);
+    else if (T.note) h += '<button type="button" class="bx-note" data-bc="ibcard" data-id="' + id + '" aria-label="নোট খুলুন"><b>নোট:</b> <span data-noi18n="1">' + esc(T.note) + '</span></button>';
+    if (sm || sb) h += '<div class="bx-sum" role="status">' + (sb && !sm ? '<div><p><span class="bc-spin"></span> AI কথোপকথনটা পড়ছে…</p></div>'
+      : '<div><b>সারাংশ</b>' + String(sm.summary || '').split('\n').filter(function (l) { return l.trim(); }).map(function (l) { return '<p data-noi18n="1">' + esc(l) + '</p>'; }).join('') +
+        (sm.next ? '<p class="nx"><b>বাকি:</b> <span data-noi18n="1">' + esc(sm.next) + '</span></p>' : '') + '</div><button type="button" class="bc-btn ghost sm" data-bc="ibsumx" data-id="' + id + '" aria-label="সারাংশ বন্ধ করুন">' + svg('x') + '</button>') + '</div>';
     var M = D.messages || [], lastDay = '';
-    h += '<div class="bx-ms" id="bc_ibms">' + (M.length ? M.map(function (m) {
+    h += '<div class="bx-ms" id="bc_ibms">' + (D.older ? '<div class="bx-older">' + btn('আগের মেসেজ দেখুন', 'data-bc="ibolder" data-id="' + id + '"', 'ghost sm', 'ibolder') + '</div>' : '') + (M.length ? M.map(function (m) {
       var d = new Date(m.at), dk = isNaN(d) ? '' : d.toDateString(), sep = dk && dk !== lastDay ? '<span class="bx-day">' + ibDay(d) + '</span>' : ''; lastDay = dk || lastDay;
       var fail = m.status === 'failed', sending = m.status === 'sending';
-      return sep + '<div class="bx-b ' + (m.direction === 'out' ? 'out' : 'in') + (fail ? ' fail' : '') + '">' + ibMedia(m.media) + (m.text ? '<div class="tx" data-noi18n="1">' + esc(m.text) + '</div>' : '') +
-        (fail ? (function () { var y = ibWhy(m.error, T.channel); return '<div class="why"><span>যায়নি: ' + esc(y.t) + '</span>' + (y.fix ? '<button type="button" class="bc-btn sm" data-bc="ibadd" data-id="' + y.fix + '">যুক্ত করুন</button>' : '') + btn('আবার পাঠান', 'data-bc="ibretry" data-id="' + m.id + '"', 'sm', 'ibr' + m.id) + '</div>'; })() : '<small>' + (sending ? 'পাঠানো হচ্ছে…' : isNaN(d) ? '' : dTime(d)) + '</small>') + '</div>';
+      return sep + '<div class="bx-b ' + (m.direction === 'out' ? 'out' : 'in') + (fail ? ' fail' : '') + '">' + ibMedia(m.media, m.id, T.channel) + (m.text ? '<div class="tx" data-noi18n="1">' + esc(m.text) + '</div>' : '') +
+        (fail ? (function () { var y = ibWhy(m.error, T.channel); return '<div class="why"><span>যায়নি: ' + esc(y.t) + '</span>' + (y.fix ? '<button type="button" class="bc-btn sm" data-bc="ibadd" data-id="' + y.fix + '">যুক্ত করুন</button>' : '') + btn('আবার পাঠান', 'data-bc="ibretry" data-id="' + m.id + '"', 'sm', 'ibr' + m.id) + '</div>'; })() : '<small>' + (sending ? 'পাঠানো হচ্ছে…' : isNaN(d) ? '' : dTime(d)) + ibTick(m, T.channel) + '</small>') + '</div>';
     }).join('') : '<div class="bx-empty">এখানে এখনো কোনো বার্তা নেই।</div>') + '</div>';
     var k = 'ibtx_' + id, ph = C.ibPh[id], chk = C.ibChk[id], hole = ibHole(v(k));
     if (T.can_reply) {
-      h += '<div class="bx-cp"><label class="bc-vh" for="bci_' + k + '">আপনার উত্তর</label>' + ta(k, T.kind === 'comment' ? 'সবার সামনে উত্তর লিখুন…' : 'উত্তর লিখুন…', '', ' rows="3"').replace('class="bc-ta" id', 'class="bc-ta bx-ta" id') +
+      h += ibWin(T) + '<div class="bx-cp">' + (C.ibSv === String(id) ? ibSavedHtml(id) : '') + '<label class="bc-vh" for="bci_' + k + '">আপনার উত্তর</label>' + ta(k, T.kind === 'comment' ? 'সবার সামনে উত্তর লিখুন…' : 'উত্তর লিখুন…', '', ' rows="3"').replace('class="bc-ta" id', 'class="bc-ta bx-ta" id') +
         (chk ? '<div class="bx-chk">' + (/আগে/.test(chk) ? '' : 'পাঠানোর আগে: ') + esc(chk) + '</div>' : '') +
         '<p class="bx-hole" id="bc_ibhole"' + (hole ? '' : ' hidden') + '>[ ] ঘরগুলোতে আসল কথা বসান, তারপর পাঠানো যাবে।</p>' +
         (ph ? '<div class="bx-ph"><img src="' + esc(ph.thumb) + '" alt="বাছাই করা ছবি"><button type="button" class="bc-btn ghost sm" data-bc="ibphx" data-id="' + id + '" aria-label="ছবিটা সরান">' + svg('x') + '</button></div>' : '') +
-        '<div class="bc-row">' + (T.photo ? '<label class="bc-btn ghost bx-pick" title="ছবি দিন">' + svg('photo') + '<span>ছবি</span><input type="file" accept="image/jpeg,image/png,image/webp" data-bcibph="' + id + '" aria-label="ছবি দিন"></label>' : '') +
-        btn(svg('spark') + 'AI দিয়ে উত্তর লিখুন', 'data-bc="ibdraft" data-id="' + id + '"', 'ghost', 'ibd' + id) + '<span class="bc-sp"></span>' +
+        (C.ibAsk[id] ? '<div class="bx-ask"><label class="bc-lbl" for="bci_ibask_' + id + '">AI-কে কী বলবেন (না দিলেও চলে)</label>' + inp('ibask_' + id, 'যেমন: ছোট করে লিখুন, ইংরেজিতে, দাম বলবেন না') + '</div>' : '') +
+        '<div class="bc-row">' + (T.photo ? '<label class="bc-btn ghost bx-pick" title="ছবি দিন">' + svg('photo') + '<span class="lb">ছবি</span><input type="file" accept="image/jpeg,image/png,image/webp" data-bcibph="' + id + '" aria-label="ছবি দিন"></label>' : '') +
+        '<button type="button" class="bc-btn ghost" data-bc="ibsv" data-id="' + id + '" aria-label="সেভ করা উত্তর" aria-expanded="' + (C.ibSv === String(id)) + '" title="সেভ করা উত্তর">' + svg('saved') + '<span class="lb">সেভ করা</span></button>' +
+        btn(svg('spark') + '<span class="lb">AI দিয়ে উত্তর লিখুন</span><span class="sh">AI উত্তর</span>', 'data-bc="ibdraft" data-id="' + id + '"', 'ghost', 'ibd' + id) +
+        '<button type="button" class="bc-btn ghost" data-bc="ibask" data-id="' + id + '" aria-label="AI-কে নির্দেশ দিন" aria-expanded="' + !!C.ibAsk[id] + '" title="AI-কে নির্দেশ দিন">' + svg('pen') + '</button><span class="bc-sp"></span>' +
         btn(svg('send') + 'পাঠান', 'data-bc="ibsend" data-id="' + id + '"', 'dark bx-send', 'ibs' + id, (!String(v(k)).trim() && !ph) || hole) + '</div></div>';
     } else {
       h += '<div class="bx-ro"><p style="margin:0 0 8px">' + esc(T.why || 'এখান থেকে উত্তর যায় না।') + '</p>' +
@@ -61459,7 +61666,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function inboxHtml() {
     var narrow = narrowNow();
     if (C.ibAdd) return connectHtml();
-    var h = headHtml('ইনবক্স', '', '<button type="button" class="bc-btn sm" data-bc="ibadd">' + svg('plus') + 'যুক্ত করুন</button>'), g = gate(['inbox'], 90); if (g) return h + g;
+    var h = headHtml('ইনবক্স', '', '<button type="button" class="bc-btn ghost sm bx-nt" data-bc="ibnt" aria-pressed="' + !!C.ibNt + '" title="নতুন বার্তায় শব্দ আর নোটিফিকেশন">' + svg(C.ibNt ? 'bell' : 'belloff') + '<span class="lb">' + (C.ibNt ? 'শব্দ চালু' : 'শব্দ বন্ধ') + '</span></button>' +
+      '<button type="button" class="bc-btn sm" data-bc="ibadd">' + svg('plus') + 'যুক্ত করুন</button>'), g = gate(['inbox'], 90); if (g) return h + g;
     var D = C.d.inbox, n = D.counts || {}, chans = ibChans(), real = chans.filter(function (c) { return c.kind !== 'youtube'; }), bad = chans.filter(function (c) { return c.state === 'error'; });
     if (bad.length && !(narrow && C.ibOpen)) h += '<div class="bx-alert one" role="status"><span class="ln" title="' + esc(ibShort(ibWhy(bad[0].error, bad[0].kind).t)) + '"><b>' + bad.map(function (c) { return '<span data-noi18n="1">' + esc(c.name || c.address) + '</span>'; }).join(', ') + '</b> · ' + esc(ibShort(ibWhy(bad[0].error, bad[0].kind).t) || 'কাজ করছে না।') + '</span><button type="button" class="bc-btn sm" data-bc="ibadd" data-id="' + esc(bad[0].kind) + '">ঠিক করুন</button></div>';
     if (!real.length && C.d.ichan && !C.ibNoNag) h += '<div class="bc-wait calm"><p>আপনার কোনো ইমেইল, WhatsApp বা Telegram এখনো যুক্ত হয়নি<small>এখন শুধু YouTube-এর কমেন্ট আসছে। যুক্ত করলে সব বার্তা এখানে এক জায়গায় আসবে।</small></p><span class="bc-sp"></span><button type="button" class="bc-btn dark" data-bc="ibadd">' + svg('plus') + 'যুক্ত করুন</button></div>';
@@ -61468,13 +61676,17 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
         var c = f[0] === 'all' ? n.all : f[0] === 'comments' ? n.comments : n[f[0]];
         return '<button type="button" data-bc="ibf" data-id="' + f[0] + '"' + (C.ibf === f[0] ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + (f[0] !== 'all' && f[0] !== 'comments' ? logo(f[0], 15) : '') + f[1] + ibEm(c) + '</button>';
       }).join('') + '</div></div>';
+      h += '<div class="bx-tools"><label class="bx-q"><span class="bc-vh">খুঁজুন</span>' + svg('search') + '<input id="bci_ibq" data-bcin="ibq" type="search" data-noi18n="1" placeholder="নাম বা কথা খুঁজুন" value="' + esc(v('ibq')) + '" autocomplete="off" enterkeyhint="search"></label>' +
+        '<div class="bc-pills" role="group" aria-label="কোনগুলো দেখাবে">' + [['unread', 'না-পড়া'], ['done', 'শেষ করা']].map(function (f) {
+          return '<button type="button" data-bc="ibs" data-id="' + f[0] + '" aria-pressed="' + (C.ibs === f[0]) + '"' + (C.ibs === f[0] ? ' class="on"' : '') + '>' + f[1] + '</button>'; }).join('') + '</div></div>';
       if (C.ibf === 'comments') h += '<div class="bx-sub"><div class="bc-pills" role="group" aria-label="কোথাকার কমেন্ট">' + IB_CP.map(function (f) {
         return '<button type="button" data-bc="ibp" data-id="' + f[0] + '"' + (C.ibp === f[0] ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + (f[0] ? logo(f[0], 14) : '') + f[1] + ibEm(f[0] ? n['c_' + f[0]] : 0) + '</button>';
       }).join('') + '</div></div>';
     }
     var L = D.threads || [], list;
     if (C.ibFchk) { C.ibFchk = 0; if (C.ibOpen && !L.some(function (t) { return String(t.id) === String(C.ibOpen); })) { C.ibOpen = ''; C.ibT = null; } }
-    if (!L.length) {
+    if (!L.length && (C.ibq || C.ibs)) list = '<div class="bx-none">' + (C.ibq ? '<b>কিছু পাওয়া গেল না</b>অন্য কোনো নাম বা কথা দিয়ে খুঁজুন।' : C.ibs === 'unread' ? '<b>সব পড়া হয়ে গেছে</b>নতুন বার্তা এলে এখানে দেখাবে।' : '<b>শেষ করা কিছু নেই</b>যে কথোপকথনে “শেষ” চাপবেন, সেগুলো এখানে থাকবে।') + '</div>';
+    else if (!L.length) {
       var fname = ibNet(C.ibf);
       var ch = C.ibf !== 'all' && C.ibf !== 'comments' && !chans.some(function (c) { return c.kind === C.ibf; });
       var noIg = ch && C.ibf === 'instagram' && chans.some(function (c) { return c.kind === 'facebook'; });
@@ -61622,6 +61834,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   });
   document.addEventListener('input', function (e) {
     var x = e.target; if (!on() || !x.getAttribute) return; var k = x.getAttribute('data-bcin') || '';
+    if (k === 'ibq') { clearTimeout(C.ibqT); var qv = x.value; C.ibqT = setTimeout(function ibqGo() { if (C.busy.g_inbox) { C.ibqT = setTimeout(ibqGo, 300); return; } C.ibq = String(qv).trim().slice(0, 60); C.ibFchk = 1; ibLoad(true); }, 400); }
     if (k.indexOf('ibtx_') === 0) { var sb = el('bc_root').querySelector('[data-bc="ibsend"]'), id = k.slice(5), hl = ibHole(x.value), hp = el('bc_ibhole'); if (sb && !C.busy['ibs' + id]) sb.disabled = (!x.value.trim() && !C.ibPh[id]) || hl; if (hp) hp.hidden = !hl; }
   });
   document.addEventListener('click', function (e) {
@@ -61631,16 +61844,75 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     if (!/^(ib|ic)/.test(w)) return;
     if (w === 'ibf') { C.ibf = id; C.ibp = ''; C.ibOpen = narrowNow() ? '' : C.ibOpen; C.ibFchk = 1; ibLoad(); draw(); ibPillView(); return; }
     if (w === 'ibp') { C.ibp = id; C.ibFchk = 1; ibLoad(); draw(); ibPillView(); return; }
+    // ---- brand-31
+    if (w === 'ibs') { C.ibs = C.ibs === id ? '' : id; C.ibOpen = narrowNow() ? '' : C.ibOpen; C.ibFchk = 1; ibLoad(); draw(); return; }
+    if (w === 'ibnt') {
+      C.ibNt = !C.ibNt; try { localStorage.setItem('bx_alert', C.ibNt ? '1' : '0'); } catch (er) {}
+      var NN = typeof Notification !== 'undefined' ? Notification : null;
+      if (C.ibNt) { ibChime(); if (NN && NN.permission === 'default') { try { var pr = NN.requestPermission(); if (pr && pr.then) pr.then(function () {}, function () {}); } catch (er) {} }
+        toast('নতুন বার্তায় হালকা শব্দ হবে' + (NN && NN.permission !== 'denied' ? '; অন্য ট্যাবে থাকলে নোটিফিকেশনও আসবে।' : '। এই ব্রাউজারে নোটিফিকেশন বন্ধ করা আছে।')); }
+      else toast('শব্দ আর নোটিফিকেশন বন্ধ।');
+      draw(); ibLive(); return;
+    }
+    if (w === 'ibolder') {
+      var T0 = C.ibT, M0 = (T0 && T0.messages) || []; if (!M0.length) return;
+      var ms0 = el('bc_ibms'), sc0 = narrowNow() ? ibScroller(ms0) : ms0, h0 = sc0 ? sc0.scrollHeight : 0, top0 = sc0 ? sc0.scrollTop : 0;
+      act('ibolder', 'erpBrandDeskThread', { id: T0.thread.id, before: M0[0].id }, function (r) {
+        if (C.ibT !== T0) return; T0.messages = (r.messages || []).concat(M0); T0.older = r.older; T0.extra = 1;
+        requestAnimationFrame(function () { var ms1 = el('bc_ibms'), sc1 = narrowNow() ? ibScroller(ms1) : ms1; if (sc1) sc1.scrollTop = top0 + (sc1.scrollHeight - h0); });
+      }); return;
+    }
+    if (w === 'ibaudio') {
+      act('iba' + id, 'erpBrandDeskAudio', { id: Number(id) }, function (r) {
+        var m1 = ((C.ibT && C.ibT.messages) || []).filter(function (q) { return String(q.id) === id; })[0]; if (!m1) return;
+        var ix = (m1.media || []).map(function (x) { return x.kind === 'audio' || x.name === 'ভয়েস মেসেজ'; }).indexOf(true); if (ix < 0) return;
+        m1.media[ix] = { kind: 'audio', src: r.src, secs: m1.media[ix].secs };
+        requestAnimationFrame(function () { var au = el('bc_root').querySelector('audio[data-m="' + id + '"]'); if (au) { try { var pp = au.play(); if (pp && pp.catch) pp.catch(function () {}); } catch (er) {} } });
+      }); return;
+    }
+    if (w === 'ibsum') { if (C.ibSum[id]) { delete C.ibSum[id]; draw(); return; } act('ibsum' + id, 'erpBrandDeskThreadSummary', { thread: Number(id) }, function (r) { C.ibSum[id] = r; }); return; }
+    if (w === 'ibsumx') { delete C.ibSum[id]; draw(); return; }
+    if (w === 'ibcard') {
+      if (C.ibCard === id) { C.ibCard = ''; draw(); return; }
+      var TT = C.ibT && C.ibT.thread; if (!TT) return; C.ibCard = id; C.v['ibcn_' + id] = TT.name_override || ''; C.v['ibcno_' + id] = TT.note || ''; draw();
+      setTimeout(function () { var f1 = el('bci_ibcn_' + id); if (f1) f1.focus(); }, 30); return;
+    }
+    if (w === 'ibcsave') {
+      act('ibcs' + id, 'erpBrandDeskContact', { thread: Number(id), name: String(v('ibcn_' + id)).trim(), note: String(v('ibcno_' + id)).trim() }, function (r) {
+        C.ibT = r; C.ibCard = ''; toast('সেভ হলো।');
+        ((C.d.inbox && C.d.inbox.threads) || []).forEach(function (q) { if (String(q.id) === id) q.name = r.thread.name; });
+      }); return;
+    }
+    if (w === 'ibask') { C.ibAsk[id] = !C.ibAsk[id]; draw(); if (C.ibAsk[id]) setTimeout(function () { var f2 = el('bci_ibask_' + id); if (f2) f2.focus(); }, 30); return; }
+    if (w === 'ibsv') {
+      C.ibSv = C.ibSv === id ? '' : id; C.ibSvEd = ''; C.err.ibsv = '';
+      if (C.ibSv && !C.ibSvList) srv('erpBrandDeskSaved', [{}], function (r) { C.ibSvList = r.saved || []; draw(); }, function (e2) { C.err.ibsv = (e2 && e2.message) || String(e2); draw(); });
+      draw(); return;
+    }
+    if (w === 'ibsvnew') { C.ibSvEd = 'new'; C.v.ibsvt = ''; C.v.ibsvb = t.getAttribute('data-from') ? String(v('ibtx_' + id)) : ''; draw(); setTimeout(function () { var f3 = el(C.v.ibsvb ? 'bci_ibsvt' : 'bci_ibsvb'); if (f3) f3.focus(); }, 30); return; }
+    if (w === 'ibsved') { var x0 = (C.ibSvList || []).filter(function (q) { return String(q.id) === id; })[0]; if (!x0) return; C.ibSvEd = id; C.v.ibsvt = x0.title; C.v.ibsvb = x0.body; draw(); return; }
+    if (w === 'ibsvcancel') { C.ibSvEd = ''; draw(); return; }
+    if (w === 'ibsvsave') {
+      var sb0 = String(v('ibsvb')).trim(); if (!sb0) return toast('উত্তরের লেখাটা দিন।', true);
+      act('ibsvsave', 'erpBrandDeskSavedSave', { action: 'save', id: id === 'new' ? '' : Number(id), title: String(v('ibsvt')).trim(), body: sb0 }, function (r) { C.ibSvList = r.saved || []; C.ibSvEd = ''; toast('সেভ হলো।'); }); return;
+    }
+    if (w === 'ibsvdel') { act('ibsvdel', 'erpBrandDeskSavedSave', { action: 'remove', id: Number(id) }, function (r) { C.ibSvList = r.saved || []; C.ibSvEd = ''; toast('সরানো হলো।'); }); return; }
+    if (w === 'ibsvuse' || w === 'ibsvai') {
+      var x1 = (C.ibSvList || []).filter(function (q) { return String(q.id) === id; })[0], tid1 = t.getAttribute('data-t'); if (!x1 || !tid1) return;
+      var done1 = function () { C.ibSv = ''; draw(); setTimeout(function () { var bx = el('bci_ibtx_' + tid1); if (bx) { bx.focus(); try { bx.setSelectionRange(bx.value.length, bx.value.length); } catch (er) {} bx.style.height = 'auto'; bx.style.height = Math.min(240, bx.scrollHeight + 2) + 'px'; } }, 30); };
+      if (w === 'ibsvuse') { var cur = String(v('ibtx_' + tid1)); C.v['ibtx_' + tid1] = cur.trim() ? cur.replace(/\s+$/, '') + '\n' + x1.body : x1.body; return done1(); }
+      act('ibsvai' + id, 'erpBrandDeskReplyDraft', { thread: Number(tid1), base: x1.body, ask: String(v('ibask_' + tid1)).trim() }, function (r) { C.v['ibtx_' + tid1] = r.reply; C.ibChk[tid1] = r.check || ''; done1(); }); return;
+    }
     if (w === 'ibopen') { C.ibJump = 1; ibOpen(id); return; }
     if (w === 'ibback') { C.ibOpen = ''; C.ibT = null; draw(); var r0 = el('bc_root').querySelector('.bx-r.on'); if (r0) r0.focus(); return; }
     if (w === 'ibmore') {
       var L = (C.d.inbox && C.d.inbox.threads) || [], last = L[L.length - 1]; if (!last) return;
-      act('ibmore', 'erpBrandDeskInbox', { f: C.ibf, p: C.ibp, before: last.at }, function (r) { C.d.inbox.threads = L.concat(r.threads || []); C.d.inbox.more = r.more; }); return;
+      act('ibmore', 'erpBrandDeskInbox', Object.assign(ibArgs(), { before: last.at }), function (r) { C.d.inbox.threads = L.concat(r.threads || []); C.d.inbox.more = r.more; }); return;
     }
     if (w === 'ibadd') { var go2 = id === 'instagram' ? 'facebook' : id; C.ibAdd = go2 ? true : !C.ibAdd; C.ibGoTo = go2; C.ibForm = ''; C.ibQr = null; if (C.ibAdd) get('ichan', true); draw(); if (!go2) window.scrollTo(0, 0); return; }
     if (w === 'ibphx') { delete C.ibPh[id]; draw(); return; }
     if (w === 'ibdraft') {
-      act('ibd' + id, 'erpBrandDeskReplyDraft', { thread: Number(id) }, function (r) { C.v['ibtx_' + id] = r.reply; C.ibChk[id] = r.check || '';
+      act('ibd' + id, 'erpBrandDeskReplyDraft', { thread: Number(id), ask: String(v('ibask_' + id)).trim() }, function (r) { C.v['ibtx_' + id] = r.reply; C.ibChk[id] = r.check || '';
         setTimeout(function () { var x = el('bci_ibtx_' + id); if (x) { x.focus(); x.style.height = 'auto'; x.style.height = Math.min(240, x.scrollHeight + 2) + 'px'; } }, 30); }); return;
     }
     if (w === 'ibcopy') { var tx = String(v('ibtx_' + id)); try { navigator.clipboard.writeText(tx).then(function () { toast('কপি হলো। YouTube-এ গিয়ে বসান।'); }); } catch (er) { toast('কপি করা গেল না। লেখাটা হাতে বেছে নিন।', true); } return; }
@@ -61697,12 +61969,21 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     }
   });
   // the open conversation refreshes with the list (every 20 s while the inbox is open), without losing what he types
+  // brand-31: every 5 s with the fingerprint of what he sees; an unchanged conversation answers {same} and nothing redraws
   function ibRefresh() {
-    var id = C.ibOpen; if (!id || C.busy.ibr) return; C.busy.ibr = 1;
-    srv('erpBrandDeskThread', [{ id: Number(id) }], function (r) {
+    var id = C.ibOpen; if (!id || C.busy.ibr || !C.ibT || !C.ibT.thread || String(C.ibT.thread.id) !== String(id)) return; C.busy.ibr = 1;
+    srv('erpBrandDeskThread', [{ id: Number(id), sig: C.ibT.sig || '' }], function (r) {
       C.busy.ibr = 0; if (String(C.ibOpen) !== String(id) || !C.ibT) return;
-      var a = (C.ibT.messages || []).length, b = (r.messages || []).length, ch = a !== b || JSON.stringify((C.ibT.messages || []).map(function (m) { return m.status; })) !== JSON.stringify((r.messages || []).map(function (m) { return m.status; }));
-      if (ch) { C.ibT = r; draw(); if (b > a) ibEnd(); }
+      if (C.d.inbox && r.counts) C.d.inbox.counts = r.counts;
+      if (r.same || !r.thread) return;
+      var a = C.ibT.messages || [], b = r.messages || [], have = {};
+      b.forEach(function (m) { have[m.id] = 1; });
+      if (C.ibT.extra && b.length) {   // he loaded older messages: keep them above the fresh last page
+        var f0 = b[0], at0 = String(f0.at);
+        r.messages = a.filter(function (m) { return !have[m.id] && (String(m.at) < at0 || (String(m.at) === at0 && m.id < f0.id)); }).concat(b); r.older = C.ibT.older; r.extra = 1;
+      }
+      var grew = b.length && (!a.length || b[b.length - 1].id !== a[a.length - 1].id);
+      C.ibT = r; if (!ibPlaying()) { draw(); if (grew) ibEnd(); }
     }, function () { C.busy.ibr = 0; });
   }
   function sideHtml(narrow) {
