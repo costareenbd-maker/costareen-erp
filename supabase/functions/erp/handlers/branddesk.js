@@ -126,6 +126,41 @@ export async function erpBrandDeskStyleCreator(ctx, payload) {
   return bridge(ctx, '/styles/creator', { url: url.slice(0, 400), platform, name: str(p.name).slice(0, 120) });
 }
 export async function erpBrandDeskStyleScout(ctx) { await gate(ctx); return bridge(ctx, '/styles/scout', {}); }
+// brand-aud-1 (15 Nov 2026, owner: "set who we target, keep it changeable"): four readers, each a versioned profile the
+// bridge's writers read; the channel map says which readers each network serves and in what share.
+const AUD_KEYS = ['bn_seller', 'bn_importer', 'en_supplier', 'en_buyer'];
+const AUD_LIST = ['pains', 'desires', 'objections', 'their_words', 'proof_that_moves', 'avoid'];
+const AUD_TEXT = ['who', 'their_situation', 'offer', 'first_line_test', 'qualified_when'];
+export async function erpBrandDeskAudience(ctx) { await gate(ctx); return bridge(ctx, '/audience'); }
+export async function erpBrandDeskAudienceSave(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {};
+  if (p.id != null) { const id = parseInt(p.id, 10); if (!(id > 0)) throw new Error('একটা ভার্সন বাছুন।'); return bridge(ctx, '/audience/activate', { id }); }
+  if (p.channel_map != null) {
+    const m = p.channel_map, out = {};
+    if (typeof m !== 'object' || Array.isArray(m)) throw new Error('চ্যানেল ম্যাপ ঠিক নেই।');
+    for (const net of Object.keys(m)) {
+      if (!STYLE_NETS.includes(net)) continue;
+      out[net] = {};
+      for (const k of Object.keys(m[net] || {})) {
+        if (!AUD_KEYS.includes(k)) continue;
+        const n = Number(m[net][k]);
+        if (!Number.isFinite(n) || n < 0 || n > 100) throw new Error('ভাগ ০ থেকে ১০০-এর মধ্যে দিন।');
+        out[net][k] = Math.round(n);
+      }
+    }
+    return bridge(ctx, '/audience/map', { channel_map: out });
+  }
+  const key = str(p.key);
+  if (!AUD_KEYS.includes(key)) throw new Error('এই পাঠক চেনা নেই।');
+  const src = p.profile || {}, prof = {};
+  for (const f of AUD_TEXT) prof[f] = str(src[f]).slice(0, 1500);
+  for (const f of AUD_LIST) prof[f] = (Array.isArray(src[f]) ? src[f] : []).map((x) => str(x).slice(0, 300)).filter(Boolean).slice(0, 30);
+  const c = src.cta || {};
+  prof.cta = { cold: str(c.cold).slice(0, 300), warm: str(c.warm).slice(0, 300), ready: str(c.ready).slice(0, 300) };
+  if (!prof.who) throw new Error('এরা কারা, সেটা লিখুন।');
+  return bridge(ctx, '/audience/save', { key, profile: prof, reason: str(p.reason).slice(0, 500), activate: p.activate !== false });
+}
 export async function erpBrandDeskLi(ctx) { await gate(ctx); return bridge(ctx, '/li'); }
 export async function erpBrandDeskLiAdd(ctx, payload) {
   await gate(ctx);

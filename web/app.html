@@ -58236,6 +58236,28 @@ select.bc-in{padding-right:28px}
 .bc-step h4 span{position:relative;z-index:1;background:#fff;padding:0 6px 0 2px}
 .bc-step h4 em{position:relative;z-index:1;background:#fff;font:700 12px "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;font-style:normal;color:var(--bc-ink-3);padding:0 4px}
 .bc-card{border:1px solid var(--bc-rule);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff}
+.au-map{display:grid;gap:6px;overflow-x:auto}
+.au-mh,.au-mr{display:grid;grid-template-columns:minmax(120px,1.3fr) repeat(4,minmax(70px,1fr));gap:6px;align-items:center}
+.au-mh span{font:600 12px/1.3 "Noto Sans Bengali",system-ui,sans-serif;color:var(--c,var(--bc-ink));text-align:center}
+.au-net{display:flex;align-items:center;gap:6px;font:600 14px "Noto Sans Bengali",system-ui,sans-serif}
+.au-cell{position:relative;display:block;border-radius:8px;overflow:hidden;background:var(--bc-shelf)}
+.au-cell input.bc-in{position:relative;z-index:1;width:100%;height:34px;text-align:center;background:transparent;border:1px solid transparent;font-variant-numeric:tabular-nums}
+.au-cell i{position:absolute;left:0;bottom:0;height:4px;width:var(--p);background:var(--c)}
+.au-cell.on{background:color-mix(in srgb,var(--c) 10%,#fff)}
+.au-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:18px}
+.au-c{border:1px solid var(--bc-rule);border-top:4px solid var(--c);border-radius:12px;padding:14px;background:#fff}
+.au-ch{display:flex;align-items:center;gap:8px}
+.au-ch b{font:700 16px "Anek Bangla","Noto Sans Bengali",system-ui,sans-serif;color:var(--c)}
+.au-v,.au-lang{font:600 12px system-ui,sans-serif;color:var(--bc-mute,#666)}
+.au-who{margin:8px 0 10px;font:400 14px/1.55 "Pretendard Variable",Pretendard,system-ui,sans-serif}
+.au-dl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:0 0 10px;font-size:13px}
+.au-dl dt{color:var(--bc-mute,#666);font-weight:600}
+.au-dl dd{margin:0;display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.au-ed{display:grid;gap:10px;margin-top:10px}
+.au-ed label{display:grid;gap:4px}
+.au-hist{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:13px}
+.au-hist li{display:flex;gap:8px;align-items:center}
+@media (max-width:640px){.au-mh,.au-mr{grid-template-columns:96px repeat(4,62px)}}
 .bc-card b{display:block;font:600 14px/1.4 "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;overflow-wrap:anywhere}
 .bc-card p{margin:4px 0 0;font-size:12.5px;color:var(--bc-ink-3);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .bc-card .a{display:flex;justify-content:flex-end;margin-top:8px}
@@ -59752,6 +59774,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     results: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
     rules: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
     routine: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M7.5 14h3M13.5 14h3M7.5 17.5h3"/>',
+    aud: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
     train: '<path d="M4 19c3-1 4-4 5-8l1.5-5.5a1.5 1.5 0 0 1 2.9.8L12 12c-.6 2.6-.2 4.4 1.5 5.2"/><path d="M15 19h5M4 21h16"/>',
     linkedin: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v6M8 7.2v.1M12 16v-3.2c0-1.6 1-2.6 2.3-2.6S16.5 11 16.5 12.6V16"/>',
     map: '<circle cx="5" cy="6" r="2.2"/><circle cx="19" cy="6" r="2.2"/><circle cx="12" cy="18" r="2.2"/><path d="M7 7l4 9M17 7l-4 9M7.2 6h9.6"/>',
@@ -59771,8 +59794,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function btn(label, data, cls, bk, dis) { var b = bk && C.busy[bk]; return '<button type="button" class="bc-btn' + (cls ? ' ' + cls : '') + '" ' + data + (b || dis ? ' disabled' : '') + '>' + (b ? '<span class="bc-spin"></span>' : '') + label + '</button>'; }
   function inp(key, ph, extra, type) { return '<input class="bc-in" id="bci_' + key + '" data-bcin="' + key + '" type="' + (type || 'text') + '" data-noi18n="1" placeholder="' + esc(ph || '') + '" value="' + esc(v(key)) + '"' + (extra || '') + '>'; }
   function ta(key, ph, dflt, extra) { return '<textarea class="bc-ta" id="bci_' + key + '" data-bcin="' + key + '" data-noi18n="1" placeholder="' + esc(ph || '') + '"' + (extra || '') + '>' + esc(v(key, dflt)) + '</textarea>'; }
-  var SECS = [['home', 'হোম'], ['inbox', 'ইনবক্স'], ['biz', 'ব্যবসা ও সাইট'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ'], ['routine', 'রুটিন'], ['train', 'লেখার ধরন'], ['linkedin', 'LinkedIn']];
-  var NEED = { inbox: ['cockpit', 'inbox', 'ichan'], biz: ['cockpit', 'sites'], home: ['cockpit', 'drafts', 'settings', 'routine'], posts: ['cockpit', 'drafts', 'settings', 'crit'], ideas: ['drafts', 'memos', 'board', 'settings', 'news', 'reels', 'crit'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen', 'results'], rules: ['settings', 'mlib'], map: ['cockpit'], train: ['styles', 'crit'], linkedin: ['li', 'crit'], routine: ['routine'] };
+  var SECS = [['home', 'হোম'], ['inbox', 'ইনবক্স'], ['biz', 'ব্যবসা ও সাইট'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ'], ['routine', 'রুটিন'], ['aud', 'দর্শক'], ['train', 'লেখার ধরন'], ['linkedin', 'LinkedIn']];
+  var NEED = { inbox: ['cockpit', 'inbox', 'ichan'], biz: ['cockpit', 'sites'], home: ['cockpit', 'drafts', 'settings', 'routine'], posts: ['cockpit', 'drafts', 'settings', 'crit'], ideas: ['drafts', 'memos', 'board', 'settings', 'news', 'reels', 'crit'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen', 'results'], rules: ['settings', 'mlib'], map: ['cockpit'], aud: ['aud'], train: ['styles', 'crit'], linkedin: ['li', 'crit'], routine: ['routine'] };
   function on() { return typeof VIEW !== 'undefined' && VIEW === 'branddesk' && typeof ME !== 'undefined' && ME && ME.role === 'owner'; }
   function fonts() {
     if (document.getElementById('bc_font')) return;
@@ -59780,7 +59803,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     l.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Anek+Bangla:wght@600;700&display=swap'; document.head.appendChild(l);
   }
   // ---------- data: one store, one loader per read; bridge reads wait until the cockpit says the Mac is on
-  var CALL = { inbox: 'erpBrandDeskInbox', ichan: 'erpBrandDeskChannels', sites: 'erpBrandDeskSites', mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', li: 'erpBrandDeskLi', routine: 'erpBrandDeskRoutine', reels: 'erpBrandDeskReels', results: 'erpBrandDeskResults', crit: 'erpBrandDeskCritiques' };
+  var CALL = { inbox: 'erpBrandDeskInbox', ichan: 'erpBrandDeskChannels', sites: 'erpBrandDeskSites', mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', aud: 'erpBrandDeskAudience', li: 'erpBrandDeskLi', routine: 'erpBrandDeskRoutine', reels: 'erpBrandDeskReels', results: 'erpBrandDeskResults', crit: 'erpBrandDeskCritiques' };
   function ready() { var d = C.d.cockpit; return !!(d && d.online && d.keySet); }
   function get(k, force) {
     if (C.busy['g_' + k] || (C.d[k] && !force)) return;
@@ -61076,6 +61099,59 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     if (rf) h += '<ol class="st-rules" data-noi18n="1">' + ((p.rules_bn && p.rules_bn.length ? p.rules_bn : p.rules) || []).map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ol>';
     return h + '</article>';
   }
+  // ---------- brand-aud-1 (15 Nov 2026): who every post is written for. Four readers (versioned profiles the AI writers read)
+  // and the share of each reader per network. A save makes a new version; old versions stay and can be switched back on.
+  var AUR = [['bn_seller', 'বিউটি রিসেলার', '#C2410C'], ['bn_importer', 'ইমপোর্ট করতে চান', '#B45309'], ['en_supplier', 'ব্র্যান্ড ও সাপ্লায়ার', '#1D4ED8'], ['en_buyer', 'বিদেশি বায়ার', '#047857']];
+  var AUF = [['who', 'এরা কারা', 0], ['their_situation', 'এদের অবস্থা', 0], ['pains', 'কষ্ট (এক লাইনে একটা)', 1], ['desires', 'চাওয়া', 1], ['objections', 'আপত্তি', 1],
+    ['their_words', 'এদের নিজের শব্দ', 1], ['proof_that_moves', 'যে প্রমাণে বিশ্বাস করে', 1], ['offer', 'পেছনের অফার', 0], ['first_line_test', 'প্রথম লাইনের পরীক্ষা', 0],
+    ['avoid', 'যা কখনো না', 1], ['qualified_when', 'কাজের কথোপকথন কখন', 0]];
+  function auName(k) { var x = AUR.filter(function (q) { return q[0] === k; })[0]; return x ? x[1] : k; }
+  function auCol(k) { var x = AUR.filter(function (q) { return q[0] === k; })[0]; return x ? x[2] : '#555'; }
+  function auMapVal(d, net, k) { var key = 'am_' + net + '_' + k; return C.v[key] != null ? C.v[key] : String(((d.channel_map || {})[net] || {})[k] || 0); }
+  function audHtml() {
+    var g = gate(['aud']); if (g) return headHtml('দর্শক', '') + g;
+    var d = C.d.aud, pr = d.profiles || [], mix = d.recent_mix || [];
+    var h = headHtml('দর্শক', 'প্রতিটা পোস্ট একজন পাঠকের জন্য লেখা হয়');
+    // the channel map: per network, which readers and what share
+    h += '<div class="bc-block"><div class="bc-h2"><h2>কোন নেটওয়ার্কে কাকে</h2><span>সংখ্যা = ভাগ; ০ মানে এই নেটওয়ার্কে না</span></div><div class="au-map">' +
+      '<div class="au-mh"><span></span>' + AUR.map(function (r) { return '<span style="--c:' + r[2] + '">' + r[1] + '</span>'; }).join('') + '</div>' +
+      SNETS.map(function (n) {
+        var tot = AUR.reduce(function (a, r) { return a + (Number(auMapVal(d, n, r[0])) || 0); }, 0);
+        return '<div class="au-mr"><span class="au-net">' + logo(n, 16) + esc(netName(n)) + '</span>' + AUR.map(function (r) {
+          var val = Number(auMapVal(d, n, r[0])) || 0, pc = tot ? Math.round(val * 100 / tot) : 0;
+          return '<label class="au-cell' + (val ? ' on' : '') + '" style="--c:' + r[2] + ';--p:' + pc + '%"><input class="bc-in" id="bci_am_' + n + '_' + r[0] + '" data-bcin="am_' + n + '_' + r[0] + '" inputmode="numeric" value="' + esc(String(val)) + '" aria-label="' + esc(netName(n) + ' · ' + r[1]) + '"><i></i></label>';
+        }).join('') + '</div>';
+      }).join('') + '</div><div class="uc-a">' + btn('ভাগ সেভ করুন', 'data-bc="aumap"', 'dark', 'aumap') + '</div></div>';
+    // the four readers
+    h += '<div class="au-g">' + AUR.map(function (r) {
+      var k = r[0], vs = pr.filter(function (p) { return p.key === k; }), cur = vs.filter(function (p) { return p.status === 'active'; })[0] || vs[0];
+      if (!cur) return '';
+      var P = cur.profile || {}, open = !!C.fold['ae' + k], made = mix.filter(function (m) { return m.reader === k; }).reduce(function (a, m) { return a + Number(m.n || 0); }, 0);
+      var nets = SNETS.filter(function (n) { return Number(auMapVal(d, n, k)) > 0; });
+      var c = '<article class="au-c" style="--c:' + r[2] + '"><div class="au-ch"><b>' + esc(cur.name_bn || r[1]) + '</b><span class="au-v">v' + bn(cur.version) + (cur.status === 'active' ? '' : ' · বন্ধ') + '</span><span class="bc-sp"></span>' +
+        '<span class="au-lang">' + (cur.lang === 'bn' ? 'বাংলা' : 'English') + '</span></div>' +
+        '<p class="au-who" data-noi18n="1">' + esc(P.who || '') + '</p>' +
+        '<dl class="au-dl"><dt>অফার</dt><dd data-noi18n="1">' + esc(P.offer || '—') + '</dd><dt>কাজের কথোপকথন</dt><dd data-noi18n="1">' + esc(P.qualified_when || '—') + '</dd>' +
+        '<dt>কোথায়</dt><dd>' + (nets.length ? nets.map(function (n) { return logo(n, 14); }).join(' ') : 'কোথাও না') + '</dd><dt>৩০ দিনে ড্রাফট</dt><dd>' + bn(made) + 'টা</dd></dl>' +
+        '<button type="button" class="bc-fold' + (open ? ' on' : '') + '" data-bc="fold" data-id="ae' + k + '">' + svg('right') + (open ? 'বন্ধ করুন' : 'বদলান') + '</button>';
+      if (open) {
+        c += '<div class="au-ed">' + AUF.map(function (f) {
+          var key = 'au_' + k + '_' + f[0], val = f[2] ? (P[f[0]] || []).join('\n') : (P[f[0]] || '');
+          return '<label><span class="bc-lbl">' + f[1] + '</span>' + ta(key, '', val, ' rows="' + (f[2] ? 4 : 2) + '"') + '</label>';
+        }).join('') + ['cold', 'warm', 'ready'].map(function (s, i) {
+          return '<label><span class="bc-lbl">ডাক · ' + ['নতুন মানুষ', 'চেনা হয়েছে', 'কিনতে তৈরি'][i] + '</span>' + ta('au_' + k + '_cta_' + s, '', (P.cta || {})[s] || '', ' rows="2"') + '</label>';
+        }).join('') + '<label><span class="bc-lbl">কেন বদলাচ্ছেন</span>' + inp('au_' + k + '_reason', 'যেমন: ইনবক্সে আসল প্রশ্ন দেখে') + '</label>' +
+          '<div class="uc-a">' + btn('নতুন ভার্সন চালু করুন', 'data-bc="ausave" data-id="' + k + '"', 'dark', 'ausave' + k) + '</div>';
+        if (vs.length > 1) c += '<div class="bc-lbl">আগের ভার্সন</div><ul class="au-hist">' + vs.map(function (p) {
+          return '<li><span>v' + bn(p.version) + '</span><span data-noi18n="1">' + esc(p.reason || '') + '</span><span class="bc-sp"></span>' +
+            (p.status === 'active' ? '<b>চালু</b>' : btn('এটা চালু করুন', 'data-bc="auon" data-id="' + p.id + '"', 'ghost sm', 'auon' + p.id)) + '</li>';
+        }).join('') + '</ul>';
+        c += '</div>';
+      }
+      return c + '</article>';
+    }).join('') + '</div>';
+    return h;
+  }
   function trainHtml() {
     var g = gate(['styles']); if (g) return headHtml('লেখার ধরন', '') + g;
     var d = C.d.styles, pr = d.profiles || [], ex = d.examples || [], off = !!d.off, jobs = d.jobs || {}, jk = Object.keys(jobs);
@@ -62016,7 +62092,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function mainHtml(narrow) {
     switch (C.sec) {
       case 'posts': return postsHtml(); case 'ideas': return ideasHtml(); case 'media': return mediaHtml(); case 'listen': return listenHtml();
-      case 'inbox': return inboxHtml(); case 'biz': return bizHtml(); case 'people': return peopleHtml(); case 'results': return resultsHtml(); case 'rules': return rulesHtml(); case 'map': return mapPageHtml(); case 'train': return trainHtml(); case 'linkedin': return liHtml(); case 'routine': return routineHtml();
+      case 'inbox': return inboxHtml(); case 'biz': return bizHtml(); case 'people': return peopleHtml(); case 'results': return resultsHtml(); case 'rules': return rulesHtml(); case 'map': return mapPageHtml(); case 'train': return trainHtml(); case 'aud': return audHtml(); case 'linkedin': return liHtml(); case 'routine': return routineHtml();
       default: return homeHtml(narrow);
     }
   }
@@ -62356,6 +62432,19 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     else if (w === 'stscout') act('stscout', 'erpBrandDeskStyleScout', {}, function (r) { C.d.styles = r; poll('styles'); toast('খোঁজা শুরু হলো। ৫-১০ মিনিট লাগবে।'); });
     else if (w === 'stcr') act('stcr' + id, 'erpBrandDeskStyleCreator', { id: Number(id), active: t.getAttribute('data-on') === '1' }, function (r) { C.d.styles = r; });
     else if (w === 'stcradd') act('stcradd', 'erpBrandDeskStyleCreator', { platform: v('crp') || 'facebook', url: String(v('cru')).trim(), name: String(v('crn')).trim() }, function (r) { C.d.styles = r; delete C.v.cru; delete C.v.crn; toast('যোগ হলো।'); });
+    else if (w === 'aumap') {
+      var am = {}, ad = C.d.aud || {};
+      SNETS.forEach(function (n) { am[n] = {}; AUR.forEach(function (r) { am[n][r[0]] = Number(String(auMapVal(ad, n, r[0])).replace(/[^0-9]/g, '')) || 0; }); });
+      act('aumap', 'erpBrandDeskAudienceSave', { channel_map: am }, function (r) { C.d.aud = r; Object.keys(C.v).forEach(function (q) { if (/^am_/.test(q)) delete C.v[q]; }); toast('ভাগ সেভ হলো। পরের ড্রাফট থেকে কাজ করবে।'); });
+    }
+    else if (w === 'ausave') {
+      var ak = id, cur = ((C.d.aud || {}).profiles || []).filter(function (p) { return p.key === ak && p.status === 'active'; })[0] || {}, P0 = cur.profile || {}, prof = { cta: {} };
+      AUF.forEach(function (f) { var raw = v('au_' + ak + '_' + f[0], f[2] ? (P0[f[0]] || []).join('\n') : (P0[f[0]] || '')); prof[f[0]] = f[2] ? String(raw).split('\n').map(function (x) { return x.trim(); }).filter(Boolean) : String(raw).trim(); });
+      ['cold', 'warm', 'ready'].forEach(function (s) { prof.cta[s] = String(v('au_' + ak + '_cta_' + s, (P0.cta || {})[s] || '')).trim(); });
+      act('ausave' + ak, 'erpBrandDeskAudienceSave', { key: ak, profile: prof, reason: String(v('au_' + ak + '_reason')).trim(), activate: true }, function (r) {
+        C.d.aud = r; Object.keys(C.v).forEach(function (q) { if (q.indexOf('au_' + ak + '_') === 0) delete C.v[q]; }); C.fold['ae' + ak] = false; toast('নতুন ভার্সন চালু হলো। আগেরটা রাখা আছে।'); });
+    }
+    else if (w === 'auon') act('auon' + id, 'erpBrandDeskAudienceSave', { id: Number(id) }, function (r) { C.d.aud = r; toast('এই ভার্সন চালু হলো।'); });
     else if (w === 'lik') { C.lk = id; draw(); }
     else if (w === 'liadd') act('liadd', 'erpBrandDeskLiAdd', { kind: C.lk || 'comment', name: String(v('lnm')).trim(), url: String(v('lurl')).trim(), context: String(v('lctx')).trim() }, function (r) { C.d.li = r; ['lnm', 'lurl', 'lctx'].forEach(function (q) { delete C.v[q]; }); poll('li'); toast('লেখা হচ্ছে, আধা মিনিট।'); });
     else if (w === 'lipull') act('lipull', 'erpBrandDeskLiPull', {}, function (r) { C.d.li = r; poll('li'); toast('কমেন্ট পড়া হচ্ছে; রিপ্লাই নিচে আসবে।'); });
