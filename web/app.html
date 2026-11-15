@@ -58977,6 +58977,24 @@ button.ph-play:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .tr-cr li span[data-noi18n]{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .tr-cr li.off span{color:var(--bc-ink-3)}
 .tr-add{display:flex;gap:8px;flex-wrap:wrap}
+.fw-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin:18px 0 22px}
+.fw-c{border:1px solid var(--bc-rule);border-radius:14px;padding:16px;background:#fff;display:flex;flex-direction:column;gap:12px;min-width:0}
+.fw-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.fw-h h2{margin:0;font:700 17px "Anek Bangla","Noto Sans Bengali",system-ui,sans-serif}
+.fw-h span{font-size:13px;color:var(--bc-mute,#667)}
+.fw-add{display:flex;gap:8px}
+.fw-add select.bc-in{flex:0 0 auto;width:auto}
+.fw-add input.bc-in{flex:1 1 auto;min-width:0}
+.fw-l{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.fw-l li{display:flex;align-items:center;gap:10px;padding:8px 2px;border-top:1px solid var(--bc-rule)}
+.fw-l li.off{opacity:.55}
+.fw-l li>div{flex:1 1 auto;min-width:0}
+.fw-l b{display:block;font:600 14px/1.35 "Pretendard Variable",Pretendard,"Noto Sans Bengali",system-ui,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fw-l small{display:block;font-size:12.5px;line-height:1.45;color:var(--bc-mute,#667)}
+.fw-e{margin:0;font-size:13.5px;line-height:1.6;color:var(--bc-mute,#667);background:var(--bc-shelf);border-radius:10px;padding:10px 12px}
+.fw-dot{flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:#C9CBD1}
+.fw-dot.run{background:#E8A33D}.fw-dot.ok{background:#1E9E61}.fw-dot.bad{background:#D33B3B}
+@media (max-width:480px){.fw-add{flex-wrap:wrap}.fw-add input.bc-in{flex-basis:100%;order:-1}.fw-add .bc-btn{flex:1 1 auto}}
 .tr-add .bc-in{flex:1;min-width:140px}.tr-add select.bc-in{flex:0 0 auto;min-width:0}
 /* brand-17: LinkedIn lane - counters, kill switch, tickets */
 .bc-btn.redline{background:transparent;color:var(--bc-alert-ink);box-shadow:inset 0 0 0 1.5px var(--bc-alert)}
@@ -61152,6 +61170,29 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     }).join('') + '</div>';
     return h;
   }
+  // brand-follow-1 (owner 15 Nov 2026): the two places to paste links sit on the first screen, side by side
+  function followHtml(d) {
+    var cr = d.creators || [], vids = d.videos || [], sc = d.scout || {};
+    var who = function (c) { return esc(c.name || String(c.url).replace(/^https:\/\/(www\.|m\.)?/, '').slice(0, 48)); };
+    var a = '<section class="fw-c" id="bc_follow"><div class="fw-h"><h2>প্রোফাইল ফলো করুন</h2><span>' + (cr.length ? bn(cr.length) + 'টা' : 'লেখা আর কাজের ধরন শেখে') + '</span></div>' +
+      '<div class="fw-add"><select class="bc-in" id="bci_crp" data-bcin="crp" aria-label="নেটওয়ার্ক">' + ['facebook', 'instagram', 'youtube', 'tiktok', 'linkedin'].map(function (n) { return '<option value="' + n + '"' + ((v('crp') || 'facebook') === n ? ' selected' : '') + '>' + netName(n) + '</option>'; }).join('') + '</select>' +
+      inp('cru', 'প্রোফাইলের লিংক', ' aria-label="প্রোফাইলের লিংক"', 'url') + btn('যোগ করুন', 'data-bc="stcradd"', 'dark', 'stcradd') + '</div>' +
+      (cr.length ? '<ul class="fw-l">' + cr.map(function (c) {
+        var m = c.meta || {}, f = Object.keys(m.formats || {}).map(function (k) { return k + ' ' + bn(m.formats[k]); }).join(', ');
+        var line = m.posts_seen ? ((m.per_week != null ? 'সপ্তাহে ' + bn(m.per_week) + 'টা পোস্ট' : bn(m.posts_seen) + 'টা পোস্ট দেখা') + (m.top_hours_seoul && m.top_hours_seoul.length ? ' · ' + m.top_hours_seoul.map(function (x) { return bn(x) + 'টা'; }).join(', ') : '') + (f ? ' · ' + esc(f) : '')) : 'এখনো পড়া হয়নি · পরের খোঁজায় পড়বে';
+        return '<li class="' + (c.active ? '' : 'off') + '">' + logo(c.platform, 18) + '<div><b data-noi18n="1">' + who(c) + '</b><small>' + line + '</small></div>' +
+          '<button type="button" class="tr-sw sm' + (c.active ? ' on' : '') + '" role="switch" aria-checked="' + !!c.active + '" aria-label="' + who(c) + ' চালু" data-bc="stcr" data-id="' + c.id + '" data-on="' + (c.active ? 0 : 1) + '"><i></i></button></li>';
+      }).join('') + '</ul>' : '<p class="fw-e">ভালো লাগা কারো প্রোফাইলের লিংক দিন। তারা কী নিয়ে, কত ঘনঘন, কোন সময়ে, কোন ফরম্যাটে পোস্ট করে, সেটা দেখে আপনার লেখার ধরন শিখবে। বিষয় আসবে আপনার দর্শক থেকে, তাদের থেকে নয়।</p>') + '</section>';
+    var stt = { 'new': ['অপেক্ষায়', ''], measuring: ['মাপা হচ্ছে…', 'run'], done: ['শেখা হয়েছে', 'ok'], failed: ['পড়া গেল না', 'bad'] };
+    var b = '<section class="fw-c" id="bc_vref"><div class="fw-h"><h2>ভিডিওর স্টাইল শেখান</h2><span>' + (vids.length ? bn(vids.length) + 'টা' : 'কাট, ক্যাপশন, zoom, সাউন্ড') + '</span></div>' +
+      '<div class="fw-add">' + inp('vru', 'ভিডিওর লিংক', ' aria-label="ভিডিওর লিংক"', 'url') + btn('যোগ করুন', 'data-bc="stvadd"', 'dark', 'stvadd') + '</div>' +
+      (vids.length ? '<ul class="fw-l">' + vids.map(function (x) {
+        var st = stt[x.state] || [x.state, ''], lk = (x.recipe && x.recipe.look) || {};
+        return '<li><span class="fw-dot ' + st[1] + '"></span><div><b data-noi18n="1">' + esc(x.note || (x.recipe && x.recipe.source && x.recipe.source.title) || String(x.url).replace(/^https:\/\/(www\.|m\.)?/, '').slice(0, 48)) + '</b><small>' + st[0] +
+          (lk.summary_bn ? ' · ' + esc(lk.summary_bn) : '') + '</small></div>' + btn(svg('trash'), 'data-bc="stvdel" data-id="' + x.id + '" aria-label="সরান"', 'ghost sm', 'stvd' + x.id) + '</li>';
+      }).join('') + '</ul>' : '<p class="fw-e">যে ভিডিওর এডিটিং ভালো লাগে, তার লিংক দিন। PC সেটা মেপে নিয়ম বানাবে, আপনার ভিডিও সেই নিয়মে কাটা হবে। ভিডিওটা রাখা হয় না, শুধু মাপ।</p>') + '</section>';
+    return '<div class="fw-g">' + a + b + '</div>';
+  }
   function trainHtml() {
     var g = gate(['styles']); if (g) return headHtml('লেখার ধরন', '') + g;
     var d = C.d.styles, pr = d.profiles || [], ex = d.examples || [], off = !!d.off, jobs = d.jobs || {}, jk = Object.keys(jobs);
@@ -61166,6 +61207,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       return '<button type="button" class="tr-row" style="--c:' + netCol(n) + '" data-bc="jump" data-id="' + (st ? 'bc_st' + st.id : 'bc_tpaste') + '"><i></i>' + logo(n, 16) + '<span class="tr-n">' + esc(netName(n)) + '</span>' +
         '<span class="tr-ride' + (st ? ' on' : '') + '">' + (st ? esc(st.name_bn || st.name) : 'সাধারণ') + '</span></button>';
     }).join('') + '</div>' + (off ? '<p class="tr-offnote">সব ধরন বন্ধ। কিছু মোছেনি; চালু করলে আগের মতো হবে।</p>' : '');
+    h += followHtml(d);
     h += lessonsHtml();
     if (failed) h += '<div class="bc-call"><span>' + esc(hasBn(jobs[failed].error) ? jobs[failed].error : 'ধরন পড়া গেল না।') + '</span><span class="bc-sp"></span><button class="bc-btn ghost sm" type="button" data-bc="fold" data-id="jx' + failed + '">ঠিক আছে</button></div>';
     // paste box
@@ -61183,35 +61225,14 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     h += '<div class="bc-block"><div class="bc-h2"><h2>আপনার ধরন</h2>' + (mine.length ? '<span>' + bn(mine.length) + 'টা</span>' : '') + '</div>' +
       (mine.length ? '<div class="st-g">' + mine.map(function (p) { return styleCard(p, ex); }).join('') + '</div>' : '<p class="tr-empty">এখনো কোনো ধরন নেই। উপরে একটা লেখা পেস্ট করুন।</p>') + '</div>';
     if (sug.length) h += '<div class="bc-block"><div class="bc-h2"><h2>AI খুঁজে এনেছে</h2></div><div class="st-g">' + sug.map(function (p) { return styleCard(p, ex); }).join('') + '</div></div>';
-    // scout + creators
-    var sc = d.scout || {}, runs = (sc.runs || []).length, cr = d.creators || [];
-    var srcs = [['youtube', sc.youtube ? 'চালু' : 'YouTube-এর চাবি নেই', sc.youtube], ['facebook', sc.apify ? 'চালু' : 'Apify-এর চাবি নেই', sc.apify], ['linkedin', sc.apify ? 'চালু' : 'Apify-এর চাবি নেই', sc.apify]];
-    h += '<div class="bc-block tr-scout"><div class="bc-h2"><h2>নিজে খোঁজা</h2><span>মাসের ১ তারিখে নিজে চলে</span></div>' +
+    // scout (monthly self-search); the follow + video cards sit near the top (brand-follow-1)
+    var sc = d.scout || {}, runs = (sc.runs || []).length;
+    var srcs = [['youtube', sc.youtube ? 'চালু' : 'YouTube-এর চাবি নেই', sc.youtube], ['tiktok', 'চালু', true], ['instagram', sc.apify ? 'চালু' : 'আংশিক', true],
+      ['facebook', sc.apify ? 'চালু' : 'Apify-এর চাবি নেই', sc.apify], ['linkedin', sc.apify ? 'চালু' : 'Apify-এর চাবি নেই', sc.apify]];
+    h += '<div class="bc-block tr-scout"><div class="bc-h2"><h2>নিজে খোঁজা</h2><span>মাসের ১ তারিখে নিজে চলে' + (sc.apify_used != null ? ' · Apify খরচ $' + Number(sc.apify_used).toFixed(2) + ' / $' + Number(sc.apify_cap || 5).toFixed(0) : '') + '</span></div>' +
       '<div class="tr-sc"><div class="tr-runs">' + [0, 1].map(function (i) { return '<i class="' + (i < runs ? 'f' : '') + '"></i>'; }).join('') + '<span>এ মাসে ' + bn(runs) + '/২ বার</span></div>' +
       '<ul class="tr-srcs">' + srcs.map(function (x) { return '<li class="' + (x[2] ? 'on' : '') + '">' + lb(x[0]) + '<span>' + x[1] + '</span></li>'; }).join('') + '</ul>' +
-      btn(scouting ? 'খোঁজা চলছে…' : runs >= 2 ? 'এ মাসে আর হবে না' : 'এখন খুঁজুন', 'data-bc="stscout"', 'dark', 'stscout', runs >= 2 || scouting) + '</div>' +
-      '<div class="bc-lbl">যাদের পোস্ট থেকে শিখবে</div>' +
-      (cr.length ? '<ul class="tr-cr">' + cr.map(function (c) {
-        return '<li class="' + (c.active ? '' : 'off') + '">' + logo(c.platform, 15) + '<span data-noi18n="1">' + esc(c.name || c.url.replace(/^https:\/\/(www\.)?/, '')) + '</span><span class="bc-sp"></span>' +
-          '<button type="button" class="tr-sw sm' + (c.active ? ' on' : '') + '" role="switch" aria-checked="' + !!c.active + '" aria-label="' + esc((c.name || 'ক্রিয়েটর') + ' চালু') + '" data-bc="stcr" data-id="' + c.id + '" data-on="' + (c.active ? 0 : 1) + '"><i></i></button></li>';
-      }).join('') + '</ul>' : '<p class="tr-empty sm">এখনো কেউ নেই। নিচে লিংক দিন।' + (sc.apify ? '' : ' Apify-এর চাবি বসালে তবে পড়া যাবে।') + '</p>') +
-      '<div class="tr-add"><select class="bc-in" id="bci_crp" data-bcin="crp" aria-label="নেটওয়ার্ক">' + ['facebook', 'instagram', 'youtube', 'tiktok', 'linkedin'].map(function (n) { return '<option value="' + n + '"' + ((v('crp') || 'facebook') === n ? ' selected' : '') + '>' + netName(n) + '</option>'; }).join('') + '</select>' +
-      inp('cru', 'https://…', ' aria-label="লিংক"', 'url') + inp('crn', 'নাম', ' aria-label="নাম"') + btn('যোগ করুন', 'data-bc="stcradd"', '', 'stcradd') + '</div></div>';
-    // brand-follow-1: what each followed creator DOES (posts a week, hours, formats), and the videos whose editing style to learn
-    var withMeta = cr.filter(function (c) { return c.meta && c.meta.posts_seen; });
-    if (withMeta.length) h += '<div class="bc-block"><div class="bc-h2"><h2>তারা কী করে</h2><span>শেষ খোঁজা থেকে</span></div><ul class="tr-cr">' + withMeta.map(function (c) {
-      var m = c.meta, f = Object.keys(m.formats || {}).map(function (k) { return k + ' ' + bn(m.formats[k]); }).join(', ');
-      return '<li>' + logo(c.platform, 15) + '<span data-noi18n="1">' + esc(c.name || c.url.replace(/^https:\/\/(www\.)?/, '')) + '</span><span class="bc-sp"></span><small>' +
-        (m.per_week != null ? 'সপ্তাহে ' + bn(m.per_week) + 'টা · ' : '') + (m.top_hours_seoul && m.top_hours_seoul.length ? 'সময় ' + m.top_hours_seoul.map(function (x) { return bn(x) + 'টা'; }).join('/') + ' · ' : '') + esc(f) + '</small></li>';
-    }).join('') + '</ul></div>';
-    var vids = d.videos || [];
-    h += '<div class="bc-block"><div class="bc-h2"><h2>ভিডিওর স্টাইল শেখান</h2><span>কাট, ক্যাপশন, zoom, সাউন্ড মাপা হয়; ভিডিও রাখা হয় না</span></div>' +
-      (vids.length ? '<ul class="tr-cr">' + vids.map(function (x) {
-        var st = { 'new': 'অপেক্ষায়', measuring: 'মাপা হচ্ছে…', done: 'শেখা হয়েছে', failed: 'পড়া গেল না' }[x.state] || x.state;
-        return '<li class="' + (x.state === 'failed' ? 'off' : '') + '"><span data-noi18n="1">' + esc(x.note || x.url.replace(/^https:\/\/(www\.)?/, '').slice(0, 60)) + '</span><span class="bc-sp"></span><small>' + st + '</small>' +
-          btn(svg('trash'), 'data-bc="stvdel" data-id="' + x.id + '" aria-label="সরান"', 'ghost sm', 'stvd' + x.id) + '</li>';
-      }).join('') + '</ul>' : '<p class="tr-empty sm">এখনো কোনো ভিডিও নেই। যে ভিডিওর এডিটিং ভালো লাগে, তার লিংক দিন।</p>') +
-      '<div class="tr-add">' + inp('vru', 'https://www.youtube.com/watch?v=…', ' aria-label="ভিডিও লিংক"', 'url') + inp('vrn', 'কী ভালো লাগল (ঐচ্ছিক)', ' aria-label="নোট"') + btn('যোগ করুন', 'data-bc="stvadd"', '', 'stvadd') + '</div></div>';
+      btn(scouting ? 'খোঁজা চলছে…' : runs >= 2 ? 'এ মাসে আর হবে না' : 'এখন খুঁজুন', 'data-bc="stscout"', 'dark', 'stscout', runs >= 2 || scouting) + '</div></div>';
     return h;
   }
   // ---------- brand-17: LinkedIn yellow lane - a counter board with a queue; he posts every item by hand
@@ -61513,8 +61534,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     // business of this ERP that he belongs to, one tap switches the ERP to it and opens its dashboard (same login)
     var EB = (typeof BIZ !== 'undefined' && BIZ && BIZ.businesses) ? BIZ.businesses.filter(function (x) { return x.id !== BIZ.active; }) : [];
     if (EB.length && !C.bzEdit) h += '<div class="bc-lbl" style="margin-top:14px">এই ERP-তে আপনার ব্যবসাগুলো</div><div class="sx-biz">' + EB.map(function (x) {
-      return '<div class="sx-b"><div><h3 data-noi18n="1">' + esc(x.name) + '</h3><small>' + (x.pool ? 'যৌথ স্টক' : 'এক চাপে ঢুকুন') + '</small></div>' +
-        '<button type="button" class="bc-btn" data-bc="bizopen" data-id="' + esc(x.id) + '">ERP খুলুন' + svg('out') + '</button></div>';
+      return '<div class="sx-b"><div><h3 data-noi18n="1">' + esc(x.name) + '</h3><small>' + (x.pool ? 'যৌথ স্টক · এই ট্যাবেই খোলে' : 'এই ট্যাবেই খোলে, একই লগইনে') + '</small></div>' +
+        '<button type="button" class="bc-btn" data-bc="bizopen" data-id="' + esc(x.id) + '">ERP-তে যান' + svg('right') + '</button></div>';
     }).join('') + '</div>';
     if (C.bzForm === 'new') h += bzForm(null);
     else if (C.bzEdit && B.length) h += '<div class="sx-acts"><button type="button" class="bc-btn" data-bc="bzform" data-id="new">' + svg('plus') + 'ব্যবসা যোগ করুন</button></div>';
