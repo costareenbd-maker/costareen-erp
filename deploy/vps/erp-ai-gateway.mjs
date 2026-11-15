@@ -29,6 +29,13 @@ const GPT_ALIAS = { 'gpt-5.5': 'gpt-5.6-sol', 'gpt-5.4': 'gpt-5.6-sol', 'gpt-5.5
 const CLAUDE_MODEL = { 'claude-opus': 'opus', 'claude-sonnet': 'sonnet', 'claude-haiku': 'haiku' };
 const ALLOW_CLAUDE = process.env.ALLOW_CLAUDE === '1';
 const CLAUDE_AS_GPT = { 'claude-opus': 'gpt-5.6-sol', 'claude-sonnet': 'gpt-5.6-terra', 'claude-haiku': 'gpt-5.6-luna' };
+// OWNER RULE 15 Nov 2026: "my personal brand runs on Claude; ChatGPT is for the other businesses". A second key,
+// PERSONAL_SECRET (/etc/erp-ai-gateway.env), is the personal-brand door (brand bridge, journal bot, PC video editor):
+// with it EVERY chat goes to Claude on the owner's Claude plan, photos included, and gpt-* names are read as Claude
+// (sol/terra -> sonnet, luna -> haiku). No fallback to ChatGPT: a Claude limit comes back as 429 and the job waits.
+// The business key (ERP_AI_SECRET) is unchanged: Claude never answers it unless ALLOW_CLAUDE=1.
+const PERSONAL = process.env.PERSONAL_SECRET || '';
+const GPT_AS_CLAUDE = { 'gpt-5.6-sol': 'claude-sonnet', 'gpt-5.6-terra': 'claude-sonnet', 'gpt-5.6-luna': 'claude-haiku' };
 
 let running = 0; const waiting = [];
 const slot = () => new Promise((ok) => { if (running < MAX_PAR) { running++; ok(); } else waiting.push(ok); });
@@ -58,6 +65,58 @@ function runClaude(model, system, prompt, ms) {
     });
     p.stdin.end(prompt);
   });
+}
+
+function runClaudeBlocks(model, system, blocks, ms) {
+  return new Promise((ok, bad) => {
+    const f = '/tmp/erp-ai-sys-' + randomUUID() + '.txt';
+    writeFileSync(f, system || 'Follow the instructions in the request.');
+    const p = spawn(CLAUDE, ['-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose', '--model', model,
+      '--system-prompt-file', f, '--tools', '', '--no-session-persistence', '--setting-sources', '', '--strict-mcp-config',
+      '--mcp-config', '{"mcpServers":{}}'], { env: { ...process.env, HOME: '/root' }, cwd: '/tmp' });
+    let out = '', e = '';
+    const t = setTimeout(() => { p.kill('SIGKILL'); }, ms);
+    p.stdout.on('data', (d) => { out += d; });
+    p.stderr.on('data', (d) => { e += d; });
+    p.on('close', () => {
+      clearTimeout(t); try { unlinkSync(f); } catch (_) { /* gone */ }
+      let j = null;
+      for (const line of out.split('\n')) { try { const o = JSON.parse(line); if (o.type === 'result') j = o; } catch (_) { /* not json */ } }
+      if (!j) return bad(new Error('claude gave no answer: ' + (e || out).slice(-300)));
+      if (j.is_error) return bad(new Error('claude: ' + String(j.result || j.subtype).slice(0, 300)));
+      ok(j);
+    });
+    p.stdin.end(JSON.stringify({ type: 'user', message: { role: 'user', content: blocks } }) + '\n');
+  });
+}
+function imageBlocks(msgs) {
+  const out = [];
+  for (const m of msgs) {
+    if (!Array.isArray(m.content)) continue;
+    for (const c of m.content) {
+      const u = c && c.type === 'image_url' && (c.image_url && c.image_url.url || c.image_url);
+      const d = /^data:(image\/(?:jpeg|png|gif|webp));base64,(.+)$/s.exec(String(u || ''));
+      if (d) out.push({ type: 'image', source: { type: 'base64', media_type: d[1], data: d[2] } });
+    }
+  }
+  return out;
+}
+async function personalChat(body, res) {
+  const msgs = body.messages || [];
+  const m = CLAUDE_MODEL[body.model] ? body.model : (GPT_AS_CLAUDE[GPT_ALIAS[body.model] || body.model] || 'claude-sonnet');
+  const sys = msgs.filter((x) => x.role === 'system').map((x) => textOf(x.content)).join('\n\n') + toolSystem(body.tools) +
+    (body.response_format && body.response_format.type === 'json_object' ? '\n\nAnswer with valid JSON only.' : '');
+  const imgs = imageBlocks(msgs);
+  await slot();
+  let j;
+  try {
+    j = imgs.length ? await runClaudeBlocks(CLAUDE_MODEL[m], sys, [...imgs, { type: 'text', text: transcript(msgs) }], 290000)
+      : await runClaude(CLAUDE_MODEL[m], sys, transcript(msgs), 290000);
+  } catch (e) { free(); console.log('personal claude failed: ' + e.message); return err(res, /rate|limit|usage/i.test(e.message) ? 429 : 502, e.message); }
+  free();
+  const u = j.usage || {};
+  answer(res, { ...body, model: m }, j.result, { prompt_tokens: (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0), completion_tokens: u.output_tokens || 0 },
+    { 'x-erp-ai-engine': 'claude:' + CLAUDE_MODEL[m] });
 }
 
 function toolSystem(tools) {
@@ -242,7 +301,8 @@ function imgStatus(id, res) {
 
 http.createServer((req, res) => {
   const auth = String(req.headers.authorization || '');
-  if (!SECRET || auth !== 'Bearer ' + SECRET) return err(res, 401, 'unauthorized', 'authentication_error');
+  const personal = !!PERSONAL && auth === 'Bearer ' + PERSONAL;
+  if (!personal && (!SECRET || auth !== 'Bearer ' + SECRET)) return err(res, 401, 'unauthorized', 'authentication_error');
   const path = req.url.replace(/^\/ai/, '').split('?')[0];
   if (req.method === 'GET' && path === '/v1/models') return send(res, 200, { object: 'list', data: MODELS.map((id) => ({ id, object: 'model', owned_by: 'erp-gateway' })) });
   const im = /^\/v1\/images\/jobs\/([0-9a-f]{32})$/.exec(path);
@@ -254,6 +314,7 @@ http.createServer((req, res) => {
     let body; try { body = JSON.parse(raw); } catch (_) { return err(res, 400, 'bad json', 'invalid_request_error'); }
     if (path === '/v1/images/jobs') { try { return imgStart(body, res); } catch (e) { return err(res, 500, String(e && e.message || e)); } }
     const m = String(body.model || 'gpt-5.6-terra');
+    if (personal) { if (path === '/v1/images/jobs') return err(res, 403, 'pictures are not on the personal key'); return personalChat(body, res).catch((e) => err(res, 500, String(e && e.message || e))); }
     const run = !ALLOW_CLAUDE ? openclawChat({ ...body, model: CLAUDE_AS_GPT[m] || (/^gpt|^o\d/.test(m) ? m : 'gpt-5.6-terra') }, res)
       : CLAUDE_MODEL[m] ? claudeChat(body, res) : /^gpt|^o\d/.test(m) ? openclawChat(body, res) : claudeChat({ ...body, model: 'claude-opus' }, res);
     run
