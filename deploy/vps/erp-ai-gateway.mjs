@@ -425,7 +425,7 @@ function imgStatus(id, res) {
   return send(res, 200, pub);
 }
 
-http.createServer((req, res) => {
+const HANDLER = (req, res) => {
   const auth = String(req.headers.authorization || '');
   const personal = !!PERSONAL && auth === 'Bearer ' + PERSONAL;
   if (!personal && (!SECRET || auth !== 'Bearer ' + SECRET)) return err(res, 401, 'unauthorized', 'authentication_error');
@@ -447,4 +447,8 @@ http.createServer((req, res) => {
     run
       .catch((e) => err(res, 500, String(e && e.message || e)));
   });
-}).listen(PORT, '127.0.0.1', () => console.log('erp-ai-gateway on 127.0.0.1:' + PORT));
+};
+http.createServer(HANDLER).listen(PORT, '127.0.0.1', () => console.log('erp-ai-gateway on 127.0.0.1:' + PORT));
+// 15 Nov 2026: the brand bridge (a container) calls the gateway directly on the docker host address, so long Opus answers
+// are not cut at Cloudflare's 100-second limit (HTTP 524). Same keys and rules; only containers on this Mac can reach it.
+if (process.env.DOCKER_HOST_IP) http.createServer(HANDLER).listen(PORT, process.env.DOCKER_HOST_IP, () => console.log('erp-ai-gateway also on ' + process.env.DOCKER_HOST_IP + ':' + PORT));
