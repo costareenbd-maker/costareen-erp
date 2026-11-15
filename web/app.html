@@ -58637,6 +58637,12 @@ select.bc-in{padding-right:28px}
 .ph-mo{position:absolute;right:0;bottom:0;padding-left:2.2em;background:linear-gradient(90deg,rgba(255,255,255,0),#fff 1.8em)}
 .ph-ov .ph-mo,.ph-reel .ph-mo,.ph-tt .ph-mo{background:none;text-shadow:0 1px 2px rgba(0,0,0,.6)}
 .ph-mbox{position:relative;background:#000;overflow:hidden}
+.ph-v{display:block;width:100%;max-height:420px;background:#000;cursor:pointer}
+.ph-mbox.sq4 .ph-v{aspect-ratio:4/5;object-fit:contain;max-height:none}
+.ph-mbox.wide .ph-v{aspect-ratio:16/9;object-fit:contain;max-height:none}
+button.ph-play{border:0;padding:0;cursor:pointer;z-index:2;color:#fff;transition:opacity .15s}
+button.ph-play:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.vp-on>button.ph-play{opacity:0;pointer-events:none}
 .ph-mbox img{display:block;width:100%;max-height:420px;object-fit:contain}
 .ph-mbox.sq4 img{aspect-ratio:4/5;object-fit:cover;max-height:none}
 .ph-mbox.wide img{aspect-ratio:16/9;object-fit:cover;max-height:none}
@@ -60058,7 +60064,14 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     return 'media';
   }
   var MODEW = { text: 'শুধু লেখা', media: 'ফিড পোস্ট', reel: 'খাড়া ভিডিও', long: 'YouTube ভিডিও' };
+  // brand-32 (15 Nov 2026): a video draft plays right in its card (the file is the Postiz upload; tap to play / pause)
+  function vidTag(m, cls) {
+    return '<video class="ph-v ' + (cls || '') + '" src="' + esc(m.path) + '"' + (m.thumb ? ' poster="' + m.thumb + '"' : '') + ' preload="metadata" playsinline loop data-bc="vplay"></video>' +
+      '<button type="button" class="ph-play" data-bc="vplay" aria-label="ভিডিও চালান">' + pi('play') + '</button>';
+  }
+  function canPlay(m) { return m && m.type === 'video' && /^https:\/\//.test(m.path || ''); }
   function mediaBox(m, cls, pic, npic) {
+    if (canPlay(m)) return '<div class="ph-mbox ' + (cls || '') + ' vid">' + vidTag(m) + '</div>';
     if (m) return '<div class="ph-mbox ' + (cls || '') + (m.type === 'video' ? ' vid' : '') + '">' + (m.thumb ? '<img alt="" src="' + m.thumb + '">' : '') + (m.type === 'video' ? '<span class="ph-play">' + pi('play') + '</span>' + (m.duration ? '<span class="ph-dur">' + esc(String(m.duration).replace(/^0?0:|\.\d+$/g, '')) + '</span>' : '') : '') + '</div>';
     if (pic) return '<div class="ph-pic"><img alt="" src="' + pic + '">' + (npic > 1 ? '<span>১ / ' + bn(npic) + '</span>' : '') + '</div>';
     return '';
@@ -60067,7 +60080,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function reelCard(p, acc, text, key, o) {
     var m = o.media, h = esc(handle(acc)), L = (FOLDL[p] || {}).reel || 2, top = p === 'youtube' ? 'Shorts' : p === 'tiktok' ? 'Following · <b>For You</b>' : 'Reels';
     var cap = o.edit ? bodyBlock(p, text, key, o.edit) : '<div class="ph-tx" data-noi18n="1">' + foldText(p, p === 'youtube' ? (o.title || String(text).split('\n')[0]) : text, key, L) + '</div>';
-    return '<article data-noi18n="1" class="ph ph-reel ph-r-' + p + '"><div class="ph-vid">' + (m && m.thumb ? '<img class="ph-bg" alt="" src="' + m.thumb + '">' : '<div class="ph-noclip">' + pi('play') + '<span>ভিডিও লাগবে</span></div>') +
+    return '<article data-noi18n="1" class="ph ph-reel ph-r-' + p + '"><div class="ph-vid">' + (canPlay(m) ? vidTag(m, 'ph-bg') : m && m.thumb ? '<img class="ph-bg" alt="" src="' + m.thumb + '">' : '<div class="ph-noclip">' + pi('play') + '<span>ভিডিও লাগবে</span></div>') +
       '<div class="ph-rtop">' + top + '</div><div class="ph-rail">' + avatar(acc, 38) + '<span>' + pi('heart') + '0</span>' + phCm(o, pi('comment') + (o.cn || 0), 1) + '<span>' + pi(p === 'youtube' ? 'like' : 'save') + '0</span><span>' + pi('share') + (p === 'youtube' ? 'Share' : '0') + '</span></div>' +
       '<div class="ph-ov"><b>' + (p === 'youtube' ? avatar(acc, 22) + ' @' : '@') + h + (p === 'tiktok' ? '' : ' <em>Follow</em>') + '</b>' + cap + (p === 'youtube' ? '' : '<small>' + pi('music') + 'original sound · ' + h + '</small>') + '</div></div></article>';
   }
@@ -62186,6 +62199,12 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     if (w === 'mopen') { C.mpk = String(C.mpk) === String(id) ? '' : id; if (C.mpk && !C.d.mlib) { C.err.mlib = ''; get('mlib'); } draw(); return; }
     if (w === 'mclose') { C.mpk = ''; draw(); return; }
     if (w === 'munpick') { delete C.media[id]; draw(); return; }
+    if (w === 'vplay') {
+      var vb = t.parentNode, vd = t.tagName === 'VIDEO' ? t : vb && vb.querySelector('video.ph-v'); if (!vd) return;
+      if (vd.paused) { Array.prototype.forEach.call(document.querySelectorAll('#bc_root video.ph-v'), function (o) { if (o !== vd) { o.pause(); o.parentNode.classList.remove('vp-on'); } }); vd.play(); vb.classList.add('vp-on'); }
+      else { vd.pause(); vb.classList.remove('vp-on'); }
+      return;
+    }
     if (w === 'mpick') {
       var mk = t.getAttribute('data-k'), it = ((C.d.mlib && C.d.mlib.items) || []).filter(function (q) { return q.id === id; })[0]; if (!it) return;
       act('at' + id, 'erpBrandDeskAttach', { asset_id: id }, function (r) { C.media[mk] = { id: r.id, path: r.path, type: r.type || it.type, name: r.name || it.name, thumb: it.thumb, asset: it.id, duration: it.duration }; C.keepm = C.keepm || {}; C.keepm[mk] = 1; measureAspect(C.media[mk]); C.mpk = ''; toast((r.type === 'video' ? 'ভিডিও' : 'ছবি') + ' যুক্ত হলো।'); });
