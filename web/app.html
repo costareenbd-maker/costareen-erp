@@ -58977,7 +58977,7 @@ button.ph-play:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .tr-cr li span[data-noi18n]{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .tr-cr li.off span{color:var(--bc-ink-3)}
 .tr-add{display:flex;gap:8px;flex-wrap:wrap}
-.fw-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin:18px 0 22px}
+.fw-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin:4px 0 18px}
 .fw-c{border:1px solid var(--bc-rule);border-radius:14px;padding:16px;background:#fff;display:flex;flex-direction:column;gap:12px;min-width:0}
 .fw-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .fw-h h2{margin:0;font:700 17px "Anek Bangla","Noto Sans Bengali",system-ui,sans-serif}
@@ -61201,13 +61201,13 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     var failed = jk.filter(function (k) { return jobs[k].state === 'failed' && !C.fold['jx' + k]; }).slice(-1)[0];
     var sw = '<button type="button" class="tr-sw' + (off ? '' : ' on') + '" role="switch" aria-checked="' + !off + '" data-bc="stoff"' + (C.busy.stoff ? ' disabled' : '') + '><i></i>' + (off ? 'সব ধরন বন্ধ' : 'ধরন চালু') + '</button>';
     var h = headHtml('লেখার ধরন', '', sw);
+    h += followHtml(d);   // brand-follow-1: the paste places come first, on phone too
     // the switchboard: one line per network and the style it rides now
     h += '<div class="tr-board' + (off ? ' off' : '') + '">' + SNETS.map(function (n) {
       var st = styleOn(n);
       return '<button type="button" class="tr-row" style="--c:' + netCol(n) + '" data-bc="jump" data-id="' + (st ? 'bc_st' + st.id : 'bc_tpaste') + '"><i></i>' + logo(n, 16) + '<span class="tr-n">' + esc(netName(n)) + '</span>' +
         '<span class="tr-ride' + (st ? ' on' : '') + '">' + (st ? esc(st.name_bn || st.name) : 'সাধারণ') + '</span></button>';
     }).join('') + '</div>' + (off ? '<p class="tr-offnote">সব ধরন বন্ধ। কিছু মোছেনি; চালু করলে আগের মতো হবে।</p>' : '');
-    h += followHtml(d);
     h += lessonsHtml();
     if (failed) h += '<div class="bc-call"><span>' + esc(hasBn(jobs[failed].error) ? jobs[failed].error : 'ধরন পড়া গেল না।') + '</span><span class="bc-sp"></span><button class="bc-btn ghost sm" type="button" data-bc="fold" data-id="jx' + failed + '">ঠিক আছে</button></div>';
     // paste box
