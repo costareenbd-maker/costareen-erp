@@ -61195,8 +61195,23 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
         return '<li class="' + (c.active ? '' : 'off') + '">' + logo(c.platform, 15) + '<span data-noi18n="1">' + esc(c.name || c.url.replace(/^https:\/\/(www\.)?/, '')) + '</span><span class="bc-sp"></span>' +
           '<button type="button" class="tr-sw sm' + (c.active ? ' on' : '') + '" role="switch" aria-checked="' + !!c.active + '" aria-label="' + esc((c.name || 'ক্রিয়েটর') + ' চালু') + '" data-bc="stcr" data-id="' + c.id + '" data-on="' + (c.active ? 0 : 1) + '"><i></i></button></li>';
       }).join('') + '</ul>' : '<p class="tr-empty sm">এখনো কেউ নেই। নিচে লিংক দিন।' + (sc.apify ? '' : ' Apify-এর চাবি বসালে তবে পড়া যাবে।') + '</p>') +
-      '<div class="tr-add"><select class="bc-in" id="bci_crp" data-bcin="crp" aria-label="নেটওয়ার্ক"><option value="facebook"' + (v('crp') !== 'linkedin' ? ' selected' : '') + '>Facebook</option><option value="linkedin"' + (v('crp') === 'linkedin' ? ' selected' : '') + '>LinkedIn</option></select>' +
-      inp('cru', 'https://www.facebook.com/…', ' aria-label="লিংক"', 'url') + inp('crn', 'নাম', ' aria-label="নাম"') + btn('যোগ করুন', 'data-bc="stcradd"', '', 'stcradd') + '</div></div>';
+      '<div class="tr-add"><select class="bc-in" id="bci_crp" data-bcin="crp" aria-label="নেটওয়ার্ক">' + ['facebook', 'instagram', 'youtube', 'tiktok', 'linkedin'].map(function (n) { return '<option value="' + n + '"' + ((v('crp') || 'facebook') === n ? ' selected' : '') + '>' + netName(n) + '</option>'; }).join('') + '</select>' +
+      inp('cru', 'https://…', ' aria-label="লিংক"', 'url') + inp('crn', 'নাম', ' aria-label="নাম"') + btn('যোগ করুন', 'data-bc="stcradd"', '', 'stcradd') + '</div></div>';
+    // brand-follow-1: what each followed creator DOES (posts a week, hours, formats), and the videos whose editing style to learn
+    var withMeta = cr.filter(function (c) { return c.meta && c.meta.posts_seen; });
+    if (withMeta.length) h += '<div class="bc-block"><div class="bc-h2"><h2>তারা কী করে</h2><span>শেষ খোঁজা থেকে</span></div><ul class="tr-cr">' + withMeta.map(function (c) {
+      var m = c.meta, f = Object.keys(m.formats || {}).map(function (k) { return k + ' ' + bn(m.formats[k]); }).join(', ');
+      return '<li>' + logo(c.platform, 15) + '<span data-noi18n="1">' + esc(c.name || c.url.replace(/^https:\/\/(www\.)?/, '')) + '</span><span class="bc-sp"></span><small>' +
+        (m.per_week != null ? 'সপ্তাহে ' + bn(m.per_week) + 'টা · ' : '') + (m.top_hours_seoul && m.top_hours_seoul.length ? 'সময় ' + m.top_hours_seoul.map(function (x) { return bn(x) + 'টা'; }).join('/') + ' · ' : '') + esc(f) + '</small></li>';
+    }).join('') + '</ul></div>';
+    var vids = d.videos || [];
+    h += '<div class="bc-block"><div class="bc-h2"><h2>ভিডিওর স্টাইল শেখান</h2><span>কাট, ক্যাপশন, zoom, সাউন্ড মাপা হয়; ভিডিও রাখা হয় না</span></div>' +
+      (vids.length ? '<ul class="tr-cr">' + vids.map(function (x) {
+        var st = { 'new': 'অপেক্ষায়', measuring: 'মাপা হচ্ছে…', done: 'শেখা হয়েছে', failed: 'পড়া গেল না' }[x.state] || x.state;
+        return '<li class="' + (x.state === 'failed' ? 'off' : '') + '"><span data-noi18n="1">' + esc(x.note || x.url.replace(/^https:\/\/(www\.)?/, '').slice(0, 60)) + '</span><span class="bc-sp"></span><small>' + st + '</small>' +
+          btn(svg('trash'), 'data-bc="stvdel" data-id="' + x.id + '" aria-label="সরান"', 'ghost sm', 'stvd' + x.id) + '</li>';
+      }).join('') + '</ul>' : '<p class="tr-empty sm">এখনো কোনো ভিডিও নেই। যে ভিডিওর এডিটিং ভালো লাগে, তার লিংক দিন।</p>') +
+      '<div class="tr-add">' + inp('vru', 'https://www.youtube.com/watch?v=…', ' aria-label="ভিডিও লিংক"', 'url') + inp('vrn', 'কী ভালো লাগল (ঐচ্ছিক)', ' aria-label="নোট"') + btn('যোগ করুন', 'data-bc="stvadd"', '', 'stvadd') + '</div></div>';
     return h;
   }
   // ---------- brand-17: LinkedIn yellow lane - a counter board with a queue; he posts every item by hand
@@ -61493,6 +61508,13 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
         (C.bzEdit ? '<span class="sx-ed">' + btn(svg('up'), 'data-bc="bzmove" data-id="' + x.id + '" data-d="up" aria-label="ওপরে নিন"', 'ghost sm', 'bzm' + x.id, !i) + btn(svg('down'), 'data-bc="bzmove" data-id="' + x.id + '" data-d="down" aria-label="নিচে নিন"', 'ghost sm', 'bzm' + x.id, i === B.length - 1) +
           btn(svg('pen'), 'data-bc="bzform" data-id="' + x.id + '" aria-label="বদলান"', 'ghost sm') + (C.sxDel === 'bzdel' + x.id ? btn('নিশ্চিত, সরান', 'data-bc="bzdel" data-id="' + x.id + '"', 'red sm', 'bzd' + x.id) + '<button type="button" class="bc-btn ghost sm" data-bc="sxnodel">থাক</button>' : btn(svg('trash'), 'data-bc="bzdel" data-id="' + x.id + '" aria-label="সরান"', 'ghost sm', 'bzd' + x.id)) + '</span>'
           : (x.erp_url ? '<a class="bc-btn" href="' + esc(x.erp_url) + '" target="_blank" rel="noopener noreferrer">ERP খুলুন' + svg('out') + '</a>' : '')) + '</div>';
+    }).join('') + '</div>';
+    // brand-biz-1 (owner 15 Nov 2026: "a button per business that takes me straight into that business's ERP"): every
+    // business of this ERP that he belongs to, one tap switches the ERP to it and opens its dashboard (same login)
+    var EB = (typeof BIZ !== 'undefined' && BIZ && BIZ.businesses) ? BIZ.businesses.filter(function (x) { return x.id !== BIZ.active; }) : [];
+    if (EB.length && !C.bzEdit) h += '<div class="bc-lbl" style="margin-top:14px">এই ERP-তে আপনার ব্যবসাগুলো</div><div class="sx-biz">' + EB.map(function (x) {
+      return '<div class="sx-b"><div><h3 data-noi18n="1">' + esc(x.name) + '</h3><small>' + (x.pool ? 'যৌথ স্টক' : 'এক চাপে ঢুকুন') + '</small></div>' +
+        '<button type="button" class="bc-btn" data-bc="bizopen" data-id="' + esc(x.id) + '">ERP খুলুন' + svg('out') + '</button></div>';
     }).join('') + '</div>';
     if (C.bzForm === 'new') h += bzForm(null);
     else if (C.bzEdit && B.length) h += '<div class="sx-acts"><button type="button" class="bc-btn" data-bc="bzform" data-id="new">' + svg('plus') + 'ব্যবসা যোগ করুন</button></div>';
@@ -62432,6 +62454,9 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     else if (w === 'stscout') act('stscout', 'erpBrandDeskStyleScout', {}, function (r) { C.d.styles = r; poll('styles'); toast('খোঁজা শুরু হলো। ৫-১০ মিনিট লাগবে।'); });
     else if (w === 'stcr') act('stcr' + id, 'erpBrandDeskStyleCreator', { id: Number(id), active: t.getAttribute('data-on') === '1' }, function (r) { C.d.styles = r; });
     else if (w === 'stcradd') act('stcradd', 'erpBrandDeskStyleCreator', { platform: v('crp') || 'facebook', url: String(v('cru')).trim(), name: String(v('crn')).trim() }, function (r) { C.d.styles = r; delete C.v.cru; delete C.v.crn; toast('যোগ হলো।'); });
+    else if (w === 'stvadd') act('stvadd', 'erpBrandDeskStyleVideo', { url: String(v('vru')).trim(), note: String(v('vrn')).trim() }, function (r) { C.d.styles = r; delete C.v.vru; delete C.v.vrn; toast('যোগ হলো। PC চালু থাকলে মেপে নেবে।'); });
+    else if (w === 'stvdel') act('stvd' + id, 'erpBrandDeskStyleVideo', { id: Number(id), remove: true }, function (r) { C.d.styles = r; });
+    else if (w === 'bizopen') { if (typeof switchBusiness === 'function') { switchBusiness(id); setTimeout(function () { try { go('dash'); } catch (e2) {} }, 600); } }
     else if (w === 'aumap') {
       var am = {}, ad = C.d.aud || {};
       SNETS.forEach(function (n) { am[n] = {}; AUR.forEach(function (r) { am[n][r[0]] = Number(String(auMapVal(ad, n, r[0])).replace(/[^0-9]/g, '')) || 0; }); });
