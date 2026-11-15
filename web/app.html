@@ -62608,5 +62608,35 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
 </script>
 
 
+<!-- brand-home-1 (owner 16 Nov 2026): "the Brand desk is the first step for me, the ERPs are the second step; staff start in
+their own business's ERP". When the OWNER opens the ERP in a new tab and he has a brand business, the page switches to it
+and opens the Brand desk; its "ব্যবসা ও সাইট" page has a button into each business. Once per tab (sessionStorage), so
+after he goes into Costareen a reload stays there. A link that opens a particular screen (#/invoice/..., #/use/...) is
+left alone. Staff, managers and shareholders are never moved. -->
+<script>
+(function () {
+  var prevApply = applyBusinesses, tried = false;
+  applyBusinesses = function (b) {
+    prevApply(b);
+    if (tried) return;
+    tried = true;
+    try {
+      if (sessionStorage.getItem('bd_home')) return;
+      sessionStorage.setItem('bd_home', '1');
+    } catch (e) { return; }
+    var h0 = String(window.ERP_HASH0 || '');
+    if (/^#\/(?!dash\b|home\b|branddesk\b)[a-z]/.test(h0)) return;
+    if (!b || !b.businesses || typeof ME === 'undefined' || !ME || ME.role !== 'owner') return;
+    var brand = b.businesses.filter(function (x) { return x.kind === 'brand'; })[0];
+    if (!brand) return;
+    if (b.active === brand.id) { setTimeout(function () { try { if (VIEW !== 'branddesk') go('branddesk'); } catch (e) {} }, 300); return; }
+    setTimeout(function () {
+      try { switchBusiness(brand.id); } catch (e) { return; }
+      setTimeout(function () { try { go('branddesk'); } catch (e) {} }, 700);
+    }, 50);
+  };
+})();
+</script>
+
 </body>
 </html>
