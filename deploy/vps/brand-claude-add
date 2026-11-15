@@ -1,0 +1,27 @@
+#!/bin/sh
+# Add one of the owner's Claude accounts to the personal-brand AI router (15 Nov 2026).
+# Usage (on the Mac, as the owner):  sudo brand-claude-add nazir
+# 1. Claude prints a sign-in link: open it in the browser, sign in with THAT account, copy the code back here.
+# 2. Claude prints a long token (sk-ant-oat01-...). Copy it and paste it at the prompt below (it is not shown).
+# The token is stored only in /etc/erp-ai-gateway.claude-accounts.json (root, 600); the router uses it from then on.
+set -e
+NAME=$(echo "${1:-}" | tr -cd 'a-zA-Z0-9_-')
+[ -n "$NAME" ] || { echo "usage: sudo brand-claude-add <short-name>"; exit 1; }
+DIR=$(mktemp -d)
+HOME=/root CLAUDE_CONFIG_DIR="$DIR" claude setup-token || true
+rm -rf "$DIR"
+printf 'Paste the token (sk-ant-oat01-...), then Enter: '
+stty -echo; read TOKEN; stty echo; echo
+case "$TOKEN" in sk-ant-*) ;; *) echo "That does not look like a token - nothing saved."; exit 1;; esac
+F=/etc/erp-ai-gateway.claude-accounts.json
+python3 - "$F" "$NAME" "$TOKEN" <<'PY'
+import json, os, sys
+f, name, tok = sys.argv[1:]
+try: a = json.load(open(f))
+except Exception: a = [{"name": "abidur"}]
+a = [x for x in a if x.get("name") != name] + [{"name": name, "token": tok}]
+open(f, "w").write(json.dumps(a, indent=1)); os.chmod(f, 0o600)
+print("saved. accounts in order:", ", ".join(x["name"] for x in a))
+PY
+echo "Checking it works..."
+cd /tmp && echo "Reply OK" | env HOME=/root CLAUDE_CONFIG_DIR=/var/lib/erp-ai-gateway/claude-$NAME CLAUDE_CODE_OAUTH_TOKEN="$TOKEN" timeout 90 claude -p --model haiku --tools "" --no-session-persistence && echo "Account $NAME works."

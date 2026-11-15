@@ -46,12 +46,12 @@ const err = (res, code, msg, type) => send(res, code, { error: { message: msg, t
 const textOf = (c) => (typeof c === 'string' ? c : Array.isArray(c) ? c.filter((p) => p && (p.type === 'text' || p.type === 'input_text')).map((p) => p.text || '').join('\n') : '');
 const hasImage = (msgs) => msgs.some((m) => Array.isArray(m.content) && m.content.some((p) => p && /image|file|audio/.test(p.type || '')));
 
-function runClaude(model, system, prompt, ms) {
+function runClaude(model, system, prompt, ms, env) {
   return new Promise((ok, bad) => {
     const f = '/tmp/erp-ai-sys-' + randomUUID() + '.txt';
     writeFileSync(f, system || 'You are the language engine of a business system. Follow the instructions in the request.');
     const p = spawn(CLAUDE, ['-p', '--output-format', 'json', '--model', model, '--system-prompt-file', f, '--tools', '', '--no-session-persistence',
-      '--setting-sources', '', '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}'], { env: { ...process.env, HOME: '/root' }, cwd: '/tmp' });
+      '--setting-sources', '', '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}'], { env: env || { ...process.env, HOME: '/root' }, cwd: '/tmp' });
     let out = '', e = '';
     const t = setTimeout(() => { p.kill('SIGKILL'); }, ms);
     p.stdout.on('data', (d) => { out += d; });
@@ -67,13 +67,13 @@ function runClaude(model, system, prompt, ms) {
   });
 }
 
-function runClaudeBlocks(model, system, blocks, ms) {
+function runClaudeBlocks(model, system, blocks, ms, env) {
   return new Promise((ok, bad) => {
     const f = '/tmp/erp-ai-sys-' + randomUUID() + '.txt';
     writeFileSync(f, system || 'Follow the instructions in the request.');
     const p = spawn(CLAUDE, ['-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose', '--model', model,
       '--system-prompt-file', f, '--tools', '', '--no-session-persistence', '--setting-sources', '', '--strict-mcp-config',
-      '--mcp-config', '{"mcpServers":{}}'], { env: { ...process.env, HOME: '/root' }, cwd: '/tmp' });
+      '--mcp-config', '{"mcpServers":{}}'], { env: env || { ...process.env, HOME: '/root' }, cwd: '/tmp' });
     let out = '', e = '';
     const t = setTimeout(() => { p.kill('SIGKILL'); }, ms);
     p.stdout.on('data', (d) => { out += d; });
@@ -101,22 +101,148 @@ function imageBlocks(msgs) {
   }
   return out;
 }
-async function personalChat(body, res) {
+// ---------------------------------------------------------------- personal brand router (owner, 15 Nov 2026)
+// Public work (his image: video keep/cut, captions, posts, Remotion) -> Claude first, best model; internal work (inbox,
+// ERP, tags, summaries) -> ChatGPT first. Research: G:\bendar-brand\reports\AI model routing for brand.md.
+//   public        Claude opus   -> Gemini -> ChatGPT sol
+//   public-light  Claude sonnet -> Gemini -> ChatGPT sol      (caption spelling, frame look)
+//   internal      ChatGPT terra -> Claude sonnet -> Gemini
+//   internal-light ChatGPT luna -> Claude haiku  -> Gemini
+// The task comes from the x-ai-task header (or is read from the model name). x-ai-wait: 1 = the job can wait: when no
+// Claude account is free a public job gets 429 + retry_at instead of a weaker model. x-ai-private: 1 = never Gemini
+// (free-tier inputs may be read by Google). Every answer says who made it: x-erp-ai-engine, x-ai-fallback, served_by.
+// Claude accounts (owner's own, any of them may be paid or not at a time) are found by use: the first account in
+// /etc/erp-ai-gateway.claude-accounts.json that answers is used; one that says "limit" rests until its reset time, one
+// that is logged out / not paid rests 3 h and is tried again. Tokens come from `claude setup-token` (never printed).
+const ACC_FILE = process.env.CLAUDE_ACCOUNTS_FILE || '/etc/erp-ai-gateway.claude-accounts.json';
+const GEMINI_KEY = process.env.GEMINI_API_KEY || '';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+const TASKS = {
+  public: { claude: 'opus', gpt: 'gpt-5.6-sol', chain: ['claude', 'gemini', 'gpt'] },
+  'public-light': { claude: 'sonnet', gpt: 'gpt-5.6-sol', chain: ['claude', 'gemini', 'gpt'] },
+  internal: { claude: 'sonnet', gpt: 'gpt-5.6-terra', chain: ['gpt', 'claude', 'gemini'] },
+  'internal-light': { claude: 'haiku', gpt: 'gpt-5.6-luna', chain: ['gpt', 'claude', 'gemini'] },
+};
+const accRest = {};   // account name -> {until, why}
+function accounts() {
+  try { const a = JSON.parse(readFileSync(ACC_FILE, 'utf8')); if (Array.isArray(a) && a.length) return a; } catch (_) { /* none */ }
+  return [{ name: 'root' }];
+}
+function accEnv(a) {
+  const e = { ...process.env, HOME: '/root' };
+  delete e.ANTHROPIC_API_KEY;   // with it set, claude -p bills the API instead of the plan
+  delete e.CLAUDE_CONFIG_DIR;
+  if (a.token) {
+    // its own empty settings folder, so root's own login (/root/.claude) is not read instead of the token
+    const dir = '/var/lib/erp-ai-gateway/claude-' + String(a.name).replace(/[^a-z0-9_-]/gi, '');
+    try { mkdirSync(dir, { recursive: true, mode: 0o700 }); } catch (_) { /* there */ }
+    e.CLAUDE_CONFIG_DIR = dir; e.CLAUDE_CODE_OAUTH_TOKEN = a.token;
+  } else delete e.CLAUDE_CODE_OAUTH_TOKEN;
+  return e;
+}
+// "limit reached · resets 3pm", "resets 11:30am (Asia/Seoul)", "resets Nov 18, 9am" -> a time; else now + 60 min
+function resetAt(msg) {
+  const now = Date.now(), txt = String(msg || '');
+  const m = /resets?\s+(?:at\s+)?(?:([A-Z][a-z]{2})[a-z]*\s+(\d{1,2}),?\s+(?:at\s+)?)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i.exec(txt);
+  if (!m) return now + 3600e3;
+  // the time is in the zone named in brackets, else the server's (UTC)
+  const z = /\(([A-Za-z_]+\/[A-Za-z_]+)\)/.exec(txt);
+  let off = 0;
+  try { if (z) { const d0 = new Date(now); off = (new Date(d0.toLocaleString('en-US', { timeZone: z[1] })) - new Date(d0.toLocaleString('en-US', { timeZone: 'UTC' }))) / 60000; } } catch (_) { off = 0; }
+  const local = new Date(now + off * 60000);   // "wall clock" in that zone, read with UTC getters
+  let h = Number(m[3]) % 12; if (/pm/i.test(m[5])) h += 12;
+  const d = new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate(), h, Number(m[4] || 0)));
+  if (m[1]) { const mon = 'janfebmaraprmayjunjulaugsepoctnovdec'.indexOf(m[1].toLowerCase().slice(0, 3)) / 3; if (mon >= 0) d.setUTCMonth(mon, Number(m[2])); }
+  let t = d.getTime() - off * 60000; if (t <= now) t += 86400e3;
+  return Math.min(t + 60e3, now + 8 * 86400e3);
+}
+async function claudeAny(model, sys, msgs) {
+  const imgs = imageBlocks(msgs);
+  let soonest = 0, last = '';
+  for (const a of accounts()) {
+    const r = accRest[a.name];
+    if (r && r.until > Date.now()) { soonest = soonest ? Math.min(soonest, r.until) : r.until; continue; }
+    try {
+      const j = imgs.length ? await runClaudeBlocks(model, sys, [...imgs, { type: 'text', text: transcript(msgs) }], 290000, accEnv(a))
+        : await runClaude(model, sys, transcript(msgs), 290000, accEnv(a));
+      delete accRest[a.name];
+      return { j, acc: a.name };
+    } catch (e) {
+      last = e.message;
+      const until = /limit|usage|quota|rate.?limit|429/i.test(last) ? resetAt(last)
+        : /auth|log ?in|401|403|expired|invalid.*(token|key)|subscription|oauth|credit/i.test(last) ? Date.now() + 3 * 3600e3 : 0;
+      if (until) { accRest[a.name] = { until, why: last.slice(0, 160) }; soonest = soonest ? Math.min(soonest, until) : until; }
+      console.log('claude account ' + a.name + ' failed: ' + last.slice(0, 200));
+    }
+  }
+  const e = new Error('no Claude account free: ' + last.slice(0, 160)); e.retryAt = soonest || Date.now() + 3600e3; throw e;
+}
+async function gptAsk(body, model) {
+  let token = '';
+  try { token = JSON.parse(readFileSync('/home/admin/.openclaw/openclaw.json', 'utf8')).gateway.auth.token; } catch (_) { token = ''; }
+  const r = await fetch('http://127.0.0.1:18789/v1/chat/completions', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token, 'x-openclaw-model': 'openai/' + model },
+    body: JSON.stringify({ ...asText(body), model: 'openclaw/erp', stream: false }), signal: AbortSignal.timeout(170000) });
+  const txt = await r.text();
+  if (!r.ok) throw new Error('chatgpt ' + r.status + ' ' + txt.slice(0, 160));
+  const j = JSON.parse(txt), c = j.choices && j.choices[0] && j.choices[0].message;
+  if (!c) throw new Error('chatgpt odd answer');
+  return { text: c.content, usage: j.usage || {} };
+}
+async function geminiAsk(body) {
+  if (!GEMINI_KEY) throw new Error('no personal Gemini key');
+  const r = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', { method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: 'Bearer ' + GEMINI_KEY },
+    body: JSON.stringify({ model: GEMINI_MODEL, messages: asText(body).messages }), signal: AbortSignal.timeout(170000) });
+  const txt = await r.text();
+  if (!r.ok) throw new Error('gemini ' + r.status + ' ' + txt.slice(0, 160));
+  const j = JSON.parse(txt), c = j.choices && j.choices[0] && j.choices[0].message;
+  if (!c) throw new Error('gemini odd answer');
+  return { text: c.content, usage: j.usage || {} };
+}
+function taskOf(req, body) {
+  const h = String(req.headers['x-ai-task'] || body.task || '').toLowerCase();
+  if (TASKS[h]) return h;
+  const m = String(body.model || '');
+  return m === 'claude-opus' ? 'public' : m === 'claude-sonnet' ? 'public-light' : /luna|haiku/.test(m) ? 'internal-light' : /^gpt|^o\d/.test(m) ? 'internal' : 'public-light';
+}
+async function personalChat(req, body, res) {
   const msgs = body.messages || [];
-  const m = CLAUDE_MODEL[body.model] ? body.model : (GPT_AS_CLAUDE[GPT_ALIAS[body.model] || body.model] || 'claude-sonnet');
+  const task = taskOf(req, body), T = TASKS[task];
+  const wait = String(req.headers['x-ai-wait'] || '') === '1', priv = String(req.headers['x-ai-private'] || '') === '1';
   const sys = msgs.filter((x) => x.role === 'system').map((x) => textOf(x.content)).join('\n\n') + toolSystem(body.tools) +
     (body.response_format && body.response_format.type === 'json_object' ? '\n\nAnswer with valid JSON only.' : '');
-  const imgs = imageBlocks(msgs);
-  await slot();
-  let j;
-  try {
-    j = imgs.length ? await runClaudeBlocks(CLAUDE_MODEL[m], sys, [...imgs, { type: 'text', text: transcript(msgs) }], 290000)
-      : await runClaude(CLAUDE_MODEL[m], sys, transcript(msgs), 290000);
-  } catch (e) { free(); console.log('personal claude failed: ' + e.message); return err(res, /rate|limit|usage/i.test(e.message) ? 429 : 502, e.message); }
-  free();
-  const u = j.usage || {};
-  answer(res, { ...body, model: m }, j.result, { prompt_tokens: (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0), completion_tokens: u.output_tokens || 0 },
-    { 'x-erp-ai-engine': 'claude:' + CLAUDE_MODEL[m] });
+  const why = [];
+  for (let i = 0; i < T.chain.length; i++) {
+    const step = T.chain[i];
+    if (step === 'gemini' && (priv || !GEMINI_KEY)) continue;
+    // a public job that may wait does not go below Claude: it is told when to come back
+    if (i > 0 && wait && T.chain[0] === 'claude') {
+      const r = why.find((w) => w.retryAt);
+      res.setHeader('retry-after', String(Math.ceil(((r && r.retryAt) || Date.now() + 3600e3) - Date.now()) / 1000 | 0));
+      return send(res, 429, { error: { message: 'Claude is resting; this job waits (' + (why[0] && why[0].msg || '') + ')', type: 'rate_limit', retry_at: new Date((r && r.retryAt) || Date.now() + 3600e3).toISOString() } });
+    }
+    await slot();
+    try {
+      let text, usage, by;
+      if (step === 'claude') {
+        const { j, acc } = await claudeAny(T.claude, sys, msgs);
+        const u = j.usage || {};
+        text = j.result; by = 'claude:' + T.claude + '@' + acc;
+        usage = { prompt_tokens: (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0), completion_tokens: u.output_tokens || 0 };
+      } else if (step === 'gpt') { ({ text, usage } = await gptAsk(body, T.gpt)); by = 'chatgpt:' + T.gpt; }
+      else { ({ text, usage } = await geminiAsk(body)); by = 'gemini:' + GEMINI_MODEL; }
+      free();
+      const fb = i > 0 ? '1' : '0';
+      if (fb === '1') console.log('personal ' + task + ' fell back to ' + by + ' after: ' + why.map((w) => w.msg).join(' | ').slice(0, 300));
+      return answer(res, { ...body, model: by }, text, { ...usage, served_by: by, task, fallback: fb === '1' },
+        { 'x-erp-ai-engine': by, 'x-ai-fallback': fb, 'x-ai-task': task });
+    } catch (e) { free(); why.push({ step, msg: String(e.message).slice(0, 160), retryAt: e.retryAt }); }
+  }
+  const r = why.find((w) => w.retryAt);
+  return send(res, 429, { error: { message: 'no AI free right now: ' + why.map((w) => w.step + ': ' + w.msg).join(' | ').slice(0, 400), type: 'rate_limit', retry_at: r ? new Date(r.retryAt).toISOString() : null } });
+}
+function accStatus(res) {
+  return send(res, 200, { accounts: accounts().map((a) => ({ name: a.name, resting_until: accRest[a.name] && accRest[a.name].until > Date.now() ? new Date(accRest[a.name].until).toISOString() : null, why: accRest[a.name] && accRest[a.name].why || null })), gemini: !!GEMINI_KEY, tasks: TASKS });
 }
 
 function toolSystem(tools) {
@@ -304,6 +430,7 @@ http.createServer((req, res) => {
   const personal = !!PERSONAL && auth === 'Bearer ' + PERSONAL;
   if (!personal && (!SECRET || auth !== 'Bearer ' + SECRET)) return err(res, 401, 'unauthorized', 'authentication_error');
   const path = req.url.replace(/^\/ai/, '').split('?')[0];
+  if (personal && req.method === 'GET' && path === '/v1/accounts') return accStatus(res);
   if (req.method === 'GET' && path === '/v1/models') return send(res, 200, { object: 'list', data: MODELS.map((id) => ({ id, object: 'model', owned_by: 'erp-gateway' })) });
   const im = /^\/v1\/images\/jobs\/([0-9a-f]{32})$/.exec(path);
   if (req.method === 'GET' && im) return imgStatus(im[1], res);
@@ -314,7 +441,7 @@ http.createServer((req, res) => {
     let body; try { body = JSON.parse(raw); } catch (_) { return err(res, 400, 'bad json', 'invalid_request_error'); }
     if (path === '/v1/images/jobs') { try { return imgStart(body, res); } catch (e) { return err(res, 500, String(e && e.message || e)); } }
     const m = String(body.model || 'gpt-5.6-terra');
-    if (personal) { if (path === '/v1/images/jobs') return err(res, 403, 'pictures are not on the personal key'); return personalChat(body, res).catch((e) => err(res, 500, String(e && e.message || e))); }
+    if (personal) return personalChat(req, body, res).catch((e) => err(res, 500, String(e && e.message || e)));
     const run = !ALLOW_CLAUDE ? openclawChat({ ...body, model: CLAUDE_AS_GPT[m] || (/^gpt|^o\d/.test(m) ? m : 'gpt-5.6-terra') }, res)
       : CLAUDE_MODEL[m] ? claudeChat(body, res) : /^gpt|^o\d/.test(m) ? openclawChat(body, res) : claudeChat({ ...body, model: 'claude-opus' }, res);
     run
