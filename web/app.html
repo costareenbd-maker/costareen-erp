@@ -58743,6 +58743,9 @@ button.ph-play:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .mw{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:22px}
 .mw-i{margin:0;border:1px solid var(--bc-rule);border-radius:14px;overflow:hidden;background:var(--bc-ground);display:flex;flex-direction:column}
 .mw-i.big{grid-column:1/-1}
+.mw-v{position:relative;background:#000;border-radius:12px;overflow:hidden}
+.mw-v video{display:block;width:100%;max-height:72vh;background:#000}
+.mw-v .mw-x{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.92)}
 .mw-p{position:relative;display:block;width:100%;padding:0;border:0;background:var(--bc-shelf);cursor:zoom-in;aspect-ratio:4/5}
 .mw-i.big .mw-p{aspect-ratio:auto;max-height:72vh;cursor:zoom-out}
 .mw-p img{width:100%;height:100%;object-fit:cover;display:block}
@@ -60689,7 +60692,11 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     var h = '<div class="bc-h2" style="margin-top:4px"><h2>অ্যালবাম</h2><span>' + bn(items.length - nV) + 'টা ছবি' + (nV ? ', ' + bn(nV) + 'টা ভিডিও' : '') + '</span></div><div class="mw">';
     h += items.map(function (it) {
       var big = C.mview === it.id;
-      return '<figure class="mw-i' + (big ? ' big' : '') + '"><button type="button" class="mw-p" data-bc="mview" data-id="' + esc(it.id) + '" aria-expanded="' + big + '" title="' + esc(it.name || '') + '">' + (it.thumb ? '<img alt="" loading="lazy" src="' + it.thumb + '">' : '<span class="ph-media">' + pi('media') + '</span>') + (it.type === 'video' ? '<span class="ph-play">' + pi('play') + '</span>' : '') + usedMark(it) + '</button>' +
+      // brand-play-1: an opened video plays here (a playable copy is made on the Mac the first time)
+      var pv = big && it.type === 'video' ? (C.prev || {})[it.id] : '';
+      return '<figure class="mw-i' + (big ? ' big' : '') + '">' + (pv ? '<div class="mw-v"><video controls playsinline autoplay preload="metadata" src="' + esc(pv) + '"></video>' +
+          '<button type="button" class="bc-btn ghost sm mw-x" data-bc="mview" data-id="' + esc(it.id) + '" aria-expanded="true">বন্ধ করুন</button></div>'
+        : '<button type="button" class="mw-p" data-bc="mview" data-id="' + esc(it.id) + '" aria-expanded="' + big + '" title="' + esc(it.name || '') + '">' + (it.thumb ? '<img alt="" loading="lazy" src="' + it.thumb + '">' : '<span class="ph-media">' + pi('media') + '</span>') + (it.type === 'video' ? '<span class="ph-play">' + (big && C.busy['mpv' + it.id] ? '<span class="bc-spin"></span>' : pi('play')) + '</span>' : '') + usedMark(it) + '</button>') +
         '<figcaption><span title="' + esc(it.name || '') + '"' + (it.at ? '' : ' data-noi18n="1"') + '>' + (it.at ? ago(it.at) : esc(it.name || '')) + '</span><small>' + (it.type === 'video' ? 'ভিডিও' + (it.duration ? ' · ' + secs(it.duration) : '') : 'ছবি') + (usedN(it) ? ' · <b class="um-t">' + bn(usedN(it)) + ' বার ব্যবহার</b>' : (it.uses || []).length ? ' · <b class="um-t">অপেক্ষায়</b>' : '') + '</small>' +
         (big ? (it.note ? '<p class="mw-n"><b>AI যা দেখেছে:</b> <span data-noi18n="1">' + esc(it.note) + '</span></p>' : '<p class="mw-n">AI শিগগির দেখবে</p>') +
           ((it.uses || []).length ? '<ul class="mw-u">' + it.uses.map(function (u) { var ud = new Date(u.at); return '<li style="--c:' + netCol(u.platform) + '"><i></i><b>' + esc(netName(u.platform)) + '</b><span>' + (isNaN(ud) ? '' : dDate(ud)) + (u.posted ? '' : ' · অপেক্ষায়') + '</span><em data-noi18n="1">' + esc(u.hook || '') + '</em></li>'; }).join('') + '</ul>' : '<p class="mw-n">এখনো কোনো পোস্টে যায়নি।</p>') : '') +
@@ -62553,7 +62560,13 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     else if (w === 'nmake') act('nm' + id, 'erpBrandDeskNewsMake', { id: Number(id) }, function (r) { C.d.news = r; poll('news'); toast('পোস্ট লেখা হচ্ছে, কয়েক মিনিট।'); });
     else if (w === 'ndraft') { C.sec = 'posts'; C.ptab = 'wait'; draw(); need(); setTimeout(function () { var e = el('bc_tk_' + id); if (e) e.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 120); }
     else if (w === 'itopic') { C.itopic = C.itopic === id ? '' : id; draw(); }
-    else if (w === 'mview') { C.mview = C.mview === id ? '' : id; draw(); }
+    else if (w === 'mview') {
+      C.mview = C.mview === id ? '' : id;
+      var mit = ((C.d.mlib || {}).items || []).filter(function (q) { return String(q.id) === String(id); })[0];
+      C.prev = C.prev || {};
+      if (C.mview && mit && mit.type === 'video' && !C.prev[id]) act('mpv' + id, 'erpBrandDeskMediaPreview', { asset_id: id }, function (r) { if (r && r.path) C.prev[id] = r.path; });
+      else draw();
+    }
     else if (w === 'mpost') {
       var mi = ((C.d.mlib && C.d.mlib.items) || []).filter(function (q) { return q.id === id; })[0]; if (!mi) return;
       act('mp' + id, 'erpBrandDeskAttach', { asset_id: id }, function (r) { C.media.c = { id: r.id, path: r.path, type: r.type || mi.type, name: r.name || mi.name, thumb: mi.thumb, asset: mi.id, duration: mi.duration }; measureAspect(C.media.c); C.sec = 'posts'; C.ptab = 'new'; C.mview = ''; draw(); toast('ছবি লাগানো হলো।'); });
