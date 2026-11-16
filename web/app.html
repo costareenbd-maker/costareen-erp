@@ -62651,13 +62651,19 @@ left alone. Staff, managers and shareholders are never moved. -->
     prevApply(b);
     if (tried) return;
     tried = true;
+    goHome(b, 0);
+  };
+  // brand-polish-1: the business list can arrive before the signed-in person (ME) - wait up to 10 s for ME instead of
+  // giving up (on live the first tab sometimes stayed on Costareen)
+  function goHome(b, n) {
+    if (typeof ME === 'undefined' || !ME) { if (n < 40) setTimeout(function () { goHome(b, n + 1); }, 250); return; }
     try {
       if (sessionStorage.getItem('bd_home')) return;
       sessionStorage.setItem('bd_home', '1');
     } catch (e) { return; }
     var h0 = String(window.ERP_HASH0 || '');
     if (/^#\/(?!dash\b|home\b|branddesk\b)[a-z]/.test(h0)) return;
-    if (!b || !b.businesses || typeof ME === 'undefined' || !ME || ME.role !== 'owner') return;
+    if (!b || !b.businesses || ME.role !== 'owner') return;
     var brand = b.businesses.filter(function (x) { return x.kind === 'brand'; })[0];
     if (!brand) return;
     if (b.active === brand.id) { setTimeout(function () { try { if (VIEW !== 'branddesk') go('branddesk'); } catch (e) {} }, 300); return; }
@@ -62665,7 +62671,7 @@ left alone. Staff, managers and shareholders are never moved. -->
       try { switchBusiness(brand.id); } catch (e) { return; }
       setTimeout(function () { try { go('branddesk'); } catch (e) {} }, 700);
     }, 50);
-  };
+  }
 })();
 </script>
 
