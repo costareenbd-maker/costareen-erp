@@ -62669,7 +62669,18 @@ left alone. Staff, managers and shareholders are never moved. -->
     if (b.active === brand.id) { setTimeout(function () { try { if (VIEW !== 'branddesk') go('branddesk'); } catch (e) {} }, 300); return; }
     setTimeout(function () {
       try { switchBusiness(brand.id); } catch (e) { return; }
-      setTimeout(function () { try { go('branddesk'); } catch (e) {} }, 700);
+      // wait until the switch has really landed (on live it can take longer than a second), then open the desk
+      var k = 0;
+      (function land() {
+        var ok = typeof BIZ !== 'undefined' && BIZ && BIZ.active === brand.id;
+        if (ok) {
+          // the ERP may still repaint its dashboard after the switch: check again a few times
+          var t = 0;
+          (function open() { try { if (VIEW === 'dash' || VIEW === 'home' || t === 0) { if (VIEW !== 'branddesk') go('branddesk'); } } catch (e) {} if (++t < 6) setTimeout(open, 500); })();
+          return;
+        }
+        if (++k < 60) setTimeout(land, 200);
+      })();
     }, 50);
   }
 })();
