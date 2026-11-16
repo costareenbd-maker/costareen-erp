@@ -120,14 +120,17 @@ export async function erpVideoPlan(ctx, payload) {
     'The whole video is about ' + seconds + ' seconds (the shots\' seconds add up to it), 4 to 8 shots, aspect ratio ' + aspect + '.',
     'Voice-over budget: at most ' + Math.floor(seconds * (lang === 'bn' ? 2.5 : 4.2)) + ' words in total (' + (lang === 'bn' ? '2.5 Bangla' : '4.2 English') + ' words a second); a shot of N seconds carries at most N x ' + (lang === 'bn' ? '2.5' : '4.2') + ' words. Count the words before answering.'].join('\n');
   const user = 'Platform: ' + platform + ' (' + aspect + ')\nLength: ' + seconds + ' s\nFacts:\n' + facts.text;
-  const ask = async (extra) => ai(ctx, { purpose: 'video-plan', json: true, maxTokens: 4000, temperature: 0.6, avoid: ['anthropic'], system: sys + (extra ? '\n\n' + extra : ''), messages: [{ role: 'user', content: [{ type: 'text', text: user }] }] });
+  const until = Date.now() + 140000;   // the server stops a call at 150 s: both tries share it
+  const ask = async (extra) => ai(ctx, { purpose: 'video-plan', deadline: until, json: true, maxTokens: 4000, temperature: 0.6, avoid: ['anthropic'], system: sys + (extra ? '\n\n' + extra : ''), messages: [{ role: 'user', content: [{ type: 'text', text: user }] }] });
   let r = await ask(''), plan = r.json, errors = [], tries = 1;
   const judge = (pl) => { const e = validatePlan(pl, { profile, aspect }); if (!e.length) { const fc = factCheck(pl, facts.text); return fc.problems; } return e; };
   errors = judge(plan);
   if (errors.length) {
     tries = 2;
-    r = await ask('Your last plan was refused for these reasons - fix every one and answer with the whole plan again:\n- ' + errors.join('\n- '));
-    plan = r.json; errors = judge(plan);
+    try {
+      r = await ask('Your last plan was refused for these reasons - fix every one and answer with the whole plan again:\n- ' + errors.join('\n- '));
+      plan = r.json; errors = judge(plan);
+    } catch (e) { errors = errors.concat('The second try did not finish (' + str(e && e.message).slice(0, 120) + ').'); }
   }
   if (errors.length) return { valid: false, errors, tries, profile, model: r.provider + ':' + r.model };
   const row = { id: 'vp' + Date.now().toString(36), at: (ctx.now || new Date()).toISOString(), profile, platform, seconds, lang, sku: facts.product ? facts.product.sku : '', product: facts.product ? facts.product.name : str(p.notes).slice(0, 60), model: r.provider + ':' + r.model, tries, plan };

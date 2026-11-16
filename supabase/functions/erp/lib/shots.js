@@ -154,7 +154,7 @@ const numbersOf = (t) => (latinDigits(t).replace(/(\d),(?=\d{2,3}\b)/g, '$1').ma
 // Latin words in a Bangla or English line that carry a claim: brand names, specs (SPF, PLA, PETG), units
 const STOP = new Set(['the', 'and', 'for', 'you', 'your', 'with', 'this', 'that', 'now', 'our', 'are', 'just', 'get', 'buy', 'shop', 'order', 'inbox', 'message', 'link', 'bio', 'today', 'here', 'from', 'all', 'one', 'new', 'more', 'skin', 'face', 'use', 'try', 'see', 'how', 'why', 'what', 'its', 'it\'s', 'can', 'will', 'not', 'has', 'have', 'only', 'every', 'day', 'days', 'night', 'morning', 'website', 'page', 'call', 'dm', 'free', 'taka', 'tk', 'bdt']);
 function claimWords(t) {
-  return (String(t || '').match(/[A-Za-z][A-Za-z0-9+\-]{1,}/g) || []).map((w) => w.toLowerCase()).filter((w) => w.length >= 3 && !STOP.has(w));
+  return (String(t || '').match(/[A-Za-z][A-Za-z0-9+\-]{1,}/g) || []).map((w) => w.toLowerCase().replace(/[+-]+$/, '')).filter((w) => w.length >= 3 && !STOP.has(w));
 }
 /** -> { ok, problems: [...] }. factsText = the facts block the AI was given (product, price, product page text, notes). */
 export function factCheck(plan, factsText) {
