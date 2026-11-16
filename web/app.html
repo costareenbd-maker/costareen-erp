@@ -62177,7 +62177,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       if (same && html === C.lastHtml) return;
       C.lastHtml = html;
       if (same) { window.bcMorph(r, html); if (Math.abs(window.scrollY - sy) > 1) window.scrollTo(0, sy); }
-      else { r.innerHTML = html; var mm = r.querySelector('.bc-main'); if (mm && C.lastSec) mm.classList.add('bc-swap'); }
+      else { r.innerHTML = html; var mm = r.querySelector('.bc-main'); if (mm && C.lastSec) mm.classList.add('bc-swap'); if (window.bcMotionEnter) window.bcMotionEnter(r, C.sec); }
       C.lastSec = C.sec;
       C.csIn = 0;
       document.documentElement.classList.toggle('bc-cs-on', !!C.sheet);
@@ -62703,6 +62703,8 @@ Nothing about what the screens show or do changes; only how a redraw lands. Moti
       childrenOnly: true,
       onBeforeElUpdated: function (from, to) {
         if (from.isEqualNode(to)) return false;
+        // brand-motion-1: a count that changed (a new message, a draft waiting) gives one small bump
+        if (from.tagName === 'EM' && from.textContent !== to.textContent && window.bcBump) setTimeout(function () { window.bcBump(from); }, 0);
         // the field he is typing in keeps its text, caret and selection
         if (from === document.activeElement && FIELD[from.tagName]) return false;
         // a 'more' link that fitFolds already showed stays shown (no one-frame blink)
@@ -62726,6 +62728,80 @@ Nothing about what the screens show or do changes; only how a redraw lands. Moti
         return n;
       }
     });
+  };
+})();
+</script>
+
+<!-- brand-motion-1 (owner 16 Nov 2026: "add animation, phone and PC"). Motion thesis for the Line Map world:
+ focal: the Connections map draws its wires one after another when the page opens, and a chosen (lit) wire carries a
+ running dash - data moving along the line; continuity: a new page rises in, lists arrive in order (first 8, 35 ms
+ apart), the chosen menu item settles in; feedback: a changed count bumps once, buttons press. Transform / opacity /
+ stroke only; everything is visible by default; reduced motion keeps only short fades. -->
+<style>
+@media (prefers-reduced-motion: no-preference) {
+  #bc_root .bc-main.bc-swap { animation: bcRise .28s cubic-bezier(.16,1,.3,1) both }
+  #bc_root .bc-stag { animation: bcRise .32s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(var(--i, 0) * 35ms) }
+  #bc_root .bc-rail button.on, #bc_root .bc-rail a.on { animation: bcPill .26s cubic-bezier(.16,1,.3,1) }
+  #bc_root .bc-bump { animation: bcBump .34s cubic-bezier(.16,1,.3,1) }
+  #bc_wires.bc-draw path:not([fill]) { stroke-dasharray: var(--len) var(--len); stroke-dashoffset: var(--len); animation: bcWire .75s cubic-bezier(.16,1,.3,1) forwards; animation-delay: calc(var(--i, 0) * 45ms) }
+  #bc_wires:not(.bc-draw) path.lit { stroke-dasharray: 7 6; animation: bcFlow .9s linear infinite }
+  #bc_root .bc-node { transition: transform .18s cubic-bezier(.16,1,.3,1), box-shadow .18s ease-out }
+  #bc_root .bc-node:hover { transform: translateY(-1px); box-shadow: 0 6px 16px -10px rgba(22,24,29,.35) }
+  #bc_root .bc-btn.dark:not(:disabled):hover { box-shadow: 0 6px 14px -8px rgba(22,24,29,.55) }
+}
+@media (prefers-reduced-motion: reduce) {
+  #bc_root .bc-main.bc-swap { animation: bcFadeOnly .15s ease-out both }
+  #bc_root .bc-stag, #bc_root .bc-enter { animation: none }
+}
+@keyframes bcRise { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+@keyframes bcFadeOnly { from { opacity: 0 } to { opacity: 1 } }
+@keyframes bcPill { from { opacity: .55; transform: scale(.95) } to { opacity: 1; transform: none } }
+@keyframes bcBump { 0% { transform: none } 40% { transform: scale(1.3) } 100% { transform: none } }
+@keyframes bcWire { to { stroke-dashoffset: 0 } }
+@keyframes bcFlow { to { stroke-dashoffset: -13 } }
+/* the parts of the browser the desk did not draw yet */
+#bc_root { caret-color: var(--bc-ink); scrollbar-width: thin; scrollbar-color: #C7CAD1 transparent }
+#bc_root ::selection { background: #16181D; color: #fff }
+</style>
+<script>
+(function () {
+  var LISTS = ['.bx-r', '.mw-i', '.bc-tk', '.fw-l > li', '.au-c', '.st-g > *', '.tr-cr > li', '.lt', '.sx-b', '.sx-s', '.bc-node', '.lv-c', '.rt-d'];
+  var still = function () { return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; };
+  window.bcBump = function (el) {
+    if (still() || !el || !el.classList) return;
+    el.classList.remove('bc-bump'); void el.offsetWidth; el.classList.add('bc-bump');
+    el.addEventListener('animationend', function () { el.classList.remove('bc-bump'); }, { once: true });
+  };
+  window.bcMotionEnter = function (root, sec) {
+    if (still() || !root) return;
+    var seen = [];
+    LISTS.forEach(function (q) {
+      var items = root.querySelectorAll('.bc-main ' + q);
+      var byParent = {};
+      [].forEach.call(items, function (n) {
+        if (seen.indexOf(n) >= 0) return;
+        var p = n.parentNode; if (!p) return;
+        var k = byParent.__k || (byParent.__k = []);
+        var at = k.indexOf(p); if (at < 0) { k.push(p); at = k.length - 1; byParent[at] = 0; }
+        var i = byParent[at]++;
+        if (i >= 8 || n.getBoundingClientRect().top > innerHeight) return;
+        seen.push(n);
+        n.style.setProperty('--i', i);
+        n.classList.add('bc-stag');
+        n.addEventListener('animationend', function () { n.classList.remove('bc-stag'); n.style.removeProperty('--i'); }, { once: true });
+      });
+    });
+    if (sec === 'map') {
+      // wires() draws in the next frames; wait for it, then let every wire draw itself in turn
+      var tries = 0;
+      (function arm() {
+        var sv = document.getElementById('bc_wires'), ps = sv ? sv.querySelectorAll('path:not([fill])') : [];
+        if (!ps.length) { if (++tries < 20) requestAnimationFrame(arm); return; }
+        [].forEach.call(ps, function (pth, i) { var L = 0; try { L = Math.ceil(pth.getTotalLength()); } catch (e) {} pth.style.setProperty('--len', L || 400); pth.style.setProperty('--i', i); });
+        sv.classList.add('bc-draw');
+        setTimeout(function () { sv.classList.remove('bc-draw'); [].forEach.call(sv.querySelectorAll('path'), function (pth) { pth.style.removeProperty('--len'); pth.style.removeProperty('--i'); }); }, 750 + ps.length * 45 + 100);
+      })();
+    }
   };
 })();
 </script>
