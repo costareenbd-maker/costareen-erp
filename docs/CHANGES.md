@@ -4654,3 +4654,13 @@ Owner: the AI video course (engine pack at G:\ai-video-course\engine) must be in
 - lib/videogen.js: the empty generator registry (fal.ai / ElevenLabs later) with the interface written down; nothing is
   generated, no money spent, nothing posted.
 - Tests: supabase/tests/aishots_test.mjs (33 checks).
+- Fixes after the first real runs on dev: pace is judged on the whole video (a line may run into the next shot, 1.7x
+  its own), the planner is told its word budget, "Oliareen-এ" (trailing hyphen) matches the facts, both AI tries share
+  a 140 s deadline, the personal-brand business is refused (own studio), clearer message when there is no ChatGPT.
+- DEV result: pack pack-4df8bdb6 loaded. "Oliareen (demo)": valid plan (Abib Heartleaf pad, reels 9:16, 20 s, 5 shots,
+  own gateway gpt-5.6-sol, second try), checked on screen desktop + 375 px. "Demo 3D Shop" (dev Costareen): NOT shown -
+  it has no AI key at all, and Claude is refused by design; the owner must set its own ChatGPT under Settings > AI brain.
+- NOT done: nothing on live (no code, no pack); no generator; Bangla words in the voice-over are not fact-checked (only
+  numbers and Latin words); the plan is kept in business_config `video_plans` (last 8), not in social_assets.
+- Tests: every suite run (206, golive skipped): green except ads (4), fddash (1), serverfinal (1, erpCrmAi words) - the
+  same failures on 0c0fc65 before shots-1. apps_test updated for the new Only-me app (20 apps, 18 with a screen).
