@@ -124,16 +124,25 @@ export function validatePlan(plan, o) {
   });
   const vo = Array.isArray(plan.vo) ? plan.vo : [];
   if (plan.vo !== undefined && !Array.isArray(plan.vo)) e('"vo" must be a list.');
+  // pace (engine pack): ~2.5 Bangla / ~4.2 English words a second. The voice-over is kept apart from the pictures, so one
+  // line may run into the next shot (up to 1.7x its own shot); the whole voice-over must fit the whole video (+15%).
+  const rate = (t) => (/[ঀ-৿]/.test(t) ? 2.5 : 4.2);
+  const wordsOf = (t) => str(t).split(/\s+/).filter(Boolean).length;
+  const total = shots.reduce((a, x) => a + (x && typeof x.seconds === 'number' ? x.seconds : 0), 0);
+  let allWords = 0, allRate = 0;
   vo.forEach((v, i) => {
     if (!v || typeof v !== 'object' || !Number.isInteger(v.shot) || typeof v.text !== 'string') { e('Voice-over line ' + (i + 1) + ' needs "shot" (number) and "text".'); return; }
     if (!ns.has(v.shot)) e('Voice-over line ' + (i + 1) + ' is for shot ' + v.shot + ', which is not in the plan.');
     const s = shots.find((x) => x && x.n === v.shot);
+    allWords += wordsOf(v.text); allRate = Math.max(allRate, rate(v.text));
     if (s && typeof s.seconds === 'number') {
-      const words = str(v.text).split(/\s+/).filter(Boolean).length, bn = /[ঀ-৿]/.test(v.text), max = Math.ceil(s.seconds * (bn ? 2.5 : 4.2) * 1.2);
-      if (words > max) e('Voice-over for shot ' + v.shot + ' is ' + words + ' words: it does not fit ' + s.seconds + ' seconds (at most ~' + max + ').');
+      const words = wordsOf(v.text), max = Math.ceil(s.seconds * rate(v.text) * 1.7);
+      if (words > max) e('Voice-over for shot ' + v.shot + ' is ' + words + ' words: far too long for ' + s.seconds + ' seconds (at most ~' + max + ').');
     }
     if (opt.profile === 'oliareen' && MEDICAL_RE.test(v.text)) e('Voice-over for shot ' + v.shot + ' makes a medical / guarantee claim: not allowed.');
   });
+  const allMax = Math.ceil(total * (allRate || 2.5) * 1.15);
+  if (total > 0 && allWords > allMax) e('The whole voice-over is ' + allWords + ' words: it does not fit ' + total + ' seconds (at most ~' + allMax + ').');
   return errs;
 }
 

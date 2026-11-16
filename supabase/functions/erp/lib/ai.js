@@ -242,7 +242,7 @@ export async function ai(ctx, req) {
   }
   // shots-1: a caller may keep a provider out (business content never runs on Claude: the AI power split rule)
   if (req.avoid && req.avoid.length) P = { ...P, list: P.list.filter((c) => !req.avoid.includes(c.provider)) };
-  const avoidMsg = req.avoid && req.avoid.length ? 'This needs the business\u2019s own ChatGPT (or Gemini) for writing - ' + req.avoid.join(', ') + ' is not used for it. Set it under Settings > AI brain.' : '';
+  const avoidMsg = req.avoid && req.avoid.length ? 'This business has no ChatGPT (or Gemini) set up for writing. Set this business\u2019s own ChatGPT under Settings > AI brain (' + req.avoid.map((p) => (PROVIDERS[p] ? PROVIDERS[p].name : p)).join(', ') + ' is never used for it).' : '';
   if (!P.list.length && avoidMsg) throw new Error(avoidMsg);
   if (!P.list.length) throw new Error('No AI key is set up on this ERP - add a ChatGPT, Claude or Gemini key under Settings > AI brain.');
   let last = '';

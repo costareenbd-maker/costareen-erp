@@ -28,6 +28,7 @@ const KEEP = 8, LENGTHS = [15, 20, 30, 45, 60];
 
 async function gate(ctx) {
   if (!roleAtLeast(ctx.s.role, 'shareholder')) throw new Error('Realistic AI shots are for the owner.');
+  if (str(await getConfig(ctx, 'business_kind', '')) === 'brand') throw new Error('The personal brand plans its AI shots in its own studio (Brand desk), not here.');
   if (!(await platformAdmin(ctx)) && await appIsOff(ctx.deps, ctx.sql, 'aishots', ctx)) throw new Error('Realistic AI shots are not open on this ERP yet.');
 }
 
@@ -116,7 +117,8 @@ export async function erpVideoPlan(ctx, payload) {
     '', 'Answer with ONE JSON object only, exactly in this shape (shot_plan.schema.json): {"business": "' + profile + '", "platform": "' + platform + '", "aspect_ratio": "' + aspect + '", "goal": "", "facts_used": [""], "vo": [{"shot": 1, "text": ""}], "shots": [{"n": 1, "purpose": "hook|problem|product|proof|broll|cta", "seconds": 4, "model": "veo|seedance|kling|gemini_omni|avatar|stock", "start_frame": "", "end_frame": null, "camera": {"movement": "", "start": "", "speed": "", "framing": "", "end": "", "time": "real time, normal speed, no slow motion"}, "action": "", "physics": null, "light": "", "mood": "", "sound": "", "onscreen_text": null}]}',
     'facts_used: copy each fact you use word for word from the facts block. Every name, number, spec and claim in "vo" must be in facts_used.',
     'start_frame / end_frame: written in English for an image model. action / camera / physics / light / mood / sound: English. vo text: ' + (lang === 'bn' ? 'spoken Bangla in BENGALI SCRIPT (brand and product names in Latin letters as given).' : 'simple spoken English.'),
-    'The whole video is about ' + seconds + ' seconds (the shots\' seconds add up to it), 4 to 8 shots, aspect ratio ' + aspect + '.'].join('\n');
+    'The whole video is about ' + seconds + ' seconds (the shots\' seconds add up to it), 4 to 8 shots, aspect ratio ' + aspect + '.',
+    'Voice-over budget: at most ' + Math.floor(seconds * (lang === 'bn' ? 2.5 : 4.2)) + ' words in total (' + (lang === 'bn' ? '2.5 Bangla' : '4.2 English') + ' words a second); a shot of N seconds carries at most N x ' + (lang === 'bn' ? '2.5' : '4.2') + ' words. Count the words before answering.'].join('\n');
   const user = 'Platform: ' + platform + ' (' + aspect + ')\nLength: ' + seconds + ' s\nFacts:\n' + facts.text;
   const ask = async (extra) => ai(ctx, { purpose: 'video-plan', json: true, maxTokens: 4000, temperature: 0.6, avoid: ['anthropic'], system: sys + (extra ? '\n\n' + extra : ''), messages: [{ role: 'user', content: [{ type: 'text', text: user }] }] });
   let r = await ask(''), plan = r.json, errors = [], tries = 1;

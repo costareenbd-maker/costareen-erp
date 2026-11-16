@@ -58,6 +58,13 @@ let fc = S.factCheck({ ...good('costareen'), vo: [{ shot: 1, text: 'দাম �
 check('an invented price and warranty in the voice-over are refused', !fc.ok && fc.problems.some((x) => /49999/.test(x)) && fc.problems.some((x) => /"years"|"warranty"/.test(x)), fc);
 fc = S.factCheck({ ...good('costareen'), facts_used: ['Prints at 500 mm/s'] }, facts);
 check('a facts_used line not in the facts is refused', !fc.ok && /not in the facts given/.test(fc.problems[0]), fc);
+const w = (n) => Array(n).fill('শব্দ').join(' ');
+e = S.validatePlan({ ...good('costareen'), vo: [{ shot: 1, text: w(14) }, { shot: 2, text: w(4) }] }, { profile: 'costareen' });
+check('pace: a line may run a little into the next shot (14 Bangla words on a 5 s shot, 18 in 10 s)', e.length === 0, e);
+e = S.validatePlan({ ...good('costareen'), vo: [{ shot: 1, text: w(24) }] }, { profile: 'costareen' });
+check('pace: far too long for its shot is refused', e.some((x) => /far too long/.test(x)), e);
+e = S.validatePlan({ ...good('costareen'), vo: [{ shot: 1, text: w(16) }, { shot: 2, text: w(16) }] }, { profile: 'costareen' });
+check('pace: the whole voice-over must fit the whole video', e.some((x) => /whole voice-over/.test(x)), e);
 e = S.validatePlan({ ...good('oliareen'), vo: [{ shot: 1, text: 'This cream cures acne.' }] }, { profile: 'oliareen' });
 check('oliareen: a medical claim is refused', e.some((x) => /medical/.test(x)), e);
 
@@ -120,7 +127,13 @@ await owner('erpAiBrainSet', [{ routes: { default: { provider: 'anthropic', mode
 r = await owner('erpVideoPlan', [{ sku: SKU, platform: 'reels', seconds: 20 }]);
 check('Claude as the writer: refused with a plain reason, Claude not called', !r.ok && /ChatGPT/.test(r.error) && claude === 0, r);
 
-// ---- 8. the other business is untouched
+// ---- 8. the personal brand business has its own studio
+await sql`insert into business_config (business_id, key, value) values (${B}, 'business_kind', 'brand') on conflict (business_id, key) do update set value = excluded.value`;
+r = await owner('erpVideoShots', [{}]);
+check('a personal-brand business is sent to its own studio', !r.ok && /Brand desk/.test(r.error), r);
+await sql`delete from business_config where business_id = ${B} and key = 'business_kind'`;
+
+// ---- 9. the other business is untouched
 const other = await sql`select count(*)::int n from business_config where business_id = ${FIX.B2} and key in ('video_plans', 'video_profile')`;
 check('the other business has no plans', other[0].n === 0, other);
 await done();
