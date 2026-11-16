@@ -417,7 +417,7 @@ export async function erpReceiveMatch(ctx, payload) {
 // ---------------------------------------------------------------- the provider's AI reader (a photo, a scanned PDF)
 const AI_DAILY = 400;       // ai-1: photos per business per day (the owner's rule: the business before the token bill)
 // the Flash models to try, in order: Google retires names and a model can be "in high demand" for a minute
-export const GEMINI_MODELS = ['gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];   // measured 8 Oct 2026: lite 4 s, 2.5-flash 20 s, flash-latest hung
+export const GEMINI_MODELS = ['gemini-3.1-flash-lite', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];   // gemini-1: 3.1-flash-lite first (works for new-account keys, 3.7 s on 17 Nov 2026)   // measured 8 Oct 2026: lite 4 s, 2.5-flash 20 s, flash-latest hung
 const GEMINI_TIMEOUT_MS = 40000;   // the edge function itself dies at 150 s
 const AI_PROMPT = 'This is a photo or scan of a supplier document for a 3D-printing shop in Bangladesh: a packing list, proforma invoice, price list or order sheet. ' +
   'Extract every product line as JSON only - an array of objects {"code": supplier item code or "", "name": the product words (brand, material/type, colour, size) as written, ' +

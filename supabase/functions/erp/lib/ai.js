@@ -90,7 +90,7 @@ export async function skillsFor(ctx, purpose) {
 const BEST = {
   openai: { pick: [/^gpt-(\d+(?:\.\d+)?)(?:-pro)?$/, /^o(\d+)(?:-pro)?$/], fallback: ['gpt-5.1', 'gpt-5', 'gpt-4.1', 'gpt-4o'] },
   anthropic: { pick: [/^claude-opus-(\d+)-(\d+)/, /^claude-sonnet-(\d+)-(\d+)/], fallback: ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-opus-4-1', 'claude-sonnet-4-5'] },
-  gemini: { pick: [/^gemini-(\d+(?:\.\d+)?)-pro(?:-latest)?$/, /^gemini-(\d+(?:\.\d+)?)-flash$/], fallback: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-flash-latest', 'gemini-flash-lite-latest'] },
+  gemini: { pick: [/^gemini-(\d+(?:\.\d+)?)-pro(?:-latest)?$/, /^gemini-(\d+(?:\.\d+)?)-flash$/], fallback: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.1-flash-lite', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'] },
   custom: { pick: [], fallback: [] },
 };
 // rough prices in US$ per million tokens (input, output): an estimate for the owner, not a bill
@@ -98,7 +98,9 @@ const PRICE = [[/gemini.*flash-lite/, 0.1, 0.4], [/gemini.*flash/, 0.3, 2.5], [/
   [/gpt-.*mini/, 0.25, 2], [/gpt-.*nano/, 0.05, 0.4], [/gpt-/, 1.25, 10], [/^o\d/, 2, 8]];
 const BDT_PER_USD = 122;
 // Gemini's free-tier models: the cheap first try for customer chat, and the last safety net for everything
-export const FREE_MODELS = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-flash-lite-latest'];
+// gemini-1 (17 Nov 2026): a key from a NEW Google account cannot call gemini-2.5-* (404 "no longer available to new users"),
+// so the 3.x lite models come first; 2.5-flash stays for older keys. Gemini is only the backup here (ChatGPT leads).
+export const FREE_MODELS = ['gemini-3.1-flash-lite', 'gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];
 const SENIOR = '[SENIOR]';
 /** A message the cheap model should not try: a complaint, a refund / return / broken item, a technical fault, a long or many-question message. */
 export function isComplex(messages) {
