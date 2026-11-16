@@ -62745,6 +62745,8 @@ Nothing about what the screens show or do changes; only how a redraw lands. Moti
   #bc_root .bc-bump { animation: bcBump .34s cubic-bezier(.16,1,.3,1) }
   #bc_wires.bc-draw path:not([fill]) { stroke-dasharray: var(--len) var(--len); stroke-dashoffset: var(--len); animation: bcWire .75s cubic-bezier(.16,1,.3,1) forwards; animation-delay: calc(var(--i, 0) * 45ms) }
   #bc_wires:not(.bc-draw) path.lit { stroke-dasharray: 7 6; animation: bcFlow .9s linear infinite }
+  #bc_wires.bc-draw marker path { opacity: 0 }
+  #bc_wires marker path { transition: opacity .2s ease-out }
   #bc_root .bc-node { transition: transform .18s cubic-bezier(.16,1,.3,1), box-shadow .18s ease-out }
   #bc_root .bc-node:hover { transform: translateY(-1px); box-shadow: 0 6px 16px -10px rgba(22,24,29,.35) }
   #bc_root .bc-btn.dark:not(:disabled):hover { box-shadow: 0 6px 14px -8px rgba(22,24,29,.55) }
