@@ -59779,7 +59779,13 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     var t = String(raw || ''), f = 'er' + t.length;
     return '<div class="bc-call"><span>' + (hasBn(t) ? esc(t) : 'আনা গেল না।' + (t ? ' <button type="button" class="bc-lnk" data-bc="fold" data-id="' + f + '" aria-expanded="' + !!C.fold[f] + '">বিস্তারিত</button>' + (C.fold[f] ? '<small class="bc-raw" data-noi18n="1">' + esc(t) + '</small>' : '') : '')) + '</span><span class="bc-sp"></span>' + (retry || '') + '</div>';
   }
-  function myName() { var s = (C.d.settings && C.d.settings.settings) || {}, p = s.public_name, a = nets()[0]; return (p && typeof p === 'object' ? (p.en || p.bn) : p) || (a && a.name) || (typeof ME !== 'undefined' && ME && ME.name) || 'Rahman Najir'; }
+  // brand-polish-1: one name on every page (it used to change with whichever data a page had loaded)
+  function myName() {
+    var s = (C.d.settings && C.d.settings.settings) || {}, p = s.public_name, nm = (p && typeof p === 'object' ? (p.en || p.bn) : p) || '';
+    if (nm) { C.myName = nm; try { localStorage.setItem('bc_name', nm); } catch (e) {} return nm; }
+    if (!C.myName) { try { C.myName = localStorage.getItem('bc_name') || ''; } catch (e) {} }
+    return C.myName || (typeof ME !== 'undefined' && ME && ME.name) || 'Rahman Najir';
+  }
   function myPos() { var s = (C.d.settings && C.d.settings.settings) || {}; return s.positioning_en || ''; }
   function closeBtn(data) { return '<button type="button" class="bc-btn ghost sm bc-close" ' + data + ' aria-label="ফিরে যান" title="ফিরে যান">' + svg('x') + '</button>'; }
   function v(k, dflt) { return C.v[k] != null ? C.v[k] : (dflt == null ? '' : dflt); }
@@ -62166,6 +62172,10 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       // jumped. Now the same page is PATCHED in place (morphdom): only what changed is touched, so scroll, pictures, a playing
       // video and the field being typed in all stay. A new section is still drawn fresh (and fades in).
       var same = !!(r.firstChild && C.lastSec === C.sec && typeof window.bcMorph === 'function'), sy = window.scrollY;
+      // brand-polish-1: a poll that brought nothing new leaves the page untouched (on a mid-range phone a full patch cost
+      // 100-200 ms of frozen screen every 12-20 s)
+      if (same && html === C.lastHtml) return;
+      C.lastHtml = html;
       if (same) { window.bcMorph(r, html); if (Math.abs(window.scrollY - sy) > 1) window.scrollTo(0, sy); }
       else { r.innerHTML = html; var mm = r.querySelector('.bc-main'); if (mm && C.lastSec) mm.classList.add('bc-swap'); }
       C.lastSec = C.sec;
