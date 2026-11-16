@@ -4664,3 +4664,8 @@ Owner: the AI video course (engine pack at G:\ai-video-course\engine) must be in
   numbers and Latin words); the plan is kept in business_config `video_plans` (last 8), not in social_assets.
 - Tests: every suite run (206, golive skipped): green except ads (4), fddash (1), serverfinal (1, erpCrmAi words) - the
   same failures on 0c0fc65 before shots-1. apps_test updated for the new Only-me app (20 apps, 18 with a screen).
+
+## shots-1 LIVE (17 Nov 2026, owner: "SSH অনুমতি দিচ্ছি")
+Released from private/release-shots-1: function patch (allow, index, security, apps, lib/ai) + handlers/aishots.js, lib/shots.js, lib/videogen.js, handlers/bizctx.js (was missing on live). Backup /data/backups/live-function/erp-20261116T151209Z.tgz (Mac clock). Web build_live tag shots1-a9fbd16 on costareen-erp + office-erp (prev page private/live-web-index-before-shots1-20261117.html + sw). Pack loaded pack-4df8bdb6.
+Hotfix shots-1b: the planner prompt now states the three hard checks (physics line for moving heavy things, end_frame for state changes, one action) - before it, Costareen plans were refused 3/3 for a missing physics line.
+Live check: Costareen, Bambu Lab A1 Mini (CZ04614) -> valid plan, gpt-5.6-sol, 2 tries (~80 s). Oliareen (no products in the live ERP yet, so notes) TIRTIR serum -> valid plan in 1 try, BUT served by gemini-3.1-flash-lite, not ChatGPT, and the Bangla VO says "সেরা"/"দাগ দূর করে" (stronger than the facts): the fact check does not catch Bangla wording yet. Active business set back to Costareen. Not done: Oliareen AI brain on its own ChatGPT; Bangla claim check.
