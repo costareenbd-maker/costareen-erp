@@ -62765,7 +62765,7 @@ Nothing about what the screens show or do changes; only how a redraw lands. Moti
 </style>
 <script>
 (function () {
-  var LISTS = ['.bx-r', '.mw-i', '.bc-tk', '.fw-l > li', '.au-c', '.st-g > *', '.tr-cr > li', '.lt', '.sx-b', '.sx-s', '.bc-node', '.lv-c', '.rt-d'];
+  var LISTS = ['.bx-r', '.mw-i', '.bc-tk', '.fw-l > li', '.au-c', '.st-g > *', '.tr-cr > li', '.lt', '.sx-b', '.sx-s', '.lv-c', '.rt-d'];   // .bc-node stays still: the wires are measured from it
   var still = function () { return window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches; };
   window.bcBump = function (el) {
     if (still() || !el || !el.classList) return;
