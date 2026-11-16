@@ -4659,7 +4659,7 @@ Owner: the AI video course (engine pack at G:\ai-video-course\engine) must be in
   a 140 s deadline, the personal-brand business is refused (own studio), clearer message when there is no ChatGPT.
 - DEV result: pack pack-4df8bdb6 loaded. "Oliareen (demo)": valid plan (Abib Heartleaf pad, reels 9:16, 20 s, 5 shots,
   own gateway gpt-5.6-sol, second try), checked on screen desktop + 375 px. "Demo 3D Shop" (dev Costareen): NOT shown -
-  it has no AI key at all, and Claude is refused by design; the owner must set its own ChatGPT under Settings > AI brain.
+  it has no AI key at all, and Claude is refused by design (owner, 16 Nov: "Skip" - no key for it now).
 - NOT done: nothing on live (no code, no pack); no generator; Bangla words in the voice-over are not fact-checked (only
   numbers and Latin words); the plan is kept in business_config `video_plans` (last 8), not in social_assets.
 - Tests: every suite run (206, golive skipped): green except ads (4), fddash (1), serverfinal (1, erpCrmAi words) - the
