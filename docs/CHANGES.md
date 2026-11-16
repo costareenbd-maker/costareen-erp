@@ -4628,3 +4628,29 @@ simulated READ receipt moved a real message to read (put back to sent), stand-al
 screenshots .impeccable/review/b31-{desktop,phone}-{list,search,thread,tools}.png, no page errors, no sideways scroll at 390.
 NOT done: Messenger receipts not seen live yet (needs a real reply); no message was sent to anyone; Telegram/email show no
 ticks by design; the summary is not saved.
+
+## shots-1 — Realistic AI shots on the reel screen (16 Nov 2026, owner-only, DEV only)
+Owner: the AI video course (engine pack at G:\ai-video-course\engine) must be inside every video engine; this is the ERP
+(Oliareen + Costareen) side. Advertisement > Content > + Video now has two chips, "Template reel" (as before) and
+"Realistic AI shots" ("Only me" app `aishots`).
+- handlers/aishots.js: erpVideoShots (read: profile, pack, last 8 plans with prompts), erpVideoPlan({sku, platform,
+  seconds, lang, notes}), erpVideoPackSet (platform admin). The business's OWN AI writes the plan (lib/ai.js task 'write',
+  purpose 'video-plan'); new `avoid: ['anthropic']` option in ai(): Claude is never used for business content (AI split
+  rule) - if Claude is the only writer the call is refused in plain words.
+- lib/shots.js: the two profiles (oliareen = beauty, ordinary BD women, female voice, benefits/ingredients/texture/routine
+  scenes; costareen = 3D printers/electronics, BD men, male voice, specs/features/warranty/unboxing/print-result scenes,
+  own colours each). The profile comes from the business (setting `video_profile`, else name / what it sells) - never from
+  the page, and a plan for the other business is refused. validatePlan = shot_plan.schema.json + the hard rules (start +
+  end still for a change of state, one cause one motion, physics line when a heavy thing moves, veo <= 8 s, six camera
+  slots, one aspect ratio per platform, VO fits the seconds, no medical claims for beauty). factCheck: every facts_used
+  line and every number / Latin word (brand, spec, unit) in the voice-over must be in the facts block (product, ERP price,
+  product page text, owner notes); Bangla words themselves cannot be checked. A refused plan goes back to the AI once
+  with the reasons, then the page shows why and nothing is kept. promptPack = port of build_prompt.py (same output,
+  checked against the Python on example_plan.json): per shot start still, end still, video prompt, each with Copy, plus
+  "Copy the whole pack".
+- The course rules are NOT in git (this repo is public): deploy/video_pack_upload.py sends VIDEO_RULES.md + the
+  REALISM/PHYSICS lines into erp_provider_secrets VIDEO_PACK; without it a short fallback in our own words is used (the
+  page says "Engine pack not loaded").
+- lib/videogen.js: the empty generator registry (fal.ai / ElevenLabs later) with the interface written down; nothing is
+  generated, no money spent, nothing posted.
+- Tests: supabase/tests/aishots_test.mjs (33 checks).

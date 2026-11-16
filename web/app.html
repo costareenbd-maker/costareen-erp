@@ -8545,7 +8545,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpBrandDeskAudience|erpBrandDeskInbox|erpBrandDeskThread|erpBrandDeskSaved|erpBrandDeskAudio|erpBrandDeskChannels|erpBrandDeskSites|erpBrandDeskCritiques|erpBrandDeskResults|erpBrandDeskCockpit|erpBrandDeskReels|erpBrandDeskRoutine|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpVideoShots|erpBrandDeskAudience|erpBrandDeskInbox|erpBrandDeskThread|erpBrandDeskSaved|erpBrandDeskAudio|erpBrandDeskChannels|erpBrandDeskSites|erpBrandDeskCritiques|erpBrandDeskResults|erpBrandDeskCockpit|erpBrandDeskReels|erpBrandDeskRoutine|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 // crit8-nav (10 Nov 2026): these calls only read when they are sent without a change (the list form) and write with one.
 // The same rule as the server's ERP_READ_WHEN (allow.js): the list form runs beside other reads, sends no one-time key
 // and drops no caches; the changing form stays a write. erpTool and erpBrainFact always write (every branch changes data).
@@ -62816,6 +62816,112 @@ Nothing about what the screens show or do changes; only how a redraw lands. Moti
       })();
     }
   };
+})();
+</script>
+
+<!-- shots-1: Realistic AI shots (owner 16 Nov 2026). Advertisement > Content > + Video gets a second way: the business's own
+     ChatGPT plans a realistic AI video as a shot list (video engine pack), the server checks it, and every shot comes with
+     its start still, end still and video prompt to copy into a generator. "Only me" app `aishots`. -->
+<style>
+.vs-shot{border:1px solid var(--line,#ddd);border-radius:10px;padding:10px 12px;margin-top:10px;background:var(--card,#fff)}
+.vs-shot h4{margin:0 0 4px;font-size:14px}
+.vs-shot .vs-meta{font-size:12px;color:var(--muted,#666);margin-bottom:6px}
+.vs-p{margin-top:6px}
+.vs-p .vs-ph{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;font-weight:600}
+.vs-p textarea{width:100%;min-height:74px;font:12px/1.45 ui-monospace,Consolas,monospace;resize:vertical;margin-top:3px;box-sizing:border-box}
+.vs-vo{font-size:13px;margin:4px 0;padding:6px 8px;border-radius:8px;background:var(--soft,#f6f6f6)}
+.vs-err li{margin:2px 0}
+.vs-steps{font-size:12px;color:var(--muted,#666);margin:6px 0 0;padding-left:18px}
+</style>
+<script>
+(function () {
+  var VS = { data: null, err: '', busy: false, plan: null, bad: null, platform: 'reels', seconds: 20 };
+  var VS_PLAT = { reels: 'Reels', shorts: 'Shorts', tiktok: 'TikTok', story: 'Story', youtube: 'YouTube 16:9', feed: 'Feed 4:5', square: 'Square' };
+  var VS_PROF = { oliareen: 'Oliareen profile: beauty, ordinary Bangladeshi women, warm female voice, benefits / ingredients / texture scenes',
+                  costareen: 'Costareen profile: 3D printers and electronics, Bangladeshi men, calm male voice, specs / features / warranty scenes' };
+  function vsOn() { if (!ME || !pageTop()) return false; var a = ME.apps || {}; if ((a.gone || []).indexOf('aishots') >= 0) return false; return !!ME.platform || (a.off || []).indexOf('aishots') < 0; }
+  window.vsOn = vsOn;
+  function vsLoad() { srv('erpVideoShots', [{}], function (r) { VS.data = r; VS.err = ''; repaint(); }, function (e) { VS.err = (e && e.message) || String(e); repaint(); }); }
+  function chips(list, cur, key) { return '<div class="cf-chips">' + Object.keys(list).map(function (k) { return '<button class="btn small' + (String(cur) === String(k) ? ' on' : '') + '" type="button" data-vs="' + key + '" data-k="' + esc(k) + '">' + esc(list[k]) + '</button>'; }).join('') + '</div>'; }
+  function box(label, id, text) {
+    return '<div class="vs-p"><div class="vs-ph"><span>' + label + '</span><button class="btn small" type="button" data-vs="copy" data-t="' + id + '">Copy</button></div><textarea class="i" id="' + id + '" readonly data-noi18n="1">' + esc(text) + '</textarea></div>';
+  }
+  function planHtml(p) {
+    var h = '<div data-noi18n="1" style="margin-top:10px"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><b>' + esc(p.product || 'Plan') + ' · ' + esc(p.platform) + ' · ' + esc(p.plan.aspect_ratio) + ' · ' + esc(p.seconds) + ' s · ' + (p.prompts || []).length + ' shots</b>' +
+      '<button class="btn small primary" type="button" data-vs="copyall" data-id="' + esc(p.id) + '">Copy the whole pack</button></div>' +
+      '<div class="sub" style="display:block">Planned by ' + esc(p.model) + (p.tries > 1 ? ' (second try: the first plan broke the rules)' : '') + '. Goal: ' + esc(p.plan.goal || '') + '</div>' +
+      '<ol class="vs-steps"><li>Make the START still for each shot and check it (faces, hands, product, text).</li><li>Where there is an END still, make it from the start still (same light, angle, lens).</li><li>Only then make the video from the still(s) with the video prompt. Two tries per shot; change one thing at a time.</li><li>Voice-over, music and on-screen text are added in the edit. Nothing is posted without you.</li></ol>';
+    (p.prompts || []).forEach(function (s) {
+      var id = 'vs_' + p.id + '_' + s.n;
+      h += '<div class="vs-shot"><h4>Shot ' + s.n + ' · ' + esc(s.purpose) + '</h4><div class="vs-meta">' + esc(s.seconds) + ' s · model: ' + esc(s.model) + (s.end ? ' · start + end still (state change)' : '') + '</div>' +
+        (s.vo ? '<div class="vs-vo">🎙 ' + esc(s.vo) + '</div>' : '') + (s.onscreen ? '<div class="sku">On screen (add in the edit): ' + esc(s.onscreen) + '</div>' : '') +
+        box('1. Start still', id + '_s', s.start) + (s.end ? box('2. End still', id + '_e', s.end) : '') + box((s.end ? '3' : '2') + '. Video', id + '_v', s.video) + '</div>';
+    });
+    if (p.plan.facts_used && p.plan.facts_used.length) h += '<div class="sku" style="margin-top:8px">Facts used: ' + p.plan.facts_used.map(esc).join(' · ') + '</div>';
+    return h + '</div>';
+  }
+  function packText(p) {
+    var t = (p.product || '') + ' - ' + p.platform + ' ' + p.plan.aspect_ratio + ', ' + p.seconds + ' s\n';
+    (p.prompts || []).forEach(function (s) {
+      t += '\n--- Shot ' + s.n + ' (' + s.purpose + ', ' + s.seconds + ' s, ' + s.model + ')\n' + (s.vo ? 'VO: ' + s.vo + '\n' : '') + (s.onscreen ? 'ON SCREEN (edit): ' + s.onscreen + '\n' : '') +
+        'START STILL: ' + s.start + '\n' + (s.end ? 'END STILL: ' + s.end + '\n' : '') + 'VIDEO: ' + s.video + '\n';
+    });
+    return t;
+  }
+  function vsForm(m) {
+    if (VS.err) return '<div class="note err"><div class="ico">!</div><div>' + esc(VS.err) + '</div></div>';
+    if (!VS.data) { vsLoad(); return '<div class="loading">Reading…</div>'; }
+    var d = VS.data;
+    var h = '<div class="sub" style="display:block;margin:4px 0 8px">' + esc(VS_PROF[d.profile] || d.profile) + '. Your own ChatGPT plans it; every line of the voice-over is checked against the product facts. ' +
+      (d.pack === 'fallback' ? '<b>Engine pack not loaded: the short rules are used.</b> ' : '') + (d.generators && d.generators.length ? '' : 'No video generator is connected: you get the prompts to paste.') + '</div>' +
+      '<div class="row" style="gap:8px;flex-wrap:wrap"><div style="flex:2 1 240px"><label class="f">Product</label>' + cfSkuInput('cf_sku', m.sku) + '</div><div style="flex:3 1 260px"><label class="f">Notes for the planner (optional)</label><input class="i" id="cf_notes" maxlength="500" value="' + esc(m.notes || '') + '" placeholder="the one feeling, the goal, what must be shown"></div></div>' +
+      '<label class="f" style="margin-top:6px">Where it goes</label>' + chips(VS_PLAT, VS.platform, 'platform') +
+      '<label class="f">Length</label>' + chips({ 15: '15 s', 20: '20 s', 30: '30 s', 45: '45 s', 60: '60 s' }, VS.seconds, 'seconds') +
+      '<label class="f">Voice-over</label>' + chips({ bn: 'বাংলা', en: 'English' }, CF.lang === 'en' ? 'en' : 'bn', 'lang') +
+      '<button class="btn primary" type="button" data-vs="plan"' + (VS.busy ? ' disabled' : '') + '>' + (VS.busy ? 'Planning… (up to a minute)' : 'Plan the shots') + '</button>';
+    if (VS.bad) h += '<div class="note err" style="margin-top:8px"><div class="ico">!</div><div>The plan was refused' + (VS.bad.tries > 1 ? ' twice' : '') + ' (' + esc(VS.bad.model || '') + '). Nothing was kept. Why:<ul class="vs-err">' + (VS.bad.errors || []).map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>Try again, or add the missing facts in the notes.</div></div>';
+    var cur = VS.plan || (d.plans && d.plans[0]);
+    if (cur) h += planHtml(cur);
+    if (d.plans && d.plans.length > 1) h += '<div style="margin-top:10px"><label class="f">Earlier plans</label><div class="cf-chips">' + d.plans.map(function (p) { return '<button class="btn small' + (cur && cur.id === p.id ? ' on' : '') + '" type="button" data-vs="open" data-id="' + esc(p.id) + '">' + esc((p.product || 'Plan').slice(0, 28) + ' · ' + String(p.at).slice(5, 10)) + '</button>'; }).join('') + '</div></div>';
+    return h;
+  }
+  var cfMakeHtmlVs = cfMakeHtml;
+  cfMakeHtml = function () {
+    var m = CF.make;
+    if (!m || m.kind !== 'video' || !vsOn()) return cfMakeHtmlVs();
+    var tabs = '<div class="cf-chips" style="margin-top:6px"><button class="btn small' + (m.mode !== 'shots' ? ' on' : '') + '" type="button" data-vs="mode" data-k="reel">Template reel</button><button class="btn small' + (m.mode === 'shots' ? ' on' : '') + '" type="button" data-vs="mode" data-k="shots">Realistic AI shots</button></div>';
+    var h = cfMakeHtmlVs(), cut = 'data-cf="close">Close</button></div>', k = h.indexOf(cut);
+    if (k < 0) return h;
+    if (m.mode !== 'shots') return h.slice(0, k + cut.length) + tabs + h.slice(k + cut.length);
+    return h.slice(0, k + cut.length).replace('>Video</h3>', '>Video · realistic AI shots</h3>') + tabs + vsForm(m) + '</div>';
+  };
+  function keep() { var m = CF.make; if (!m) return; var s = el('cf_sku'); if (s) m.sku = cfSku('cf_sku'); var n = el('cf_notes'); if (n) m.notes = n.value; }
+  function copy(text) {
+    try { navigator.clipboard.writeText(text).then(function () { toast('Copied.'); }, function () { toast('Copy is not allowed here - select the text instead.', true); }); }
+    catch (e) { toast('Copy is not allowed here - select the text instead.', true); }
+  }
+  document.addEventListener('click', function (ev) {
+    var t = ev.target && ev.target.closest ? ev.target.closest('[data-vs]') : null; if (!t || !CF.make) return;
+    var k = t.getAttribute('data-vs'), m = CF.make;
+    if (k === 'mode') { keep(); m.mode = t.getAttribute('data-k'); repaint(); return; }
+    if (k === 'platform') { keep(); VS.platform = t.getAttribute('data-k'); repaint(); return; }
+    if (k === 'seconds') { keep(); VS.seconds = Number(t.getAttribute('data-k')); repaint(); return; }
+    if (k === 'lang') { keep(); CF.lang = t.getAttribute('data-k'); repaint(); return; }
+    if (k === 'open') { var id = t.getAttribute('data-id'); VS.plan = (VS.data.plans || []).filter(function (p) { return p.id === id; })[0] || null; VS.bad = null; repaint(); return; }
+    if (k === 'copy') { var ta = el(t.getAttribute('data-t')); if (ta) copy(ta.value); return; }
+    if (k === 'copyall') { var cid = t.getAttribute('data-id'), all = [VS.plan].concat(VS.data.plans || []).filter(function (p) { return p && p.id === cid; })[0]; if (all) copy(packText(all)); return; }
+    if (k === 'plan') {
+      keep(); if (!m.sku && !m.notes) { toast('Choose the product.', true); return; }
+      VS.busy = true; VS.bad = null; repaint();
+      srv('erpVideoPlan', [{ sku: m.sku, notes: m.notes, platform: VS.platform, seconds: VS.seconds, lang: CF.lang === 'en' ? 'en' : 'bn' }], function (r) {
+        VS.busy = false;
+        if (r.valid) { VS.plan = r.plan; VS.data.plans = [r.plan].concat((VS.data.plans || []).filter(function (p) { return p.id !== r.plan.id; })).slice(0, 8); toast('Shot plan ready: ' + r.plan.prompts.length + ' shots.'); }
+        else VS.bad = r;
+        repaint();
+      }, function (e) { VS.busy = false; repaint(); toast(esc((e && e.message) || e), true, 9000); });
+      return;
+    }
+  });
 })();
 </script>
 

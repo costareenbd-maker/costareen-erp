@@ -41,7 +41,7 @@ const PURPOSE_TASK = { reply: 'chat', test: 'chat', followup: 'chat', comment: '
   photo: 'read', 'photo-match': 'read', voice: 'read', receive: 'read',
   social: 'write', inspo: 'write', 'reel-script': 'write', 'ad-draft': 'write',
   'leads-find': 'leads', 'leads-capture': 'leads', assistant: 'assistant',
-  'ad-daily': 'write', seo: 'analyze', 'skill-review': 'analyze', crm: 'analyze' };
+  'ad-daily': 'write', 'video-plan': 'write', seo: 'analyze', 'skill-review': 'analyze', crm: 'analyze' };
 export const taskOf = (purpose) => PURPOSE_TASK[str(purpose)] || (TASKS[str(purpose)] ? str(purpose) : 'default');
 
 // skills-chat-1 (owner 1 Nov 2026: "skills for ads, SEO and the rest that run with ChatGPT"): the switched-on skills of the
@@ -240,6 +240,10 @@ export async function ai(ctx, req) {
       if (str(c.text) && !str(c.text).includes(SENIOR)) return { ...c, tier: 'cheap' };
     } catch (_) { /* the strong model below */ }
   }
+  // shots-1: a caller may keep a provider out (business content never runs on Claude: the AI power split rule)
+  if (req.avoid && req.avoid.length) P = { ...P, list: P.list.filter((c) => !req.avoid.includes(c.provider)) };
+  const avoidMsg = req.avoid && req.avoid.length ? 'This needs the business\u2019s own ChatGPT (or Gemini) for writing - ' + req.avoid.join(', ') + ' is not used for it. Set it under Settings > AI brain.' : '';
+  if (!P.list.length && avoidMsg) throw new Error(avoidMsg);
   if (!P.list.length) throw new Error('No AI key is set up on this ERP - add a ChatGPT, Claude or Gemini key under Settings > AI brain.');
   let last = '';
   for (const choice of P.list) {
@@ -261,6 +265,7 @@ export async function ai(ctx, req) {
       }
     }
   }
+  if (!last && avoidMsg) throw new Error(avoidMsg);   // nothing left to try once the avoided provider is out
   throw new Error(/429|busy|timeout|overloaded|529|503/i.test(last) ? 'The AI is busy right now - try again in a minute.' : 'The AI could not answer. ' + last);
 }
 function hasPart(messages, type) { return (messages || []).some((m) => (m.content || []).some((c) => c.type === type)); }
