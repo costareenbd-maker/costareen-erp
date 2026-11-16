@@ -4669,3 +4669,10 @@ Owner: the AI video course (engine pack at G:\ai-video-course\engine) must be in
 Released from private/release-shots-1: function patch (allow, index, security, apps, lib/ai) + handlers/aishots.js, lib/shots.js, lib/videogen.js, handlers/bizctx.js (was missing on live). Backup /data/backups/live-function/erp-20261116T151209Z.tgz (Mac clock). Web build_live tag shots1-a9fbd16 on costareen-erp + office-erp (prev page private/live-web-index-before-shots1-20261117.html + sw). Pack loaded pack-4df8bdb6.
 Hotfix shots-1b: the planner prompt now states the three hard checks (physics line for moving heavy things, end_frame for state changes, one action) - before it, Costareen plans were refused 3/3 for a missing physics line.
 Live check: Costareen, Bambu Lab A1 Mini (CZ04614) -> valid plan, gpt-5.6-sol, 2 tries (~80 s). Oliareen (no products in the live ERP yet, so notes) TIRTIR serum -> valid plan in 1 try, BUT served by gemini-3.1-flash-lite, not ChatGPT, and the Bangla VO says "সেরা"/"দাগ দূর করে" (stronger than the facts): the fact check does not catch Bangla wording yet. Active business set back to Costareen. Not done: Oliareen AI brain on its own ChatGPT; Bangla claim check.
+
+### Oliareen AI brain on ChatGPT (17 Nov 2026, live settings only, no code)
+Live Oliareen's ai_routes were empty ("auto"), so auto order (openai, anthropic, gemini, custom) put Gemini before the
+ChatGPT gateway (custom) and shots-1 plans were written by gemini-3.1-flash-lite. Copied Costareen's routes onto
+Oliareen (default luna, chat/assistant/analyze terra, write/leads sol, read gemini). Test: custom:gpt-5.6-luna OK;
+Realistic AI shots plan for TIRTIR serum now VALID by custom:gpt-5.6-sol and the Bangla VO stays inside the facts.
+NOT done: Oliareen still uses the SAME business gateway key / ChatGPT account as Costareen (rule says one account each).
