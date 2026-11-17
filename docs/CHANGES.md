@@ -4712,3 +4712,16 @@ topic replaced). ERP: erpBrandDeskFit, erpBrandDeskCycles, windowed erpBrandDesk
 page). Fixed on the way: the page function shadowed the draft cards' media-plan planHtml (renamed pnPageHtml).
 NOT done: test suites (local env gone), live ERP release, a rewrite button in the sheet (it opens the draft instead),
 episode-per-date from the 60-day table on unwritten slots.
+
+## brand-fit-3 + brand-prov-1/2 (17 Nov 2026) - plan fit shows what made each piece; LIVE
+Owner: in the one-tap popup see the skills (Claude skills by name, clickable), tools, sources and decisions for the
+writing, the picture and the video, for every future AI picture/video too, and check that what should be used was used;
+sources open where they live in the ERP / Brand desk. Built: bridge drafts.provenance (writer files + sha, reader,
+style, lessons, facts, story used, idea source) recorded on every new draft; made_report per part with links
+({doc} file in the desk, {sec} desk page, {cycle} 60-day plan, {url} web) and an expected checklist; one meta contract
+for every AI generator (night.py sends it); /doc serves only the bridge's read-only voice folder (reports/, skills/,
+blueprints/ copied there). ERP: erpBrandDeskDoc, erpBrandDeskDraftFix (rewrite to keep the plan), document sheet with
+back to the fit sheet; the 60-day episode per slot. Found + fixed: the plan guard was never hooked into the writer.
+Tests 202/207 (ads, fddash, serverfinal red before; golive needs IMPORT_DIR). LIVE: function file-by-file + web
+brandfit-9607231 (G:/MACMINI-AI-HANDOFF.md #41). NOT done: older drafts show "অনুমান" (no record before today); the
+voice guide (voice-guide.md) is still the 10 Nov example draft v0 with seller lines - needs the owner's real voice.
