@@ -59845,6 +59845,136 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   .pn-ck-s{grid-column:1;grid-row:1 / 3}
   .pn-ck-b{grid-column:2}
 }
+/* brand-fit-1 (17 Nov 2026): the schedule as a zoomable line map (1-30 days wide, 35 days ahead, drag sideways), the plan-fit
+   sheet and the ৬০ দিন page. Line Map rules: hue only on network lines, waiting amber and stuck red; ad candidates are
+   ink-outline counts, never a new hue. */
+.pn-link{all:unset;cursor:pointer;color:var(--bc-ink);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+.pn-link:hover{text-decoration-thickness:2px}
+.pn-link:focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px;border-radius:4px}
+.pn-ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+.pn-nav{display:flex;gap:6px;align-items:center}
+.pn-nav .bc-btn svg{width:18px;height:18px}
+.pn-map{display:grid;grid-template-columns:150px minmax(0,1fr);border:1px solid var(--bc-rule);border-radius:14px;overflow:hidden;background:#fff;margin-top:6px}
+.pn-mlab{border-right:1px solid var(--bc-rule);background:#fff;position:relative;z-index:2}
+.pn-mlh{height:56px;border-bottom:1px solid var(--bc-rule)}
+.pn-ml{height:42px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid #F0F1F3}
+.pn-ml:last-child{border-bottom:0}
+.pn-mscroll{overflow-x:auto;overflow-y:hidden;--pn-col:64px;cursor:grab;scrollbar-width:thin;scrollbar-color:#C9CDD4 transparent;outline:none}
+.pn-mscroll:focus-visible{box-shadow:inset 0 0 0 2px var(--bc-ink)}
+.pn-mscroll.drag{cursor:grabbing;user-select:none}
+.pn-mgrid{width:calc(var(--pn-col) * var(--pn-days));position:relative}
+.pn-mhead{display:flex;height:56px;border-bottom:1px solid var(--bc-rule)}
+.pn-dh{all:unset;box-sizing:border-box;flex:none;width:var(--pn-col);height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border-left:1px solid #F0F1F3;cursor:pointer;position:relative;font-size:12px;color:var(--bc-ink-3);transition:background .15s ease-out}
+.pn-dh:first-child{border-left:0}
+.pn-dh b{font:600 13px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-2)}
+.pn-dh span{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pn-dh:hover{background:#F7F8F9}
+.pn-dh.today b{color:var(--bc-ink);font-weight:700}
+.pn-dh.fri{background:#FAFAFB}
+.pn-dh.on{background:var(--bc-ink);color:#C9CDD4}
+.pn-dh.on b{color:#fff}
+.pn-dh:focus-visible{outline:2px solid var(--bc-ink);outline-offset:-2px}
+.pn-adm{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;border:1.5px solid currentColor;border-radius:999px;font:700 10.5px/1 "Pretendard Variable",system-ui,sans-serif;font-style:normal;color:var(--bc-ink)}
+.pn-dh .pn-adm{position:absolute;top:4px;right:4px}
+.pn-dh.on .pn-adm{color:#fff}
+.pn-mbody{position:relative;background-image:linear-gradient(to right,#F0F1F3 1px,transparent 1px);background-size:var(--pn-col) 100%}
+.pn-selcol{position:absolute;top:0;bottom:0;background:rgba(22,24,29,.045);pointer-events:none}
+.pn-now{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--bc-ink);z-index:1;pointer-events:none}
+.pn-mrow{height:42px;border-bottom:1px solid #F0F1F3;position:relative}
+.pn-mrow:last-child{border-bottom:0}
+.pn-mtrack{position:absolute;inset:0}
+.pn-mline{position:absolute;left:0;right:0;top:19px;height:4px;border-radius:2px;background:var(--c);opacity:.2}
+.pn-sn{all:unset;box-sizing:border-box;position:absolute;top:14px;width:14px;height:14px;margin-left:-7px;border-radius:50%;border:3px solid var(--c);background:#fff;cursor:pointer;z-index:2;transition:transform .15s ease-out,box-shadow .15s ease-out}
+.pn-sn.q{background:var(--c);box-shadow:inset 0 0 0 2px #fff}
+.pn-sn.wt{border-color:var(--bc-wait);box-shadow:0 0 0 3px #FFF4D6}
+.pn-sn.need{border-style:dashed}
+.pn-sn.soon{opacity:.5}
+.pn-sn.gone{opacity:.7}
+.pn-sn.x{background:var(--bc-alert);border-color:var(--bc-alert)}
+.pn-sn.ad::after{content:"";position:absolute;left:50%;top:13px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--bc-ink)}
+.pn-sn:hover,.pn-sn.on{transform:scale(1.35);box-shadow:0 2px 8px rgba(22,24,29,.25);opacity:1}
+.pn-sn:focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px}
+.pn-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0 0;font-size:12.5px;color:var(--bc-ink-3);align-items:center}
+.pn-legend span{display:inline-flex;align-items:center;gap:6px}
+.pn-legend .pn-stn{width:12px;height:12px}
+.pn-hint{margin-left:auto}
+.pn-dayblk{margin-top:18px}
+.pn-dayblk .pn-dayh{display:flex;align-items:baseline;gap:10px;margin-top:6px}
+.pn-dayblk .pn-dayh small{font:500 13px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-3)}
+.pn-adbox{background:var(--bc-shelf);border-radius:14px;padding:12px 14px;margin:10px 0 4px;display:grid;gap:8px}
+.pn-adbox>b{font:600 14px "Noto Sans Bengali",system-ui,sans-serif}
+.pn-adbox p{margin:0;display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;font-size:13.5px;line-height:1.55;color:var(--bc-ink-2)}
+.pn-adbox p b{color:var(--bc-ink);font-weight:600}
+.pn-adbox small{font-size:12.5px;color:var(--bc-ink-3)}
+.pn-dep.pn-sel{background:#F7F8F9;box-shadow:inset 0 0 0 2px var(--bc-ink)}
+.pn-fitb{margin-left:4px}
+.pn-fitb svg{width:15px;height:15px}
+.pn-later-t{display:inline-block;margin-top:12px;font-size:13.5px}
+.ph-act .bc-btn svg{flex:none}
+/* plan-fit sheet */
+.pf-b{padding:18px 22px 24px}
+.pf-sum{display:flex;gap:16px;align-items:center;background:var(--bc-ink);color:#fff;border-radius:16px;padding:14px 16px}
+.pf-sum.bad{background:var(--bc-shelf);color:var(--bc-ink);box-shadow:inset 0 0 0 2px var(--bc-wait)}
+.pf-fig{font:800 34px/1 "Pretendard Variable",Pretendard,system-ui,sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pf-fig small{font-size:16px;font-weight:600;opacity:.75}
+.pf-sum p{margin:0;font-size:15px;line-height:1.4;min-width:0}
+.pf-sum p small{display:block;margin-top:3px;font-size:13px;opacity:.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-h{font:700 15px "Anek Bangla","Noto Sans Bengali",system-ui,sans-serif;margin:22px 0 8px;color:var(--bc-ink)}
+.pf-kv{display:grid;grid-template-columns:90px minmax(0,1fr);gap:6px 12px;font-size:14px;line-height:1.5}
+.pf-kv span{color:var(--bc-ink-3)}
+.pf-kv b{font-weight:600}
+.pf-rules{list-style:none;margin:0;padding:0;display:grid;border-top:1px solid var(--bc-rule)}
+.pf-rules li{display:grid;grid-template-columns:14px minmax(0,1fr);gap:12px;align-items:start;padding:9px 2px;border-bottom:1px solid var(--bc-rule);font-size:14px;line-height:1.5}
+.pf-rules li .pn-stn{margin-top:4px}
+.pf-rules li em{font-style:normal;font-weight:600;color:var(--bc-ink-3);font-size:12.5px;display:block}
+.pf-rules li.bad span{color:#7A5200}
+.pf-steps{list-style:none;margin:0;padding:0;display:grid}
+.pf-steps li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:12px;position:relative;padding-bottom:14px}
+.pf-steps li::before{content:"";position:absolute;left:8px;top:12px;bottom:-2px;width:6px;background:var(--bc-ink);border-radius:3px}
+.pf-steps li:last-child::before{display:none}
+.pf-sd{width:22px;height:22px;border-radius:50%;box-sizing:border-box;border:5px solid var(--bc-ink);background:#fff;position:relative;z-index:1}
+.pf-steps p{margin:0;font-size:13.5px;line-height:1.55;color:var(--bc-ink-2)}
+.pf-steps p b{display:block;font:600 14.5px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink)}
+.pf-ad{margin:0;font-size:14px;line-height:1.55;color:var(--bc-ink-2)}
+.pf-ad b{display:block;color:var(--bc-ink);font-weight:600}
+.pf-load{display:grid;gap:4px}
+/* ৬০ দিন */
+.cy-line{margin:4px 0 6px}
+.cy-bar{height:6px;border-radius:3px;background:var(--bc-shelf);overflow:hidden}
+.cy-bar i{display:block;height:100%;background:var(--bc-ink);border-radius:3px}
+.cy-wks{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));margin-top:8px}
+.cy-wk{font-size:12px;color:var(--bc-ink-3);text-align:center;padding:4px 0;border-radius:6px;white-space:nowrap}
+.cy-wk.past{color:var(--bc-ink-2)}
+.cy-wk.cur{background:var(--bc-ink);color:#fff;font-weight:700}
+.cy-ends{display:flex;justify-content:space-between;gap:12px;margin-top:10px;font-size:13px;color:var(--bc-ink-3);flex-wrap:wrap}
+.cy-ends b{display:block;color:var(--bc-ink);font:600 14px "Noto Sans Bengali",system-ui,sans-serif}
+.cy-next{text-align:right}
+.cy-bp{overflow-x:auto;border:1px solid var(--bc-rule);border-radius:14px;margin-top:8px}
+.cy-bp table{border-collapse:collapse;width:100%;min-width:860px;font-size:13px;line-height:1.5}
+.cy-bp th{background:var(--bc-shelf);text-align:left;font:600 12.5px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-2);padding:9px 10px;position:sticky;top:0}
+.cy-bp td{padding:9px 10px;border-top:1px solid var(--bc-rule);vertical-align:top;color:var(--bc-ink)}
+.cy-bp td:first-child{font-weight:600;white-space:nowrap;color:var(--bc-ink-2)}
+
+.cy-bp tr.cy-cur td{background:var(--bc-shelf)}
+.cy-bp tr.cy-cur td:first-child{color:var(--bc-ink);font-weight:700}
+.cy-bp p{margin:10px 12px;font-size:13px;color:var(--bc-ink-2);line-height:1.6}
+.cy-bp p.li{padding-left:14px;position:relative}
+.cy-bp p.li::before{content:"";position:absolute;left:2px;top:9px;width:5px;height:5px;border-radius:50%;background:var(--bc-ink-3)}
+.cy-bp h4{margin:14px 12px 4px;font:700 14px "Noto Sans Bengali",system-ui,sans-serif}
+@media (max-width:760px){
+  .pn-map{grid-template-columns:96px minmax(0,1fr)}
+  .pn-ml{padding:0 8px}
+  .pn-ml .bc-lb{font-size:12px;gap:5px}
+  .pn-hint{margin-left:0;flex-basis:100%}
+  .pn-adbox p{grid-template-columns:1fr;gap:2px}
+  .pn-ctl .bc-sp{display:none}
+  .pf-b{padding:14px 16px 22px}
+  .pf-fig{font-size:28px}
+  .cy-wks{grid-template-columns:repeat(9,minmax(34px,1fr));overflow-x:auto}
+  .cy-wk{font-size:11px}
+  .cy-next{text-align:left}
+}
+
 </style>
 
 <script>
@@ -59891,6 +60021,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   var ICO = {
     home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
     plan: '<path d="M4 6h11M4 12h8M4 18h6"/><path d="m14 17 2.5 2.5L21 15"/>',
+    cycle: '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h3"/>',
     biz: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.4 2.5 3.6 5.5 3.6 9s-1.2 6.5-3.6 9M12 3C9.6 5.5 8.4 8.5 8.4 12s1.2 6.5 3.6 9"/>',
     pulse: '<path d="M3 12h4l3-7 4 14 3-7h4"/>', out: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>', up: '<path d="M12 19V5M6 11l6-6 6 6"/>', down: '<path d="M12 5v14M6 13l6 6 6-6"/>', trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
     posts: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
@@ -59906,7 +60037,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     linkedin: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v6M8 7.2v.1M12 16v-3.2c0-1.6 1-2.6 2.3-2.6S16.5 11 16.5 12.6V16"/>',
     map: '<circle cx="5" cy="6" r="2.2"/><circle cx="19" cy="6" r="2.2"/><circle cx="12" cy="18" r="2.2"/><path d="M7 7l4 9M17 7l-4 9M7.2 6h9.6"/>',
     reload: '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/>', search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
-    plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>', right: '<path d="M9 6l6 6-6 6"/>', check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>', right: '<path d="M9 6l6 6-6 6"/>', left: '<path d="M15 6l-6 6 6 6"/>', check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
     copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>', send: '<path d="M4 12l16-8-6 16-2.5-6.5z"/>',
     pen: '<path d="M4 20h4L19 9l-4-4L4 16z"/>', note: '<path d="M4 5h16v11H10l-4 3.5V16H4z"/><path d="M8 9h8M8 12.5h5"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>', dots: '<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>'
   };
@@ -59921,8 +60052,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function btn(label, data, cls, bk, dis) { var b = bk && C.busy[bk]; return '<button type="button" class="bc-btn' + (cls ? ' ' + cls : '') + '" ' + data + (b || dis ? ' disabled' : '') + '>' + (b ? '<span class="bc-spin"></span>' : '') + label + '</button>'; }
   function inp(key, ph, extra, type) { return '<input class="bc-in" id="bci_' + key + '" data-bcin="' + key + '" type="' + (type || 'text') + '" data-noi18n="1" placeholder="' + esc(ph || '') + '" value="' + esc(v(key)) + '"' + (extra || '') + '>'; }
   function ta(key, ph, dflt, extra) { return '<textarea class="bc-ta" id="bci_' + key + '" data-bcin="' + key + '" data-noi18n="1" placeholder="' + esc(ph || '') + '"' + (extra || '') + '>' + esc(v(key, dflt)) + '</textarea>'; }
-  var SECS = [['home', 'হোম'], ['plan', 'পরিকল্পনা'], ['inbox', 'ইনবক্স'], ['biz', 'ব্যবসা ও সাইট'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ'], ['routine', 'রুটিন'], ['aud', 'দর্শক'], ['train', 'লেখার ধরন'], ['linkedin', 'LinkedIn']];
-  var NEED = { inbox: ['cockpit', 'inbox', 'ichan'], biz: ['cockpit', 'sites'], home: ['cockpit', 'drafts', 'settings', 'routine'], posts: ['cockpit', 'drafts', 'settings', 'crit'], ideas: ['drafts', 'memos', 'board', 'settings', 'news', 'reels', 'crit'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen', 'results'], rules: ['settings', 'mlib'], map: ['cockpit'], aud: ['aud'], train: ['styles', 'crit'], linkedin: ['li', 'crit'], routine: ['routine'], plan: ['plan'] };
+  var SECS = [['home', 'হোম'], ['plan', 'পরিকল্পনা'], ['cycle', '৬০ দিন'], ['inbox', 'ইনবক্স'], ['biz', 'ব্যবসা ও সাইট'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ'], ['routine', 'রুটিন'], ['aud', 'দর্শক'], ['train', 'লেখার ধরন'], ['linkedin', 'LinkedIn']];
+  var NEED = { inbox: ['cockpit', 'inbox', 'ichan'], biz: ['cockpit', 'sites'], home: ['cockpit', 'drafts', 'settings', 'routine'], posts: ['cockpit', 'drafts', 'settings', 'crit'], ideas: ['drafts', 'memos', 'board', 'settings', 'news', 'reels', 'crit'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen', 'results'], rules: ['settings', 'mlib'], map: ['cockpit'], aud: ['aud'], train: ['styles', 'crit'], linkedin: ['li', 'crit'], routine: ['routine'], plan: ['plan'], cycle: ['cycles'] };
   function on() { return typeof VIEW !== 'undefined' && VIEW === 'branddesk' && typeof ME !== 'undefined' && ME && ME.role === 'owner'; }
   function fonts() {
     if (document.getElementById('bc_font')) return;
@@ -59930,7 +60061,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     l.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Anek+Bangla:wght@600;700&display=swap'; document.head.appendChild(l);
   }
   // ---------- data: one store, one loader per read; bridge reads wait until the cockpit says the Mac is on
-  var CALL = { inbox: 'erpBrandDeskInbox', ichan: 'erpBrandDeskChannels', sites: 'erpBrandDeskSites', mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', aud: 'erpBrandDeskAudience', li: 'erpBrandDeskLi', routine: 'erpBrandDeskRoutine', plan: 'erpBrandDeskPlan', reels: 'erpBrandDeskReels', results: 'erpBrandDeskResults', crit: 'erpBrandDeskCritiques' };
+  var CALL = { inbox: 'erpBrandDeskInbox', ichan: 'erpBrandDeskChannels', sites: 'erpBrandDeskSites', mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', aud: 'erpBrandDeskAudience', li: 'erpBrandDeskLi', routine: 'erpBrandDeskRoutine', plan: 'erpBrandDeskPlan', cycles: 'erpBrandDeskCycles', reels: 'erpBrandDeskReels', results: 'erpBrandDeskResults', crit: 'erpBrandDeskCritiques' };
   function ready() { var d = C.d.cockpit; return !!(d && d.online && d.keySet); }
   function get(k, force) {
     if (C.busy['g_' + k] || (C.d[k] && !force)) return;
@@ -60300,6 +60431,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     h += '<div class="ph-meta"><span>' + (v('a' + id) ? 'যাবে ' + whenWords(v('a' + id)) : 'পরের ফাঁকা সময়ে যাবে') + '</span><span id="bc_cnt_' + id + '" class="' + (body.length > lim ? 'over' : '') + '"' + (body.length > lim * .8 ? '' : ' hidden') + '>' + bn(body.length) + ' / ' + bn(lim) + ' অক্ষর</span>' + (mine.length > 1 ? '<span class="bc-sp"></span>' + mine.map(function (n) { return '<button type="button" class="bc-nc bclg' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" data-noi18n="1">' + logo(n.platform, 15) + esc(n.name || '') + '</button>'; }).join('') : '') + '</div>';
     h += '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : btn(svg('copy') + 'কপি করুন', 'data-bc="copy" data-id="' + id + '"', 'dark', '')) + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
       '<button type="button" class="bc-btn ghost" data-bc="pedit" data-id="' + id + '" aria-pressed="' + !!editing + '">' + (editing ? 'বদল শেষ' : 'লেখা বদলান') + '</button>' + (pickWhy(x) ? '' : mediaButton(id)) +
+      '<button type="button" class="bc-btn ghost" data-bc="fit" data-id="' + id + '" aria-haspopup="dialog">' + svg('plan') + 'প্ল্যান মিল</button>' +
       '<button type="button" class="bc-btn ghost" data-bc="more" data-id="' + id + '" aria-expanded="' + !!C.open[id] + '">আরও' + svg('right') + '</button></div>';
     // brand-19 decision inline (was a 9-second toast): no lived detail in this text
     if (C.fold['lv' + id] && !String(v('qa' + id)).trim()) h += '<div class="bc-call ph-lv"><span>নিজের কোনো ঘটনা নেই</span><span class="bc-sp"></span>' + ((x.questions || []).length ? '<button type="button" class="bc-btn sm" data-bc="lvans" data-id="' + id + '">প্রশ্নের উত্তর দিন</button>' : '') + btn('তবুও পাঠান', 'data-bc="approve" data-id="' + id + '"', 'dark sm', 'ap' + id, !sel.length) + '</div>';
@@ -61154,6 +61286,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function ctReg(tg, id, o) { SHEET[tg + id] = { tg: tg, id: id, o: o || {} }; }
   function sheetHtml() {
     if (!C.sheet) return '';
+    if (String(C.sheet).indexOf('fit:') === 0) return fitSheetHtml(String(C.sheet).slice(4));
     var S = SHEET[C.sheet];
     if (!S) { C.sheet = ''; return ''; }
     var o = S.o, top = o.top ? o.top() : o.text ? '<div class="cs-txt" data-noi18n="1">' + esc(String(o.text).slice(0, 1500)) + '</div>' : '';
@@ -62245,24 +62378,78 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     if (C.sec === 'people') return C.pform || !narrowNow() ? personForm() : '';
     return '';
   }
-  // ---------- brand-plan-1 (owner 17 Nov 2026): "a system that is easy to run and to understand - what is happening, what
-  // will happen, and a way to see that our research is really applied". One page from bridge /plan, in the Line Map world
-  // (impeccable polish 17 Nov): decisions under the wait bar, the 7 days as departures, research as station rows, every
-  // network's growth step as a line with stations, ads and the machine's own clock.
+  // ---------- brand-plan-1 / brand-fit-1 (owner 17 Nov 2026): "a system that is easy to run and to understand - what is
+  // happening, what will happen, and a way to see that our research is really applied". One page from bridge /plan, in the
+  // Line Map world: decisions under the wait bar; the schedule as a line map that zooms from 1 to 30 days and drags sideways
+  // (35 days ahead); the chosen day as departures with its ad slots explained; research rules as station rows; every
+  // network's growth step as a line with stations; the machine's clock. Every draft opens "প্ল্যান মিল" (fit sheet).
+  C.fits = C.fits || {};
   var PNST = { gone: ['গেছে', 'gone'], ready: ['যাবে', 'q'], review: ['আপনার রিভিউ', 'wt'], video: ['ভিডিও লাগবে', 'need'], write: ['রাতে লেখা হবে', 'soon'],
     hand: ['আপনি নিজে দেবেন', 'soon'], later: ['পরের ধাপে খুলবে', 'soon'], missed: ['ফাঁকা গেছে', 'x'] };
   var PNLANG = { bn: 'বাংলা', en: 'English', mixed: 'বাংলা + English' };
+  var PNZ = [[1, '১ দিন'], [2, '২ দিন'], [7, '৭ দিন'], [14, '১৪ দিন'], [30, '৩০ দিন']];
+  var PNMON = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
   function pnTime(v) { var d = bdt(v), h = d.getHours(), m = d.getMinutes(); return (h < 12 ? 'সকাল ' : h < 17 ? 'দুপুর ' : h < 20 ? 'সন্ধ্যা ' : 'রাত ') + bn((h % 12 || 12) + ':' + (m < 10 ? '0' : '') + m); }
-  function pnDay(v) { var d = bdt(v), t = bdt(), k = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(t.getFullYear(), t.getMonth(), t.getDate())) / 864e5); return k === 0 ? 'আজ' : k === 1 ? 'কাল' : RDAY[(d.getDay() + 1) % 7][1]; }
+  function pnIdx(v) { var d = bdt(v), t = bdt(); return Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(t.getFullYear(), t.getMonth(), t.getDate())) / 864e5); }
+  function pnDateOf(k) { var t = bdt(); return new Date(t.getFullYear(), t.getMonth(), t.getDate() + k); }
+  function pnDay(v) { var k = typeof v === 'number' ? v : pnIdx(v), d = pnDateOf(k); return k === 0 ? 'আজ' : k === 1 ? 'কাল' : RDAY[(d.getDay() + 1) % 7][1]; }
+  function pnDate(k) { var d = pnDateOf(k); return bn(d.getDate()) + ' ' + PNMON[d.getMonth()]; }
   function pnStn(st) { return '<span class="pn-stn ' + st + '" aria-hidden="true"></span>'; }
+  function pnRow(w, i, fitBtn) {
+    var st = PNST[w.state] || [w.state, 'soon'], what = '<b>' + (RFMT[w.format] || w.format) + '</b>' + (w.series_name ? ' · ' + esc(w.series_name) : '') + (w.lang ? ' · ' + (w.lang === 'en' ? 'English' : 'বাংলা') : '');
+    return '<div class="bc-dep pn-dep' + (w.state === 'later' ? ' pn-later' : '') + (C.pitem === String(i) ? ' pn-sel' : '') + '" id="bc_pnr_' + i + '"><span class="tm">' + pnTime(w.at) + '</span>' + lb(w.platform) +
+      '<p><span class="pn-what">' + what + (w.ad ? '<span class="pn-flag">বিজ্ঞাপন-প্রার্থী</span>' : '') + (w.ai_video ? '<span class="pn-flag">AI ভিডিও</span>' : '') + '</span>' +
+      (w.hook ? '<span class="m" data-noi18n="1">' + esc(w.hook) + '</span>' : '') + '</p><span class="a pn-state">' + pnStn(st[1]) + st[0] +
+      (fitBtn && w.draft ? '<button type="button" class="bc-btn ghost sm pn-fitb" data-bc="fit" data-id="' + w.draft + '" aria-haspopup="dialog">' + svg('plan') + 'প্ল্যান মিল</button>' : '') + '</span></div>';
+  }
+  function pnMapHtml(week, nets) {
+    var z = C.pz || 7, sel = C.pday || 0, N = 35;
+    var adsDay = {}, cnt = {};
+    week.forEach(function (w, i) { w._i = i; w._k = pnIdx(w.at); if (w.ad && w.state !== 'later') adsDay[w._k] = (adsDay[w._k] || 0) + 1; cnt[w._k] = (cnt[w._k] || 0) + (w.state === 'later' ? 0 : 1); });
+    var head = '', k;
+    for (k = 0; k < N; k++) {
+      var d = pnDateOf(k), on = k === sel || (z <= 2 && k > sel && k < sel + z);
+      head += '<button type="button" class="pn-dh' + (k === 0 ? ' today' : '') + (on ? ' on' : '') + (d.getDay() === 5 ? ' fri' : '') + '" data-bc="pnday" data-id="' + k + '" aria-pressed="' + on + '">' +
+        '<b>' + (k === 0 ? 'আজ' : RDAY[(d.getDay() + 1) % 7][0]) + '</b><span>' + bn(d.getDate()) + (d.getDate() === 1 || k === 0 ? ' ' + PNMON[d.getMonth()].slice(0, 3) : '') + '</span>' +
+        (adsDay[k] ? '<i class="pn-adm" title="বিজ্ঞাপনের প্রার্থী ' + bn(adsDay[k]) + 'টা">' + bn(adsDay[k]) + '</i>' : '') + '</button>';
+    }
+    var rows = nets.map(function (p) {
+      var st = week.filter(function (w) { return w.platform === p && w._k >= 0 && w._k < N; }).map(function (w) {
+        var t = bdt(w.at), x = w._k + (t.getHours() * 60 + t.getMinutes()) / 1440, s0 = PNST[w.state] || ['', 'soon'];
+        return '<button type="button" class="pn-sn ' + s0[1] + (w.ad && w.state !== 'later' ? ' ad' : '') + (C.pitem === String(w._i) ? ' on' : '') + '" style="left:calc(var(--pn-col) * ' + x.toFixed(4) + ')" data-bc="pnpick" data-id="' + w._k + ':' + w._i + '" ' +
+          'aria-label="' + esc(netName(p)) + ', ' + pnDay(w._k) + ' ' + pnTime(w.at) + ', ' + (RFMT[w.format] || w.format) + ', ' + s0[0] + '" title="' + pnDay(w._k) + ' ' + pnTime(w.at) + ' · ' + (RFMT[w.format] || w.format) + ' · ' + s0[0] + '"></button>';
+      }).join('');
+      return '<div class="pn-mrow" style="--c:' + netCol(p) + '"><div class="pn-mtrack"><i class="pn-mline"></i>' + st + '</div></div>';
+    }).join('');
+    var t0 = bdt(), now = (t0.getHours() * 60 + t0.getMinutes()) / 1440;
+    return '<div class="pn-map"><div class="pn-mlab"><div class="pn-mlh"></div>' + nets.map(function (p) { return '<div class="pn-ml">' + lb(p) + '</div>'; }).join('') + '</div>' +
+      '<div class="pn-mscroll" id="bc_pnmap" tabindex="0" aria-label="সময়সূচি, পাশে টেনে সামনে যান"><div class="pn-mgrid" style="--pn-days:' + N + '"><div class="pn-mhead">' + head + '</div>' +
+      '<div class="pn-mbody"><i class="pn-now" style="left:calc(var(--pn-col) * ' + now.toFixed(4) + ')" aria-hidden="true"></i><i class="pn-selcol" style="left:calc(var(--pn-col) * ' + sel + ');width:calc(var(--pn-col) * ' + (z <= 2 ? z : 1) + ')" aria-hidden="true"></i>' + rows + '</div></div></div></div>';
+  }
+  function pnAfter() {
+    var sc = el('bc_pnmap'); if (!sc) return;
+    var z = C.pz || 7, w = sc.clientWidth || 800, col = Math.max(z >= 30 ? 30 : z >= 14 ? 44 : 64, Math.floor(w / z));
+    sc.style.setProperty('--pn-col', col + 'px');
+    if (C.pnScroll != null) { sc.scrollLeft = Math.max(0, C.pnScroll * col - (z >= 7 ? 0 : 0)); C.pnScroll = null; }
+    if (!sc._pnDrag) {   // drag sideways with the mouse (touch scrolls natively)
+      sc._pnDrag = 1;
+      var x0 = 0, l0 = 0, down = false, moved = false;
+      sc.addEventListener('pointerdown', function (e) { if (e.pointerType !== 'mouse' || e.button !== 0) return; down = true; moved = false; x0 = e.clientX; l0 = sc.scrollLeft; });
+      window.addEventListener('pointermove', function (e) { if (!down) return; var dx = e.clientX - x0; if (Math.abs(dx) > 4) { moved = true; sc.classList.add('drag'); } sc.scrollLeft = l0 - dx; });
+      window.addEventListener('pointerup', function () { if (!down) return; down = false; sc.classList.remove('drag'); if (moved) { sc._pnNoClick = Date.now(); } });
+      sc.addEventListener('click', function (e) { if (sc._pnNoClick && Date.now() - sc._pnNoClick < 250) { e.stopPropagation(); e.preventDefault(); } }, true);
+      sc.addEventListener('wheel', function (e) { if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && !e.shiftKey) return; sc.scrollLeft += (e.shiftKey ? e.deltaY : e.deltaX); e.preventDefault(); }, { passive: false });
+    }
+  }
   function pnPageHtml() {
     var g = gate(['plan']); if (g) return headHtml('পরিকল্পনা', '') + g;
-    var P = C.d.plan || {}, week = P.week || [], nets = P.nets || [], checks = P.checks || [], ads = P.ads || {}, nt = P.night || {}, held = P.held || [];
+    var P = C.d.plan || {}, week = P.week || [], nets = P.nets || [], checks = P.checks || [], ads = P.ads || {}, nt = P.night || {}, held = P.held || [], cy = P.cycle || {};
     var au = P.autopilot_until ? bdt(P.autopilot_until) : null;
     var h = headHtml('পরিকল্পনা', '');
     h += '<p class="pn-mode">' + (P.mode === 'autopilot' && au ? '<b>এখন অটোপাইলট।</b> ' + bn(au.getDate()) + ' নভেম্বর পর্যন্ত AI নিজে লেখে আর পাঠায়; তারপর প্রতিটা পোস্ট রাত ১১টায় (Seoul) আপনার রিভিউতে আসবে।'
-      : '<b>রিভিউ মোড।</b> AI রাতে লেখে, রাত ১১টায় (Seoul) আপনি দেখে অনুমোদন দেন; অনুমোদন ছাড়া কিছু যায় না।') + ' সব সময় ঢাকার।</p>';
-    // what waits for him: posts the machine stopped
+      : '<b>রিভিউ মোড।</b> AI রাতে লেখে, রাত ১১টায় (Seoul) আপনি দেখে অনুমোদন দেন; অনুমোদন ছাড়া কিছু যায় না।') + ' ' +
+      (cy.before ? '৬০ দিনের প্ল্যান শুরু ' + bn(24) + ' নভেম্বর, আর ' + bn(cy.before) + ' দিন।' : cy.day ? '৬০ দিনের প্ল্যানের দিন ' + bn(cy.day) + ', সপ্তাহ ' + bn(cy.week) + '।' : '') +
+      ' <button type="button" class="pn-link" data-bc="sec" data-id="cycle">৬০ দিনের প্ল্যান দেখুন</button></p>';
     if (held.length) {
       h += '<div class="bc-wait pn-wait"><b>' + bn(held.length) + '<em>টা</em></b><p>পোস্ট আপনার সিদ্ধান্তের অপেক্ষায়<small>নিয়ম ভাঙে বা সময় পেরিয়ে গেছে, তাই যায়নি। পাঠালে এখনই যাবে; বাদ দিলে যাবে না, মুছবেও না।</small></p></div><div class="pn-held">' +
         held.map(function (x) {
@@ -62271,36 +62458,39 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
             btn('পাঠান', 'data-bc="decide" data-act="send" data-id="' + esc(x.id) + '"', 'amber sm', 'dc' + x.id) + btn('বাদ দিন', 'data-bc="decide" data-act="drop" data-id="' + esc(x.id) + '"', 'ghost sm', 'dd' + x.id) + '</span></div>';
         }).join('') + '</div>';
     }
-    // 1) the coming 7 days, as departures
-    if (C.pnNet == null) C.pnNet = 'all';
+    // 1) the schedule: a line map 1-30 days wide over the next 35 days
+    var z = C.pz || 7, sel = C.pday || 0;
     var netsIn = []; week.forEach(function (w) { if (netsIn.indexOf(w.platform) < 0) netsIn.push(w.platform); });
-    var cnt = {}; week.forEach(function (w) { if (w.state !== 'later') cnt[w.state] = (cnt[w.state] || 0) + 1; });
-    var show = week.filter(function (w) { return (C.pnNet === 'all' || w.platform === C.pnNet) && (C.pnLater || w.state !== 'later'); });
-    h += '<section class="bc-block pn-sec"><div class="bc-h2"><h2>সামনের ৭ দিন</h2></div><div class="pn-tally">' + ['ready', 'review', 'write', 'video', 'hand'].filter(function (k) { return cnt[k]; }).map(function (k) {
-        return '<span class="pn-tl">' + pnStn(PNST[k][1]) + '<b>' + bn(cnt[k]) + '</b>' + PNST[k][0] + '</span>'; }).join('') + '</div>' +
-      '<div class="bc-pills pn-filter" role="group" aria-label="নেটওয়ার্ক"><button type="button" data-bc="pnnet" data-id="all"' + (C.pnNet === 'all' ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>সব</button>' +
-      netsIn.map(function (n) { return '<button type="button" data-bc="pnnet" data-id="' + n + '"' + (C.pnNet === n ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + esc(netName(n)) + '</button>'; }).join('') +
-      '<button type="button" data-bc="pnlater" aria-pressed="' + !!C.pnLater + '"' + (C.pnLater ? ' class="on"' : '') + '>পরের ধাপের ঘরও</button></div>';
-    var day = '', rows = '', days = 0, cut = 0;
-    show.forEach(function (w) {
-      var dn = pnDay(w.at), st = PNST[w.state] || [w.state, 'soon'];
-      if (dn !== day) { days++; day = dn; if (!C.pnAll && days > 2) { cut = 1; return; } rows += '<h3 class="pn-dayh' + (dn === 'আজ' ? ' today' : '') + '">' + dn + '</h3>'; }
-      if (cut) return;
-      var what = '<b>' + (RFMT[w.format] || w.format) + '</b>' + (w.series_name ? ' · ' + esc(w.series_name) : '') + (w.lang ? ' · ' + (w.lang === 'en' ? 'English' : 'বাংলা') : '');
-      rows += '<div class="bc-dep pn-dep' + (w.state === 'later' ? ' pn-later' : '') + '"><span class="tm">' + pnTime(w.at) + '</span>' + lb(w.platform) +
-        '<p><span class="pn-what">' + what + (w.ad ? '<span class="pn-flag">বিজ্ঞাপন-প্রার্থী</span>' : '') + (w.ai_video ? '<span class="pn-flag">AI ভিডিও</span>' : '') + '</span>' +
-        (w.hook ? '<span class="m" data-noi18n="1">' + esc(w.hook) + '</span>' : '') + '</p><span class="a pn-state">' + pnStn(st[1]) + st[0] + '</span></div>';
-    });
-    h += '<div class="pn-deps">' + (rows || '<p class="pn-note">এই বাছাইয়ে কোনো ঘর নেই।</p>') + '</div>' +
-      (cut || C.pnAll ? '<button type="button" class="bc-btn pn-more" data-bc="pnall" aria-expanded="' + !!C.pnAll + '">' + (C.pnAll ? 'শুধু আজ আর কাল দেখান' : 'পুরো ৭ দিন দেখুন') + '</button>' : '') + '</section>';
+    var mapNets = C.pnNet && C.pnNet !== 'all' ? netsIn.filter(function (n) { return n === C.pnNet; }) : netsIn;
+    h += '<section class="bc-block pn-sec pn-sched"><div class="bc-h2"><h2>সময়সূচি</h2></div>' +
+      '<div class="pn-ctl"><div class="bc-pills" role="group" aria-label="কত দিন দেখবেন">' + PNZ.map(function (q) { return '<button type="button" data-bc="pnz" data-id="' + q[0] + '"' + (z === q[0] ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + q[1] + '</button>'; }).join('') + '</div>' +
+      '<span class="bc-sp"></span><div class="pn-nav"><button type="button" class="bc-btn ghost sm" data-bc="pnstep" data-id="-1" aria-label="আগের দিকে"' + (sel <= 0 ? ' disabled' : '') + '>' + svg('left') + '</button>' +
+      '<button type="button" class="bc-btn sm" data-bc="pntoday"' + (sel === 0 ? ' disabled' : '') + '>আজ</button><button type="button" class="bc-btn ghost sm" data-bc="pnstep" data-id="1" aria-label="পরের দিকে"' + (sel >= 34 ? ' disabled' : '') + '>' + svg('right') + '</button></div></div>' +
+      '<div class="bc-pills pn-filter" role="group" aria-label="নেটওয়ার্ক"><button type="button" data-bc="pnnet" data-id="all"' + (!C.pnNet || C.pnNet === 'all' ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>সব নেটওয়ার্ক</button>' +
+      netsIn.map(function (n) { return '<button type="button" data-bc="pnnet" data-id="' + n + '"' + (C.pnNet === n ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + esc(netName(n)) + '</button>'; }).join('') + '</div>' +
+      pnMapHtml(week, mapNets) +
+      '<p class="pn-legend">' + [['q', 'যাবে'], ['wt', 'আপনার রিভিউ'], ['soon', 'রাতে লেখা হবে / আপনি দেবেন'], ['need', 'ভিডিও লাগবে'], ['gone', 'গেছে'], ['x', 'ফাঁকা গেছে']].map(function (q) { return '<span>' + pnStn(q[0]) + q[1] + '</span>'; }).join('') +
+      '<span><i class="pn-adm">১</i>বিজ্ঞাপনের প্রার্থী</span><span class="pn-hint">মাউস দিয়ে টেনে বা পাশে স্ক্রল করে ৩৫ দিন পর্যন্ত যান</span></p>';
+    // the chosen day(s): departures, ads explained
+    var span = z <= 2 ? z : 1, list = '';
+    for (var k = sel; k < Math.min(35, sel + span); k++) {
+      var items = week.map(function (w, i) { w._i = i; return w; }).filter(function (w) { return pnIdx(w.at) === k && (!C.pnNet || C.pnNet === 'all' || w.platform === C.pnNet) && (C.pnLater || w.state !== 'later'); });
+      var adI = items.filter(function (w) { return w.ad; });
+      list += '<div class="pn-dayblk"><h3 class="pn-dayh' + (k === 0 ? ' today' : '') + '">' + pnDay(k) + '<small>' + pnDate(k) + ' · ' + bn(items.length) + 'টা ঘর</small></h3>' +
+        (adI.length ? '<div class="pn-adbox"><b>এই দিনে বিজ্ঞাপনের প্রার্থী</b>' + adI.map(function (w) { return '<p>' + lb(w.platform) + '<span><b>' + pnTime(w.at) + ' · ' + (RFMT[w.format] || w.format) + '</b> — ' + esc(w.ad_why || '') + '</span></p>'; }).join('') +
+          '<small>টাকা খরচ হবে শুধু পোস্টটা নিজে থেকে ভালো চললে, আর আপনি "হ্যাঁ" বললে।</small></div>' : '') +
+        '<div class="pn-deps">' + (items.length ? items.map(function (w) { return pnRow(w, w._i, true); }).join('') : '<p class="pn-note">এই দিনে কোনো ঘর নেই।</p>') + '</div></div>';
+    }
+    h += list + '<button type="button" class="pn-link pn-later-t" data-bc="pnlater" aria-pressed="' + !!C.pnLater + '">' + (C.pnLater ? 'পরের ধাপের ঘর লুকান' : 'পরের ধাপের ঘরও দেখান') + '</button></section>';
     // 2) research rules, counted on the real drafts
     var bad = checks.filter(function (c) { return c.total && c.ok < c.total; }).length;
     h += '<section class="bc-block pn-sec"><div class="bc-h2"><h2>গবেষণা মানা হচ্ছে কি না</h2>' + (bad ? '<span class="bc-tag w">' + bn(bad) + 'টা নিয়মে গরমিল</span>' : '<span class="bc-tag">সব নিয়ম মানা হচ্ছে</span>') + '</div>' +
-      '<p class="pn-note">গত ৭ দিন আর সামনের ৭ দিনের আসল ড্রাফট মেশিন নিজে গোনে। গরমিল থাকলে নিয়মে চাপ দিয়ে কোন পোস্টে, দেখুন।</p><div class="pn-rules">' + checks.map(function (c) {
+      '<p class="pn-note">গত ৭ দিন আর সামনের ৭ দিনের আসল ড্রাফট মেশিন নিজে গোনে। গরমিল থাকলে নিয়মে চাপ দিয়ে কোন পোস্টে, দেখুন। একটা পোস্টের পুরো হিসাব তার "প্ল্যান মিল" বোতামে।</p><div class="pn-rules">' + checks.map(function (c) {
         var ok = !c.total || c.ok === c.total, op = C.fold['pnc' + c.key] && !ok;
         return '<div class="pn-rule' + (ok ? '' : ' bad') + '"><button type="button" class="pn-rule-h" data-bc="fold" data-id="pnc' + c.key + '" aria-expanded="' + !!op + '"' + (ok ? ' disabled' : '') + '>' +
           pnStn(ok ? (c.total ? 'q' : 'soon') : 'wt') + '<span class="pn-rule-t"><b>' + esc(c.title) + '</b><small>' + esc(c.why) + '</small></span><span class="pn-fig">' + (c.total ? bn(c.ok) + '<small>/' + bn(c.total) + '</small>' : '—') + '</span>' + (ok ? '' : svg('right')) + '</button>' +
-          (op ? '<ul class="pn-bad">' + (c.bad || []).map(function (x) { return '<li>' + lb(x.platform) + '<span data-noi18n="1">' + esc(x.hook || '') + '</span>' + (x.autopilot ? '<small>অটোপাইলটের পুরনো লেখা</small>' : '') + '</li>'; }).join('') + '</ul>' : '') + '</div>';
+          (op ? '<ul class="pn-bad">' + (c.bad || []).map(function (x) { return '<li>' + lb(x.platform) + '<span data-noi18n="1">' + esc(x.hook || '') + '</span>' + (x.autopilot ? '<small>অটোপাইলটের পুরনো লেখা</small>' : '') +
+            '<button type="button" class="bc-btn ghost sm" data-bc="fit" data-id="' + x.id + '" aria-haspopup="dialog">প্ল্যান মিল</button></li>'; }).join('') + '</ul>' : '') + '</div>';
       }).join('') + '</div></section>';
     // 3) every network's growth step as a line with stations
     h += '<section class="bc-block pn-sec"><div class="bc-h2"><h2>নেটওয়ার্কের ধাপ</h2></div><p class="pn-note">সবাই ধাপ ১ থেকে শুরু। গত ১৪ দিনের ভিউ শর্ত পার হলে মেশিন নিজে পরের ধাপে নেয়, মানে বেশি পোস্ট; ভিউ পড়ে গেলে নিজে এক ধাপ নামায়। প্রতিদিন সকাল ৯টায় দেখে।</p><div class="pn-lines">' +
@@ -62311,27 +62501,74 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
           '<div class="pn-track' + (n.max === 1 ? ' one' : '') + '">' + st + '</div><p><b>' + bn(n.week_now) + 'টা</b> পোস্ট এ সপ্তাহে' + (n.week_max > n.week_now ? ' (পুরো হলে ' + bn(n.week_max) + ')' : '') +
           '<small>' + gate + (n.ads ? ' · ' + bn(n.ads) + 'টা বিজ্ঞাপন-প্রার্থী ঘর' : '') + '</small></p></div>';
       }).join('') + '</div></section>';
-    // 4) ads
-    var cand = ads.candidates || [];
-    h += '<section class="bc-block pn-sec"><div class="bc-h2"><h2>বিজ্ঞাপন</h2><span class="bc-tag">খরচ ৳0 · আপনার হ্যাঁ ছাড়া কিছু নয়</span></div><ul class="pn-list">' + (ads.rules || []).map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul>' +
-      (cand.length ? '<h3 class="pn-sub">সামনের প্রার্থী ঘর<small>পোস্টটা নিজে থেকে ভালো চললে তবেই প্রস্তাব আসবে' + (cand.length > 5 ? '; এ সপ্তাহে মোট ' + bn(cand.length) + 'টা' : '') + '</small></h3><div class="pn-deps">' + cand.slice(0, 5).map(function (a) {
-        return '<div class="bc-dep pn-dep"><span class="tm">' + pnTime(a.at) + '<small>' + pnDay(a.at) + '</small></span>' + lb(a.platform) + '<p><b>' + (RFMT[a.format] || a.format) + '</b></p><span class="a pn-state">' + esc(a.type_bn) + '</span></div>'; }).join('') + '</div>'
-        : '<p class="pn-note">এ সপ্তাহে বিজ্ঞাপনের প্রার্থী ঘর নেই।</p>') + '</section>';
+    // 4) ads: the rules (the candidates live on each day above)
+    h += '<section class="bc-block pn-sec"><div class="bc-h2"><h2>বিজ্ঞাপনের নিয়ম</h2><span class="bc-tag">খরচ ৳0 · আপনার হ্যাঁ ছাড়া কিছু নয়</span></div><ul class="pn-list">' + (ads.rules || []).map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') +
+      '</ul><p class="pn-note">কোন দিনে কোন পোস্ট বিজ্ঞাপনের প্রার্থী, তা সময়সূচির দিনের মাথায় সংখ্যা দিয়ে দেখানো, আর দিনে চাপলে কারণসহ লেখা।</p></section>';
     // 5) the machine's own clock, as a spine
     var vn = nt.video || null, stops = [
-      ['রাত ১২টা–সকাল ৭টা', 'লেখা', '৭ দিন পরের দিনের পোস্ট লেখে' + (nt.writes_until ? '; লেখা আছে ' + pnDay(nt.writes_until + 'T12:00:00Z') + ' পর্যন্ত' : '')],
+      ['রাত ১২টা–সকাল ৭টা', 'লেখা', '৭ দিন পরের দিনের পোস্ট লেখে' + (nt.writes_until ? '; লেখা আছে ' + pnDay(pnIdx(nt.writes_until + 'T12:00:00Z')) + ' পর্যন্ত' : '')],
       ['রাত ১২:১৫', 'AI ভিডিও', 'রাতে সর্বোচ্চ ২টা, একটা ভিডিও সেদিনের সব ভিডিওর ঘরে। রাত ১২টার আগে reelovio-তে সাইন ইন রাখবেন।' + (vn ? (vn.state === 'done' ? ' শেষবার: ভিডিও তৈরি।' : ' শেষবার: বানানো শুরু হয়েছিল।') : ' এখনো একবারও চলেনি।')],
       ['প্রতি ঘণ্টা', 'ছবি ও স্টোরি', 'ছবি ছাড়া অনুমোদিত পোস্টে পোস্টের কথা দিয়ে স্লাইড; FB/IG পোস্টের ৩০ মিনিট পরে স্টোরি'],
       ['সকাল ৯টা', 'ধাপ যাচাই', 'প্রতিটা নেটওয়ার্কের ভিউ দেখে ধাপ বাড়ায় বা কমায়'],
-      ['রাত ১১টা (Seoul)', 'আপনার রিভিউ', 'Telegram-এ অনুমোদন বা মন্তব্য; AI আপনার মন্তব্য থেকে শেখে']];
+      ['রাত ১১টা (Seoul)', 'আপনার রিভিউ', 'Telegram-এ অনুমোদন বা মন্তব্য; AI আপনার মন্তব্য থেকে শেখে'],
+      ['প্রতি ৬০ দিনের ৫০তম দিন', 'পরের ৬০ দিন', 'একই গবেষণা আর আসল ফল থেকে পরের প্ল্যানের খসড়া; আপনার হ্যাঁ ছাড়া চালু হয় না']];
     h += '<section class="bc-block pn-sec"><div class="bc-h2"><h2>মেশিন নিজে যা করে</h2></div><ol class="pn-clock">' + stops.map(function (x) {
       return '<li><span class="pn-ck-t">' + x[0] + '</span><span class="pn-ck-s" aria-hidden="true"></span><span class="pn-ck-b"><b>' + x[1] + '</b>' + x[2] + '</span></li>'; }).join('') + '</ol></section>';
     return h;
   }
+  // ---------- the plan-fit sheet: one draft against the plan, the research and the steps it went through
+  function fitSheetHtml(id) {
+    var f = C.fits[id] || {}, body;
+    if (f.busy || (!f.id && !f.err)) body = '<div class="pf-load">' + skel(80) + skel(160) + '</div>';
+    else if (f.err) body = '<div class="bc-call"><span>' + esc(hasBn(f.err) ? f.err : 'হিসাব আনা গেল না।') + '</span><span class="bc-sp"></span><button type="button" class="bc-btn sm" data-bc="fitretry" data-id="' + esc(id) + '">আবার চেষ্টা করুন</button></div>';
+    else {
+      var sl = f.slot, cy = f.cycle || {}, okN = (f.score || [0, 0])[0], all = (f.score || [0, 0])[1];
+      body = '<div class="pf-sum' + (okN === all ? '' : ' bad') + '"><span class="pf-fig">' + bn(okN) + '<small>/' + bn(all) + '</small></span><p><b>' + (okN === all ? 'প্ল্যান আর গবেষণার সাথে পুরো মিলে' : bn(all - okN) + 'টা জায়গায় মেলে না') + '</b>' +
+        '<small data-noi18n="1">' + esc(f.hook || '') + '</small></p></div>' +
+        '<h3 class="pf-h">প্ল্যানের কোন ঘর</h3><div class="pf-kv">' +
+        (sl ? '<span>ঘর</span><b>' + (f.planned_at ? pnDay(f.planned_at) + ' ' + pnTime(f.planned_at) + ' · ' : '') + esc(RFMT[sl.format] || sl.format) + '</b>' +
+          (sl.series_name ? '<span>সিরিজ</span><b>' + esc(sl.series_name) + '</b>' : '') + '<span>ভাষা</span><b>' + (sl.lang === 'en' ? 'English (বিদেশি পাঠক)' : 'বাংলা (বাংলাদেশের পাঠক)') + '</b>'
+          : '<span>ঘর</span><b>রুটিনের কোনো ঘরে বসানো নেই</b>') +
+        '<span>প্ল্যান</span><b>' + esc(f.blueprint || '') + (cy.day ? ' · ৬০ দিনের দিন ' + bn(cy.day) : cy.before ? ' · ৬০ দিন শুরু হবে ২৪ নভেম্বর' : '') + '</b>' +
+        (f.autopilot ? '<span>লেখা</span><b>অটোপাইলটের দিনে লেখা</b>' : '') + '</div>' +
+        '<h3 class="pf-h">গবেষণার নিয়ম</h3><ul class="pf-rules">' + (f.rules || []).map(function (r) { return '<li class="' + (r.ok ? '' : 'bad') + '">' + pnStn(r.ok ? 'q' : 'wt') + '<span><em>' + esc(r.rule) + '</em>' + esc(r.text) + '</span></li>'; }).join('') + '</ul>' +
+        '<h3 class="pf-h">কীভাবে বানানো হয়েছে</h3><ol class="pf-steps">' + (f.steps || []).map(function (x) { return '<li><span class="pf-sd" aria-hidden="true"></span><p><b>' + esc(x.step) + '</b><span data-noi18n="1">' + esc(x.how) + '</span></p></li>'; }).join('') + '</ol>' +
+        '<h3 class="pf-h">বিজ্ঞাপন</h3>' + (f.ad ? '<p class="pf-ad"><b>' + esc(f.ad.type_bn) + '</b>' + esc(f.ad.why) + '</p>' : '<p class="pf-ad">এই ঘর বিজ্ঞাপনের প্রার্থী নয়।</p>');
+    }
+    return '<div class="cs pf' + (C.csIn ? ' in' : '') + '"><div class="cs-bg" data-bc="ctclose"></div><div class="cs-p" id="bc_cs_p" role="dialog" aria-modal="true" aria-labelledby="bc_cs_t" tabindex="-1">' +
+      '<header class="cs-h"><span class="cs-grab" aria-hidden="true"></span><h2 id="bc_cs_t">' + (f.platform ? logo(f.platform, 18) : '') + 'প্ল্যান মিল</h2>' +
+      '<button type="button" class="cs-x" data-bc="ctclose" aria-label="বন্ধ করুন">' + svg('x') + '</button></header><div class="cs-b pf-b">' + body + '</div></div></div>';
+  }
+  // ---------- ৬০ দিন: the 60-day plan per network (from the blueprints) and how the next 60 days get written
+  function cyPageHtml() {
+    var g = gate(['cycles']); if (g) return headHtml('৬০ দিনের প্ল্যান', '') + g;
+    var D = C.d.cycles || {}, cy = D.cycle || {}, nx = D.next || {}, plans = D.plans || {}, ks = Object.keys(plans);
+    if (!C.cyNet || !plans[C.cyNet]) C.cyNet = ks[0] || '';
+    var day = cy.day || 0, h = headHtml('৬০ দিনের প্ল্যান', '');
+    var wk = ''; for (var i = 0; i <= 8; i++) wk += '<span class="cy-wk' + (cy.week === i && day ? ' cur' : day && i < cy.week ? ' past' : '') + '">' + (i === 0 ? 'শুরু' : 'সপ্তাহ ' + bn(i)) + '</span>';
+    h += '<p class="pn-mode">' + (cy.before ? '<b>সাইকেল ' + bn(cy.n) + ' শুরু ২৪ নভেম্বর, আর ' + bn(cy.before) + ' দিন।</b> তার আগে অটোপাইলট চলছে।' : '<b>সাইকেল ' + bn(cy.n) + ', দিন ' + bn(day) + '/৬০।</b>') +
+      ' প্রতিটা নেটওয়ার্কের সপ্তাহ ধরে কোন দিন কোন পর্ব, নিচে। রাতের লেখক এই তালিকা ধরেই লেখে।</p>' +
+      '<div class="cy-line"><div class="cy-bar"><i style="width:' + Math.max(0, Math.min(100, day / 60 * 100)).toFixed(1) + '%"></i></div><div class="cy-wks">' + wk + '</div>' +
+      '<div class="cy-ends"><span><b>সাইকেল ' + bn(cy.n) + '</b>' + esc(pnIso(cy.start)) + ' – ' + esc(pnIso(cy.end)) + '</span><span class="cy-next"><b>সাইকেল ' + bn(nx.n) + '</b>খসড়া ' + esc(pnIso(nx.write_on)) + ' · শুরু ' + esc(pnIso(nx.start)) + '</span></div></div>';
+    h += '<section class="bc-block pn-sec"><div class="bc-h2"><h2>নেটওয়ার্ক ধরে প্ল্যান</h2></div><div class="bc-pills pn-filter" role="group" aria-label="নেটওয়ার্ক">' +
+      ks.map(function (k) { return '<button type="button" data-bc="cynet" data-id="' + k + '"' + (C.cyNet === k ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + esc(netName(k)) + '</button>'; }).join('') + '</div>' +
+      (plans[C.cyNet] ? '<h3 class="pn-sub">' + esc(plans[C.cyNet].title) + '</h3><div class="cy-bp" id="bc_cybp" data-week="' + (day ? cy.week : -1) + '" data-noi18n="1">' + plans[C.cyNet].html + '</div>' : '<p class="pn-note">ব্লুপ্রিন্ট পাওয়া যায়নি।</p>') + '</section>';
+    h += '<section class="bc-block pn-sec"><div class="bc-h2"><h2>৬০ দিনের পরে</h2><span class="bc-tag' + (nx.state === 'draft' ? ' w' : '') + '">' + (nx.state === 'draft' ? 'সাইকেল ' + bn(nx.n) + '-এর খসড়া তৈরি' : 'সাইকেল ' + bn(nx.n) + ' লেখা হবে ' + esc(pnIso(nx.write_on))) + '</span></div>' +
+      '<p class="pn-note">প্রজেক্ট ৬০ দিনে শেষ নয়। প্রতি ৬০ দিনের ৫০তম দিনে মেশিন পরের ৬০ দিনের প্ল্যান লেখে, যাতে আমরা একই পথে থাকি:</p><ul class="pn-list">' +
+      (D.rules || []).map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul>' +
+      ((nx.files || []).length ? '<p class="pn-note">খসড়া আছে: ' + nx.files.map(esc).join(', ') + '। দেখে হ্যাঁ বললে চালু হবে।</p>' : '') + '</section>';
+    return h;
+  }
+  function pnIso(v) { if (!v) return ''; var d = new Date(v + 'T00:00:00'); return isNaN(d) ? v : bn(d.getDate()) + ' ' + PNMON[d.getMonth()] + (d.getFullYear() !== bdt().getFullYear() ? ' ' + bn(d.getFullYear()) : ''); }
+  function cyAfter() {
+    var bp = el('bc_cybp'); if (!bp) return;
+    var w = Number(bp.getAttribute('data-week')), rows = bp.querySelectorAll('table tbody tr');
+    [].forEach.call(rows, function (r, i) { r.classList.toggle('cy-cur', i === w); });
+  }
   function mainHtml(narrow) {
     switch (C.sec) {
       case 'posts': return postsHtml(); case 'ideas': return ideasHtml(); case 'media': return mediaHtml(); case 'listen': return listenHtml();
-      case 'inbox': return inboxHtml(); case 'biz': return bizHtml(); case 'people': return peopleHtml(); case 'results': return resultsHtml(); case 'rules': return rulesHtml(); case 'map': return mapPageHtml(); case 'train': return trainHtml(); case 'aud': return audHtml(); case 'linkedin': return liHtml(); case 'routine': return routineHtml(); case 'plan': return pnPageHtml();
+      case 'inbox': return inboxHtml(); case 'biz': return bizHtml(); case 'people': return peopleHtml(); case 'results': return resultsHtml(); case 'rules': return rulesHtml(); case 'map': return mapPageHtml(); case 'train': return trainHtml(); case 'aud': return audHtml(); case 'linkedin': return liHtml(); case 'routine': return routineHtml(); case 'plan': return pnPageHtml(); case 'cycle': return cyPageHtml();
       default: return homeHtml(narrow);
     }
   }
@@ -62370,6 +62607,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       if (C.sec === 'inbox') requestAnimationFrame(ibAfter);
       if (!fid && fsel) { var nf2 = null; try { nf2 = r.querySelector(fsel); } catch (e) {} if (nf2) { try { nf2.focus({ preventScroll: true }); } catch (e) {} } }
       if (C.sec === 'map') requestAnimationFrame(wires);
+      if (C.sec === 'plan') requestAnimationFrame(pnAfter);
+      if (C.sec === 'cycle') requestAnimationFrame(cyAfter);
       if (C.sec === 'home') requestAnimationFrame(function () { var sc = r.querySelector('.bc-scroll'), nw = sc && sc.querySelector('.bc-now'); if (sc && nw && sc.scrollWidth > sc.clientWidth && !C.moved) { sc.scrollLeft = nw.offsetLeft - sc.clientWidth / 2; C.moved = 1; } });
     } finally { DRAWING = false; }
   }
@@ -62487,6 +62726,11 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     act('write', 'erpBrandDeskMakeDrafts', args, function (r) { C.d.drafts = r; poll('drafts'); toast('AI লিখছে, ১-২ মিনিট।'); });
   }
   // brand-28: the comment sheet closes back to the control that opened it
+  function fitLoad(id) {
+    C.fits[id] = { busy: 1 };
+    srv('erpBrandDeskFit', [{ id: Number(id) }], function (r) { C.fits[id] = r; draw(); }, function (e) { C.fits[id] = { err: (e && e.message) || String(e) }; draw(); });
+  }
+  function pnScrollTo(day) { C.pnScroll = day; }
   function closeSheet() {
     var from = C.csFrom; C.sheet = ''; C.mpk = ''; draw();
     var r2 = el('bc_root'), b3 = from && r2 ? r2.querySelector(from) : null;
@@ -62718,6 +62962,14 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     else if (w === 'pnnet') { C.pnNet = id; draw(); }   // brand-plan-1
     else if (w === 'pnlater') { C.pnLater = !C.pnLater; draw(); }
     else if (w === 'pnall') { C.pnAll = !C.pnAll; draw(); }
+    else if (w === 'pnz') { C.pz = Number(id); pnScrollTo(C.pday || 0); draw(); }
+    else if (w === 'pnday') { C.pday = Number(id); C.pitem = ''; draw(); }
+    else if (w === 'pnpick') { var pp = String(id).split(':'); C.pday = Number(pp[0]); C.pitem = pp[1]; draw(); var rw = el('bc_pnr_' + pp[1]); if (rw) try { rw.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {} }
+    else if (w === 'pnstep') { var nd = Math.max(0, Math.min(34, (C.pday || 0) + Number(id) * (C.pz || 7))); C.pday = nd; C.pitem = ''; pnScrollTo(nd); draw(); }
+    else if (w === 'pntoday') { C.pday = 0; C.pitem = ''; pnScrollTo(0); draw(); }
+    else if (w === 'fit') { C.csFrom = '[data-bc="fit"][data-id="' + id + '"]'; C.sheet = 'fit:' + id; C.csIn = 1; if (!C.fits[id]) fitLoad(id); draw(); }
+    else if (w === 'fitretry') { C.fits[id] = null; fitLoad(id); draw(); }
+    else if (w === 'cynet') { C.cyNet = id; draw(); }
     else if (w === 'rplat') { C.rp[id] = C.rp[id] ? 0 : 1; draw(); }
     else if (w === 'rlvl') act('rlvl', 'erpBrandDeskRoutineLevel', { level: Number(id) }, function (r) { C.d.routine = r; toast('পরিকল্পনা বদলানো হলো।'); });
     else if (w === 'rclose') { C.redit = ''; draw(); }
