@@ -4676,3 +4676,17 @@ ChatGPT gateway (custom) and shots-1 plans were written by gemini-3.1-flash-lite
 Oliareen (default luna, chat/assistant/analyze terra, write/leads sol, read gemini). Test: custom:gpt-5.6-luna OK;
 Realistic AI shots plan for TIRTIR serum now VALID by custom:gpt-5.6-sol and the Bangla VO stays inside the facts.
 NOT done: Oliareen still uses the SAME business gateway key / ChatGPT account as Costareen (rule says one account each).
+
+## brand-plan-1 (17 Nov 2026) - Brand desk "পরিকল্পনা" page (owner-only, dev + stand-alone desk)
+Owner: "a system that is easy to run and understand - what is happening, what will happen, and a way to see our research
+is really applied". New rail page পরিকল্পনা (2nd item, also in the phone bar) from erpBrandDeskPlan -> bridge /plan
+(G:/bendar-brand/bridge/bridge.py plan_report): (1) research checks counted on the real drafts of the last + next 7 days
+(language per network, reader psychology v2, no selling lines (quoted lines are teaching and do not count), banned topics,
+"পণ্য", series label, picture on picture networks, Story copy, faceless share) with the failing drafts listed;
+(2) every network's growth step, gate and current 14-day median; (3) the coming 7 days slot by slot (format, series,
+language, ad candidate, AI video, state: will go / your review / video needed / written at night / you do it / next step);
+(4) ads: rules + candidate slots, spend 0 without his yes; (5) the machine's clock (night writer, 00:15 AI video,
+hourly pictures + Stories, 09:00 growth check, 23:00 review). Same day on the Mac: brand-pics-1 (slides for approved
+posts without a picture), pacer YouTube/TikTok settings, brand-video-night-1 (voice chain + nightly AI video).
+Held (pacer state ask, nothing deleted): English FB draft 111 + Story, sales post 116 + Story.
+NOT done: test suites not run (local test scratch env is gone); no live ERP release (dev + social.costareen.com/brand only).
