@@ -4735,3 +4735,15 @@ map nodes); cross links Rules<->Routine/Audience, Listen/People -> Inbox; + আ�
 cards; Posts folds after 3 idea groups with a jump strip (8,012 -> 2,064px), Media 24 tiles (phone 39,181 -> 5,246px);
 plan stations as spans (980 -> 113 buttons); Train page sideways scroll fixed; prefetch of the phone-bar pages; Bangla
 fonts start with the page on devices that used the desk. DESIGN.md navigation entry.
+
+## brand-nav-5 (17 Nov 2026) - re-review fixes; LIVE
+Re-critique 23 -> 27/40, re-audit 11 -> 14/20 (independent agents on the navF captures). Fixed from both: one door for
+every page change (links inside a sheet, re-entry from another ERP screen, same page = no scroll/focus jump, Forward over
+an empty sheet entry); departure rows have a real toggle button (no button inside a button); phone media tiles named;
+plan stations hidden from screen readers; rail group names are labels, not headings; prefetch one page per idle moment;
++ আইডিয়া (own class, lands in the idea box); one word per state (late = সিদ্ধান্ত লাগবে, stuck = আটকে গেছে); Home "আরও N";
+Plan held banner "সময়মতো যায়নি" folded after 2; one time zone; plain labels; phone callout buttons on one row. Checked:
+16 pages x 2 sizes, Back tests (sheet -> Plan -> reload -> Back; Settings -> Back into the desk/plan), no errors. Tests
+203/207 (ads, fddash, serverfinal, golive red before). LIVE web brandnav5-7d59952 (page only; function unchanged since
+#41); stand-alone desk rebuilt. NOT done (critique P2s): Listen/Audience/People English topic text, grey-only legends on
+Listen and Rules, post volume set in two places (Routine + Rules), inline grey intros vs ?-button rule, dark theme.
