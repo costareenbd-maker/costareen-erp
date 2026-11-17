@@ -62984,7 +62984,7 @@ button.sr-d:focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px}
       return '<button type="button" role="tab" data-bc="fitpart" data-id="' + i + '" aria-selected="' + (i === cur) + '"' + (i === cur ? ' class="on"' : '') + '>' + esc(x.part) + (miss(x) ? '<i class="pf-dot" aria-label="কিছু বাকি"></i>' : '') + '</button>'; }).join('') + '</div>';
     h += '<div class="pf-part"><p class="pf-rec">' + (P.recorded ? 'যা আসলে ব্যবহার হয়েছে, বানানোর সময় লিখে রাখা।' : 'এটা আগের লেখা বা এখনো বানানো হয়নি; নিচের অনেকটা নিয়ম আর সংস্করণ থেকে <b>অনুমান</b>।') + '</p>';
     var list = function (title, arr, fn) { return arr && arr.length ? '<div class="pf-blk"><h4>' + title + '</h4><ul>' + arr.map(fn).join('') + '</ul></div>' : ''; };
-    h += list('স্কিল', P.skills, function (x) { var go = x.doc ? { doc: x.doc } : x.sec ? { sec: x.sec } : null;
+    h += list('স্কিল', P.skills, function (x) { var go = x.doc ? { doc: x.doc } : x.sec ? { sec: x.sec } : x.url ? { url: x.url } : null;   // brand-prov-3: OpenMontage skills link to GitHub
       return '<li>' + pfLink(go, '<b>' + esc(x.name) + '</b>') + (x.what ? '<span>' + esc(x.what) + '</span>' : '') + (x.file ? '<code>' + esc(x.file) + '</code>' : '') + '</li>'; });
     h += list('টুল', P.tools, function (x) { return '<li>' + pfItem(x, true) + '</li>'; });
     h += list('উৎস', P.sources, function (x) { return '<li>' + pfItem(x) + '</li>'; });
