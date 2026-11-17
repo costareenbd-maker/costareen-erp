@@ -241,7 +241,7 @@ export async function erpBrandDeskRoutine(ctx) { await gate(ctx); return bridge(
 // brand-plan-1 (owner 17 Nov 2026): one easy page - the week, each network's growth step, the research checks, ads, the night
 export async function erpBrandDeskPlan(ctx, payload) {
   await gate(ctx);
-  const p = payload || {}, days = Math.max(1, Math.min(35, Number(p.days) || 35)), start = Math.max(0, Math.min(35, Number(p.start) || 0));
+  const p = payload || {}, days = Math.max(1, Math.min(68, Number(p.days) || 68)), start = Math.max(-7, Math.min(60, p.start == null ? -7 : Number(p.start) || 0));
   return bridge(ctx, '/plan', { days, start }, 60000);
 }
 // brand-fit-1 (owner 17 Nov 2026): how one draft lines up with the plan and the research, and what it went through
