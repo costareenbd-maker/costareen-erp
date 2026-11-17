@@ -59966,7 +59966,9 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
 .pf-sum p{margin:0;font-size:15px;line-height:1.4;min-width:0}
 .pf-sum p small{display:block;margin-top:4px;font-size:13px;line-height:1.5;opacity:.85;overflow-wrap:anywhere}
 .pf-act{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border:1px solid var(--bc-rule);border-radius:12px;font-size:13.5px;color:var(--bc-ink-2);line-height:1.5}
-.pf-act span{flex:1;min-width:200px}
+.pf-act>span:first-child{flex:1;min-width:200px}
+.pf-btns{display:flex;gap:8px;flex-wrap:wrap}
+.pn-ep{color:var(--bc-ink-2)}
 .pf-h{font:700 15px "Anek Bangla","Noto Sans Bengali",system-ui,sans-serif;margin:22px 0 8px;color:var(--bc-ink)}
 .pf-kv{display:grid;grid-template-columns:90px minmax(0,1fr);gap:6px 12px;font-size:14px;line-height:1.5}
 .pf-kv span{color:var(--bc-ink-3)}
@@ -62469,7 +62471,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       : w.state === 'later' ? '' : '<button type="button" class="bc-btn ghost sm pn-fitb" data-bc="slotfit" data-id="' + i + '" aria-haspopup="dialog">' + svg('plan') + 'প্ল্যান</button>';
     return '<div class="bc-dep pn-dep' + (w.state === 'later' ? ' pn-later' : '') + (C.pitem === String(i) ? ' pn-sel' : '') + '" id="bc_pnr_' + i + '"><span class="tm">' + pnTime(w.at) + '</span>' + lb(w.platform) +
       '<p><span class="pn-what">' + what + (w.ad ? '<span class="pn-flag">বিজ্ঞাপন-প্রার্থী</span>' : '') + (w.ai_video ? '<span class="pn-flag">AI ভিডিও</span>' : '') + '</span>' +
-      (w.hook ? '<span class="m" data-noi18n="1">' + esc(w.hook) + '</span>' : '') + '</p><span class="a pn-state">' + pnStn(pnNeeds(w) && w.state !== 'missed' ? 'wt' : st[1]) + (w.fit && w.fit[0] < w.fit[1] && w.state !== 'gone' ? 'মেলে না, দেখুন' : st[0]) + act + '</span></div>';
+      (w.hook ? '<span class="m" data-noi18n="1">' + esc(w.hook) + '</span>' : w.episode ? '<span class="m pn-ep" data-noi18n="1">৬০ দিনের প্ল্যান: ' + esc(w.episode) + '</span>' : '') + '</p><span class="a pn-state">' + pnStn(pnNeeds(w) && w.state !== 'missed' ? 'wt' : st[1]) + (w.fit && w.fit[0] < w.fit[1] && w.state !== 'gone' ? 'মেলে না, দেখুন' : st[0]) + act + '</span></div>';
   }
   function pnMapHtml(week, nets) {
     var z = C.pz || 7, sel = C.pday || 0, big = z >= 14;
@@ -62631,10 +62633,10 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       var sl = f.slot, cy = f.cycle || {}, okN = (f.score || [0, 0])[0], all = (f.score || [0, 0])[1], bad = okN < all;
       body = '<div class="pf-sum' + (bad ? ' bad' : '') + '"><span class="pf-fig">' + bn(okN) + '<small>/' + bn(all) + '</small></span><p><b>' + (bad ? bn(all - okN) + 'টা জায়গায় প্ল্যানের সাথে মেলে না' : 'প্ল্যান আর গবেষণার সাথে পুরো মিলে') + '</b>' +
         '<small data-noi18n="1">' + esc(f.hook || '') + '</small></p></div>' +
-        (bad ? '<div class="pf-act"><span>ঠিক করতে: লেখাটা খুলে বদলান, না হলে বাদ দিন; রাতের লেখক নতুন নিয়মে আবার লিখবে।</span>' + (f.status === 'awaiting_final_approval' ? '<button type="button" class="bc-btn sm dark" data-bc="fitgo" data-id="' + f.id + '">লেখাটা খুলুন</button>' : '') + '</div>' : '') +
+        (bad ? '<div class="pf-act"><span>ঠিক করতে: AI-কে নিয়মগুলো মেনে আবার লিখতে দিন (একই ঘর, একই সময়; পুরনোটা সরে যাবে), না হলে লেখাটা খুলে নিজে বদলান।</span>' + (f.status === 'awaiting_final_approval' ? '<span class="pf-btns"><button type="button" class="bc-btn sm dark" data-bc="fitfix" data-id="' + f.id + '"' + (C.busy['fx' + f.id] ? ' disabled' : '') + '>' + (C.busy['fx' + f.id] ? '<span class="bc-spin"></span>' : '') + 'নিয়ম মেনে আবার লিখুন</button><button type="button" class="bc-btn sm ghost" data-bc="fitgo" data-id="' + f.id + '">লেখাটা খুলুন</button></span>' : '') + '</div>' : '') +
         '<h3 class="pf-h">প্ল্যানের কোন ঘর</h3><div class="pf-kv">' +
         (sl ? '<span>ঘর</span><b>' + (f.planned_at ? pnDay(f.planned_at) + ' ' + pnTime(f.planned_at) + ' · ' : '') + esc(RFMT[sl.format] || sl.format) + '</b>' +
-          (sl.series_name ? '<span>সিরিজ</span><b>' + esc(sl.series_name) + '</b>' : '') + '<span>ভাষা</span><b>' + (sl.lang === 'en' ? 'English (বিদেশি পাঠক)' : 'বাংলা (বাংলাদেশের পাঠক)') + '</b>'
+          (sl.series_name ? '<span>সিরিজ</span><b>' + esc(sl.series_name) + '</b>' : '') + (sl.episode ? '<span>৬০ দিনের প্ল্যান</span><b data-noi18n="1">' + esc(sl.episode) + '</b>' : '') + '<span>ভাষা</span><b>' + (sl.lang === 'en' ? 'English (বিদেশি পাঠক)' : 'বাংলা (বাংলাদেশের পাঠক)') + '</b>'
           : '<span>ঘর</span><b>রুটিনের কোনো ঘরে বসানো নেই</b>') +
         '<span>প্ল্যান</span><b>' + esc(f.blueprint || '') + (cy.day ? ' · ৬০ দিনের দিন ' + bn(cy.day) : cy.before ? ' · ৬০ দিন শুরু হবে ' + pnIso(cy.start) : '') + '</b>' +
         (f.autopilot ? '<span>লেখা</span><b>অটোপাইলটের দিনে লেখা</b>' : '') + '</div>' +
@@ -62653,6 +62655,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     if (w.series_name) rules.push('সিরিজ: ' + w.series_name + ' — নাম শুধু শেষ লাইনে');
     if (w.format === 'reel' || w.format === 'short' || w.format === 'video' || w.format === 'trial') rules.push('AI ভিডিও হলে কোণে "AI ভিডিও" লেবেল; মুখ ছাড়া ভিডিও সপ্তাহে অর্ধেকের বেশি নয়');
     var body = '<div class="pf-sum plain"><p><b>' + esc(netName(w.platform)) + ' · ' + pnDay(w.at) + ' ' + pnTime(w.at) + '</b><small>' + esc(RFMT[w.format] || w.format) + (w.series_name ? ' · ' + esc(w.series_name) : '') + '</small></p></div>' +
+      (w.episode ? '<h3 class="pf-h">৬০ দিনের প্ল্যানে এই দিনে</h3><p class="pf-ad" data-noi18n="1"><b>' + esc(w.episode) + '</b></p>' : '') +
       '<h3 class="pf-h">কীভাবে তৈরি হবে</h3><p class="pf-ad">' + how + '</p>' +
       '<h3 class="pf-h">যে নিয়মে লেখা হবে</h3><ul class="pf-rules">' + rules.map(function (r) { return '<li>' + pnStn('tick') + '<span>' + esc(r) + '</span></li>'; }).join('') + '</ul>' +
       '<h3 class="pf-h">বিজ্ঞাপন</h3><p class="pf-ad">' + (w.ad ? esc(w.ad_why || '') : 'এই ঘর বিজ্ঞাপনের প্রার্থী নয়।') + '</p>';
@@ -63116,6 +63119,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     else if (w === 'pnjump') { var jt = el(id); if (jt) try { jt.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } catch (e) {} }
     else if (w === 'fit' || w === 'slotfit') { C.csFromEl = t; C.csFrom = ''; C.sheet = 'fit:' + (w === 'slotfit' ? 'slot' + id : id); C.csIn = 1; if (w === 'fit' && !C.fits[id]) fitLoad(id); draw(); setTimeout(function () { var pf = el('bc_cs_p'); if (pf) try { pf.focus({ preventScroll: true }); } catch (e) {} }, 30); }
     else if (w === 'fitretry') { C.fits[id] = null; fitLoad(id); draw(); var pr = el('bc_cs_p'); if (pr) try { pr.focus({ preventScroll: true }); } catch (e) {} }
+    else if (w === 'fitfix') { act('fx' + id, 'erpBrandDeskDraftFix', { id: Number(id) }, function (r) { C.fits[id] = null; closeSheet(); toast('AI নিয়ম মেনে আবার লিখছে, ১-২ মিনিট। নতুন লেখা পোস্টে আর এখানে আসবে।'); get('drafts', true); setTimeout(function () { get('plan', true); }, 90000); }); }
     else if (w === 'fitgo') { C.csFromEl = null; closeSheet(); C.sec = 'posts'; get('drafts'); draw(); setTimeout(function () { var tk = el('bc_tk_' + id); if (tk) try { tk.scrollIntoView({ block: 'start' }); } catch (e) {} }, 400); }
     else if (w === 'cynet') { C.cyNet = id; C.cyWk = null; draw(); }
     else if (w === 'cywk') { C.cyWk = Number(id); draw(); }

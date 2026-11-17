@@ -34,6 +34,11 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (url.endsWith('/media/keep')) return { body: { keep_days: 60 } };
   if (url.includes('/reels')) return { body: { reels: [], jobs: {} } };
   if (url.includes('/results?days=')) return { body: { days: Number(url.split('days=')[1]), channels: [{ platform: 'facebook', integration: 'n1', metrics: { views: { value: 12, prev: null, kind: 'flow' } }, why: null }, { platform: 'linkedin', integration: 'n2', metrics: {}, why: 'not measured' }], posts: [{ id: 1, platform: 'facebook', views: null, likes: 2 }], totals: { posts: 1, measured: 1, views: null, likes: 2 }, best: [1], by_pillar: [], not_measured: [], last_run: null } };
+  // brand-plan-1 / brand-fit-1/3: plan report, plan fit, 60-day cycles, rewrite to keep the plan
+  if (url.endsWith('/plan')) return { body: { window: JSON.parse(opts.body), week: [], nets: [], checks: [], held: [], cycle: { n: 1 } } };
+  if (url.endsWith('/fit')) { const b = JSON.parse(opts.body); return b.id === 404 ? { status: 400, body: { error: 'ড্রাফটটা আর নেই।' } } : { body: { id: b.id, score: [4, 5], rules: [], steps: [] } }; }
+  if (url.endsWith('/cycles')) return { body: { cycle: { n: 1, day: 0 }, plans: { facebook: { head: ['সপ্তাহ'], rows: [] } }, next: { n: 2 } } };
+  if (url.endsWith('/drafts/fix')) return { body: { job: 'fx1', fixing: ['ভাষা'] } };
   if (url.includes('/routine')) return { body: { slots: [], status: { level: 2, effective: 2 }, fills: {} } };
   if (url.endsWith('/media/upload')) return { body: { id: 'up9', path: 'https://social.example.com/uploads/p.jpg', type: 'image', asset: '5d23777f-eda4-40ef-9b8d-8065d7a9a896' } };
   if (url.endsWith('/drafts/idea')) return { body: { job: 'i1', waiting: [], ideas: [], jobs: {} } };
@@ -567,6 +572,30 @@ for (const n of ['erpBrandDeskThreadSummary', 'erpBrandDeskContact', 'erpBrandDe
 }
 const sysAfter = await sql`select (select count(*)::int from business_config) as c`;
 check('the inbox keeps nothing in the ERP settings', sysAfter[0].c === sysBefore[0].c, { sysBefore, sysAfter });
+
+// brand-plan-1 / brand-fit-1/3 (17 Nov 2026): plan report window, plan fit, cycles, rewrite
+r = await owner('erpBrandDeskPlan', []);
+check('the plan asks for 7 days back to 60 ahead by default', r.ok && r.result.window.days === 68 && r.result.window.start === -7, r);
+r = await owner('erpBrandDeskPlan', [{ days: 500, start: -99 }]);
+check('the plan window is clamped', r.ok && r.result.window.days === 68 && r.result.window.start === -7, r);
+r = await owner('erpBrandDeskPlan', [{ days: 1, start: 3 }]);
+check('one day from day 3', r.ok && r.result.window.days === 1 && r.result.window.start === 3, r);
+r = await owner('erpBrandDeskFit', [{ id: 12 }]);
+check('plan fit comes from the bridge', r.ok && r.result.id === 12 && r.result.score[0] === 4, r);
+r = await owner('erpBrandDeskFit', [{ id: 'x' }]);
+check('plan fit needs a draft id', !r.ok, r);
+r = await owner('erpBrandDeskFit', [{ id: 404 }]);
+check('a missing draft says so', !r.ok && /ড্রাফট/.test(r.error), r);
+r = await owner('erpBrandDeskCycles', []);
+check('the 60-day plans come from the bridge', r.ok && r.result.next.n === 2 && !!r.result.plans.facebook, r);
+r = await owner('erpBrandDeskDraftFix', [{ id: 12 }]);
+check('rewrite to keep the plan goes to the bridge', r.ok && r.result.job === 'fx1' && seen.filter((x) => x.url.endsWith('/drafts/fix')).pop().body.id === 12, r);
+r = await owner('erpBrandDeskDraftFix', [{ id: -3 }]);
+check('rewrite needs a real draft id', !r.ok, r);
+for (const n of ['erpBrandDeskPlan', 'erpBrandDeskFit', 'erpBrandDeskCycles', 'erpBrandDeskDraftFix']) {
+  r = await mgr(n, [{ id: 12 }]);
+  check('staff cannot use ' + n, !r.ok, r);
+}
 
 // 5. the PC goes quiet: closed after 3 minutes
 await sql`update business_config set value = ${JSON.stringify({ url: URL, seen: new Date(Date.now() - 4 * 60e3).toISOString() })} where business_id = ${B} and key = 'brand_bridge'`;
