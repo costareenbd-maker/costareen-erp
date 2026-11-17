@@ -62924,6 +62924,7 @@ i.pn-sn{display:block;font-style:normal}
       if (C.sec === 'map') requestAnimationFrame(wires);
       try { document.title = secTitle(C.sec) + ' · ব্র্যান্ড ডেস্ক'; } catch (e) {}
       if (C.focusHead) { C.focusHead = 0; var h1 = el('bc_h1'); if (h1) try { h1.focus({ preventScroll: true }); } catch (e) {} }
+      if (C.capFocus && C.sec === 'ideas') { var ib = el('bci_cap'); if (ib) { C.capFocus = 0; try { ib.scrollIntoView({ block: 'center' }); ib.focus({ preventScroll: true }); } catch (e) {} } } else if (C.sec !== 'ideas') C.capFocus = 0;
       var layer = !!(C.sheet || C.railMore);
       if (layer && !C._lay) { C._lay = 1; try { history.pushState({ bcLayer: 1 }, '', location.hash); } catch (e) {} }
       else if (!layer && C._lay) { C._lay = 0; try { if (history.state && history.state.bcLayer) { C._skipPop = 1; history.back(); } } catch (e) {} }
@@ -63170,7 +63171,7 @@ i.pn-sn{display:block;font-style:normal}
     else if (w === 'st') { tipHide(); C.pick = C.pick === id ? '' : id; var s = findSt(id); if (s) { C.wk = Math.floor((new Date(s.at) - weekStart(0)) / (7 * 864e5)); } draw(); var pk = el('bc_root').querySelector('.bc-pick'); if (pk && pk.scrollIntoView) pk.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
     else if (w === 'unpick') { C.pick = ''; draw(); }
     else if (w === 'dep') { if (e.target.closest('button,a') && e.target.closest('button,a') !== t) return; C.dep = C.dep === id ? '' : id; draw(); }
-    else if (w === 'hcap') { C.itab = ''; goSec('ideas', false, true); setTimeout(function () { var ib = el('bci_cap'); if (ib) { try { ib.scrollIntoView({ block: 'center' }); ib.focus({ preventScroll: true }); } catch (e) {} } }, 80); }
+    else if (w === 'hcap') { C.itab = ''; C.capFocus = 1; goSec('ideas', false, true); }   // the idea box gets focus on the first draw that has it (the page may still be loading)
     else if (w === 'ptab') { C.ptab = id; goSec('posts', false, C.sec === 'posts'); }
     else if (w === 'todrafts') { var fd = el('bc_root').querySelector('#bc_sidehd'); var tk = el('bc_root').querySelector('.bc-side .bc-tk, #bc_side_drafts .bc-tk'); if (tk) { tk.scrollIntoView({ behavior: 'smooth', block: 'center' }); tk.classList.remove('bc-flash'); void tk.offsetWidth; tk.classList.add('bc-flash'); var fa = tk.querySelector('[data-bc="approve"]'); if (fa) setTimeout(function () { fa.focus({ preventScroll: true }); }, 400); } else if (fd) fd.scrollIntoView({ behavior: 'smooth' }); }
     else if (w === 'resend') {
