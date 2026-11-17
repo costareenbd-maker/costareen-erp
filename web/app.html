@@ -60175,7 +60175,7 @@ button.bc-rk.ls-r b{text-align:right;font:700 14px "Pretendard Variable",system-
 }
 
 /* brand-acc-1 */
-.bx-acc{display:inline-block;max-width:14ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;margin-right:6px;padding:0 7px;border-radius:99px;background:var(--bc-shelf);color:var(--bc-ink);font:600 11.5px/18px "Pretendard Variable",system-ui,sans-serif}
+.bx-acc{display:inline-block;max-width:22ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;margin-right:6px;padding:0 7px;border-radius:99px;background:var(--bc-shelf);color:var(--bc-ink);font:600 11.5px/18px "Pretendard Variable",system-ui,sans-serif}
 .bx-th .bx-acc{margin:0 0 0 2px}
 
 /* brand-plan-3 */
@@ -60870,7 +60870,7 @@ button.sr-d:focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px}
   }
   function ideaTabs() {
     var nd = (C.d.news && C.d.news.news) || [], fresh = nd.filter(function (n) { return n.picked; }).length;
-    return '<div class="bc-pills it-tabs" role="tablist"><button type="button" role="tab" data-bc="itab" data-id="mine"' + (C.itab !== 'news' ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>আইডিয়া</button>' +
+    return '<div class="bc-pills it-tabs" role="tablist"><button type="button" role="tab" data-bc="itab" data-id="mine"' + (C.itab !== 'news' && C.itab !== 'series' ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>আইডিয়া</button>' +
       '<button type="button" role="tab" data-bc="itab" data-id="series"' + (C.itab === 'series' ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>ধাপে ধাপে সিরিজ</button>' +
       '<button type="button" role="tab" data-bc="itab" data-id="news"' + (C.itab === 'news' ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>খবর' + (fresh ? ' <em>' + bn(fresh) + '</em>' : '') + '</button></div>';
   }
