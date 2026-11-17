@@ -60359,8 +60359,8 @@ i.pn-sn{display:block;font-style:normal}
   }
   function flagsHtml(x) {
     var fs = flagsOf(x), k = 'fl' + x.id, open = !!C.fold[k], show = open ? fs : fs.slice(0, 2);
-    return show.map(function (f) { var rs = String(f.reason_bn || f.reason || ''), en = (rs.match(/[A-Za-z]/g) || []).length > 3 * (rs.match(/[\u0985-\u09B9\u09DC-\u09DF]/g) || []).length;   // mostly English (Bangla digits do not count)
-      if (en) return '<div class="bc-flag"><span class="bc-tag ' + (f.severity === 'block' ? 'x' : 'w') + '">' + (f.severity === 'block' ? 'পোস্ট আটকাবে' : 'দেখে নিন') + '</span><details class="bc-fx"><summary>AI-এর যাচাইয়ের নোট (ইংরেজিতে)</summary><span data-noi18n="1">' + esc(rs) + '</span></details></div>';
+    return show.map(function (f, fi) { var fk = 'fx' + x.id + '_' + fi, fo = !!C.fold[fk], rs = String(f.reason_bn || f.reason || ''), en = (rs.match(/[A-Za-z]/g) || []).length > 3 * (rs.match(/[\u0985-\u09B9\u09DC-\u09DF]/g) || []).length;   // mostly English (Bangla digits do not count)
+      if (en) return '<div class="bc-flag"><span class="bc-tag ' + (f.severity === 'block' ? 'x' : 'w') + '">' + (f.severity === 'block' ? 'পোস্ট আটকাবে' : 'দেখে নিন') + '</span><span class="bc-fx"><button type="button" class="bc-fold' + (fo ? ' on' : '') + '" data-bc="fold" data-id="' + fk + '" aria-expanded="' + fo + '">' + svg('right') + 'AI-এর যাচাইয়ের নোট (ইংরেজিতে)</button>' + (fo ? '<span class="bc-fxt" data-noi18n="1">' + esc(rs) + '</span>' : '') + '</span></div>';
       return '<div class="bc-flag"><span class="bc-tag ' + (f.severity === 'block' ? 'x' : 'w') + '">' + (f.severity === 'block' ? 'পোস্ট আটকাবে' : 'দেখে নিন') + '</span><span data-noi18n="1">' + esc(String(f.reason_bn || f.reason || '').replace(NETRX, '').replace(/^\s*যাচাই\s*:\s*/, '')) + (f.match ? ' (“' + esc(f.match) + '”)' : '') + '</span></div>'; }).join('') +
       (fs.length > 2 ? '<button type="button" class="bc-fold' + (open ? ' on' : '') + '" data-bc="fold" data-id="' + k + '" aria-expanded="' + open + '">' + svg('right') + (open ? 'কম দেখান' : 'আরও ' + bn(fs.length - 2) + 'টা') + '</button>' : '');
   }
