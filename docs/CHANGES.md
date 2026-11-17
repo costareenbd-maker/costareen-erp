@@ -4725,3 +4725,13 @@ back to the fit sheet; the 60-day episode per slot. Found + fixed: the plan guar
 Tests 202/207 (ads, fddash, serverfinal red before; golive needs IMPORT_DIR). LIVE: function file-by-file + web
 brandfit-9607231 (G:/MACMINI-AI-HANDOFF.md #41). NOT done: older drafts show "অনুমান" (no record before today); the
 voice guide (voice-guide.md) is still the 10 Nov example draft v0 with seller lines - needs the owner's real voice.
+
+## brand-nav-1..4 (17 Nov 2026) - Brand desk easier to find your way + nicer (dev, then live)
+Owner: review the whole Brand desk design with impeccable, keep every function, raise the score, make it easy to
+navigate, nicer to look at and quicker to get work done. Critique 23/40 + audit 11/20 before. Built (nothing removed):
+grouped rail + phone bar with a আরও sheet, Back/forward history per page, page title + heading focus, skip link; one
+waiting count on Home/Posts/Plan; late vs stuck callouts with a fix button; plain Bangla labels (এখন পাঠান, নিয়ম মানেনি,
+map nodes); cross links Rules<->Routine/Audience, Listen/People -> Inbox; + আইডিয়া in Home/Posts heads; fit chip on post
+cards; Posts folds after 3 idea groups with a jump strip (8,012 -> 2,064px), Media 24 tiles (phone 39,181 -> 5,246px);
+plan stations as spans (980 -> 113 buttons); Train page sideways scroll fixed; prefetch of the phone-bar pages; Bangla
+fonts start with the page on devices that used the desk. DESIGN.md navigation entry.

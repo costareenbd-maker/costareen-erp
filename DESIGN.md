@@ -508,6 +508,17 @@ Cockpit panels and cards carry a 1px rule, not a shadow.
   as departures with dates and a go-to-that-day button (series codes and writer notes stripped), then how the next 60
   days get written.
 
+- **Navigation (brand-nav-1..4, 17 Nov 2026):** the desktop rail is four named groups (আজকের কাজ: হোম, পোস্ট, ইনবক্স,
+  পরিকল্পনা · বানানো: আইডিয়া, মিডিয়া · মানুষ ও সাড়া · AI কীভাবে চলে), group titles 12px ink-3 `h2.bc-rg`. Phone bar: the
+  four daily pages + আরও, which opens a grouped sheet right after its trigger (scrim, Esc closes, focus to the first item).
+  Every page change is a history entry (`#branddesk/<page>`), Back closes an open sheet first, the page title and h1 focus
+  follow the page, a skip link jumps to `main#bc_main`. One waiting number everywhere (`counts().waiting`). Late posts on
+  Home are amber ("সিদ্ধান্ত লাগবে"), stuck ones red with ঠিক করুন. Long pages fold: Posts shows three idea groups + a
+  jump strip (`.ph-jump`), Media 24 tiles (3-up on phone). Categories that are not networks (inbox kinds, audiences) use
+  the ink ramp. English AI notes sit behind a Bangla fold. Fonts: Noto Sans Bengali + Anek Bangla from Google Fonts,
+  loaded with the page on a device that has opened the desk (the old "no CDN fonts" line is wrong: the page CSP allows
+  fonts.googleapis.com / fonts.gstatic.com). Light-only by decision: the cockpit has no dark theme.
+
 ### Do's and Don'ts
 - **Do** keep colour on the lines. A new cockpit element is ink, grey or rule unless it is a network, stuck or waiting.
 - **Do** keep stuck posts visible at every zoom level and through every merge.
@@ -515,7 +526,7 @@ Cockpit panels and cards carry a 1px rule, not a shadow.
 - **Do** keep a network's own colours and fonts inside its phone card, YouTube thread or Telegram inbox; the chrome around
   them stays Line Map.
 - **Don't** use the shielded short class words (or `empty`, `none`) for new cockpit classes.
-- **Don't** load fonts from a CDN; the CSP blocks it.
+- **Don't** load fonts from any CDN other than Google Fonts.
 - **Don't** bring the ERP's lime, pastel KPI tiles or grey canvas into the cockpit, and don't take the Line Map palette
   out of it.
 - **Don't** open the cockpit on KPI cards with a table below. The map leads.

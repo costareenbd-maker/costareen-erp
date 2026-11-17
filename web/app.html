@@ -60140,6 +60140,7 @@ i.pn-sn{display:block;font-style:normal}
     SRV_SLOW.erpBrandDeskVideos = 60000; SRV_SLOW.erpBrandDeskSites = 45000; SRV_SLOW.erpBrandDeskSiteSave = 45000; SRV_SLOW.erpBrandDeskBizSave = 45000; SRV_SLOW.erpBrandDeskListenPull = 90000; SRV_SLOW.erpBrandDeskListenIdeas = 90000; SRV_SLOW.erpBrandDeskListenPaste = 90000; } catch (e) {}
   var C = { media: {}, ar: {}, mpk: '', exp: {}, edit: {}, sec: 'home', wk: 0, pick: '', node: '', ptab: '', dep: '', d: {}, busy: {}, err: {}, v: {}, acc: {}, open: {}, cards: {}, plats: { linkedin: 1, facebook: 1 }, lf: 'all', lopen: {}, fold: {}, rw: {}, nk: 'customer', paste: false, t: 0 };
   try { var s0 = localStorage.getItem('bc_sec'); if (s0) C.sec = s0; } catch (e) {}
+  try { if (localStorage.getItem('bc_sec')) fonts(); } catch (e) {}   // brand-nav-3: on a device that has opened the desk, its Bangla fonts start loading with the page (no reflow when the desk opens)
   var NET = {
     linkedin: ['LinkedIn', '#0A66C2'], facebook: ['Facebook', '#1877F2'], instagram: ['Instagram', '#C13584'], 'instagram-standalone': ['Instagram', '#C13584'],
     youtube: ['YouTube', '#E62117'], tiktok: ['TikTok', '#111111'], bluesky: ['Bluesky', '#1185FE'], telegram: ['Telegram', '#229ED9'], x: ['X', '#3A3F47'], threads: ['Threads', '#5B5F66']
