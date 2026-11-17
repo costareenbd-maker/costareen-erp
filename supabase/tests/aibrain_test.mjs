@@ -98,7 +98,7 @@ await owner('erpAiBrainKey', [{ provider: 'gemini', key: 'gm-test-fake-key-0000-
 await owner('erpAiBrainSet', [{ routes: { default: { provider: 'openai', model: 'auto' }, tasks: {}, cheap: ['chat'] } }]);
 const nG = seen.gemini.length, nO = seen.openai.length;
 x = await asB((ctx) => A.ai(ctx, { purpose: 'reply', system: 'shop', messages: [{ role: 'user', content: [{ type: 'text', text: 'PLA black ache?' }] }] }));
-check('a plain customer question: Gemini\'s free-tier model answers, the paid AI is not called', x.provider === 'gemini' && x.tier === 'cheap' && /gemini-2\.5-flash/.test(seen.gemini[seen.gemini.length - 1].url) && seen.openai.length === nO, { x, url: seen.gemini[seen.gemini.length - 1].url });
+check('a plain customer question: Gemini\'s free-tier model answers, the paid AI is not called', x.provider === 'gemini' && x.tier === 'cheap' && /gemini-(3\.1-flash-lite|2\.5-flash)/.test(seen.gemini[seen.gemini.length - 1].url)   /* gemini-1: new keys cannot call 2.5, the free list starts at 3.1-flash-lite */ && seen.openai.length === nO, { x, url: seen.gemini[seen.gemini.length - 1].url });
 x = await asB((ctx) => A.ai(ctx, { purpose: 'reply', system: 'shop', messages: [{ role: 'user', content: [{ type: 'text', text: 'My printer is broken after 2 days, I want a refund' }] }] }));
 check('a complaint goes straight to the strong AI (ChatGPT)', x.provider === 'openai' && seen.gemini.length === nG + 1, x);
 gemNext = () => [{ text: '[SENIOR]' }];

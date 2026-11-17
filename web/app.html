@@ -59988,6 +59988,23 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
 .pf-ad{margin:0;font-size:14px;line-height:1.55;color:var(--bc-ink-2)}
 .pf-ad b{display:block;color:var(--bc-ink);font-weight:600}
 .pf-load{display:grid;gap:4px}
+.pf-parts{margin:0 0 10px}
+.pf-parts button{position:relative}
+.pf-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--bc-wait);margin-left:6px;vertical-align:2px}
+.pf-part{border:1px solid var(--bc-rule);border-radius:14px;padding:12px 14px}
+.pf-rec{margin:0 0 6px;font-size:12.5px;color:var(--bc-ink-3);line-height:1.5}
+.pf-blk{margin-top:12px}
+.pf-blk h4{margin:0 0 6px;font:600 13px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-3)}
+.pf-blk ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.pf-blk li{font-size:13.5px;line-height:1.5;color:var(--bc-ink)}
+.pf-blk li b{font-weight:600}
+.pf-blk li span{display:block;font-size:12.5px;color:var(--bc-ink-3)}
+.pf-blk li code{display:inline-block;margin-top:2px;font:500 11.5px "Pretendard Variable",ui-monospace,monospace;background:var(--bc-shelf);border-radius:5px;padding:1px 6px;color:var(--bc-ink-2)}
+.pf-exp li{display:grid;grid-template-columns:14px minmax(0,1fr);gap:10px;align-items:start}
+.pf-exp li .pn-stn{margin-top:4px}
+.pf-exp li span{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;color:var(--bc-ink)}
+.pf-exp li em{font-style:normal;font-size:12px;font-weight:600;color:var(--bc-ink-3);white-space:nowrap}
+.pf-exp li.bad em,.pf-exp li.bad span{color:#7A5200}
 /* ৬০ দিনের প্ল্যান */
 .cy-line{margin:6px 0 30px;padding:0 8px}
 .cy-track{position:relative;height:6px;border-radius:3px;background:var(--bc-shelf);margin-top:26px}
@@ -62641,10 +62658,29 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
         '<span>প্ল্যান</span><b>' + esc(f.blueprint || '') + (cy.day ? ' · ৬০ দিনের দিন ' + bn(cy.day) : cy.before ? ' · ৬০ দিন শুরু হবে ' + pnIso(cy.start) : '') + '</b>' +
         (f.autopilot ? '<span>লেখা</span><b>অটোপাইলটের দিনে লেখা</b>' : '') + '</div>' +
         '<h3 class="pf-h">গবেষণার নিয়ম</h3><ul class="pf-rules">' + (f.rules || []).map(function (r) { return '<li class="' + (r.ok ? '' : 'bad') + '">' + pnStn(r.ok ? 'q' : 'wt') + '<span><em>' + esc(r.rule) + '</em>' + esc(r.text) + '</span></li>'; }).join('') + '</ul>' +
-        '<h3 class="pf-h">কীভাবে বানানো হয়েছে</h3><ol class="pf-steps">' + (f.steps || []).map(function (x) { return '<li><span class="pf-sd" aria-hidden="true"></span><p><b>' + esc(x.step) + '</b><span data-noi18n="1">' + esc(x.how) + '</span></p></li>'; }).join('') + '</ol>' +
+        pfMadeHtml(f) +
         '<h3 class="pf-h">বিজ্ঞাপন</h3>' + (f.ad ? '<p class="pf-ad"><b>' + esc(f.ad.type_bn) + '</b>' + esc(f.ad.why) + '</p>' : '<p class="pf-ad">এই ঘর বিজ্ঞাপনের প্রার্থী নয়।</p>');
     }
-    return pnSheet('প্ল্যান মিল', f.platform, body, f.busy);
+    return pnSheet('প্ল্যান মিল আর উৎস', f.platform, body, f.busy);
+  }
+  // brand-prov-1 (owner 17 Nov 2026): for the writing, the picture and the video: which skills, which tools, which sources
+  // and decisions went in, and whether what should be used was used. "অনুমান" when the draft was written before records began.
+  function pfMadeHtml(f) {
+    var parts = f.made || [];
+    if (!parts.length) return '<h3 class="pf-h">কীভাবে বানানো হয়েছে</h3><ol class="pf-steps">' + (f.steps || []).map(function (x) { return '<li><span class="pf-sd" aria-hidden="true"></span><p><b>' + esc(x.step) + '</b><span data-noi18n="1">' + esc(x.how) + '</span></p></li>'; }).join('') + '</ol>';
+    var cur = Math.max(0, Math.min(parts.length - 1, C.fitPart || 0)), P = parts[cur];
+    var miss = function (x) { return (x.expected || []).some(function (e) { return e.ok === false; }); };
+    var h = '<h3 class="pf-h">কী দিয়ে বানানো</h3><div class="bc-pills pf-parts" role="tablist" aria-label="অংশ">' + parts.map(function (x, i) {
+      return '<button type="button" role="tab" data-bc="fitpart" data-id="' + i + '" aria-selected="' + (i === cur) + '"' + (i === cur ? ' class="on"' : '') + '>' + esc(x.part) + (miss(x) ? '<i class="pf-dot" aria-label="কিছু বাকি"></i>' : '') + '</button>'; }).join('') + '</div>';
+    h += '<div class="pf-part"><p class="pf-rec">' + (P.recorded ? 'যা আসলে ব্যবহার হয়েছে, বানানোর সময় লিখে রাখা।' : 'এটা আগের লেখা বা এখনো বানানো হয়নি; নিচের অনেকটা নিয়ম আর সংস্করণ থেকে <b>অনুমান</b>।') + '</p>';
+    var list = function (title, arr, fn) { return arr && arr.length ? '<div class="pf-blk"><h4>' + title + '</h4><ul>' + arr.map(fn).join('') + '</ul></div>' : ''; };
+    h += list('স্কিল', P.skills, function (x) { return '<li><b>' + esc(x.name) + '</b>' + (x.what ? '<span>' + esc(x.what) + '</span>' : '') + (x.file && x.file !== 'skill' ? '<code>' + esc(x.file) + '</code>' : x.file === 'skill' ? '<code>Claude skill</code>' : '') + '</li>'; });
+    h += list('টুল', P.tools, function (x) { return '<li><b>' + esc(x) + '</b></li>'; });
+    h += list('উৎস', P.sources, function (x) { return '<li data-noi18n="1">' + esc(x) + '</li>'; });
+    h += list('সিদ্ধান্ত', P.decisions, function (x) { return '<li data-noi18n="1">' + esc(x) + '</li>'; });
+    h += '<div class="pf-blk"><h4>যা ব্যবহার হওয়ার কথা</h4><ul class="pf-exp">' + (P.expected || []).map(function (e) {
+      return '<li class="' + (e.ok === false ? 'bad' : e.ok == null ? 'unk' : '') + '">' + pnStn(e.ok === false ? 'wt' : e.ok == null ? 'tick' : 'q') + '<span>' + esc(e.what) + '<em>' + (e.ok === false ? 'হয়নি' : e.ok == null ? 'নথি নেই' : 'হয়েছে') + '</em></span></li>'; }).join('') + '</ul></div></div>';
+    return h;
   }
   function slotSheetHtml(i) {
     var w = ((C.d.plan || {}).week || [])[i];
@@ -63117,9 +63153,10 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     else if (w === 'pntoday') { C.pday = 0; C.pitem = ''; pnScrollTo(0); draw(); }
     else if (w === 'pntab') { C.ptab = id; draw(); }
     else if (w === 'pnjump') { var jt = el(id); if (jt) try { jt.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } catch (e) {} }
-    else if (w === 'fit' || w === 'slotfit') { C.csFromEl = t; C.csFrom = ''; C.sheet = 'fit:' + (w === 'slotfit' ? 'slot' + id : id); C.csIn = 1; if (w === 'fit' && !C.fits[id]) fitLoad(id); draw(); setTimeout(function () { var pf = el('bc_cs_p'); if (pf) try { pf.focus({ preventScroll: true }); } catch (e) {} }, 30); }
+    else if (w === 'fit' || w === 'slotfit') { C.fitPart = 0; C.csFromEl = t; C.csFrom = ''; C.sheet = 'fit:' + (w === 'slotfit' ? 'slot' + id : id); C.csIn = 1; if (w === 'fit' && !C.fits[id]) fitLoad(id); draw(); setTimeout(function () { var pf = el('bc_cs_p'); if (pf) try { pf.focus({ preventScroll: true }); } catch (e) {} }, 30); }
     else if (w === 'fitretry') { C.fits[id] = null; fitLoad(id); draw(); var pr = el('bc_cs_p'); if (pr) try { pr.focus({ preventScroll: true }); } catch (e) {} }
     else if (w === 'fitfix') { act('fx' + id, 'erpBrandDeskDraftFix', { id: Number(id) }, function (r) { C.fits[id] = null; closeSheet(); toast('AI নিয়ম মেনে আবার লিখছে, ১-২ মিনিট। নতুন লেখা পোস্টে আর এখানে আসবে।'); get('drafts', true); setTimeout(function () { get('plan', true); }, 90000); }); }
+    else if (w === 'fitpart') { C.fitPart = Number(id); draw(); }
     else if (w === 'fitgo') { C.csFromEl = null; closeSheet(); C.sec = 'posts'; get('drafts'); draw(); setTimeout(function () { var tk = el('bc_tk_' + id); if (tk) try { tk.scrollIntoView({ block: 'start' }); } catch (e) {} }, 400); }
     else if (w === 'cynet') { C.cyNet = id; C.cyWk = null; draw(); }
     else if (w === 'cywk') { C.cyWk = Number(id); draw(); }
