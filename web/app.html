@@ -8545,7 +8545,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpVideoShots|erpBrandDeskAudience|erpBrandDeskInbox|erpBrandDeskThread|erpBrandDeskSaved|erpBrandDeskAudio|erpBrandDeskChannels|erpBrandDeskSites|erpBrandDeskCritiques|erpBrandDeskResults|erpBrandDeskCockpit|erpBrandDeskReels|erpBrandDeskRoutine|erpBrandDeskPlan|erpBrandDeskFit|erpBrandDeskCycles|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpVideoShots|erpBrandDeskAudience|erpBrandDeskInbox|erpBrandDeskThread|erpBrandDeskSaved|erpBrandDeskAudio|erpBrandDeskChannels|erpBrandDeskSites|erpBrandDeskCritiques|erpBrandDeskResults|erpBrandDeskCockpit|erpBrandDeskReels|erpBrandDeskRoutine|erpBrandDeskPlan|erpBrandDeskFit|erpBrandDeskDoc|erpBrandDeskCycles|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 // crit8-nav (10 Nov 2026): these calls only read when they are sent without a change (the list form) and write with one.
 // The same rule as the server's ERP_READ_WHEN (allow.js): the list form runs beside other reads, sends no one-time key
 // and drops no caches; the changing form stays a write. erpTool and erpBrainFact always write (every branch changes data).
@@ -60005,6 +60005,27 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
 .pf-exp li span{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;color:var(--bc-ink)}
 .pf-exp li em{font-style:normal;font-size:12px;font-weight:600;color:var(--bc-ink-3);white-space:nowrap}
 .pf-exp li.bad em,.pf-exp li.bad span{color:#7A5200}
+.pf-go{all:unset;box-sizing:border-box;display:inline-flex;align-items:flex-start;gap:6px;cursor:pointer;border-radius:6px;color:var(--bc-ink);text-decoration:underline;text-decoration-color:#B4B9C1;text-underline-offset:3px;max-width:100%}
+.pf-go:hover{text-decoration-color:var(--bc-ink)}
+.pf-go:focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px}
+.pf-go svg{width:14px;height:14px;flex:none;margin-top:4px;stroke:var(--bc-ink-3);fill:none;stroke-width:2}
+.pf-tx{min-width:0}
+.dv-back{margin:0 0 10px}
+.dv-name{margin:0 0 8px}
+.dv-name code{font:500 12px "Pretendard Variable",ui-monospace,monospace;background:var(--bc-shelf);border-radius:5px;padding:2px 7px;color:var(--bc-ink-2)}
+.dv{font-size:14.5px;line-height:1.7;color:var(--bc-ink);overflow-wrap:anywhere}
+.dv h2{font:700 19px "Anek Bangla","Noto Sans Bengali",system-ui,sans-serif;margin:18px 0 8px}
+.dv h3{font:700 16.5px "Anek Bangla","Noto Sans Bengali",system-ui,sans-serif;margin:16px 0 6px}
+.dv h4,.dv h5{font:600 15px "Noto Sans Bengali",system-ui,sans-serif;margin:14px 0 4px}
+.dv p{margin:0 0 10px;max-width:72ch}
+.dv ul{margin:0 0 10px;padding-left:20px}
+.dv li{margin:3px 0}
+.dv code{font:500 12.5px "Pretendard Variable",ui-monospace,monospace;background:var(--bc-shelf);border-radius:4px;padding:1px 5px}
+.dv a{color:var(--bc-ink);text-underline-offset:3px}
+.dv-tw{overflow-x:auto;margin:6px 0 12px;border:1px solid var(--bc-rule);border-radius:10px}
+.dv table{border-collapse:collapse;font-size:13px;min-width:100%}
+.dv th{background:var(--bc-shelf);text-align:left;padding:7px 9px;font-weight:600;white-space:nowrap}
+.dv td{padding:7px 9px;border-top:1px solid var(--bc-rule);vertical-align:top}
 /* ৬০ দিনের প্ল্যান */
 .cy-line{margin:6px 0 30px;padding:0 8px}
 .cy-track{position:relative;height:6px;border-radius:3px;background:var(--bc-shelf);margin-top:26px}
@@ -61367,6 +61388,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
   function sheetHtml() {
     if (!C.sheet) return '';
     if (String(C.sheet).indexOf('fit:') === 0) return fitSheetHtml(String(C.sheet).slice(4));
+    if (String(C.sheet).indexOf('doc:') === 0) return docSheetHtml(String(C.sheet).slice(4));
     var S = SHEET[C.sheet];
     if (!S) { C.sheet = ''; return ''; }
     var o = S.o, top = o.top ? o.top() : o.text ? '<div class="cs-txt" data-noi18n="1">' + esc(String(o.text).slice(0, 1500)) + '</div>' : '';
@@ -62674,13 +62696,36 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       return '<button type="button" role="tab" data-bc="fitpart" data-id="' + i + '" aria-selected="' + (i === cur) + '"' + (i === cur ? ' class="on"' : '') + '>' + esc(x.part) + (miss(x) ? '<i class="pf-dot" aria-label="কিছু বাকি"></i>' : '') + '</button>'; }).join('') + '</div>';
     h += '<div class="pf-part"><p class="pf-rec">' + (P.recorded ? 'যা আসলে ব্যবহার হয়েছে, বানানোর সময় লিখে রাখা।' : 'এটা আগের লেখা বা এখনো বানানো হয়নি; নিচের অনেকটা নিয়ম আর সংস্করণ থেকে <b>অনুমান</b>।') + '</p>';
     var list = function (title, arr, fn) { return arr && arr.length ? '<div class="pf-blk"><h4>' + title + '</h4><ul>' + arr.map(fn).join('') + '</ul></div>' : ''; };
-    h += list('স্কিল', P.skills, function (x) { return '<li><b>' + esc(x.name) + '</b>' + (x.what ? '<span>' + esc(x.what) + '</span>' : '') + (x.file && x.file !== 'skill' ? '<code>' + esc(x.file) + '</code>' : x.file === 'skill' ? '<code>Claude skill</code>' : '') + '</li>'; });
-    h += list('টুল', P.tools, function (x) { return '<li><b>' + esc(x) + '</b></li>'; });
-    h += list('উৎস', P.sources, function (x) { return '<li data-noi18n="1">' + esc(x) + '</li>'; });
-    h += list('সিদ্ধান্ত', P.decisions, function (x) { return '<li data-noi18n="1">' + esc(x) + '</li>'; });
+    h += list('স্কিল', P.skills, function (x) { var go = x.doc ? { doc: x.doc } : x.sec ? { sec: x.sec } : null;
+      return '<li>' + pfLink(go, '<b>' + esc(x.name) + '</b>') + (x.what ? '<span>' + esc(x.what) + '</span>' : '') + (x.file ? '<code>' + esc(x.file) + '</code>' : '') + '</li>'; });
+    h += list('টুল', P.tools, function (x) { return '<li>' + pfItem(x, true) + '</li>'; });
+    h += list('উৎস', P.sources, function (x) { return '<li>' + pfItem(x) + '</li>'; });
+    h += list('সিদ্ধান্ত', P.decisions, function (x) { return '<li>' + pfItem(x) + '</li>'; });
     h += '<div class="pf-blk"><h4>যা ব্যবহার হওয়ার কথা</h4><ul class="pf-exp">' + (P.expected || []).map(function (e) {
       return '<li class="' + (e.ok === false ? 'bad' : e.ok == null ? 'unk' : '') + '">' + pnStn(e.ok === false ? 'wt' : e.ok == null ? 'tick' : 'q') + '<span>' + esc(e.what) + '<em>' + (e.ok === false ? 'হয়নি' : e.ok == null ? 'নথি নেই' : 'হয়েছে') + '</em></span></li>'; }).join('') + '</ul></div></div>';
     return h;
+  }
+  // a skill or source with a place to go: a file in the desk, a desk page, a network's 60-day plan, or a web page
+  function pfLink(go, inner) {
+    if (!go) return inner;
+    var lbl = go.doc ? 'ফাইলটা দেখুন' : go.url ? 'ওয়েবে খুলুন' : go.cycle ? '৬০ দিনের প্ল্যানে যান' : 'পাতায় যান';
+    return '<button type="button" class="pf-go" data-bc="pfgo" data-go="' + esc(JSON.stringify(go)) + '" title="' + lbl + '">' + inner + svg(go.url ? 'out' : 'right') + '</button>';
+  }
+  function pfItem(x, bold) {
+    if (x == null) return '';
+    if (typeof x === 'string') return '<span class="pf-tx" data-noi18n="1">' + (bold ? '<b>' + esc(x) + '</b>' : esc(x)) + '</span>';
+    var t = '<span class="pf-tx" data-noi18n="1">' + (bold ? '<b>' + esc(x.t) + '</b>' : esc(x.t)) + '</span>';
+    return x.go && Object.keys(x.go).length ? pfLink(x.go, t) : t;
+  }
+  function docSheetHtml(name) {
+    C.docs = C.docs || {};
+    var D = C.docs[name], body;
+    if (!D) { C.docs[name] = { busy: 1 }; srv('erpBrandDeskDoc', [{ name: name }], function (r) { C.docs[name] = r; draw(); }, function (e) { C.docs[name] = { err: (e && e.message) || String(e) }; draw(); }); D = C.docs[name]; }
+    if (D.busy) body = skel(60) + skel(240);
+    else if (D.err) body = '<div class="bc-call"><span>' + esc(hasBn(D.err) ? D.err : 'ফাইলটা আনা গেল না।') + '</span></div>';
+    else body = '<p class="dv-name"><code>' + esc(D.name) + '</code></p><div class="dv" data-noi18n="1">' + D.html + '</div>';
+    var back = C.docBack ? '<button type="button" class="bc-btn ghost sm dv-back" data-bc="pfback">' + svg('left') + 'প্ল্যান মিলে ফিরুন</button>' : '';
+    return pnSheet(esc((D && D.title) || name), '', back + body, !!(D && D.busy));
   }
   function slotSheetHtml(i) {
     var w = ((C.d.plan || {}).week || [])[i];
@@ -63157,6 +63202,14 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     else if (w === 'fitretry') { C.fits[id] = null; fitLoad(id); draw(); var pr = el('bc_cs_p'); if (pr) try { pr.focus({ preventScroll: true }); } catch (e) {} }
     else if (w === 'fitfix') { act('fx' + id, 'erpBrandDeskDraftFix', { id: Number(id) }, function (r) { C.fits[id] = null; closeSheet(); toast('AI নিয়ম মেনে আবার লিখছে, ১-২ মিনিট। নতুন লেখা পোস্টে আর এখানে আসবে।'); get('drafts', true); setTimeout(function () { get('plan', true); }, 90000); }); }
     else if (w === 'fitpart') { C.fitPart = Number(id); draw(); }
+    else if (w === 'pfgo') {   // brand-prov-2: a skill or source opens where it lives
+      var go = {}; try { go = JSON.parse(t.getAttribute('data-go') || '{}'); } catch (e) {}
+      if (go.doc) { C.docBack = C.sheet; C.sheet = 'doc:' + go.doc; draw(); setTimeout(function () { var pd = el('bc_cs_p'); if (pd) try { pd.focus({ preventScroll: true }); pd.querySelector('.cs-b').scrollTop = 0; } catch (e) {} }, 30); }
+      else if (go.url) { try { window.open(go.url, '_blank', 'noopener'); } catch (e) {} }
+      else if (go.cycle) { C.csFromEl = null; closeSheet(); C.sec = 'plan'; C.ptab = 'cycle'; C.cyNet = go.cycle; C.cyWk = null; draw(); window.scrollTo(0, 0); }
+      else if (go.sec) { C.csFromEl = null; closeSheet(); C.sec = go.sec; if (go.sec === 'plan') C.ptab = 'days'; draw(); window.scrollTo(0, 0); }
+    }
+    else if (w === 'pfback') { C.sheet = C.docBack || ''; C.docBack = ''; draw(); }
     else if (w === 'fitgo') { C.csFromEl = null; closeSheet(); C.sec = 'posts'; get('drafts'); draw(); setTimeout(function () { var tk = el('bc_tk_' + id); if (tk) try { tk.scrollIntoView({ block: 'start' }); } catch (e) {} }, 400); }
     else if (w === 'cynet') { C.cyNet = id; C.cyWk = null; draw(); }
     else if (w === 'cywk') { C.cyWk = Number(id); draw(); }

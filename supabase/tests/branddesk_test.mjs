@@ -39,6 +39,7 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   if (url.endsWith('/fit')) { const b = JSON.parse(opts.body); return b.id === 404 ? { status: 400, body: { error: 'ড্রাফটটা আর নেই।' } } : { body: { id: b.id, score: [4, 5], rules: [], steps: [] } }; }
   if (url.endsWith('/cycles')) return { body: { cycle: { n: 1, day: 0 }, plans: { facebook: { head: ['সপ্তাহ'], rows: [] } }, next: { n: 2 } } };
   if (url.endsWith('/drafts/fix')) return { body: { job: 'fx1', fixing: ['ভাষা'] } };
+  if (url.endsWith('/doc')) { const b = JSON.parse(opts.body); return b.name === 'skills/ai-video-director/SKILL.md' ? { body: { name: b.name, title: 'AI Video Director', html: '<p>x</p>' } } : { status: 400, body: { error: 'এই ফাইলটা দেখানো যায় না।' } }; }
   if (url.includes('/routine')) return { body: { slots: [], status: { level: 2, effective: 2 }, fills: {} } };
   if (url.endsWith('/media/upload')) return { body: { id: 'up9', path: 'https://social.example.com/uploads/p.jpg', type: 'image', asset: '5d23777f-eda4-40ef-9b8d-8065d7a9a896' } };
   if (url.endsWith('/drafts/idea')) return { body: { job: 'i1', waiting: [], ideas: [], jobs: {} } };
@@ -592,7 +593,13 @@ r = await owner('erpBrandDeskDraftFix', [{ id: 12 }]);
 check('rewrite to keep the plan goes to the bridge', r.ok && r.result.job === 'fx1' && seen.filter((x) => x.url.endsWith('/drafts/fix')).pop().body.id === 12, r);
 r = await owner('erpBrandDeskDraftFix', [{ id: -3 }]);
 check('rewrite needs a real draft id', !r.ok, r);
-for (const n of ['erpBrandDeskPlan', 'erpBrandDeskFit', 'erpBrandDeskCycles', 'erpBrandDeskDraftFix']) {
+r = await owner('erpBrandDeskDoc', [{ name: 'skills/ai-video-director/SKILL.md' }]);
+check('a skill file opens in the desk', r.ok && r.result.title === 'AI Video Director', r);
+r = await owner('erpBrandDeskDoc', [{ name: '../bridge.py' }]);
+check('a path outside the voice folder is refused before the bridge', !r.ok && !seen.some((x) => x.url.endsWith('/doc') && x.body && x.body.name === '../bridge.py'), r);
+r = await owner('erpBrandDeskDoc', [{ name: 'reports/nope.md' }]);
+check('an unknown file is refused by the bridge', !r.ok, r);
+for (const n of ['erpBrandDeskPlan', 'erpBrandDeskFit', 'erpBrandDeskCycles', 'erpBrandDeskDraftFix', 'erpBrandDeskDoc']) {
   r = await mgr(n, [{ id: 12 }]);
   check('staff cannot use ' + n, !r.ok, r);
 }
