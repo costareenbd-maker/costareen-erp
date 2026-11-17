@@ -491,14 +491,22 @@ Cockpit panels and cards carry a 1px rule, not a shadow.
   - Focus: a 2px Ink outline with a 2px offset; fields take an Ink border and a 3px #16181D14 ring.
   - Reduced motion: every transition and animation is off.
 
-- **Plan page (`.pn-*`, brand-plan-1/2, 17 Nov 2026):** পরিকল্পনা, 2nd in the rail and the phone bar. Order: mode
-  sentence; wait bar + departure rows for held posts (amber পাঠান, ghost বাদ দিন); the coming 7 days as departures
-  (today + tomorrow, "পুরো ৭ দিন দেখুন" for the rest) with a shelf-grey tally and a one-row network filter; research
-  rules as station rows (ink station = kept, amber-ring station = some drafts break it, opens the list); each network
-  as a line badge + a track with one 19px station per growth step (filled up to the current step, the current one
-  lifted); ads (rules + next five candidate slots); the machine's clock as an Ink spine. Small stations (`.pn-stn`,
-  14px): `q` filled = will go, `wt` amber = his review, `need` dashed = video needed, `soon` light = written at
-  night / his hand / next step, `x` red = missed. Flags (ad candidate, AI video) are ink-outline pills, never a hue.
+- **Plan page (`.pn-*`, `.pf-*`, `.cy-*`; brand-plan-1/2, brand-fit-1/2, 17 Nov 2026):** পরিকল্পনা, 2nd in the rail and
+  the phone bar, two tabs (সামনের দিন | ৬০ দিনের প্ল্যান). সামনের দিন: mode sentence; three shelf figures (আজ যাবে, আপনার দেখা
+  দরকার in amber-soft when above 0, নতুন গরমিল) that jump to their section; wait bar + departure rows for held posts; the
+  schedule is the Line Map over 7 days back to 60 ahead: zoom pills 1/2/7/14/30 set the column width (min 120/36/34/26px),
+  native sideways scroll + mouse drag (pointer capture), a date input, back / today / next. Rows: label column of line
+  badges, an ad row (ink-outline count per day), a time row at 1-2 days, then one line per network. At 7 days and less a
+  post is a station: filled = will go, amber ring + soft halo = needs him (review or plan mismatch), ink dashed = video
+  needed, faded fill = gone, red = missed, an 8px tick = written at night / his hand; an ink dot under it = ad candidate.
+  At 14+ days a day is a count cell (800 figure in the line colour, amber dot = needs him, ink ring = ad). Day heads are
+  the keyboard path (roving tabindex, arrows); stations are tabindex -1 with a 32px hit area. The chosen day lists its
+  departures with a fit chip (5/5 shelf, 3/5 amber-soft) and an ad box (plain words, rules folded). The plan-fit sheet
+  rides on the comment sheet: score card (ink when all kept, amber-soft when not, with an open-the-draft button), plan
+  slot, research rules as station rows, how it was made as an Ink spine, ad role; unwritten slots open the plan side
+  only. ৬০ দিনের প্ল্যান: a cycle line (today ring, day ticks, amber day-50 station + key), network pills, one week at a time
+  as departures with dates and a go-to-that-day button (series codes and writer notes stripped), then how the next 60
+  days get written.
 
 ### Do's and Don'ts
 - **Do** keep colour on the lines. A new cockpit element is ink, grey or rule unless it is a network, stuck or waiting.

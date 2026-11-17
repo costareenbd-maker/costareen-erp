@@ -4699,3 +4699,16 @@ big figure; each network as a line badge + a track with one station per growth s
 slots; the machine's clock as an Ink spine. Bridge: hand slots (comments, Stories, live, YouTube community) never show a
 nearby draft. DESIGN.md cockpit section has the plan page. Checked at 1440 and 390 (no sideways scroll), no console
 errors. NOT done: finish-review agent pass; test suites (local test env gone); live ERP release.
+
+## brand-fit-1/2 (17 Nov 2026) - plan fit on every post, a zoomable schedule, the 60-day plans (dev + stand-alone desk)
+Owner: a button beside every post/photo/video showing how it keeps our plan + research and which skills made it; each
+day's ad candidates shown simply; the 60-day platform plans in the system with the next 60 days planned from them; the
+schedule zoomable (1/2/7/14/30 days, a date, drag ahead) because the routine looked messy and tiring. Built with
+impeccable: shape (.impeccable/shape/brand-schedule-fit.md), build, audit (12/20) + critique (23/40) by two independent
+agents, rebuild. Bridge (G:/bendar-brand): /plan days+start (-7..+60, quick_fit per row, bad_new), /fit (plan slot,
+rules, steps incl. skills/pipeline, ad), /cycles (blueprint section 3 as rows), cycle_write on day 50 (drafts in
+/data/brand/cards/_cycles, his yes before use); blueprints copied to /opt/brand/core/voice/blueprints (old B4.11 DGDA
+topic replaced). ERP: erpBrandDeskFit, erpBrandDeskCycles, windowed erpBrandDeskPlan; page brand-fit-2 (DESIGN.md plan
+page). Fixed on the way: the page function shadowed the draft cards' media-plan planHtml (renamed pnPageHtml).
+NOT done: test suites (local env gone), live ERP release, a rewrite button in the sheet (it opens the draft instead),
+episode-per-date from the 60-day table on unwritten slots.
