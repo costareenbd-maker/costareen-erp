@@ -37,6 +37,7 @@ web.on(/^https:\/\/desk-test\.trycloudflare\.com\//, (url, opts) => {
   // brand-plan-1 / brand-fit-1/3: plan report, plan fit, 60-day cycles, rewrite to keep the plan
   if (url.endsWith('/plan')) return { body: { window: JSON.parse(opts.body), week: [], nets: [], checks: [], held: [], cycle: { n: 1 } } };
   if (url.endsWith('/fit')) { const b = JSON.parse(opts.body); return b.id === 404 ? { status: 400, body: { error: 'ড্রাফটটা আর নেই।' } } : { body: { id: b.id, score: [4, 5], rules: [], steps: [] } }; }
+  if (url.endsWith('/series')) return { body: { season: 1, series: [{ series: 'B1', name: 'পাইকারি ম্যাপ', next: 2, done: 1, eps: [{ ep: 1, state: 'gone', drafts: [] }, { ep: 2, state: 'none', drafts: [] }] }] } };
   if (url.endsWith('/cycles')) return { body: { cycle: { n: 1, day: 0 }, plans: { facebook: { head: ['সপ্তাহ'], rows: [] } }, next: { n: 2 } } };
   if (url.endsWith('/drafts/fix')) return { body: { job: 'fx1', fixing: ['ভাষা'] } };
   if (url.endsWith('/doc')) { const b = JSON.parse(opts.body); return b.name === 'skills/ai-video-director/SKILL.md' ? { body: { name: b.name, title: 'AI Video Director', html: '<p>x</p>' } } : { status: 400, body: { error: 'এই ফাইলটা দেখানো যায় না।' } }; }
@@ -593,6 +594,8 @@ r = await owner('erpBrandDeskFit', [{ id: 404 }]);
 check('a missing draft says so', !r.ok && /ড্রাফট/.test(r.error), r);
 r = await owner('erpBrandDeskCycles', []);
 check('the 60-day plans come from the bridge', r.ok && r.result.next.n === 2 && !!r.result.plans.facebook, r);
+r = await owner('erpBrandDeskSeries', []);
+check('brand-series-1: the numbered series come from the bridge', r.ok && r.result.series[0].next === 2, r);
 r = await owner('erpBrandDeskDraftFix', [{ id: 12 }]);
 check('rewrite to keep the plan goes to the bridge', r.ok && r.result.job === 'fx1' && seen.filter((x) => x.url.endsWith('/drafts/fix')).pop().body.id === 12, r);
 r = await owner('erpBrandDeskDraftFix', [{ id: -3 }]);
@@ -603,7 +606,7 @@ r = await owner('erpBrandDeskDoc', [{ name: '../bridge.py' }]);
 check('a path outside the voice folder is refused before the bridge', !r.ok && !seen.some((x) => x.url.endsWith('/doc') && x.body && x.body.name === '../bridge.py'), r);
 r = await owner('erpBrandDeskDoc', [{ name: 'reports/nope.md' }]);
 check('an unknown file is refused by the bridge', !r.ok, r);
-for (const n of ['erpBrandDeskPlan', 'erpBrandDeskFit', 'erpBrandDeskCycles', 'erpBrandDeskDraftFix', 'erpBrandDeskDoc']) {
+for (const n of ['erpBrandDeskPlan', 'erpBrandDeskFit', 'erpBrandDeskCycles', 'erpBrandDeskSeries', 'erpBrandDeskDraftFix', 'erpBrandDeskDoc']) {
   r = await mgr(n, [{ id: 12 }]);
   check('staff cannot use ' + n, !r.ok, r);
 }
