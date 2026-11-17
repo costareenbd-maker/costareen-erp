@@ -59999,6 +59999,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
 .cy-lbl span{position:absolute;transform:translateX(-50%);font:600 12px "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-2);text-align:center;white-space:nowrap}
 .cy-lbl span:last-child{transform:translateX(-100%);text-align:right}
 .cy-lbl small{display:block;font-weight:500;color:var(--bc-ink-3)}
+.cy-key{display:flex;align-items:center;gap:8px;margin:2px 0 0;font-size:12.5px;color:var(--bc-ink-2)}
+.cy-kd50{display:inline-block;width:12px;height:12px;border-radius:50%;border:3px solid var(--bc-wait);box-shadow:0 0 0 2px #FFF4D6;box-sizing:border-box}
 .cy-note{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .cy-pager{display:flex;align-items:center;gap:10px;margin:6px 0 4px;flex-wrap:wrap}
 .cy-pager>b{font:700 16px "Anek Bangla","Noto Sans Bengali",system-ui,sans-serif;min-width:150px;text-align:center}
@@ -62671,7 +62673,8 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     h += '<div class="cy-line" aria-hidden="true"><div class="cy-track"><i class="cy-fill" style="width:' + todayPos + '%"></i><i class="cy-start" style="left:' + pos(1) + '%"></i>' +
       [8, 15, 22, 29, 36, 43, 50, 57].map(function (x) { return '<i class="cy-tk" style="left:' + pos(x) + '%"></i>'; }).join('') +
       '<i class="cy-today" style="left:' + todayPos + '%"><b>আজ</b></i><i class="cy-d50" style="left:' + pos(50) + '%"></i></div>' +
-      '<div class="cy-lbl"><span style="left:' + pos(1) + '%">দিন ১<small>' + pnIso(cy.start) + '</small></span><span style="left:' + pos(50) + '%">দিন ৫০<small>পরের প্ল্যানের খসড়া</small></span><span style="left:' + pos(60) + '%">দিন ৬০<small>' + pnIso(cy.end) + '</small></span></div></div>';
+      '<div class="cy-lbl"><span style="left:' + pos(1) + '%">দিন ১<small>' + pnIso(cy.start) + '</small></span><span style="left:' + pos(60) + '%">দিন ৬০<small>' + pnIso(cy.end) + '</small></span></div>' +
+      '<p class="cy-key"><i class="cy-kd50"></i>দিন ৫০ (' + pnIso(nx.write_on) + '): মেশিন পরের ৬০ দিনের প্ল্যানের খসড়া লেখে</p></div>';
     var P = plans[C.cyNet] || {}, rows = P.rows || [], head = P.head || [], weekly = /^সপ্তাহ/.test(head[0] || '');
     var per = weekly ? 1 : 6, pages = Math.max(1, Math.ceil(rows.length / per));
     if (C.cyWk == null) C.cyWk = weekly ? Math.max(0, Math.min(rows.length - 1, day ? cy.week : 0)) : 0;
