@@ -775,7 +775,8 @@ function ibId(v, what) { const n = parseInt(v, 10); if (!(n > 0) || String(n) !=
 export async function erpBrandDeskInbox(ctx, payload) {
   await gate(ctx);
   const p = payload || {}, f = str(p.f || 'all'), pl = str(p.p);
-  if (!IB_FILTERS.includes(f) || !IB_PLATS.includes(pl)) throw new Error('এই ছাঁকনিটা চেনা নেই। পেজটা নতুন করে আনুন।');
+  // brand-acc-1: p may also be one account (a channel id) inside a channel filter, e.g. one of three Gmails
+  if (!IB_FILTERS.includes(f) || (!IB_PLATS.includes(pl) && !/^\d{1,9}$/.test(pl))) throw new Error('এই ছাঁকনিটা চেনা নেই। পেজটা নতুন করে আনুন।');
   const q = new URLSearchParams({ f });
   if (pl) q.set('p', pl);
   if (str(p.q)) q.set('q', str(p.q).slice(0, 60));

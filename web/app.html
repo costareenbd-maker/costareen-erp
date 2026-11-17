@@ -60174,6 +60174,26 @@ button.bc-rk.ls-r b{text-align:right;font:700 14px "Pretendard Variable",system-
   button.bc-rk.ls-r{grid-template-columns:minmax(0,1fr) 72px 44px;min-height:44px}
 }
 
+/* brand-acc-1 */
+.bx-acc{display:inline-block;max-width:14ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;margin-right:6px;padding:0 7px;border-radius:99px;background:var(--bc-shelf);color:var(--bc-ink);font:600 11.5px/18px "Pretendard Variable",system-ui,sans-serif}
+.bx-th .bx-acc{margin:0 0 0 2px}
+
+/* brand-plan-3 */
+.pn-sn{cursor:pointer}
+.pn-adm[data-bc]{cursor:pointer}
+.pn-adi{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;padding:12px 0;border-top:1px solid var(--bc-rule)}
+.pn-adi:first-of-type{border-top:0}
+.pn-adi dl{display:grid;grid-template-columns:88px 1fr;gap:4px 12px;margin:0;font-size:13.5px;line-height:1.55}
+.pn-adi dt{color:var(--bc-ink-3);font-weight:500}
+.pn-adi dd{margin:0;color:var(--bc-ink)}
+.pn-adsum{margin:-4px 0 6px;font-size:13.5px;color:var(--bc-ink-2);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pn-adbox .pn-adi dl{font-size:13px}
+.bc-flash{outline:3px solid #F2A900;outline-offset:3px;border-radius:12px;transition:outline-color .4s}
+@container bc (max-width:759px){
+  .pn-adi{grid-template-columns:1fr}
+  .pn-adi dl{grid-template-columns:76px 1fr}
+}
+
 </style>
 
 <script>
@@ -62209,12 +62229,27 @@ button.bc-rk.ls-r b{text-align:right;font:700 14px "Pretendard Variable",system-
   function ibHole(t) { return /\[[^\]\n]{0,60}\]/.test(String(t || '')); }
   function ibCounts() { return (C.d.inbox && C.d.inbox.counts) || (C.d.cockpit && C.d.cockpit.cockpit && C.d.cockpit.cockpit.inbox) || {}; }
   function ibChans() { return (C.d.ichan && C.d.ichan.channels) || []; }
+  // brand-acc-1 (owner 17 Nov 2026: three Gmails in one list got mixed up): the accounts of one channel kind, from the
+  // channel list and from the threads themselves, and a short name for each (the part before @)
+  function ibAccs(kind) {
+    var seen = {}, out = [];
+    ibChans().forEach(function (c) { if (c.kind === kind && !seen[c.id]) { seen[c.id] = 1; out.push({ id: c.id, name: c.address || c.name }); } });
+    ((C.d.inbox && C.d.inbox.threads) || []).forEach(function (t) { if (t.channel === kind && t.kind !== 'comment' && t.channel_id && !seen[t.channel_id]) { seen[t.channel_id] = 1; out.push({ id: t.channel_id, name: t.channel_name || '' }); } });
+    return out;
+  }
+  function ibAccName(n) { n = String(n || ''); return n.indexOf('@') > 0 ? n.split('@')[0] : n; }
+  function ibAccTag(t) {
+    if (t.kind === 'comment' || !t.channel_id) return '';
+    var a = ibAccs(t.channel); if (a.length < 2) return '';
+    var me = a.filter(function (x) { return String(x.id) === String(t.channel_id); })[0];
+    return '<span class="bx-acc" data-noi18n="1" title="' + esc((me && me.name) || t.channel_name || '') + '-এ এসেছে">' + esc(ibAccName((me && me.name) || t.channel_name)) + '</span>';
+  }
   function ibEm(n) { return n ? '<em class="w">' + bn(n) + '</em>' : ''; }
   function ibRow(t) {
     var un = t.unread > 0, last = (t.dir === 'out' ? '<small>আপনি: </small>' : '') + '<span data-noi18n="1">' + esc(t.last || '') + '</span>';
     var sub = t.kind === 'comment' ? '<small>কমেন্ট' + (t.subject ? ' · <span data-noi18n="1">' + esc(t.subject) + '</span>' : '') + ' · </small>' : (t.channel === 'email' && t.subject ? '<small data-noi18n="1">' + esc(t.subject) + ' · </small>' : '');
     return '<button type="button" class="bx-r' + (un ? ' un' : '') + (String(C.ibOpen) === String(t.id) ? ' on' : '') + '" data-bc="ibopen" data-id="' + t.id + '" aria-label="' + esc(t.name) + ', ' + esc(ibNet(t.channel)) + (un ? ', নতুন বার্তা' : '') + '">' +
-      '<span class="lg">' + logo(t.channel, 20) + '</span><b data-noi18n="1">' + esc(t.name) + '</b><time>' + ibWhen(t.at) + '</time><p>' + sub + last + '</p>' + (un ? '<i class="dt" aria-hidden="true"></i>' : '') + '</button>';
+      '<span class="lg">' + logo(t.channel, 20) + '</span><b data-noi18n="1">' + esc(t.name) + '</b><time>' + ibWhen(t.at) + '</time><p>' + ibAccTag(t) + sub + last + '</p>' + (un ? '<i class="dt" aria-hidden="true"></i>' : '') + '</button>';
   }
   function ibMedia(m, mid, ch) {
     return (m || []).map(function (x, i) {
@@ -62238,7 +62273,7 @@ button.bc-rk.ls-r b{text-align:right;font:700 14px "Pretendard Variable",system-
       (T.avatar && /^data:image\//.test(T.avatar) ? '<img class="bx-av" src="' + esc(T.avatar) + '" alt="">' : logo(T.channel, 22)) +
       '<div class="nm"><b data-noi18n="1">' + esc(T.name) + '</b><small>' + (T.name_override && T.peer_name && T.peer_name !== T.name_override ? '<span data-noi18n="1">' + esc(T.peer_name) + '</span> · ' : '') +
       (T.handle ? '<span data-noi18n="1">' + esc(T.handle) + '</span> · ' : '') + esc(ibNet(T.channel)) + (T.kind === 'comment' ? ' কমেন্ট' : '') +
-      (T.subject ? ' · <span data-noi18n="1">' + esc(T.subject) + '</span>' : '') + '</small></div><div class="ac">' + open +
+      (T.subject ? ' · <span data-noi18n="1">' + esc(T.subject) + '</span>' : '') + (function () { var lt = ((C.d.inbox && C.d.inbox.threads) || []).filter(function (x) { return String(x.id) === String(id); })[0]; return lt && ibAccTag(lt) ? ' · এসেছে ' + ibAccTag(lt) : ''; })() + '</small></div><div class="ac">' + open +
       btn(svg('sum') + '<span class="lb">সারাংশ</span>', 'data-bc="ibsum" data-id="' + id + '" aria-label="সারাংশ" aria-pressed="' + !!sm + '"', 'ghost sm', 'ibsum' + id) +
       '<button type="button" class="bc-btn ghost sm" data-bc="ibcard" data-id="' + id + '" aria-label="পরিচিতি আর নোট" aria-expanded="' + cardOn + '">' + svg('user') + '<span class="lb">পরিচিতি</span></button>' +
       btn(svg('done') + (T.done ? 'আবার খুলুন' : 'শেষ'), 'data-bc="ibdone" data-id="' + id + '"', 'ghost sm', 'ibdone') + '</div></div>';
@@ -62290,6 +62325,11 @@ button.bc-rk.ls-r b{text-align:right;font:700 14px "Pretendard Variable",system-
       h += '<div class="bx-tools"><label class="bx-q"><span class="bc-vh">খুঁজুন</span>' + svg('search') + '<input id="bci_ibq" data-bcin="ibq" type="search" data-noi18n="1" placeholder="নাম বা কথা খুঁজুন" value="' + esc(v('ibq')) + '" autocomplete="off" enterkeyhint="search"></label>' +
         '<div class="bc-pills" role="group" aria-label="কোনগুলো দেখাবে">' + [['unread', 'না-পড়া'], ['done', 'শেষ করা']].map(function (f) {
           return '<button type="button" data-bc="ibs" data-id="' + f[0] + '" aria-pressed="' + (C.ibs === f[0]) + '"' + (C.ibs === f[0] ? ' class="on"' : '') + '>' + f[1] + '</button>'; }).join('') + '</div></div>';
+      var accs = C.ibf !== 'all' && C.ibf !== 'comments' ? ibAccs(C.ibf) : [];
+      if (accs.length > 1) h += '<div class="bx-sub"><div class="bc-pills" role="group" aria-label="কোন অ্যাকাউন্ট">' + [{ id: '', name: 'সব অ্যাকাউন্ট' }].concat(accs).map(function (a) {
+        var on = String(C.ibp || '') === String(a.id);
+        return '<button type="button" data-bc="ibp" data-id="' + esc(String(a.id)) + '"' + (on ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + (a.id ? ' title="' + esc(a.name) + '" data-noi18n="1"' : '') + '>' + esc(a.id ? ibAccName(a.name) : a.name) + ibEm(a.id ? n['a_' + a.id] : 0) + '</button>';
+      }).join('') + '</div></div>';
       if (C.ibf === 'comments') h += '<div class="bx-sub"><div class="bc-pills" role="group" aria-label="কোথাকার কমেন্ট">' + IB_CP.map(function (f) {
         return '<button type="button" data-bc="ibp" data-id="' + f[0] + '"' + (C.ibp === f[0] ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + (f[0] ? logo(f[0], 14) : '') + f[1] + ibEm(f[0] ? n['c_' + f[0]] : 0) + '</button>';
       }).join('') + '</div></div>';
@@ -62627,12 +62667,58 @@ button.bc-rk.ls-r b{text-align:right;font:700 14px "Pretendard Variable",system-
   function pnStn(st) { return '<span class="pn-stn ' + st + '" aria-hidden="true"></span>'; }
   function pnNeeds(w) { return w.state === 'review' || w.state === 'missed' || (w.fit && w.fit[0] < w.fit[1] && w.state !== 'gone'); }
   function pnFitChip(f) { return f ? '<span class="pn-fit' + (f[0] < f[1] ? ' bad' : '') + '" title="গবেষণার নিয়ম মানা: ' + bn(f[0]) + '/' + bn(f[1]) + '">' + bn(f[0]) + '/' + bn(f[1]) + '</span>' : ''; }
+  // brand-plan-3 (owner 17 Nov 2026): "the ad line says 2 but not where, for what or what kind of ad" - every candidate now
+  // names the network, the post, the goal, the kind of ad, who sees it and when money could be spent
+  var PNADT = { follow: 'ফলো বাড়ানো', page_likes: 'পেজ লাইক', thruplay: 'পুরো ভিডিও দেখানো (ThruPlay)', engagement: 'কমেন্ট আর শেয়ার বাড়ানো', profile_visit: 'প্রোফাইলে মানুষ আনা' };
+  var PNVID = { reel: 1, short: 1, video: 1, trial: 1, long: 1, face: 1 };
+  function pnAdKind(w) {
+    var v = PNVID[w.format] ? 'ভিডিও' : 'ছবি/লেখার';
+    return w.platform === 'youtube' ? 'YouTube ভিডিও বিজ্ঞাপন (Google Ads দিয়ে, অন্য ভিডিওর আগে আর পাশে দেখায়)'
+      : w.platform === 'linkedin' ? 'LinkedIn Sponsored পোস্ট (পোস্টটাই বিজ্ঞাপন হয়)'
+      : w.platform === 'tiktok' ? 'TikTok Promote (পোস্টটাই বিজ্ঞাপন হয়)'
+      : 'Meta বুস্ট: এই ' + v + ' পোস্টটাই বিজ্ঞাপন হয়ে ' + (w.platform === 'instagram' ? 'Instagram-এ' : w.platform === 'threads' ? 'Threads-এ' : 'Facebook-এ') + ' নতুন মানুষের কাছে যাবে (নতুন বিজ্ঞাপন বানানো নয়)';
+  }
+  function pnAdWho(w) { return w.lang === 'en' ? 'বিদেশি সাপ্লায়ার আর ক্রেতা, এখনকার ফলোয়ার বাদ' : 'বাংলাদেশ, বয়স ২২+, ব্যবসায় আগ্রহী, এখনকার ফলোয়ার বাদ'; }
+  function pnAdHtml(w) {
+    var post = w.hook ? '<span data-noi18n="1">' + esc(w.hook) + '</span>' : (RFMT[w.format] || w.format) + ' · ' + ((PNST[w.state] || [''])[0] || 'এখনো লেখা হয়নি');
+    return '<div class="pn-adi">' + lb(w.platform) + '<dl>' +
+      '<dt>কখন</dt><dd>' + pnDay(w._k) + ', ' + pnDate(w._k) + ' · ' + pnTime(w.at) + '</dd>' +
+      '<dt>কোন পোস্ট</dt><dd>' + post + (w.draft ? ' <button type="button" class="pn-link" data-bc="pnpost" data-id="' + w._i + '">পোস্টটা দেখুন</button>' : '') + '</dd>' +
+      '<dt>কিসের জন্য</dt><dd><b>' + esc(w.ad_type || PNADT[w.ad] || w.ad) + '</b>' + (w.ad_why ? ' — ' + esc(w.ad_why.replace(/^পোস্টটা ভালো চললে: |^ভিডিওটা ভালো চললে: /, '')) : '') + '</dd>' +
+      '<dt>কী ধরনের</dt><dd>' + pnAdKind(w) + '</dd>' +
+      '<dt>কাকে দেখাবে</dt><dd>' + pnAdWho(w) + '</dd>' +
+      '<dt>টাকা</dt><dd>পোস্ট যাওয়ার পর নিজে থেকে ভালো চললে তবেই; আপনার "হ্যাঁ" ছাড়া এক টাকাও না। এখন পর্যন্ত খরচ ৳0।</dd></dl></div>';
+  }
+  // a dot or a row opens the post itself on the Posts page (waiting -> its card; queued/gone -> its line, opened)
+  function pnGoPost(i) {
+    var w = ((C.d.plan || {}).week || [])[i]; if (!w) return;
+    w._i = i; w._k = pnIdx(w.at);
+    if (!w.draft) {
+      C.pday = w._k; C.pitem = String(i); draw();
+      var rw = el('bc_pnr_' + i); if (rw) try { rw.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } catch (e) {}
+      return toast(w.state === 'video' ? 'এই ঘরে এখনো পোস্ট নেই: ভিডিও তৈরি হলে আসবে।' : w.state === 'hand' ? 'এই ঘরটা আপনি নিজে দেবেন; পোস্ট আগে থেকে লেখা থাকে না।' : w.state === 'later' ? 'এই ঘর নেটওয়ার্ক পরের ধাপে উঠলে খুলবে।' : w.state === 'missed' ? 'এই ঘরে কোনো পোস্ট যায়নি।' : 'এই ঘরে এখনো পোস্ট লেখা হয়নি; রাতে লেখা হবে।');
+    }
+    var at = new Date(w.at).getTime(), tries = 0;
+    var find = function () {
+      var s0 = w.state === 'review' ? null : stations().filter(function (x) { return x.net === netOf(w.platform) && Math.abs(new Date(x.at).getTime() - at) < 1800000; })[0];
+      return s0 ? { tab: s0.st === 'go' ? 'gone' : s0.st === 'x' ? 'stuck' : 'next', key: s0.key } : { tab: 'wait', key: '' };
+    };
+    var f = find(); C.ptab = f.tab; C.dep = f.key; goSec('posts');
+    var look = function () {
+      var g = find();
+      if (g.tab !== C.ptab || g.key !== C.dep) { C.ptab = g.tab; C.dep = g.key; draw(); }
+      var e = g.key ? document.querySelector('#bc_root .bc-dep[data-id="' + g.key + '"]') : el('bc_tk_' + w.draft);
+      if (e) { try { e.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } catch (er) {} e.classList.add('bc-flash'); setTimeout(function () { e.classList.remove('bc-flash'); }, 2400); return; }
+      if (++tries < 20) setTimeout(look, 300); else toast('পোস্টটা পোস্ট পাতায় পাওয়া গেল না; তালিকাটা নতুন করে আনুন।', true);
+    };
+    setTimeout(look, 120);
+  }
   function pnRow(w, i) {
     var st = PNST[w.state] || [w.state, 'tick'], what = '<b>' + (RFMT[w.format] || w.format) + '</b>' + (w.series_name ? ' · ' + esc(w.series_name) : '') + (w.lang ? ' · ' + (w.lang === 'en' ? 'English' : 'বাংলা') : '');
-    var act = w.draft ? '<button type="button" class="bc-btn ghost sm pn-fitb" data-bc="fit" data-id="' + w.draft + '" aria-haspopup="dialog">' + svg('plan') + 'প্ল্যান মিল' + pnFitChip(w.fit) + '</button>'
+    var act = w.draft ? '<button type="button" class="bc-btn sm pn-fitb" data-bc="pnpost" data-id="' + i + '">পোস্ট দেখুন</button><button type="button" class="bc-btn ghost sm pn-fitb" data-bc="fit" data-id="' + w.draft + '" aria-haspopup="dialog">' + svg('plan') + 'প্ল্যান মিল' + pnFitChip(w.fit) + '</button>'
       : w.state === 'later' ? '' : '<button type="button" class="bc-btn ghost sm pn-fitb" data-bc="slotfit" data-id="' + i + '" aria-haspopup="dialog">' + svg('plan') + 'প্ল্যান</button>';
     return '<div class="bc-dep pn-dep' + (w.state === 'later' ? ' pn-later' : '') + (C.pitem === String(i) ? ' pn-sel' : '') + '" id="bc_pnr_' + i + '"><span class="tm">' + pnTime(w.at) + '</span>' + lb(w.platform) +
-      '<p><span class="pn-what">' + what + (w.ad ? '<span class="pn-flag">বিজ্ঞাপন-প্রার্থী</span>' : '') + (w.ai_video ? '<span class="pn-flag">AI ভিডিও</span>' : '') + '</span>' +
+      '<p><span class="pn-what">' + what + (w.ad ? '<span class="pn-flag">বিজ্ঞাপন: ' + esc(w.ad_type || PNADT[w.ad] || w.ad) + '</span>' : '') + (w.ai_video ? '<span class="pn-flag">AI ভিডিও</span>' : '') + '</span>' +
       (w.hook ? '<span class="m" data-noi18n="1">' + esc(w.hook) + '</span>' : w.episode ? '<span class="m pn-ep" data-noi18n="1">৬০ দিনের প্ল্যান: ' + esc(w.episode) + '</span>' : '') + '</p><span class="a pn-state">' + pnStn(pnNeeds(w) && w.state !== 'missed' ? 'wt' : st[1]) + (w.fit && w.fit[0] < w.fit[1] && w.state !== 'gone' ? 'মেলে না, দেখুন' : st[0]) + act + '</span></div>';
   }
   function pnMapHtml(week, nets) {
@@ -62645,7 +62731,7 @@ button.bc-rk.ls-r b{text-align:right;font:700 14px "Pretendard Variable",system-
       head += '<button type="button" class="pn-dh' + (k === 0 ? ' today' : '') + (k < 0 ? ' past' : '') + (on ? ' on' : '') + (d.getDay() === 5 ? ' fri' : '') + '" data-bc="pnday" data-id="' + k + '" aria-pressed="' + on + '"' + (k === sel ? '' : ' tabindex="-1"') +
         ' aria-label="' + pnDay(k) + ', ' + pnDate(k) + ', ' + bn(a.n) + 'টা ঘর' + (a.ad ? ', বিজ্ঞাপনের প্রার্থী ' + bn(a.ad) + 'টা' : '') + (a.need ? ', আপনার দেখা দরকার ' + bn(a.need) + 'টা' : '') + '">' +
         '<b aria-hidden="true">' + (k === 0 ? 'আজ' : RDAY[(d.getDay() + 1) % 7][0]) + '</b><span aria-hidden="true">' + bn(d.getDate()) + (d.getDate() === 1 || k === -PN_OFF || k === 0 ? ' ' + PNMON[d.getMonth()].slice(0, 3) : '') + '</span></button>';
-      ads += '<span class="pn-adc">' + (a.ad ? '<i class="pn-adm" aria-hidden="true">' + (big ? '' : bn(a.ad)) + '</i>' : '') + '</span>';
+      ads += '<span class="pn-adc">' + (a.ad ? '<i class="pn-adm" data-bc="pnadday" data-id="' + k + '" title="' + pnDay(k) + ': ' + bn(a.ad) + 'টা বিজ্ঞাপনের প্রার্থী, চাপলে বিস্তারিত">' + (big ? '' : bn(a.ad)) + '</i>' : '') + '</span>';
       if (z <= 2) hrs += '<span class="pn-hrs">' + [6, 9, 12, 15, 18, 21].map(function (hh) { return '<i style="left:' + (hh / 24 * 100).toFixed(2) + '%">' + bn(hh % 12 || 12) + '</i>'; }).join('') + '</span>';
     }
     var rows = nets.map(function (p) {
@@ -62658,8 +62744,8 @@ button.bc-rk.ls-r b{text-align:right;font:700 14px "Pretendard Variable",system-
       } else {
         inner = week.filter(function (w) { return w.platform === p && w._k >= -PN_OFF && w._k < PN_N - PN_OFF; }).map(function (w) {
           var t = bdt(w.at), x = w._k + PN_OFF + (t.getHours() * 60 + t.getMinutes()) / 1440, s0 = PNST[w.state] || ['', 'tick'], cls = pnNeeds(w) && w.state !== 'missed' ? 'wt' : s0[1];
-          return '<i aria-hidden="true" class="pn-sn ' + cls + (w.ad && w.state !== 'later' ? ' ad' : '') + (C.pitem === String(w._i) ? ' on' : '') + '" style="left:calc(var(--pn-col) * ' + x.toFixed(4) + ')" data-bc="pnpick" data-id="' + w._k + ':' + w._i + '" ' +
-            'aria-label="' + esc(netName(p)) + ', ' + pnDay(w._k) + ' ' + pnTime(w.at) + ', ' + (RFMT[w.format] || w.format) + ', ' + s0[0] + '" title="' + pnDay(w._k) + ' ' + pnTime(w.at) + ' · ' + (RFMT[w.format] || w.format) + ' · ' + s0[0] + '"></i>';
+          return '<i aria-hidden="true" class="pn-sn ' + cls + (w.ad && w.state !== 'later' ? ' ad' : '') + (C.pitem === String(w._i) ? ' on' : '') + '" style="left:calc(var(--pn-col) * ' + x.toFixed(4) + ')" data-bc="pnpost" data-id="' + w._i + '" ' +
+            'aria-label="' + esc(netName(p)) + ', ' + pnDay(w._k) + ' ' + pnTime(w.at) + ', ' + (RFMT[w.format] || w.format) + ', ' + s0[0] + '" title="' + pnDay(w._k) + ' ' + pnTime(w.at) + ' · ' + (RFMT[w.format] || w.format) + ' · ' + s0[0] + (w.draft ? ' · চাপলে পোস্টটা খুলবে' : '') + '"></i>';
         }).join('');
       }
       return '<div class="pn-mrow" style="--c:' + netCol(p) + '"><div class="pn-mtrack"><i class="pn-mline"></i>' + inner + '</div></div>';
@@ -62713,6 +62799,14 @@ button.bc-rk.ls-r b{text-align:right;font:700 14px "Pretendard Variable",system-
     h += '<div class="pn-figs"><button type="button" class="pn-fg" data-bc="pnjump" data-id="bc_pn_days"><b>' + bn(today) + '</b><span>আজ যাবে</span></button>' +
       '<button type="button" class="pn-fg' + (waitN ? ' wt' : '') + '" data-bc="ptab" data-id="wait"><b>' + bn(waitN) + '</b><span>লেখা আপনার অপেক্ষায়</span></button>' +
       '<button type="button" class="pn-fg' + (badR ? ' wt' : '') + '" data-bc="pnjump" data-id="bc_pn_rules"><b>' + bn(badR) + '</b><span>নতুন লেখায় নিয়ম মানেনি</span></button></div>';
+    var adW = week.filter(function (w) { return w.ad && w.state !== 'later' && w._k >= 0 && w._k < 7; });
+    if (adW.length) {
+      var adOpen = !!C.fold.pnads;
+      h += '<section class="bc-block pn-sec pn-adsec" id="bc_pn_ads"><div class="bc-h2"><h2>সামনের ৭ দিনে ' + bn(adW.length) + 'টা বিজ্ঞাপনের প্রার্থী</h2></div>' +
+        '<p class="pn-adsum">' + Object.keys(adW.reduce(function (o, w) { o[w.platform] = (o[w.platform] || 0) + 1; return o; }, {})).map(function (p) { var c = adW.filter(function (w) { return w.platform === p; }); return lb(p) + ' ' + bn(c.length) + 'টা'; }).join(' · ') + '</p>' +
+        adW.slice(0, adOpen ? adW.length : 2).map(pnAdHtml).join('') +
+        (adW.length > 2 ? '<button type="button" class="bc-fold" data-bc="fold" data-id="pnads" aria-expanded="' + adOpen + '">' + svg('right') + (adOpen ? 'কম দেখান' : 'আরও ' + bn(adW.length - 2) + 'টা দেখুন') + '</button>' : '') + '</section>';
+    }
     if (held.length) {
       h += '<div class="bc-wait pn-wait" id="bc_pn_held"><b>' + bn(held.length) + '<em>টা</em></b><p>পোস্ট সময়মতো যায়নি<small>নিয়ম ভাঙে বা সময় পেরিয়ে গেছে, তাই যায়নি। পাঠালে এখনই যাবে; বাদ দিলে যাবে না, মুছবেও না।</small></p></div><div class="pn-held">' +
         held.slice(0, C.fold.pnheld ? held.length : 2).map(function (x) {
@@ -62743,9 +62837,8 @@ button.bc-rk.ls-r b{text-align:right;font:700 14px "Pretendard Variable",system-
       var items = week.filter(function (w) { return w._k === k && (!C.pnNet || C.pnNet === 'all' || w.platform === C.pnNet) && (C.pnLater || w.state !== 'later'); });
       var adI = items.filter(function (w) { return w.ad; });
       list += '<div class="pn-dayblk"><h3 class="pn-dayh' + (k === 0 ? ' today' : '') + '">' + pnDay(k) + '<small>' + pnDate(k) + ' · ' + bn(items.length) + 'টা ঘর</small></h3>' +
-        (adI.length ? '<div class="pn-adbox"><b>এই দিনে বিজ্ঞাপনের প্রার্থী</b>' + adI.map(function (w) { return '<p>' + lb(w.platform) + '<span><b>' + pnTime(w.at) + ' · ' + (RFMT[w.format] || w.format) + '</b> — ' + esc(w.ad_why || '') + '</span></p>'; }).join('') +
-          '<details class="pn-adr"><summary>বিজ্ঞাপনের নিয়ম</summary><ul class="pn-list">' + (ads.rules || []).map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul></details>' +
-          '<small>টাকা খরচ হবে শুধু পোস্টটা নিজে থেকে ভালো চললে, আর আপনি "হ্যাঁ" বললে। এখন পর্যন্ত খরচ ৳0।</small></div>' : '') +
+        (adI.length ? '<div class="pn-adbox" id="bc_pnad_' + k + '"><b>এই দিনে ' + bn(adI.length) + 'টা বিজ্ঞাপনের প্রার্থী</b>' + adI.map(pnAdHtml).join('') +
+          '<details class="pn-adr"><summary>বিজ্ঞাপনের নিয়ম</summary><ul class="pn-list">' + (ads.rules || []).map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul></details></div>' : '') +
         '<div class="pn-deps">' + (items.length ? items.map(function (w) { return pnRow(w, w._i); }).join('') : '<p class="pn-note">এই দিনে কোনো ঘর নেই।</p>') + '</div></div>';
     }
     h += list + '<button type="button" class="pn-link pn-later-t" data-bc="pnlater" aria-pressed="' + !!C.pnLater + '">' + (C.pnLater ? 'পরের ধাপের ঘর লুকান' : 'পরের ধাপের ঘরও দেখান') + '</button></section>';
@@ -63355,6 +63448,8 @@ button.bc-rk.ls-r b{text-align:right;font:700 14px "Pretendard Variable",system-
     else if (w === 'pgjump') { var gi = Number(id); if (gi >= 3 && !C.fold.pgall) { C.fold.pgall = true; draw(); } setTimeout(function () { var sg = el('bc_pg_' + gi); if (sg) try { sg.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } catch (e) {} }, 30); }
     else if (w === 'pnz') { C.pz = Number(id); var scz = el('bc_pnmap'); if (scz) C.pnCol = pnColFor(scz); pnScrollTo(C.pday || 0); draw(); }
     else if (w === 'pnday') { C.pday = Number(id); C.pitem = ''; draw(); }
+    else if (w === 'pnpost') pnGoPost(Number(id));
+    else if (w === 'pnadday') { C.pday = Number(id); C.pitem = ''; draw(); var ab = el('bc_pnad_' + id); if (ab) try { ab.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } catch (e) {} }
     else if (w === 'pnpick') { var pp = String(id).split(':'); C.pday = Number(pp[0]); C.pitem = pp[1]; draw(); var rw = el('bc_pnr_' + pp[1]); if (rw) try { rw.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } catch (e) {} }
     else if (w === 'pnstep') { var nd = Math.max(-PN_OFF, Math.min(PN_N - PN_OFF - 1, (C.pday || 0) + Number(id) * (C.pz || 7))); C.pday = nd; C.pitem = ''; pnScrollTo(nd); draw(); }
     else if (w === 'pntoday') { C.pday = 0; C.pitem = ''; pnScrollTo(0); draw(); }
