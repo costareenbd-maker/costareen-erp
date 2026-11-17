@@ -59810,6 +59810,13 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
 .pn-ads li b{font-size:12.5px;color:#7A5200}
 .pn-clock li{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;font-size:13.5px;line-height:1.5;padding:7px 0;border-top:1px solid var(--bc-rule)}
 .pn-clock time{color:var(--bc-ink-2);font-weight:600}
+.pn-hl{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.pn-hl li{border:1px solid #E8C46A;background:#FFFBEF;border-left:3px solid var(--c);border-radius:10px;padding:9px 12px}
+.pn-hl-t{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:13.5px}
+.pn-hl-t span{color:var(--bc-ink-2);font-size:12.5px}
+.pn-hl li p{margin:6px 0 8px;font-size:13.5px;line-height:1.5;color:var(--bc-ink)}
+.pn-hl-a{display:flex;gap:8px;flex-wrap:wrap}
+.pn-hl-a .bc-btn{min-height:40px}
 @media (max-width:760px){
   .pn-slot{grid-template-columns:minmax(0,1fr) auto}
   .pn-slot time{grid-column:1 / 3}
@@ -62232,6 +62239,13 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     var h = headHtml('পরিকল্পনা', '');
     h += '<p class="pn-mode">' + (P.mode === 'autopilot' && au ? '<b>এখন অটোপাইলট</b> — ' + bn(au.getDate()) + ' নভেম্বর পর্যন্ত AI নিজে লেখে আর পাঠায়। তারপর প্রতিটা পোস্ট রাত ১১টায় (Seoul) আপনার রিভিউতে আসবে।'
       : '<b>রিভিউ মোড</b> — AI রাতে লেখে, রাত ১১টায় (Seoul) আপনি দেখে অনুমোদন দেন। অনুমোদন ছাড়া কিছু যায় না।') + ' সময়গুলো ঢাকার।</p>';
+    // 0) held posts: he decides (brand-plan-1b)
+    var held = P.held || [];
+    if (held.length) h += '<section class="bc-block pn-sec pn-held" style="margin-top:18px"><div class="bc-h2"><h2>আপনার সিদ্ধান্ত লাগবে</h2><span class="bc-tag w">' + bn(held.length) + 'টা পোস্ট আটকে আছে</span></div>' +
+      '<p class="pn-note">এগুলো নিয়ম ভাঙে বা সময় পেরিয়ে গেছে, তাই যায়নি। পাঠালে এখনই যাবে; বাদ দিলে আর যাবে না (মুছবে না)।</p><ul class="pn-hl">' + held.map(function (x) {
+        return '<li style="--c:' + netCol(x.platform) + '"><div class="pn-hl-t">' + logo(x.platform, 15) + '<b>' + esc(netName(x.platform)) + (x.story ? ' · স্টোরি' : '') + '</b><span>' + pnDay(x.at) + ' ' + pnTime(x.at) + '</span><span class="pn-st w">' + esc(x.why) + '</span></div>' +
+          '<p data-noi18n="1">' + esc(x.text) + '</p><div class="pn-hl-a">' + btn('পাঠান', 'data-bc="decide" data-act="send" data-id="' + esc(x.id) + '"', 'sm', 'dc' + x.id) + btn('বাদ দিন', 'data-bc="decide" data-act="drop" data-id="' + esc(x.id) + '"', 'ghost sm', 'dd' + x.id) + '</div></li>';
+      }).join('') + '</ul></section>';
     // 1) research checks
     var bad = checks.filter(function (c) { return c.total && c.ok < c.total; }).length;
     h += '<section class="bc-block pn-sec" style="margin-top:18px"><div class="bc-h2"><h2>গবেষণা কাজ করছে কি না</h2><span class="bc-tag ' + (bad ? 'w' : '') + '">' + (bad ? bn(bad) + 'টা নিয়মে সমস্যা' : 'সব ঠিক') + '</span></div>' +
@@ -62533,7 +62547,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       var rs = findSt(id); if (!rs || !rs.raw || !rs.raw.integration) return toast('এই পোস্টটা আবার পাঠানো যাচ্ছে না।', true);
       act('rs' + id, 'erpBrandDeskPost', { networks: [{ id: rs.raw.integration, platform: rs.raw.platform }], content: rs.text, at: null, urgent: true }, function () { toast('আবার লাইনে দেওয়া হলো, আগে যাবে।'); C.pick = ''; get('cockpit', true); });
     }
-    else if (w === 'decide') { var a = t.getAttribute('data-act'); act((a === 'send' ? 'dc' : 'dd') + id, 'erpBrandDeskDecide', { id: id, action: a }, function () { toast(a === 'send' ? 'এখনই পাঠানো হচ্ছে।' : 'বাদ দেওয়া হলো।'); C.pick = ''; get('cockpit', true); }); }
+    else if (w === 'decide') { var a = t.getAttribute('data-act'); act((a === 'send' ? 'dc' : 'dd') + id, 'erpBrandDeskDecide', { id: id, action: a }, function () { toast(a === 'send' ? 'এখনই পাঠানো হচ্ছে।' : 'বাদ দেওয়া হলো।'); C.pick = ''; get('cockpit', true); if (C.d.plan) get('plan', true); }); }
     // drafts
     else if (w === 'approve') {
       // brand-19: a draft with no lived detail asks once more before it goes (owner's rule: no generic AI post slips through)
