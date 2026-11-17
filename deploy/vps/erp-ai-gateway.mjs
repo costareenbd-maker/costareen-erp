@@ -117,12 +117,33 @@ function imageBlocks(msgs) {
 const ACC_FILE = process.env.CLAUDE_ACCOUNTS_FILE || '/etc/erp-ai-gateway.claude-accounts.json';
 const GEMINI_KEY = process.env.GEMINI_API_KEY || '';
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+// free-1 (17 Nov 2026, owner: "so work never stops when our real AI runs out"): FreeLLMAPI (MIT, self-hosted on the
+// Mac at 127.0.0.1:3001, /opt/freellmapi) pools free tiers of many AI companies behind one /v1. It is the LAST step of
+// every chain: used only when Claude, ChatGPT and Gemini all failed. Free tiers may read or keep what is sent, so it is
+// skipped like Gemini for x-ai-private: 1, and a public job that may wait (x-ai-wait: 1) still waits for Claude.
+// Key: FLA_KEY in /etc/freellmapi-admin.env (read at each call, never printed). Dashboard: ssh -L 3001:127.0.0.1:3001.
+const FREE_URL = process.env.FREE_LLM_URL || 'http://127.0.0.1:3001/v1/chat/completions';
+const FREE_KEY_FILE = process.env.FREE_LLM_KEY_FILE || '/etc/freellmapi-admin.env';
 const TASKS = {
-  public: { claude: 'opus', gpt: 'gpt-5.6-sol', chain: ['claude', 'gemini', 'gpt'] },
-  'public-light': { claude: 'sonnet', gpt: 'gpt-5.6-sol', chain: ['claude', 'gemini', 'gpt'] },
-  internal: { claude: 'sonnet', gpt: 'gpt-5.6-terra', chain: ['gpt', 'claude', 'gemini'] },
-  'internal-light': { claude: 'haiku', gpt: 'gpt-5.6-luna', chain: ['gpt', 'claude', 'gemini'] },
+  public: { claude: 'opus', gpt: 'gpt-5.6-sol', chain: ['claude', 'gemini', 'gpt', 'free'] },
+  'public-light': { claude: 'sonnet', gpt: 'gpt-5.6-sol', chain: ['claude', 'gemini', 'gpt', 'free'] },
+  internal: { claude: 'sonnet', gpt: 'gpt-5.6-terra', chain: ['gpt', 'claude', 'gemini', 'free'] },
+  'internal-light': { claude: 'haiku', gpt: 'gpt-5.6-luna', chain: ['gpt', 'claude', 'gemini', 'free'] },
 };
+function freeKey() {
+  try { const m = /^FLA_KEY=(.+)$/m.exec(readFileSync(FREE_KEY_FILE, 'utf8')); return m ? m[1].trim() : ''; } catch (_) { return ''; }
+}
+async function freeAsk(body) {
+  const key = freeKey();
+  if (!key) throw new Error('no FreeLLMAPI key');
+  const r = await fetch(FREE_URL, { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + key },
+    body: JSON.stringify({ model: 'auto', messages: asText(body).messages }), signal: AbortSignal.timeout(170000) });
+  const txt = await r.text();
+  if (!r.ok) throw new Error('free ' + r.status + ' ' + txt.slice(0, 160));
+  const j = JSON.parse(txt), c = j.choices && j.choices[0] && j.choices[0].message;
+  if (!c || !c.content) throw new Error('free odd answer');
+  return { text: c.content, usage: j.usage || {}, via: r.headers.get('x-routed-via') || j.model || 'auto' };
+}
 const accRest = {};   // account name -> {until, why}
 function accounts() {
   try { const a = JSON.parse(readFileSync(ACC_FILE, 'utf8')); if (Array.isArray(a) && a.length) return a; } catch (_) { /* none */ }
@@ -215,6 +236,7 @@ async function personalChat(req, body, res) {
   for (let i = 0; i < T.chain.length; i++) {
     const step = T.chain[i];
     if (step === 'gemini' && (priv || !GEMINI_KEY)) continue;
+    if (step === 'free' && priv) continue;
     // a public job that may wait does not go below Claude: it is told when to come back
     if (i > 0 && wait && T.chain[0] === 'claude') {
       const r = why.find((w) => w.retryAt);
@@ -230,6 +252,7 @@ async function personalChat(req, body, res) {
         text = j.result; by = 'claude:' + T.claude + '@' + acc;
         usage = { prompt_tokens: (u.input_tokens || 0) + (u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0), completion_tokens: u.output_tokens || 0 };
       } else if (step === 'gpt') { ({ text, usage } = await gptAsk(body, T.gpt)); by = 'chatgpt:' + T.gpt; }
+      else if (step === 'free') { let via; ({ text, usage, via } = await freeAsk(body)); by = 'free:' + via; }
       else { ({ text, usage } = await geminiAsk(body)); by = 'gemini:' + GEMINI_MODEL; }
       free();
       const fb = i > 0 ? '1' : '0';
