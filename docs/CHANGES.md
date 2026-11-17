@@ -4758,3 +4758,20 @@ question topics written in plain Bangla from now on; listen_bangla_backfill() re
 branddesk suite 253/253 (server code unchanged). NOT done: dark theme (cockpit stays light by decision: ~200 colour
 literals and the network phone cards are drawn in each network's own light look); English reader profiles on Audience
 stay English on purpose (the AI writes English posts for those readers from them).
+
+## brand-acc-1 / brand-plan-3 / brand-plan-4 / brand-series-1 / brand-pics-2 (17 Nov 2026) - LIVE #44
+
+Owner: three Gmails mixed in one inbox; plan dots did not open the post; ad candidates said "2" with no where/why/kind;
+video slots did not say AI or his face; the step-by-step series research was not on the Ideas page; waiting posts had
+no pictures.
+- Inbox: account tag on every conversation (and in the thread head); a channel filter gets one pill per account with
+  unread counts (bridge ib_list p = channel id, ib_counts a_<id>; erpBrandDeskInbox accepts a numeric p).
+- Plan: a dot or a "পোস্ট দেখুন" button opens the post on the Posts page (waiting -> its card; queued/gone -> its line,
+  opened, flashed). Ad candidates show network, time, post, goal (AD_BN as week.ad_type), kind of ad per network,
+  audience, money rule; a 7-day ad overview under the figures; the ad lane marks open that day's ads.
+- Plan: video slots carry `maker` (ai / face / own) by the night-studio rule played forward (>20 h ahead, half of a
+  network's week videos at most) and `idea` (the series episode the writer will take, distinct per slot).
+- Ideas > "ধাপে ধাপে সিরিজ": bridge /series + erpBrandDeskSeries (owner read): six series, 72 episodes, next per series,
+  state per episode, its posts open on tap.
+- Pictures: picture_prepare() hourly makes slides for posts waiting for review (4 made at once). NOT done: AI-drawn or
+  stock photos - no image model is allowed for the personal brand yet (owner's call).
