@@ -4747,3 +4747,14 @@ Plan held banner "সময়মতো যায়নি" folded after 2; one 
 203/207 (ads, fddash, serverfinal, golive red before). LIVE web brandnav5-7d59952 (page only; function unchanged since
 #41); stand-alone desk rebuilt. NOT done (critique P2s): Listen/Audience/People English topic text, grey-only legends on
 Listen and Rules, post volume set in two places (Routine + Rules), inline grey intros vs ?-button rule, dark theme.
+
+## brand-nav-6 (17 Nov 2026) - the critique's leftovers; LIVE
+Listen: comment kinds as named ranked rows (name, share, count; tap = filter) instead of a grey stacked bar + grey chips.
+Rules: topic names on wide bar segments + one readable line per network (numbered codes retired). The two volume
+settings named for what they are (Rules = "প্রতি নেটওয়ার্কে সপ্তাহের লক্ষ্য", Routine = "রুটিনের কতগুলো ঘর চালু"), photo/video
+need shown as "(দরকার N)". Explanations on Routine and Plan behind ? buttons (qh/qt helpers). Bridge: comment summaries and
+question topics written in plain Bangla from now on; listen_bangla_backfill() rewrote the 573 older summaries + 18 topics
+(comment text untouched; bridge.py.bak-nav6 on the Mac). LIVE web brandnav6-6bf4f35; stand-alone desk rebuilt;
+branddesk suite 253/253 (server code unchanged). NOT done: dark theme (cockpit stays light by decision: ~200 colour
+literals and the network phone cards are drawn in each network's own light look); English reader profiles on Audience
+stay English on purpose (the AI writes English posts for those readers from them).
