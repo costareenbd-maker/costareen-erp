@@ -4690,3 +4690,12 @@ hourly pictures + Stories, 09:00 growth check, 23:00 review). Same day on the Ma
 posts without a picture), pacer YouTube/TikTok settings, brand-video-night-1 (voice chain + nightly AI video).
 Held (pacer state ask, nothing deleted): English FB draft 111 + Story, sales post 116 + Story.
 NOT done: test suites not run (local test scratch env is gone); no live ERP release (dev + social.costareen.com/brand only).
+
+## brand-plan-2 (17 Nov 2026) - impeccable polish of পরিকল্পনা (dev + stand-alone desk)
+Owner: "Impeccable use kore koro". The page broke the Line Map rules (green/purple state chips, a card grid, logos as
+names, a 3px coloured left border). Now: held posts under the black wait bar as departure rows; the 7 days as departures
+(today + tomorrow first, button for the full week), states as small stations; research rules as station rows with the
+big figure; each network as a line badge + a track with one station per growth step; ads with the next five candidate
+slots; the machine's clock as an Ink spine. Bridge: hand slots (comments, Stories, live, YouTube community) never show a
+nearby draft. DESIGN.md cockpit section has the plan page. Checked at 1440 and 390 (no sideways scroll), no console
+errors. NOT done: finish-review agent pass; test suites (local test env gone); live ERP release.

@@ -491,6 +491,15 @@ Cockpit panels and cards carry a 1px rule, not a shadow.
   - Focus: a 2px Ink outline with a 2px offset; fields take an Ink border and a 3px #16181D14 ring.
   - Reduced motion: every transition and animation is off.
 
+- **Plan page (`.pn-*`, brand-plan-1/2, 17 Nov 2026):** পরিকল্পনা, 2nd in the rail and the phone bar. Order: mode
+  sentence; wait bar + departure rows for held posts (amber পাঠান, ghost বাদ দিন); the coming 7 days as departures
+  (today + tomorrow, "পুরো ৭ দিন দেখুন" for the rest) with a shelf-grey tally and a one-row network filter; research
+  rules as station rows (ink station = kept, amber-ring station = some drafts break it, opens the list); each network
+  as a line badge + a track with one 19px station per growth step (filled up to the current step, the current one
+  lifted); ads (rules + next five candidate slots); the machine's clock as an Ink spine. Small stations (`.pn-stn`,
+  14px): `q` filled = will go, `wt` amber = his review, `need` dashed = video needed, `soon` light = written at
+  night / his hand / next step, `x` red = missed. Flags (ad candidate, AI video) are ink-outline pills, never a hue.
+
 ### Do's and Don'ts
 - **Do** keep colour on the lines. A new cockpit element is ink, grey or rule unless it is a network, stuck or waiting.
 - **Do** keep stuck posts visible at every zoom level and through every merge.
