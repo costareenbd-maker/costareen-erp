@@ -62908,6 +62908,7 @@ i.pn-sn{display:block;font-style:normal}
       var layer = !!(C.sheet || C.railMore);
       if (layer && !C._lay) { C._lay = 1; try { history.pushState({ bcLayer: 1 }, '', location.hash); } catch (e) {} }
       else if (!layer && C._lay) { C._lay = 0; try { if (history.state && history.state.bcLayer) { C._skipPop = 1; history.back(); } } catch (e) {} }
+      else if (!layer && !C._skipPop) { try { if (routeView() === 'branddesk' && routeParam() !== C.sec) routeSet('branddesk', C.sec); } catch (e) {} }   // pages opened from a link inside a sheet
       if (C.sec === 'plan') requestAnimationFrame(pnAfter);
       if (C.sec === 'home') requestAnimationFrame(function () { var sc = r.querySelector('.bc-scroll'), nw = sc && sc.querySelector('.bc-now'); if (sc && nw && sc.scrollWidth > sc.clientWidth && !C.moved) { sc.scrollLeft = nw.offsetLeft - sc.clientWidth / 2; C.moved = 1; } });
     } finally { DRAWING = false; }
@@ -63048,6 +63049,8 @@ i.pn-sn{display:block;font-style:normal}
     if (!NEED[id] && id !== 'home') id = 'home';
     C.sec = id; C.pick = ''; C.dep = ''; C.railMore = false; C.focusHead = 1;
     try { localStorage.setItem('bc_sec', id); } catch (e2) {}
+    // a page picked from a sheet replaces the sheet's history layer, so Back goes to the page before, not to the sheet
+    if (C._lay) { C._lay = 0; replace = true; }
     try { routeSet('branddesk', id, replace); } catch (e3) {}
     draw(); scrollTo({ top: 0 });
   }
