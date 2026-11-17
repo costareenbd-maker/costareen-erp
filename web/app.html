@@ -59777,6 +59777,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
 .pn-filter{margin:0 0 6px;flex-wrap:wrap}
 .pn-dayh{font:700 15px "Anek Bangla","Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink-3);margin:22px 0 2px;padding-bottom:6px;border-bottom:1px solid var(--bc-rule)}
 .pn-dayh.today{color:var(--bc-ink)}
+.pn-more{margin-top:14px}
 .pn-rules{display:grid;border-top:1px solid var(--bc-rule)}
 .pn-rule{border-bottom:1px solid var(--bc-rule)}
 .pn-rule-h{all:unset;box-sizing:border-box;display:grid;grid-template-columns:14px minmax(0,1fr) auto 18px;gap:14px;align-items:center;width:100%;padding:12px 6px;cursor:pointer;border-radius:8px}
@@ -62278,16 +62279,18 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
       '<div class="bc-pills pn-filter" role="group" aria-label="নেটওয়ার্ক"><button type="button" data-bc="pnnet" data-id="all"' + (C.pnNet === 'all' ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>সব</button>' +
       netsIn.map(function (n) { return '<button type="button" data-bc="pnnet" data-id="' + n + '"' + (C.pnNet === n ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + esc(netName(n)) + '</button>'; }).join('') +
       '<button type="button" data-bc="pnlater" aria-pressed="' + !!C.pnLater + '"' + (C.pnLater ? ' class="on"' : '') + '>পরের ধাপের ঘরও</button></div>';
-    var day = '', rows = '';
+    var day = '', rows = '', days = 0, cut = 0;
     show.forEach(function (w) {
       var dn = pnDay(w.at), st = PNST[w.state] || [w.state, 'soon'];
-      if (dn !== day) { rows += '<h3 class="pn-dayh' + (dn === 'আজ' ? ' today' : '') + '">' + dn + '</h3>'; day = dn; }
+      if (dn !== day) { days++; day = dn; if (!C.pnAll && days > 2) { cut = 1; return; } rows += '<h3 class="pn-dayh' + (dn === 'আজ' ? ' today' : '') + '">' + dn + '</h3>'; }
+      if (cut) return;
       var what = '<b>' + (RFMT[w.format] || w.format) + '</b>' + (w.series_name ? ' · ' + esc(w.series_name) : '') + (w.lang ? ' · ' + (w.lang === 'en' ? 'English' : 'বাংলা') : '');
       rows += '<div class="bc-dep pn-dep' + (w.state === 'later' ? ' pn-later' : '') + '"><span class="tm">' + pnTime(w.at) + '</span>' + lb(w.platform) +
         '<p><span class="pn-what">' + what + (w.ad ? '<span class="pn-flag">বিজ্ঞাপন-প্রার্থী</span>' : '') + (w.ai_video ? '<span class="pn-flag">AI ভিডিও</span>' : '') + '</span>' +
         (w.hook ? '<span class="m" data-noi18n="1">' + esc(w.hook) + '</span>' : '') + '</p><span class="a pn-state">' + pnStn(st[1]) + st[0] + '</span></div>';
     });
-    h += '<div class="pn-deps">' + (rows || '<p class="pn-note">এই বাছাইয়ে কোনো ঘর নেই।</p>') + '</div></section>';
+    h += '<div class="pn-deps">' + (rows || '<p class="pn-note">এই বাছাইয়ে কোনো ঘর নেই।</p>') + '</div>' +
+      (cut || C.pnAll ? '<button type="button" class="bc-btn pn-more" data-bc="pnall" aria-expanded="' + !!C.pnAll + '">' + (C.pnAll ? 'শুধু আজ আর কাল দেখান' : 'পুরো ৭ দিন দেখুন') + '</button>' : '') + '</section>';
     // 2) research rules, counted on the real drafts
     var bad = checks.filter(function (c) { return c.total && c.ok < c.total; }).length;
     h += '<section class="bc-block pn-sec"><div class="bc-h2"><h2>গবেষণা মানা হচ্ছে কি না</h2>' + (bad ? '<span class="bc-tag w">' + bn(bad) + 'টা নিয়মে গরমিল</span>' : '<span class="bc-tag">সব নিয়ম মানা হচ্ছে</span>') + '</div>' +
@@ -62309,7 +62312,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     // 4) ads
     var cand = ads.candidates || [];
     h += '<section class="bc-block pn-sec"><div class="bc-h2"><h2>বিজ্ঞাপন</h2><span class="bc-tag">খরচ ৳0 · আপনার হ্যাঁ ছাড়া কিছু নয়</span></div><ul class="pn-list">' + (ads.rules || []).map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul>' +
-      (cand.length ? '<h3 class="pn-sub">এ সপ্তাহের প্রার্থী ঘর<small>পোস্টটা নিজে থেকে ভালো চললে তবেই প্রস্তাব আসবে</small></h3><div class="pn-deps">' + cand.map(function (a) {
+      (cand.length ? '<h3 class="pn-sub">সামনের প্রার্থী ঘর<small>পোস্টটা নিজে থেকে ভালো চললে তবেই প্রস্তাব আসবে' + (cand.length > 5 ? '; এ সপ্তাহে মোট ' + bn(cand.length) + 'টা' : '') + '</small></h3><div class="pn-deps">' + cand.slice(0, 5).map(function (a) {
         return '<div class="bc-dep pn-dep"><span class="tm">' + pnTime(a.at) + '<small>' + pnDay(a.at) + '</small></span>' + lb(a.platform) + '<p><b>' + (RFMT[a.format] || a.format) + '</b></p><span class="a pn-state">' + esc(a.type_bn) + '</span></div>'; }).join('') + '</div>'
         : '<p class="pn-note">এ সপ্তাহে বিজ্ঞাপনের প্রার্থী ঘর নেই।</p>') + '</section>';
     // 5) the machine's own clock, as a spine
@@ -62712,6 +62715,7 @@ html.bc-cs-on,html.bc-cs-on body{overflow:hidden!important}
     else if (w === 'rday') { C.rday = Number(id); C.redit = ''; draw(); }
     else if (w === 'pnnet') { C.pnNet = id; draw(); }   // brand-plan-1
     else if (w === 'pnlater') { C.pnLater = !C.pnLater; draw(); }
+    else if (w === 'pnall') { C.pnAll = !C.pnAll; draw(); }
     else if (w === 'rplat') { C.rp[id] = C.rp[id] ? 0 : 1; draw(); }
     else if (w === 'rlvl') act('rlvl', 'erpBrandDeskRoutineLevel', { level: Number(id) }, function (r) { C.d.routine = r; toast('পরিকল্পনা বদলানো হলো।'); });
     else if (w === 'rclose') { C.redit = ''; draw(); }
