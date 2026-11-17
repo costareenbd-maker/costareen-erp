@@ -60141,7 +60141,9 @@ i.pn-sn{display:block;font-style:normal}
 .bc-rgw{display:contents}
 .bc-sheet{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
 @container bc (max-width:759px){
-  .bc-call{flex-wrap:wrap}
+  .bc-call{flex-wrap:wrap;gap:8px}
+  .bc-call>span:first-child,.bc-call>.bc-sub{flex:1 0 100%}
+  .bc-call>.bc-sp{display:none}
   .bc-dt{width:44px;height:44px}
 }
 @media (prefers-reduced-motion:reduce){.bc-dt svg{transition:none}}
