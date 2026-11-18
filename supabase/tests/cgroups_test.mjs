@@ -2,6 +2,7 @@
 // salesperson; group messages from our team pause the AI, other groups are ignored. Made-up numbers only.
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
+import fs from 'node:fs';
 import { sql, FIX, owner, mgr, sales, check, done, deps, web, fnDir } from './harness.mjs';
 
 const ib = await import(pathToFileURL(path.join(fnDir, 'handlers', 'inbox.js')));
@@ -102,17 +103,41 @@ r = await owner('erpCustomerGroups', [{ action: 'after_purchase' }]);
 check('cgroup-2: "after purchase" mode is set (on, since now)', r.ok && r.result.on && r.result.mode === 'purchase' && r.result.since, r);
 const prof = await asB(async (ctx) => ib.profile(ctx, false));
 let t2 = await asB(async (ctx) => cg.purchaseTick(ctx, prof, true));
-check('cgroup-2: no purchase since - no group (the old list is not worked)', t2.waiting === 'no new buyer', t2);
+check('cgroup-2: no purchase since - no group (the old list is not worked)', t2.waiting === 'no new invoice', t2);
 await sql`insert into invoices (business_id, invoice_no, customer_name, customer_phone, subtotal, grand_total) values (${FIX.B}, 'INV-CG-9', 'Karim Hasan', '01713-000009', 500, 500)`;
 made.length = 0; sent.length = 0; inGroup = true;
-t2 = await asB(async (ctx) => cg.purchaseTick(ctx, prof, true));
+const later = (ctx, min) => ({ ...ctx, now: new Date(Date.now() + (min || 10) * 60e3) });   // cgpost-1: invoices wait 3 min
+t2 = await asB(async (ctx) => cg.purchaseTick(later(ctx), prof, true));
 const g9 = (await sql`select * from customer_groups where phone = '8801713000009'`)[0];
 check('cgroup-2: a buyer gets a group: the customer, the MD and Alvi - NOT the owner\'s number', t2.made && made.length === 1 && made[0].participants.join() === '8801713000009,8801900000070,8801900000659' && g9.source === 'purchase' && g9.invoice_no === 'INV-CG-9', [t2, made, g9]);
 check('cgroup-2: the manager greets with the purchase text', sent.length >= 1 && sent[0].inst === 'boss1' && sent[0].number === g9.group_jid && /ধন্যবাদ \(test\)/.test(sent[0].text), sent);
 check('cgroup-2: the greeting is in the group\'s Inbox chat as the team\'s message', g9 && (await sql`select 1 from inbox_messages where conversation_id = ${g9.conversation_id} and author = 'team' and text like '%ধন্যবাদ (test)%'`).length === 1);
 check('cgroup-2: no invoice PDF stored here: a note says send it by hand (never a crash)', g9 && (await sql`select 1 from inbox_messages where conversation_id = ${g9.conversation_id} and direction = 'note' and text like '%INV-CG-9%'`).length === 1);
-t2 = await asB(async (ctx) => cg.purchaseTick(ctx, prof, true));
-check('cgroup-2: the same buyer is not grouped twice', t2.waiting === 'no new buyer' && made.length === 1, t2);
+t2 = await asB(async (ctx) => cg.purchaseTick(later(ctx), prof, true));
+check('cgroup-2: the same buyer is not grouped twice', t2.waiting === 'no new invoice' && made.length === 1, t2);
+// ---- cgpost-1: every invoice once; the window moves past 40; a repeat buyer's invoice goes into their group
+await sql`insert into invoices (business_id, invoice_no, customer_name, customer_phone, subtotal, grand_total) values (${FIX.B}, 'INV-CG-10', 'Karim Hasan', '01713-000009', 300, 300)`;
+made.length = 0; sent.length = 0;
+t2 = await asB(async (ctx) => cg.purchaseTick(later(ctx), prof, true));
+check('cgpost-1: a repeat buyer\'s new invoice is worked in their OWN group (no new group); no PDF here -> error, kept for the next tick', made.length === 0 && t2.error && /PDF/.test(t2.error) && t2.invoice === 'INV-CG-10', [t2, made]);
+t2 = await asB(async (ctx) => cg.purchaseTick(later(ctx, 200), prof, true));
+check('cgpost-1: after 2 hours a failing invoice is left for the team with a note (never blocks the rest)', t2.waiting === 'no new invoice' && (await sql`select 1 from inbox_messages where conversation_id = ${g9.conversation_id} and direction = 'note' and text like '%INV-CG-10 could not be sent%'`).length === 1, t2);
+for (let k = 0; k < 41; k++) await sql`insert into invoices (business_id, invoice_no, customer_name, customer_phone, subtotal, grand_total) values (${FIX.B}, ${'INV-TEAM-' + k}, 'Our MD', '01900000070', 1, 1)`;
+await sql`insert into invoices (business_id, invoice_no, customer_name, customer_phone, subtotal, grand_total, created_at) values (${FIX.B}, 'INV-CG-11', 'Rahim Uddin', '01713-000011', 400, 400, now() + interval '1 second')`;
+made.length = 0;
+t2 = await asB(async (ctx) => cg.purchaseTick(later(ctx), prof, true));
+const t3 = await asB(async (ctx) => cg.purchaseTick(later(ctx), prof, true));
+check('cgpost-1: the 40-invoice window moves on (the old bug: buyer no. 41 was never seen)', t2.waiting === 'no new invoice' && t3.made && made.length === 1 && made[0].participants[0] === '8801713000011', [t2, t3, made]);
+await sql`insert into invoices (business_id, invoice_no, customer_name, customer_phone, subtotal, grand_total) values (${FIX.B}, 'INV-CG-77', 'Salma Akter', '01713-000077', 700, 700)`;
+made.length = 0;
+const hand = await asB(async (ctx) => cg.sendInvoiceToGroup(ctx, prof, 'inv-cg-77'));
+check('cgpost-1: by hand (manager/MD): a buyer with no group gets the group made with the invoice', hand.sent && hand.newGroup && made.length === 1 && hand.invoice === 'INV-CG-77', [hand, made]);
+const hand2 = await asB(async (ctx) => cg.sendInvoiceToGroup(ctx, prof, 'INV-NOPE-1'));
+check('cgpost-1: by hand: an unknown invoice is a plain answer', !hand2.sent && /No invoice/.test(hand2.error || ''), hand2);
+t2 = await asB(async (ctx) => cg.purchaseTick(later(ctx), prof, true));
+check('cgpost-1: an invoice sent by hand is not sent again by the timer', t2.waiting === 'no new invoice' && made.length === 1, t2);
+const bsrc = fs.readFileSync(path.join(fnDir, 'handlers', 'bosschat.js'), 'utf8');
+check('cgpost-1: the manager and MD have invoice_to_group and report_bug; the AI is told never to make up reasons', /name: 'invoice_to_group'/.test(bsrc) && /if \(name === 'report_bug'\)/.test(bsrc) && /NEVER make up a reason/.test(bsrc));
 // greet the groups made before, once
 sent.length = 0;
 r = await owner('erpCustomerGroups', [{ action: 'greet_all' }]);

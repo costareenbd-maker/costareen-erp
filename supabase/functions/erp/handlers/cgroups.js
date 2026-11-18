@@ -20,11 +20,19 @@
 //                one at a time, 9:00-22:00 Dhaka; the old random queue is never worked again
 //   greeting     from the MANAGER's number (profile cg_welcome / cg_welcome_buy, {salute} = ভাই / আপু / nothing), kept in
 //                the group's Inbox chat as the team's message; after a purchase the invoice PDF follows, then the notice
+//
+// cgpost-1 (owner 19 Nov 2026, "Alvi does not put the invoices in the groups"): purchaseTick read only the FIRST 40
+// invoices after cg_since, so after invoice no. 40 (INV-20261115-2167) it never saw a new buyer again; and a buyer who
+// already had a group never got the next invoice there. Now every invoice is worked once (business_config cg_inv_sent:
+// {since, done[]}): no group -> the group is made (as before); a group -> Alvi's number posts the invoice PDF + notice.
+// Invoices from before cgpost-1 went live are NOT sent by themselves (that would surprise customers days later); the
+// manager / MD send any invoice by hand on WhatsApp ("2161 group-e dao" -> bosschat invoice_to_group).
 
 import { formatDate } from '../lib/time.js';
 import { roleAtLeast } from '../allow.js';
 import { call, chSecret, sendOut } from './inboxch.js';
 import { bossPhones } from './superior.js';
+import { getConfig, setConfig } from '../lib/ext.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const num = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
@@ -182,30 +190,109 @@ export async function cgTick(ctx) {
   return makeNext(ctx, p);
 }
 
-/** cgroup-2: the next customer who bought (an invoice after cg_since) and has no group yet - their group now. */
+const SENT_KEY = 'cg_inv_sent';
+async function sentState(ctx) {
+  let st = null;
+  try { st = JSON.parse(str(await getConfig(ctx, SENT_KEY, '')) || 'null'); } catch (_) { st = null; }
+  if (!st || typeof st !== 'object' || !str(st.since)) { st = { since: ctx.now.toISOString(), done: [] }; await setConfig(ctx, SENT_KEY, JSON.stringify(st)); }
+  if (!Array.isArray(st.done)) st.done = [];
+  return st;
+}
+async function sentMark(ctx, st, no) {
+  st.done = st.done.filter((x) => x !== no).concat([no]).slice(-1500);
+  await setConfig(ctx, SENT_KEY, JSON.stringify(st));
+}
+const upper = (v) => str(v).toUpperCase();
+/** The customer's open group (made / invited, with its WhatsApp id), or null. */
+export async function groupOf(ctx, phone) {
+  return (await ctx.tx`select * from customer_groups where business_id = ${ctx.biz} and phone = ${phone} and status in ('made', 'invited') and group_jid is not null order by made_at desc nulls last limit 1`)[0] || null;
+}
+/** cgpost-1: Alvi's number posts one invoice's PDF (and the shop's notice) into the customer's group. */
+export async function invoiceToGroup(ctx, p, g, invoiceNo) {
+  const N = await numbers(ctx, p);
+  if (!N.ai) return { error: "the salesperson's WhatsApp number is not linked" };
+  const S = await import('./sales.js');
+  const pdf = await ctx.tx.savepoint(() => S.erpInvoicePdf(ctx, { invoiceNo: str(invoiceNo) }));
+  if (!pdf || !pdf.found || !pdf.url) return { error: 'the PDF of invoice ' + invoiceNo + ' could not be made' };
+  const s = await sendOut(ctx, N.ai, { external_id: g.group_jid }, { kind: 'document', url: pdf.url, fileName: 'Invoice_' + str(invoiceNo) + '.pdf', caption: 'Invoice ' + str(invoiceNo) });
+  if (s && s.ok === false) return { error: 'WhatsApp did not take it (' + str(s.error).slice(0, 120) + ')' };
+  await sendOut(ctx, N.ai, { external_id: g.group_jid }, { kind: 'text', text: groupNotice() });
+  const v = g.conversation_id ? (await ctx.tx`select * from inbox_conversations where id = ${g.conversation_id}`)[0] : null;
+  if (v) { const { writeMsg } = await import('./inbox.js'); await writeMsg(ctx, v, { direction: 'out', author: 'ai', kind: 'text', text: '(invoice ' + str(invoiceNo) + ' PDF)', externalId: (s && s.externalId) || null }); }
+  return { sent: true };
+}
+/** Queue a group for this buyer (new row or the old list row) and make it now. */
+async function groupForBuyer(ctx, p, ph, name, invoiceNo) {
+  const g = (await ctx.tx`select * from customer_groups where business_id = ${ctx.biz} and phone = ${ph}`)[0];
+  let id;
+  if (g) { await ctx.tx`update customer_groups set status = 'queued', source = 'purchase', invoice_no = ${String(invoiceNo)}, error = null where id = ${g.id}`; id = g.id; }
+  else id = (await ctx.tx`insert into customer_groups (business_id, phone, name, source, invoice_no) values (${ctx.biz}, ${ph}, ${str(name) || ph}, 'purchase', ${String(invoiceNo)}) returning id`)[0].id;
+  return makeNext(ctx, p, id);
+}
+/** cgpost-1 (by hand, manager / MD on WhatsApp): this invoice into the buyer's group - the group is made first if there is none. */
+export async function sendInvoiceToGroup(ctx, p, ref) {
+  const d = str(ref).replace(/^#/, '');
+  if (!d) return { error: 'Which invoice? Give its number.' };
+  const tail = d.replace(/[^0-9]/g, '');
+  const inv = await ctx.tx`select invoice_no, customer_name, customer_phone from invoices where business_id = ${ctx.biz} and voided_at is null
+                           and (upper(invoice_no) = ${d.toUpperCase()} or (${tail.length >= 3} and invoice_no like ${'%-' + tail}))
+                           order by created_at desc limit 3`;
+  if (!inv.length) return { error: 'No invoice ' + d + '.' };
+  const exact = inv.find((x) => upper(x.invoice_no) === d.toUpperCase());
+  if (!exact && inv.length > 1) return { error: 'More than one invoice ends in ' + tail + ': ' + inv.map((x) => x.invoice_no).join(', ') };
+  const i = exact || inv[0], ph = phone88(i.customer_phone);
+  if (!/^8801[3-9][0-9]{8}$/.test(ph)) return { error: 'Invoice ' + i.invoice_no + ' has no usable Bangladesh mobile number (' + (str(i.customer_phone) || 'empty') + ').' };
+  if (teamPhones(p).includes(ph)) return { error: 'That number is our own team.' };
+  const st = await sentState(ctx);
+  const g = await groupOf(ctx, ph);
+  let r;
+  if (g) r = await invoiceToGroup(ctx, p, g, i.invoice_no);
+  else { r = await groupForBuyer(ctx, p, ph, i.customer_name, i.invoice_no); if (r.made) r = { sent: true, newGroup: true, invited: r.status === 'invited' }; }
+  if (r.sent) await sentMark(ctx, st, String(i.invoice_no));
+  return { ...r, invoice: i.invoice_no, customer: str(i.customer_name) };
+}
+
+/** cgroup-2 + cgpost-1: the next invoice not worked yet - its buyer's group is made (with the invoice), or the invoice
+ *  goes into the group they already have. One invoice per tick; 9:00-22:00 Dhaka. */
 export async function purchaseTick(ctx, p, anyHour) {
   const h = Number(formatDate(ctx.now, 'H'));
   if (!anyHour && (h < 9 || h >= 22)) return { waiting: 'night' };
-  const since = str(p.cg_since) ? new Date(str(p.cg_since)) : ctx.now;
-  const day = (await ctx.tx`select count(*)::int n from customer_groups where business_id = ${ctx.biz} and made_at > ${new Date(ctx.now.getTime() - 24 * 3600e3)}`)[0].n;
-  if (day >= 30) return { waiting: 'the day is full' };
+  const st = await sentState(ctx);
+  const since = new Date(Math.max(str(p.cg_since) ? new Date(str(p.cg_since)).getTime() : ctx.now.getTime(), new Date(st.since).getTime()));
   const last3 = await ctx.tx`select status from customer_groups where business_id = ${ctx.biz} and source = 'purchase' and status in ('made', 'invited', 'failed') order by coalesce(made_at, queued_at) desc limit 3`;
-  if (last3.length === 3 && last3.every((r) => r.status === 'failed')) return { stopped: 'three failures in a row - check the numbers' };
+  const makeStopped = last3.length === 3 && last3.every((r) => r.status === 'failed');
+  const day = (await ctx.tx`select count(*)::int n from customer_groups where business_id = ${ctx.biz} and made_at > ${new Date(ctx.now.getTime() - 24 * 3600e3)}`)[0].n;
   const team = new Set(teamPhones(p));
-  const inv = await ctx.tx`select invoice_no, customer_name, customer_phone from invoices where business_id = ${ctx.biz} and voided_at is null and created_at > ${since}
-                           and coalesce(customer_phone, '') <> '' order by created_at limit 40`;
+  const done = st.done.length ? st.done : ['-'];
+  // 3 minutes old at least: the invoice may still be edited right after saving
+  const inv = await ctx.tx`select invoice_no, customer_name, customer_phone, created_at from invoices where business_id = ${ctx.biz} and voided_at is null and created_at > ${since}
+                           and created_at < ${new Date(ctx.now.getTime() - 3 * MIN)} and coalesce(customer_phone, '') <> ''
+                           and not (invoice_no::text = any(${done}::text[])) order by created_at limit 40`;
   for (const i of inv) {
-    const ph = phone88(i.customer_phone);
-    if (!/^8801[3-9][0-9]{8}$/.test(ph) || team.has(ph)) continue;
-    const g = (await ctx.tx`select * from customer_groups where business_id = ${ctx.biz} and phone = ${ph}`)[0];
-    if (g && ['made', 'invited'].includes(g.status)) continue;
-    if (g && g.source === 'purchase' && g.status === 'failed') continue;   // tried once for a purchase: the owner retries by hand
-    let id;
-    if (g) { await ctx.tx`update customer_groups set status = 'queued', source = 'purchase', invoice_no = ${String(i.invoice_no)}, error = null where id = ${g.id}`; id = g.id; }
-    else id = (await ctx.tx`insert into customer_groups (business_id, phone, name, source, invoice_no) values (${ctx.biz}, ${ph}, ${str(i.customer_name) || ph}, 'purchase', ${String(i.invoice_no)}) returning id`)[0].id;
-    return makeNext(ctx, p, id);
+    const no = String(i.invoice_no), ph = phone88(i.customer_phone);
+    if (!/^8801[3-9][0-9]{8}$/.test(ph) || team.has(ph)) { await sentMark(ctx, st, no); continue; }
+    const g = await groupOf(ctx, ph);
+    if (g) {
+      const r = await invoiceToGroup(ctx, p, g, no);
+      if (r.error) {
+        // tried again next tick; after 2 hours it is left for the team (a note in the group's chat) so one bad invoice never blocks the rest
+        if (ctx.now.getTime() - new Date(i.created_at).getTime() < 2 * 3600e3) return { error: r.error, invoice: no };
+        const v = g.conversation_id ? (await ctx.tx`select * from inbox_conversations where id = ${g.conversation_id}`)[0] : null;
+        if (v) { const { writeMsg } = await import('./inbox.js'); await writeMsg(ctx, v, { direction: 'note', author: 'system', kind: 'event', text: 'Invoice ' + no + ' could not be sent to this group: ' + r.error + ' - send it by hand.' }); }
+        await sentMark(ctx, st, no);
+        continue;
+      }
+      await sentMark(ctx, st, no);
+      return { posted: no };
+    }
+    const old = (await ctx.tx`select * from customer_groups where business_id = ${ctx.biz} and phone = ${ph}`)[0];
+    if (old && old.source === 'purchase' && old.status === 'failed') { await sentMark(ctx, st, no); continue; }   // the owner retries by hand
+    if (makeStopped) return { stopped: 'three failures in a row - check the numbers' };
+    if (day >= 30) return { waiting: 'the day is full' };
+    await sentMark(ctx, st, no);   // a failed make is recorded on the group row, never retried in a loop
+    return groupForBuyer(ctx, p, ph, i.customer_name, no);
   }
-  return { waiting: 'no new buyer' };
+  return { waiting: 'no new invoice' };
 }
 
 /** ingest: a WhatsApp group message. Our customer group on Faujia's number -> handled like a chat (team members pause
