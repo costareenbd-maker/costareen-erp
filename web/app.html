@@ -60232,19 +60232,29 @@ button.sr-d:focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px}
 .sr-nxc{display:flex;flex-direction:column;border:1.5px solid var(--bc-rule);border-radius:14px;background:#fff;overflow:hidden}
 .sr-nxc:hover{border-color:var(--bc-ink)}
 .sr-nxc button.sr-nx{border:0;border-radius:0;flex:1 1 auto}
-.sr-nxc .sr-tk{margin:0 10px 10px}
-button.sr-tk{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 10px;border-radius:12px;border:1.5px solid var(--bc-rule);background:#fff;font:600 13.5px/1.3 "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink)}
-button.sr-tk:hover{border-color:var(--bc-ink)}
-button.sr-tk:focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px}
-button.sr-tk .sr-bx{width:22px;height:22px;flex:none;border-radius:6px;border:2px solid var(--bc-ink-3);display:grid;place-items:center;box-sizing:border-box}
-button.sr-tk.on{background:#E7F5EC;border-color:#1E7B45;color:#14532D}
-button.sr-tk.on .sr-bx{background:#1E7B45;border-color:#1E7B45}
-button.sr-tk.on .sr-bx::after{content:"";width:10px;height:5px;border:solid #fff;border-width:0 0 2.5px 2.5px;transform:translate(0,-1px) rotate(-45deg)}
-button.sr-tk[disabled]{opacity:.55;cursor:default}
+.sr-nxc{position:relative}
+.sr-nxc button.sr-nx{padding-left:46px}
+.sr-nxc .bc-ck{position:absolute;left:15px;top:31px}
+/* tick-box-1 (owner 18 Nov 2026): "keep only a tick box, it doesn't need to be said; put it at the start of the text".
+   A 20px square drawn inside a 44px tap area; the negative margins keep the tap area without pushing the text away. */
+button.bc-ck{all:unset;box-sizing:border-box;position:relative;flex:none;width:44px;height:44px;margin:-12px;z-index:1;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button.bc-ck::before{content:"";position:absolute;left:12px;top:12px;width:20px;height:20px;box-sizing:border-box;border:2px solid var(--bc-ink-3);border-radius:5px;background:#fff;transition:background-color .12s,border-color .12s}
+button.bc-ck:hover::before{border-color:var(--bc-ink)}
+button.bc-ck:focus-visible::before{outline:2px solid var(--bc-ink);outline-offset:2px}
+button.bc-ck.on::before{background:#1E7B45;border-color:#1E7B45}
+button.bc-ck.on::after{content:"";position:absolute;left:17px;top:18px;width:10px;height:5px;border:solid #fff;border-width:0 0 2.5px 2.5px;transform:rotate(-45deg)}
+button.bc-ck[disabled]{cursor:default;opacity:.5}
+.sr-tl{display:flex;align-items:flex-start;gap:10px}
+.sr-tl>b,.sr-tl>h3{flex:1 1 auto;min-width:0}
+.sr-b .sr-tl+small,.sr-b .sr-tl~.sr-why,.sr-b .sr-tl~.sr-ds{margin-left:30px}
+.sr-b .sr-tl~.sr-why,.sr-b .sr-tl+small{display:block}
+.sr-nxc.dn button.sr-nx b,.vn.dn .sr-tl h3{color:var(--bc-ink-2)}
+.sr-dn{color:#14532D;font-weight:600}
+.vn-h .sr-dn{font-size:12.5px}
+@media (prefers-reduced-motion:reduce){button.bc-ck::before{transition:none}}
 .sr-ep.dn .sr-b b{color:var(--bc-ink-2)}
 .sr-ep.dn .sr-n{color:#1E7B45}
 .sr-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-.sr-dn{display:block;font-size:12.5px;color:#14532D;margin-top:4px}
 .sr-new{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:99px;background:#FFE7A3;color:#5A3A00;font:700 11.5px/1.6 "Noto Sans Bengali",system-ui,sans-serif;vertical-align:2px}
 .sr-why{display:block;font-size:12.5px;color:var(--bc-ink-3);margin-top:3px}
 .sr-more{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:0 0 12px;padding:12px 14px;border-radius:12px;background:var(--bc-shelf)}
@@ -60280,10 +60290,11 @@ button.sr-tk[disabled]{opacity:.55;cursor:default}
   .bc-pills.it-tabs{display:flex;flex-wrap:wrap;gap:8px;background:none;padding:0;border-radius:0;overflow:visible;max-width:none}
   .bc-pills.it-tabs button{background:var(--bc-shelf);min-height:44px;padding:6px 14px;box-sizing:border-box;border-radius:22px}
   .bc-pills.it-tabs button.on{background:var(--bc-ink);color:#fff}
-  .vn-a .bc-btn.sm,.vn-a .sr-tk{flex:1 1 auto;justify-content:center}
+  .vn-a .bc-btn.sm{flex:1 1 auto;justify-content:center}
 }
 @container bc (max-width:759px){
-  .sr-side{grid-column:2;align-items:flex-start}
+  .sr-side{grid-column:2;align-items:flex-start;margin-left:30px}
+  .sr-side:empty{display:none}
   .bc-pills.sr-tabs button{flex:1 1 calc(50% - 4px);justify-content:space-between}
 }
 
@@ -60952,15 +60963,16 @@ button.sr-tk[disabled]{opacity:.55;cursor:default}
   // series-done-1 (owner 18 Nov 2026): "when one is complete there must be a tick; tick the videos yourself, and keep a place where I
   // tick the ones I made myself, so one topic is never made twice; new ideas must keep coming". The AI ticks an episode when its
   // video lands or its post goes; he ticks his own; a ticked episode is never picked again. A series that runs low gets new episodes.
-  function srTick(e) {
-    var by = e.done_by === 'owner' ? 'আপনি টিক দিয়েছেন' : 'AI নিজে টিক দিয়েছে';
-    return '<button type="button" class="sr-tk' + (e.done ? ' on' : '') + '" data-bc="srtick" data-id="' + e.idea + '" aria-pressed="' + !!e.done + '"' + (C.busy['srt' + e.idea] ? ' disabled' : '') +
-      ' aria-label="' + esc((e.done ? 'বানানো হয়েছে, ' + by + '। টিক তুলে নিতে চাপুন: ' : 'বানানো হয়ে গেলে টিক দিন: ') + e.title) + '"><span class="sr-bx" aria-hidden="true"></span>' +
-      (e.done ? 'বানানো হয়েছে' : 'বানানো হলে টিক দিন') + '</button>';
+  // tick-box-1 (owner 18 Nov 2026): only a tick box at the start of the title, no words beside it; the screen reader still hears them
+  function tickBox(w, id, done, title, busy) {
+    return '<button type="button" class="bc-ck' + (done ? ' on' : '') + '" data-bc="' + w + '" data-id="' + id + '" aria-pressed="' + !!done + '"' + (busy ? ' disabled' : '') +
+      ' aria-label="' + esc((done ? 'বানানো হয়েছে: ' : 'বানানো হলে টিক দিন: ') + (title || '')) + '"></button>';
   }
-  function srDone(e) {
-    if (!e.done) return '';
-    return '<span class="sr-dn" data-noi18n="1">' + (e.done_by === 'owner' ? 'আপনি টিক দিয়েছেন' : 'AI নিজে টিক দিয়েছে') + (e.done_note ? ' · ' + esc(e.done_note) : '') + '</span>';
+  function srTick(e) { return tickBox('srtick', e.idea, e.done, e.title, C.busy['srt' + e.idea]); }
+  function tickNote(x) {   // who ticked, plus the reason when it says more than that (draft number in Bangla digits)
+    if (!x.done) return '';
+    var n = String(x.done_note || '').trim();
+    return '<span class="sr-dn" data-noi18n="1">' + (x.done_by === 'owner' ? 'আপনি টিক দিয়েছেন' : 'AI নিজে টিক দিয়েছে') + (n && n !== 'আপনি নিজে বানিয়েছেন' ? ' · ' + esc(bn(n)) : '') + '</span>';
   }
   var SRWHO = { B1: 'বাংলাদেশের দোকানি আর পেজ সেলার: কোথায় কী পাইকারি পাওয়া যায়', B2: 'অল্প টাকায় ইমপোর্ট শুরু করতে চান যাঁরা', B3: 'আসল-নকল চেনা, যাচাই করা', B4: 'কোরিয়া থেকে বাংলাদেশ: শুরু থেকে শেষ, টাকার হিসাবসহ', E1: 'Foreign suppliers and buyers: the Seoul to Dhaka corridor', E2: 'Foreign brands: how South Asia buys' };
   function seriesHtml() {
@@ -60974,8 +60986,7 @@ button.sr-tk[disabled]{opacity:.55;cursor:default}
     // next to make
     h += '<section class="bc-block"><div class="bc-h2"><h2>পরের পর্বগুলো</h2></div><div class="sr-next">' + S.map(function (x) {
       var e = x.eps.filter(function (q) { return q.ep === x.next; })[0];
-      return '<div class="sr-nxc"><button type="button" class="sr-nx" data-bc="srsel" data-id="' + esc(x.series) + '"><small>' + esc(x.name) + ' · পর্ব ' + (e ? bn(e.ep) : '—') + (e && e.level ? ' · ' + (SRLV[e.level] || e.level) : '') + (e && e.new ? '<span class="sr-new">নতুন</span>' : '') + '</small><b data-noi18n="1">' + esc(e ? e.title : 'সব পর্ব বানানো হয়ে গেছে; AI নতুন পর্ব লিখছে') + '</b></button>' +
-        (e ? srTick(e) : '') + '</div>';
+      return '<div class="sr-nxc' + (e && e.done ? ' dn' : '') + '">' + (e ? srTick(e) : '') + '<button type="button" class="sr-nx" data-bc="srsel" data-id="' + esc(x.series) + '"><small>' + esc(x.name) + ' · পর্ব ' + (e ? bn(e.ep) : '—') + (e && e.level ? ' · ' + (SRLV[e.level] || e.level) : '') + (e && e.new ? '<span class="sr-new">নতুন</span>' : '') + (e && e.done ? ' · ' + tickNote(e) : '') + '</small><b data-noi18n="1">' + esc(e ? e.title : 'সব পর্ব বানানো হয়ে গেছে; AI নতুন পর্ব লিখছে') + '</b></button></div>';
     }).join('') + '</div></section>';
     var sel = C.srSel && S.some(function (x) { return x.series === C.srSel; }) ? C.srSel : S[0].series;
     h += '<div class="bc-pills big sr-tabs" role="tablist" aria-label="সিরিজ">' + S.map(function (x) {
@@ -60989,38 +61000,34 @@ button.sr-tk[disabled]{opacity:.55;cursor:default}
         'নতুন পর্ব: আগে কী বানানো হয়েছে, দর্শক কী জিজ্ঞেস করছে আর গবেষণার পরিকল্পনা দেখে AI পরের ৪-৬টা লেখে, পুরোনোটার সাথে না মিলিয়ে।') + '</p>' +
       '<button type="button" class="bc-btn" data-bc="srmore" data-id="' + esc(X.series) + '"' + (mw ? ' disabled' : '') + '>' + (mw ? 'লেখা হচ্ছে…' : 'নতুন পর্ব বানান') + '</button></div>' + X.eps.map(function (e) {
       var st = SRST[e.state] || SRST.none;
-      return '<div class="sr-ep' + (e.ep === X.next ? ' nx' : '') + (e.done ? ' dn' : '') + '"><span class="sr-n">' + bn(e.ep) + '</span><div class="sr-b"><b data-noi18n="1">' + esc(e.title) + (e.new ? '<span class="sr-new">নতুন</span>' : '') + '</b><small>' + (SRLV[e.level] || e.level || '') + (e.season > 1 ? ' · সিজন ' + bn(e.season) : '') + (e.ep === X.next ? ' · <i>পরেরটা এটা</i>' : '') + '</small>' +
-        (e.new && e.why ? '<span class="sr-why" data-noi18n="1">' + esc(e.why) + '</span>' : '') + srDone(e) +
+      return '<div class="sr-ep' + (e.ep === X.next ? ' nx' : '') + (e.done ? ' dn' : '') + '"><span class="sr-n">' + bn(e.ep) + '</span><div class="sr-b"><div class="sr-tl">' + srTick(e) + '<b data-noi18n="1">' + esc(e.title) + (e.new ? '<span class="sr-new">নতুন</span>' : '') + '</b></div><small>' + (SRLV[e.level] || e.level || '') + (e.season > 1 ? ' · সিজন ' + bn(e.season) : '') + (e.ep === X.next ? ' · <i>পরেরটা এটা</i>' : '') + (e.done ? ' · ' + tickNote(e) : '') + '</small>' +
+        (e.new && e.why ? '<span class="sr-why" data-noi18n="1">' + esc(e.why) + '</span>' : '') +
         (e.drafts.length ? '<span class="sr-ds">' + e.drafts.map(function (d) { var s1 = SRST[d.state] || SRST.none;
           return '<button type="button" class="sr-d" data-bc="srpost" data-id="' + d.id + '|' + esc(d.platform) + '|' + esc(d.at || '') + '|' + esc(d.state) + '" title="পোস্টটা খুলুন">' + logo(netOf(d.platform), 13) + (d.at ? pnDay(d.at) + ' ' + pnDate(pnIdx(d.at)) : '') + ' · ' + s1[0] + (d.video ? (d.ai ? ' · AI ভিডিও' : ' · ভিডিও') : '') + '</button>'; }).join('') + '</span>' : '') +
-        '</div><span class="sr-side"><span class="sr-st">' + pnStn(st[1]) + st[0] + '</span>' + srTick(e) + '</span></div>';
+        '</div><span class="sr-side">' + (e.state && e.state !== 'none' ? '<span class="sr-st">' + pnStn(st[1]) + st[0] + '</span>' : '') + '</span></div>';
     }).join('') + '</section>';
     return h;
   }
   // voice-idea-1 (owner 18 Nov 2026): "when I give the journal bot a voice note about an idea I will make a video about later, keep
   // it where it belongs: a box in Ideas, 'from voice notes', my talk refined into a clean write-up, so nothing gets lost". The
   // journal bot sends each video idea of a note to the bridge; the AI writes it up in clean Bangla, his own words stay below.
-  function vTick(i) {
-    return '<button type="button" class="sr-tk' + (i.done ? ' on' : '') + '" data-bc="vtick" data-id="' + i.id + '" aria-pressed="' + !!i.done + '"' + (C.busy['vt' + i.id] ? ' disabled' : '') +
-      ' aria-label="' + esc((i.done ? 'বানানো হয়েছে। টিক তুলে নিতে চাপুন: ' : 'বানানো হয়ে গেলে টিক দিন: ') + (i.title || '')) + '"><span class="sr-bx" aria-hidden="true"></span>' + (i.done ? 'বানানো হয়েছে' : 'বানানো হলে টিক দিন') + '</button>';
-  }
+  function vTick(i) { return tickBox('vtick', i.id, i.done, i.title, C.busy['vt' + i.id]); }
   function voiceCard(i) {
     var d = i.at ? new Date(i.at) : null, raw = !!C.fold['vr' + i.id], part = String(i.part || '').trim(), full = String(i.transcript || '').trim();
     var h = '<article class="vn' + (i.done ? ' dn' : '') + '"><header class="vn-h"><span class="vn-d">' + pi('mic') + (d && !isNaN(d) ? dDate(d) + ', ' + dTime(d) : 'ভয়েস নোট') + '</span>' +
-      (i.lang === 'en' ? '<span class="vn-l">ইংরেজি ভিডিও</span>' : '') + (i.topic ? '<span class="vn-l">' + esc(topicName(i.topic)) + '</span>' : '') + '</header>' +
-      '<h3 data-noi18n="1">' + esc(i.title || 'আইডিয়া') + '</h3>';
+      (i.lang === 'en' ? '<span class="vn-l">ইংরেজি ভিডিও</span>' : '') + (i.topic ? '<span class="vn-l">' + esc(topicName(i.topic)) + '</span>' : '') + (i.done ? tickNote(i) : '') + '</header>' +
+      '<div class="sr-tl">' + vTick(i) + '<h3 data-noi18n="1">' + esc(i.title || 'আইডিয়া') + '</h3></div>';
     if (i.about) h += '<p class="vn-ab" data-noi18n="1">' + esc(i.about) + '</p>';
     if (i.why || i.for_whom || (i.points || []).length) {
       h += '<dl class="vn-k">' + (i.why ? '<div><dt>কেন</dt><dd data-noi18n="1">' + esc(i.why) + '</dd></div>' : '') +
         ((i.points || []).length ? '<div><dt>মূল কথা</dt><dd><ul data-noi18n="1">' + i.points.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></dd></div>' : '') +
         (i.for_whom ? '<div><dt>কার জন্য</dt><dd data-noi18n="1">' + esc(i.for_whom) + '</dd></div>' : '') + '</dl>';
     }
-    if (i.done) h += '<span class="sr-dn" data-noi18n="1">' + (i.done_by === 'owner' ? 'আপনি টিক দিয়েছেন' : 'AI নিজে টিক দিয়েছে') + (i.done_note ? ' · ' + esc(i.done_note) : '') + '</span>';
     if ((i.drafts || []).length) h += '<span class="sr-ds">' + i.drafts.map(function (q) { var s1 = SRST[q.state] || SRST.none;
       return '<button type="button" class="sr-d" data-bc="srpost" data-id="' + q.id + '|' + esc(q.platform) + '|' + esc(q.at || '') + '|' + esc(q.state) + '" title="পোস্টটা খুলুন">' + logo(netOf(q.platform), 13) + (q.at ? pnDay(q.at) + ' ' + pnDate(pnIdx(q.at)) : '') + ' · ' + s1[0] + (q.video ? (q.ai ? ' · AI ভিডিও' : ' · ভিডিও') : '') + '</button>'; }).join('') + '</span>';
     h += '<button type="button" class="bc-fold vn-fold' + (raw ? ' on' : '') + '" data-bc="fold" data-id="vr' + i.id + '" aria-expanded="' + raw + '">' + svg('right') + (raw ? 'আসল কথা লুকান' : 'আপনার আসল কথা') + '</button>';
     if (raw) h += '<div class="vn-raw">' + (part && part !== full ? '<p class="vn-rl">এই আইডিয়ার অংশ</p><blockquote data-noi18n="1">' + esc(part) + '</blockquote><p class="vn-rl">পুরো ভয়েস নোট</p>' : '') + '<blockquote data-noi18n="1">' + esc(full || part) + '</blockquote></div>';
-    h += '<div class="vn-a">' + btn(svg('pen') + 'পোস্ট লেখান', 'data-bc="writeidea" data-id="' + i.id + '"', 'sm dark', 'write') + btn(pi('media') + 'ভিডিও বানান', 'data-bc="vvideo" data-id="' + i.id + '"', 'sm', 'vv' + i.id) + vTick(i) + '</div>';
+    h += '<div class="vn-a">' + btn(svg('pen') + 'পোস্ট লেখান', 'data-bc="writeidea" data-id="' + i.id + '"', 'sm dark', 'write') + btn(pi('media') + 'ভিডিও বানান', 'data-bc="vvideo" data-id="' + i.id + '"', 'sm', 'vv' + i.id) + '</div>';
     return h + '</article>';
   }
   function voiceHtml() {
