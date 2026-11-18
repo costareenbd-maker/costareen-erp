@@ -191,7 +191,7 @@ await owner('erpCashAccountSave', [{ name: 'Testbank', kind: 'bank', opening: 0,
 bodies.length = 0;
 script = [[{ text: 'OK.' }]];
 await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '8801847800652', text: 'cash theke bank e 1000 pathao' }));
-check('boss-5: the manager has no IT / accounting tools', !/propose_transfer|it_status|propose_expense|confirm/.test(JSON.stringify(bodies[0].tools)));
+check('boss-5 + mgrdesk-1: the manager has no IT / money-moving tools (only payment received + invoice, with a yes)', !/propose_transfer|it_status|propose_expense|propose_balance|propose_fix/.test(JSON.stringify(bodies[0].tools)) && /propose_payment/.test(JSON.stringify(bodies[0].tools)) && /"confirm"/.test(JSON.stringify(bodies[0].tools)));
 bodies.length = 0;
 script = [[{ text: 'OK.' }]];
 await asB(async (ctx) => sp.superiorInbound(ctx, W, { from: '82102151' + '0000', text: 'hello' }));

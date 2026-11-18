@@ -1424,6 +1424,8 @@ export async function inboxTick(ctx) {
   try { out.bookings = await (await import('./inbox2.js')).bookingReminders(ctx); } catch (_) { /* fine */ }
   // cgroup-1: the next customer group when it is time
   try { out.groups = await ctx.tx.savepoint(async () => (await import('./cgroups.js')).cgTick(ctx)); } catch (e) { out.groups = { error: String(e && e.message || e).slice(0, 160) }; }
+  // mgrdesk-1: the manager's day summary (21:30), stock running out / back in stock (hourly), group logos (slowly)
+  try { out.mgr = await ctx.tx.savepoint(async () => (await import('./mgrdesk.js')).mgrTick(ctx)); } catch (e) { out.mgr = { error: String(e && e.message || e).slice(0, 160) }; }
   // crmai-1: the AI keeps the customer tools (leads, follow-ups, fields, companies, duplicates) from the chats
   try { out.crmAi = await ctx.tx.savepoint(async () => (await import('./crmai.js')).crmAiTick(ctx)); } catch (e) { out.crmAi = { error: String(e && e.message || e).slice(0, 160) }; }
   // review-1: reviews given in chats go to the website
