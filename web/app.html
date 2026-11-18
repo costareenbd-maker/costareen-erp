@@ -60232,6 +60232,8 @@ button.sr-d:focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px}
     SRV_SLOW.erpBrandDeskVideos = 60000; SRV_SLOW.erpBrandDeskSites = 45000; SRV_SLOW.erpBrandDeskSiteSave = 45000; SRV_SLOW.erpBrandDeskBizSave = 45000; SRV_SLOW.erpBrandDeskListenPull = 90000; SRV_SLOW.erpBrandDeskListenIdeas = 90000; SRV_SLOW.erpBrandDeskListenPaste = 90000; } catch (e) {}
   var C = { media: {}, ar: {}, mpk: '', exp: {}, edit: {}, sec: 'home', wk: 0, pick: '', node: '', ptab: '', dep: '', d: {}, busy: {}, err: {}, v: {}, acc: {}, open: {}, cards: {}, plats: { linkedin: 1, facebook: 1 }, lf: 'all', lopen: {}, fold: {}, rw: {}, nk: 'customer', paste: false, t: 0 };
   try { var s0 = localStorage.getItem('bc_sec'); if (s0) C.sec = s0; } catch (e) {}
+  // brand-deeplink-1 (owner 18 Nov 2026, on his phone): a link ?bd=<draft id> opens Posts > waiting at that draft's card (video + approve + comment)
+  try { var dl0 = /[?&]bd=(\d+)/.exec(location.search || ''); if (dl0) { C.sec = 'posts'; C.ptab = 'wait'; C.fold = C.fold || {}; C.fold.pgall = true; C.dl = dl0[1]; } } catch (e) {}
   try { if (localStorage.getItem('bc_sec')) fonts(); } catch (e) {}   // brand-nav-3: on a device that has opened the desk, its Bangla fonts start loading with the page (no reflow when the desk opens)
   var NET = {
     linkedin: ['LinkedIn', '#0A66C2'], facebook: ['Facebook', '#1877F2'], instagram: ['Instagram', '#C13584'], 'instagram-standalone': ['Instagram', '#C13584'],
@@ -63129,6 +63131,7 @@ button.sr-d:focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px}
       else if (!layer && C._lay) { C._lay = 0; try { if (history.state && history.state.bcLayer) { C._skipPop = 1; history.back(); } } catch (e) {} }
       else if (!layer && !C._skipPop) { try { if (routeView() === 'branddesk' && routeParam() !== C.sec) routeSet('branddesk', C.sec); } catch (e) {} }   // pages opened from a link inside a sheet
       if (C.sec === 'plan') requestAnimationFrame(pnAfter);
+      if (C.dl) { var dlE = document.getElementById('bc_tk_' + C.dl); if (dlE) { C.dl = ''; requestAnimationFrame(function () { try { dlE.scrollIntoView({ block: 'start' }); dlE.classList.add('bc-dl'); } catch (e) {} }); } }   // brand-deeplink-1
       if (C.sec === 'home') requestAnimationFrame(function () { var sc = r.querySelector('.bc-scroll'), nw = sc && sc.querySelector('.bc-now'); if (sc && nw && sc.scrollWidth > sc.clientWidth && !C.moved) { sc.scrollLeft = nw.offsetLeft - sc.clientWidth / 2; C.moved = 1; } });
     } finally { DRAWING = false; }
   }
