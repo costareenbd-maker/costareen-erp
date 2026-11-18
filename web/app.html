@@ -8545,7 +8545,7 @@ function srv(name, args, ok, bad) {
 
 var SRV_ACTIVE = 0, SRV_WRITING = false, SRV_TIMED = {};
 // the same list the server uses to know a call changes nothing (ERP_READS)
-var SRV_READS = /^(erpVideoShots|erpBrandDeskAudience|erpBrandDeskInbox|erpBrandDeskThread|erpBrandDeskSaved|erpBrandDeskAudio|erpBrandDeskChannels|erpBrandDeskSites|erpBrandDeskCritiques|erpBrandDeskResults|erpBrandDeskCockpit|erpBrandDeskReels|erpBrandDeskRoutine|erpBrandDeskPlan|erpBrandDeskFit|erpBrandDeskDoc|erpBrandDeskCycles|erpBrandDeskSeries|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
+var SRV_READS = /^(erpVideoShots|erpBrandDeskAudience|erpBrandDeskInbox|erpBrandDeskThread|erpBrandDeskSaved|erpBrandDeskAudio|erpBrandDeskChannels|erpBrandDeskSites|erpBrandDeskCritiques|erpBrandDeskResults|erpBrandDeskCockpit|erpBrandDeskReels|erpBrandDeskRoutine|erpBrandDeskPlan|erpBrandDeskFit|erpBrandDeskDoc|erpBrandDeskCycles|erpBrandDeskSeries|erpBrandDeskVoiceIdeas|erpBrandDeskStyles|erpBrandDeskLi|erpBrandDeskMedia|erpBrandDeskNews|erpBrandDeskNotes|erpBrandDeskListen|erpBrandDeskCards|erpBrandDeskDrafts|erpBrandDeskSettings|erpBrandDeskLint|erpHolds|erpHoldGet|erpPhoneAlerts|erpWaNumbers|erpBrandDesk|erpBrandDeskShorts|erpBrandDeskVideos|erpBrandDeskPeople|erpBrandDeskIdeas|erpBrandDeskBoard|erpShipmentRepriceCheck|erpReceivePreview|erpSeo|erpReceipts|erpBrief|erpBrain|erpWatch|erpEngine|erpEngineJob|erpSkills|erpAiBrain|erpAiBrainModels|erpLeadForms|erpLeads|erpLeadFind|erpLeadCapture|erpMyUpdates|erpSocialBridges|erpAds|erpAdProfit|erpFactory|erpTaste|erpAdsInterests|erpSocialNet|erpSocialLearn|erpSocialAssets|erpSocialPosts|erpSocialPhotos|erpInboxDigest|erpJointRecvCatalog|erpSitePages|erpBalanceSheet|erpProductFields|erpProductAi|erpMetaConnect|erpInboxFeatureMap|erpBookings|erpInbox|erpInboxOpen|erpInboxChannels|erpChatOrders|erpInboxStats|erpAiWork|erpCommissionSales|erpFdCards|erpLineMargins|erpFd19Profit|erpFdInventory|erpFd22Analytics|erpNavigator|erpSellers|erpFollowups|erpCustomerInsight|erpPreorders|erpCashUps|erpAskingPrices|erpSystemCheck|erpAnalytics|erpCommission|erpHolding|erpLotFunding|erpShipments|erpShipment|erpLots|erpFdHead|erpFdDash|erpReceiveMatch|erpAiReader|erpProductSuggest|erpCatalogue|erpPushList|erpCreators|erpCreatorPortalLink|erpSponsorLink|erpCreatorRequests|erpCreatorEvents|erpCreatorProgramme|erpCreatorPreview|erpCreatorCatalog|erpCreatorSources|erpCreatorClaims|erpApps|erpAppQr|erpFeedback|erpRestockOffers|erpRestockList|erpWarrantyRules|erpWarrantyCard|erpMyLink|erpPlatformRegister|erpPlatformDoctor|erpPlatformCommunity|erpMarketWaiting|erpBoard|erpPlatformDesign|erpResell|erpResellerProgramme|erpLoyalty|erpCustomerPoints|erpRefillDue|erpDeliveryHistory|erpDeliveryHistoryMany|erpPrintKit|erpPrintJobs|erpPrintJob|erpPrintCost|erpSpools|erpPrintRequests|erpJoint|erpJointCatalog|erpJointCard|erpInvoiceDesign|erpInvoicePreview|erpMarket|erpMarketMine|erpMarketRequests|erpMarketHints|erpMarketNames|erpWanted|erpBrand|erpComplianceLog|erpProviderKey|erpNews|erpAccessKeys|erpAccessWarning|erpAdmin|erpAiKeys|erpAlertRules|erpAlerts|erpArena|erpBackupStatus|erpBg|erpBnWords|erpBookedParcels|erpBrandLogo|erpBundle|erpBusinessLinks|erpBusinesses|erpBusinessesDeleted|erpCampaignAudience|erpCampaignGet|erpCampaignList|erpCapital|erpCashBook|erpPayMethods|erpCatalog|erpConnStatus|erpConnections|erpCostBook|erpCourier|erpCourierKeyStatus|erpCurrencies|erpCustomerAccount|erpCustomerCredit|erpCustomerList|erpCustomerPage|erpCustomerStatement|erpCustomers|erpDashboardData|erpDaySales|erpDeliveryOptions|erpDevices|erpDiscontinued|erpDues|erpEvoQr|erpEvoStatus|erpExpenseExport|erpExpenseReceiptUrl|erpExpenses|erpFamilies|erpFighters|erpFormOptions|erpGame|erpGetTheme|erpGoogle|erpHello|erpInstalls|erpInvoice|erpInvoicePdf|erpJob|erpJobs|erpListView|erpLookupCustomer|erpLookupUsage|erpMe|erpMoney|erpNoteFileUrl|erpNotes|erpOwnerChange|erpOwnerChanges|erpParcelLabels|erpParcelPreview|erpPartnerStock|erpPartnership|erpPayReasons|erpPeople|erpPlatform|erpPlatformErrors|erpPnl|erpPnlMonth|erpPoList|erpPoolCatalog|erpProduct|erpProductListShare|erpProductPage|erpProductPhotoUrl|erpProductThumbs|erpProfile|erpQuoteAsset|erpQuoteBoot|erpQuoteGet|erpQuoteList|erpRecentInvoices|erpRecovery|erpReorderPlan|erpRestorePreview|erpReturnPreview|erpRisks|erpSales|erpSearch|erpSecurity|erpSelfTest|erpSerialLookup|erpSerialsFor|erpSessions|erpSetTheme|erpSettingsFull|erpSettingsLists|erpSfPayoutLines|erpSfPayouts|erpShareFile|erpSharedStock|erpSheet|erpStatementPdf|erpStockHistory|erpSupplierPage|erpSuppliers|erpToday|erpUsers|erpWaProductPdf|erpWebMatches|erpWebOrderInvoices|erpWebOrders|erpWebsiteTest)$/;
 // crit8-nav (10 Nov 2026): these calls only read when they are sent without a change (the list form) and write with one.
 // The same rule as the server's ERP_READ_WHEN (allow.js): the list form runs beside other reads, sends no one-time key
 // and drops no caches; the changing form stays a write. erpTool and erpBrainFact always write (every branch changes data).
@@ -60250,6 +60250,38 @@ button.sr-tk[disabled]{opacity:.55;cursor:default}
 .sr-more{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:0 0 12px;padding:12px 14px;border-radius:12px;background:var(--bc-shelf)}
 .sr-more p{margin:0;flex:1 1 220px;font-size:13.5px;line-height:1.55;color:var(--bc-ink-2)}
 .sr-more .bc-btn{min-height:44px;background:#fff}
+/* voice-idea-1 (owner 18 Nov 2026): ideas from his voice notes */
+.vn-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.vn{display:flex;flex-direction:column;gap:8px;padding:16px;border:1.5px solid var(--bc-rule);border-radius:16px;background:#fff;min-width:0}
+.vn.dn{background:#F6FBF8;border-color:#BFE3CC}
+.vn-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+.vn-d{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--bc-ink-2)}
+.vn-d svg,.it-tabs svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
+.vn-l{padding:1px 9px;border-radius:99px;background:var(--bc-shelf);font-size:12px;color:var(--bc-ink-2)}
+.vn h3{margin:0;font:700 16.5px/1.45 "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink)}
+.vn-ab{margin:0;font-size:14.5px;line-height:1.7;color:var(--bc-ink)}
+.vn-k{margin:0;display:flex;flex-direction:column;gap:8px}
+.vn-k div{display:grid;grid-template-columns:72px 1fr;gap:8px}
+.vn-k dt{font-size:12.5px;font-weight:700;color:var(--bc-ink-3);padding-top:2px}
+.vn-k dd{margin:0;font-size:14px;line-height:1.6;color:var(--bc-ink)}
+.vn-k ul{margin:0;padding-left:18px}
+.vn-k li{margin:0 0 2px}
+.vn .bc-fold.vn-fold{margin-top:2px;min-height:44px;padding:0}
+.vn-raw{padding:10px 12px;border-radius:12px;background:var(--bc-shelf)}
+.vn-raw blockquote{margin:0;font-size:14px;line-height:1.7;color:var(--bc-ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.vn-rl{margin:8px 0 4px;font-size:12px;font-weight:700;color:var(--bc-ink-3)}
+.vn-rl:first-child{margin-top:0}
+.vn-a{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.vn-a .bc-btn.sm{min-height:44px}
+.bc-pills.it-tabs button em{margin-left:2px}
+@container bc (max-width:759px){
+  .vn-g{grid-template-columns:1fr}
+  .vn{padding:14px}
+  .bc-pills.it-tabs{display:flex;flex-wrap:wrap;gap:8px;background:none;padding:0;border-radius:0;overflow:visible;max-width:none}
+  .bc-pills.it-tabs button{background:var(--bc-shelf);min-height:44px;padding:6px 14px;box-sizing:border-box;border-radius:22px}
+  .bc-pills.it-tabs button.on{background:var(--bc-ink);color:#fff}
+  .vn-a .bc-btn.sm,.vn-a .sr-tk{flex:1 1 auto;justify-content:center}
+}
 @container bc (max-width:759px){
   .sr-side{grid-column:2;align-items:flex-start}
   .bc-pills.sr-tabs button{flex:1 1 calc(50% - 4px);justify-content:space-between}
@@ -60342,7 +60374,7 @@ button.sr-tk[disabled]{opacity:.55;cursor:default}
   var GROUPS = [['আজকের কাজ', ['home', 'posts', 'inbox', 'plan']], ['বানানো', ['ideas', 'media']], ['মানুষ ও সাড়া', ['listen', 'people', 'linkedin', 'results', 'biz']],
     ['AI কীভাবে চলে', ['routine', 'rules', 'aud', 'train', 'map']]];
   var SECS = [['home', 'হোম'], ['plan', 'পরিকল্পনা'], ['inbox', 'ইনবক্স'], ['biz', 'ব্যবসা ও সাইট'], ['posts', 'পোস্ট'], ['ideas', 'আইডিয়া'], ['media', 'মিডিয়া'], ['listen', 'শোনা'], ['people', 'মানুষ'], ['results', 'ফলাফল'], ['rules', 'নিয়ম'], ['map', 'সংযোগ'], ['routine', 'রুটিন'], ['aud', 'দর্শক'], ['train', 'লেখার ধরন'], ['linkedin', 'LinkedIn']];
-  var NEED = { inbox: ['cockpit', 'inbox', 'ichan'], biz: ['cockpit', 'sites'], home: ['cockpit', 'drafts', 'settings', 'routine'], posts: ['cockpit', 'drafts', 'settings', 'crit'], ideas: ['drafts', 'memos', 'board', 'settings', 'news', 'reels', 'crit', 'series'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen', 'results'], rules: ['settings', 'mlib'], map: ['cockpit'], aud: ['aud'], train: ['styles', 'crit'], linkedin: ['li', 'crit'], routine: ['routine'], plan: ['plan'] };
+  var NEED = { inbox: ['cockpit', 'inbox', 'ichan'], biz: ['cockpit', 'sites'], home: ['cockpit', 'drafts', 'settings', 'routine'], posts: ['cockpit', 'drafts', 'settings', 'crit'], ideas: ['drafts', 'memos', 'board', 'settings', 'news', 'reels', 'crit', 'series', 'voice'], media: ['videos', 'shorts', 'mlib'], listen: ['listen'], people: ['listen', 'people'], results: ['cockpit', 'listen', 'results'], rules: ['settings', 'mlib'], map: ['cockpit'], aud: ['aud'], train: ['styles', 'crit'], linkedin: ['li', 'crit'], routine: ['routine'], plan: ['plan'] };
   function on() { return typeof VIEW !== 'undefined' && VIEW === 'branddesk' && typeof ME !== 'undefined' && ME && ME.role === 'owner'; }
   function fonts() {
     if (document.getElementById('bc_font')) return;
@@ -60350,7 +60382,7 @@ button.sr-tk[disabled]{opacity:.55;cursor:default}
     l.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Anek+Bangla:wght@600;700&display=swap'; document.head.appendChild(l);
   }
   // ---------- data: one store, one loader per read; bridge reads wait until the cockpit says the Mac is on
-  var CALL = { inbox: 'erpBrandDeskInbox', ichan: 'erpBrandDeskChannels', sites: 'erpBrandDeskSites', mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', aud: 'erpBrandDeskAudience', li: 'erpBrandDeskLi', routine: 'erpBrandDeskRoutine', plan: 'erpBrandDeskPlan', cycles: 'erpBrandDeskCycles', series: 'erpBrandDeskSeries', reels: 'erpBrandDeskReels', results: 'erpBrandDeskResults', crit: 'erpBrandDeskCritiques' };
+  var CALL = { inbox: 'erpBrandDeskInbox', ichan: 'erpBrandDeskChannels', sites: 'erpBrandDeskSites', mlib: 'erpBrandDeskMedia', cockpit: 'erpBrandDeskCockpit', drafts: 'erpBrandDeskDrafts', memos: 'erpBrandDeskIdeas', board: 'erpBrandDeskBoard', videos: 'erpBrandDeskVideos', shorts: 'erpBrandDeskShorts', listen: 'erpBrandDeskListen', people: 'erpBrandDeskPeople', settings: 'erpBrandDeskSettings', news: 'erpBrandDeskNews', styles: 'erpBrandDeskStyles', aud: 'erpBrandDeskAudience', li: 'erpBrandDeskLi', routine: 'erpBrandDeskRoutine', plan: 'erpBrandDeskPlan', cycles: 'erpBrandDeskCycles', series: 'erpBrandDeskSeries', voice: 'erpBrandDeskVoiceIdeas', reels: 'erpBrandDeskReels', results: 'erpBrandDeskResults', crit: 'erpBrandDeskCritiques' };
   function ready() { var d = C.d.cockpit; return !!(d && d.online && d.keySet); }
   function get(k, force) {
     if (C.busy['g_' + k] || (C.d[k] && !force)) return;
@@ -60597,7 +60629,8 @@ button.sr-tk[disabled]{opacity:.55;cursor:default}
     globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.8 3.5 5.8 3.5 9s-1 6.2-3.5 9c-2.5-2.8-3.5-5.8-3.5-9S9.5 5.8 12 3z"/>',
     dots: '<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>', music: '<path d="M9 18V5l11-2v13M9 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3zM20 16a3 3 0 1 1-3-3 3 3 0 0 1 3 3z"/>',
     media: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>', play: '<path d="M8 5l11 7-11 7z"/>',
-    cam: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>'
+    cam: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'
   };
   function pi(k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + PI[k] + '</svg>'; }
   function netAcc(platform) { var p = netOf(platform); return nets().filter(function (n) { return netOf(n.platform) === p; })[0] || null; }
@@ -60905,7 +60938,9 @@ button.sr-tk[disabled]{opacity:.55;cursor:default}
   }
   function ideaTabs() {
     var nd = (C.d.news && C.d.news.news) || [], fresh = nd.filter(function (n) { return n.picked; }).length;
-    return '<div class="bc-pills it-tabs" role="tablist"><button type="button" role="tab" data-bc="itab" data-id="mine"' + (C.itab !== 'news' && C.itab !== 'series' ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>আইডিয়া</button>' +
+    var vl = (C.d.voice && C.d.voice.ideas) || [], vleft = vl.filter(function (x) { return !x.done; }).length;
+    return '<div class="bc-pills it-tabs" role="tablist"><button type="button" role="tab" data-bc="itab" data-id="mine"' + (C.itab !== 'news' && C.itab !== 'series' && C.itab !== 'voice' ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>আইডিয়া</button>' +
+      '<button type="button" role="tab" data-bc="itab" data-id="voice"' + (C.itab === 'voice' ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + pi('mic') + 'ভয়েস নোট থেকে' + (vleft ? ' <em>' + bn(vleft) + '</em>' : '') + '</button>' +
       '<button type="button" role="tab" data-bc="itab" data-id="series"' + (C.itab === 'series' ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>ধাপে ধাপে সিরিজ</button>' +
       '<button type="button" role="tab" data-bc="itab" data-id="news"' + (C.itab === 'news' ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>খবর' + (fresh ? ' <em>' + bn(fresh) + '</em>' : '') + '</button></div>';
   }
@@ -60962,7 +60997,43 @@ button.sr-tk[disabled]{opacity:.55;cursor:default}
     }).join('') + '</section>';
     return h;
   }
+  // voice-idea-1 (owner 18 Nov 2026): "when I give the journal bot a voice note about an idea I will make a video about later, keep
+  // it where it belongs: a box in Ideas, 'from voice notes', my talk refined into a clean write-up, so nothing gets lost". The
+  // journal bot sends each video idea of a note to the bridge; the AI writes it up in clean Bangla, his own words stay below.
+  function vTick(i) {
+    return '<button type="button" class="sr-tk' + (i.done ? ' on' : '') + '" data-bc="vtick" data-id="' + i.id + '" aria-pressed="' + !!i.done + '"' + (C.busy['vt' + i.id] ? ' disabled' : '') +
+      ' aria-label="' + esc((i.done ? 'বানানো হয়েছে। টিক তুলে নিতে চাপুন: ' : 'বানানো হয়ে গেলে টিক দিন: ') + (i.title || '')) + '"><span class="sr-bx" aria-hidden="true"></span>' + (i.done ? 'বানানো হয়েছে' : 'বানানো হলে টিক দিন') + '</button>';
+  }
+  function voiceCard(i) {
+    var d = i.at ? new Date(i.at) : null, raw = !!C.fold['vr' + i.id], part = String(i.part || '').trim(), full = String(i.transcript || '').trim();
+    var h = '<article class="vn' + (i.done ? ' dn' : '') + '"><header class="vn-h"><span class="vn-d">' + pi('mic') + (d && !isNaN(d) ? dDate(d) + ', ' + dTime(d) : 'ভয়েস নোট') + '</span>' +
+      (i.lang === 'en' ? '<span class="vn-l">ইংরেজি ভিডিও</span>' : '') + (i.topic ? '<span class="vn-l">' + esc(topicName(i.topic)) + '</span>' : '') + '</header>' +
+      '<h3 data-noi18n="1">' + esc(i.title || 'আইডিয়া') + '</h3>';
+    if (i.about) h += '<p class="vn-ab" data-noi18n="1">' + esc(i.about) + '</p>';
+    if (i.why || i.for_whom || (i.points || []).length) {
+      h += '<dl class="vn-k">' + (i.why ? '<div><dt>কেন</dt><dd data-noi18n="1">' + esc(i.why) + '</dd></div>' : '') +
+        ((i.points || []).length ? '<div><dt>মূল কথা</dt><dd><ul data-noi18n="1">' + i.points.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></dd></div>' : '') +
+        (i.for_whom ? '<div><dt>কার জন্য</dt><dd data-noi18n="1">' + esc(i.for_whom) + '</dd></div>' : '') + '</dl>';
+    }
+    if (i.done) h += '<span class="sr-dn" data-noi18n="1">' + (i.done_by === 'owner' ? 'আপনি টিক দিয়েছেন' : 'AI নিজে টিক দিয়েছে') + (i.done_note ? ' · ' + esc(i.done_note) : '') + '</span>';
+    if ((i.drafts || []).length) h += '<span class="sr-ds">' + i.drafts.map(function (q) { var s1 = SRST[q.state] || SRST.none;
+      return '<button type="button" class="sr-d" data-bc="srpost" data-id="' + q.id + '|' + esc(q.platform) + '|' + esc(q.at || '') + '|' + esc(q.state) + '" title="পোস্টটা খুলুন">' + logo(netOf(q.platform), 13) + (q.at ? pnDay(q.at) + ' ' + pnDate(pnIdx(q.at)) : '') + ' · ' + s1[0] + (q.video ? (q.ai ? ' · AI ভিডিও' : ' · ভিডিও') : '') + '</button>'; }).join('') + '</span>';
+    h += '<button type="button" class="bc-fold vn-fold' + (raw ? ' on' : '') + '" data-bc="fold" data-id="vr' + i.id + '" aria-expanded="' + raw + '">' + svg('right') + (raw ? 'আসল কথা লুকান' : 'আপনার আসল কথা') + '</button>';
+    if (raw) h += '<div class="vn-raw">' + (part && part !== full ? '<p class="vn-rl">এই আইডিয়ার অংশ</p><blockquote data-noi18n="1">' + esc(part) + '</blockquote><p class="vn-rl">পুরো ভয়েস নোট</p>' : '') + '<blockquote data-noi18n="1">' + esc(full || part) + '</blockquote></div>';
+    h += '<div class="vn-a">' + btn(svg('pen') + 'পোস্ট লেখান', 'data-bc="writeidea" data-id="' + i.id + '"', 'sm dark', 'write') + btn(pi('media') + 'ভিডিও বানান', 'data-bc="vvideo" data-id="' + i.id + '"', 'sm', 'vv' + i.id) + vTick(i) + '</div>';
+    return h + '</article>';
+  }
+  function voiceHtml() {
+    var h = headHtml('আইডিয়া', '') + ideaTabs(), g = gate(['voice']); if (g) return h + g;
+    var L = (C.d.voice && C.d.voice.ideas) || [], left = L.filter(function (x) { return !x.done; }).length;
+    h += '<section class="bc-block vn-s"><div class="bc-h2"><h2>ভয়েস নোট থেকে</h2><span>' + bn(left) + 'টা বাকি · মোট ' + bn(L.length) + '</span>' + qh('vn', 'কীভাবে কাজ করে') + '</div>' +
+      qt('vn', 'Telegram-এ journal bot-কে ভয়েস নোটে বলুন, যেমন “এটা নিয়ে পরে একটা ভিডিও বানাব…”। AI কথাটা গুছিয়ে এখানে লেখে: ভিডিওটা কী নিয়ে, কেন, মূল কথা, কার জন্য। আপনার আসল কথাও হুবহু রাখা থাকে। ' +
+        'এক নোটে কয়েকটা আইডিয়া থাকলে আলাদা আলাদা কার্ড হয়। রাতের AI ভিডিও আপনার এই আইডিয়াগুলো সবার আগে নেয়; টিক দেওয়া আইডিয়া আর কখনো বানানো হয় না।');
+    if (!L.length) return h + '<div class="bc-clear"><b>এখনো কোনো ভয়েস আইডিয়া নেই</b><p>Telegram-এ journal bot-কে ভয়েস নোটে আইডিয়াটা বলুন।</p></div></section>';
+    return h + '<div class="vn-g">' + L.map(voiceCard).join('') + '</div></section>';
+  }
   function ideasHtml() {
+    if (C.itab === 'voice') return voiceHtml();
     if (C.itab === 'news') return newsHtml();
     if (C.itab === 'series') return seriesHtml();
     var g = gate(['drafts', 'memos', 'board']); if (g) return headHtml('আইডিয়া', '') + ideaTabs() + g;
@@ -63582,6 +63653,11 @@ button.sr-tk[disabled]{opacity:.55;cursor:default}
     else if (w === 'srsel') { C.srSel = id; draw(); }
     else if (w === 'srtick') { var stE = null; ((C.d.series && C.d.series.series) || []).forEach(function (x) { x.eps.forEach(function (q) { if (String(q.idea) === String(id)) stE = q; }); });   // series-done-1
       if (stE) act('srt' + id, 'erpBrandDeskSeriesAct', { act: stE.done ? 'untick' : 'tick', id: Number(id) }, function (r) { if (r && r.series) C.d.series = r; toast(stE.done ? 'টিক তুলে নেওয়া হলো। পর্বটা আবার বানানো যাবে।' : 'টিক দেওয়া হলো। এই পর্ব আর বানানো হবে না।'); }); }
+    else if (w === 'vtick') { var vI = (((C.d.voice && C.d.voice.ideas) || []).filter(function (q) { return String(q.id) === String(id); }))[0];   // voice-idea-1
+      if (vI) act('vt' + id, 'erpBrandDeskVoiceAct', { act: vI.done ? 'untick' : 'tick', id: Number(id) }, function (r) { if (r && r.ideas) C.d.voice = r; toast(vI.done ? 'টিক তুলে নেওয়া হলো। আইডিয়াটা আবার বানানো যাবে।' : 'টিক দেওয়া হলো। এই আইডিয়া আর বানানো হবে না।'); }); }
+    else if (w === 'vvideo') { var vnets = draftPlats().filter(function (p) { return ['facebook', 'instagram', 'tiktok', 'youtube'].indexOf(p) >= 0; });
+      if (!vnets.length) toast('ভিডিওর নেটওয়ার্ক (Facebook, Instagram, TikTok, YouTube) যুক্ত নেই।', true);
+      else act('vv' + id, 'erpBrandDeskMakeDrafts', { idea_id: Number(id), platforms: vnets }, function (r) { C.d.drafts = r; poll('drafts'); setTimeout(function () { get('voice', true); }, 90000); toast('ভিডিওর লেখা আর স্ক্রিপ্ট লেখা হচ্ছে, ১-২ মিনিট। রাতের AI ভিডিও আপনার ভয়েস আইডিয়া সবার আগে নেয়।', false, 8000); }); }
     else if (w === 'srmore') act('srm' + id, 'erpBrandDeskSeriesAct', { act: 'more', series: id }, function (r) { if (r && r.series) C.d.series = r; C.srWait = 1; poll('series'); toast('AI খোঁজ নিচ্ছে আর নতুন পর্ব লিখছে। ২-৪ মিনিট লাগবে।', false, 7000); });
     else if (w === 'pnadday') { C.pday = Number(id); C.pitem = ''; draw(); var ab = el('bc_pnad_' + id); if (ab) try { ab.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } catch (e) {} }
     else if (w === 'pnpick') { var pp = String(id).split(':'); C.pday = Number(pp[0]); C.pitem = pp[1]; draw(); var rw = el('bc_pnr_' + pp[1]); if (rw) try { rw.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } catch (e) {} }
@@ -63638,7 +63714,7 @@ button.sr-tk[disabled]{opacity:.55;cursor:default}
       act('rp' + id, 'erpBrandDeskDraftRepick', { id: Number(id), exclude: C.tried[id] }, function (r) { C.d.drafts = r; delete C.media[id]; C.picking = true; poll('drafts'); toast('AI আরেকটা ছবি খুঁজছে।'); }); }
     else if (w === 'mkeep') act('mkeep', 'erpBrandDeskMediaKeep', { days: Number(id) }, function (r) { if (C.d.mlib) C.d.mlib.keep_days = r.keep_days; toast(r.keep_days ? bn(r.keep_days) + ' দিন পর সরবে, কিছু মুছবে না।' : 'সরানো বন্ধ।'); });
     else if (w === 'hday') { C.hday = Number(id); draw(); }
-    else if (w === 'itab') { C.itab = id; if (id === 'series') get('series'); draw(); need(); }
+    else if (w === 'itab') { C.itab = id; if (id === 'series') get('series'); if (id === 'voice') get('voice', true); draw(); need(); }
     else if (w === 'nrun') act('nrun', 'erpBrandDeskNewsRun', {}, function (r) { C.d.news = r; poll('news'); toast('খবর পড়া শুরু হলো। ৫-১০ মিনিটে পোস্ট আসবে।'); });
     else if (w === 'nmake') act('nm' + id, 'erpBrandDeskNewsMake', { id: Number(id) }, function (r) { C.d.news = r; poll('news'); toast('পোস্ট লেখা হচ্ছে, কয়েক মিনিট।'); });
     else if (w === 'ndraft') { C.ptab = 'wait'; goSec('posts', false, true); need(); setTimeout(function () { var e = el('bc_tk_' + id); if (e) e.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 120); }
