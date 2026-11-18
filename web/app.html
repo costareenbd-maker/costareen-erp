@@ -60222,6 +60222,38 @@ button.sr-d:focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px}
   .sr-st{grid-column:2}
   button.sr-d{min-height:32px}
 }
+/* series-done-1 (owner 18 Nov 2026): a tick per episode; the series choice wraps as separate chips (one long rounded
+   track clipped the chips in half on a phone once they wrapped to a second line) */
+.bc-pills.sr-tabs{display:flex;flex-wrap:wrap;gap:8px;background:none;padding:0;border-radius:0;overflow:visible;max-width:none}
+.bc-pills.sr-tabs button{background:var(--bc-shelf);min-height:44px;padding:6px 14px;line-height:1.35;white-space:normal;text-align:left;box-sizing:border-box;border-radius:22px}
+.bc-pills.sr-tabs button.on{background:var(--bc-ink);color:#fff}
+.bc-pills.sr-tabs button.on em{background:rgba(255,255,255,.18);color:#fff}
+.bc-pills.it-tabs button{line-height:1.35}
+.sr-nxc{display:flex;flex-direction:column;border:1.5px solid var(--bc-rule);border-radius:14px;background:#fff;overflow:hidden}
+.sr-nxc:hover{border-color:var(--bc-ink)}
+.sr-nxc button.sr-nx{border:0;border-radius:0;flex:1 1 auto}
+.sr-nxc .sr-tk{margin:0 10px 10px}
+button.sr-tk{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 10px;border-radius:12px;border:1.5px solid var(--bc-rule);background:#fff;font:600 13.5px/1.3 "Noto Sans Bengali",system-ui,sans-serif;color:var(--bc-ink)}
+button.sr-tk:hover{border-color:var(--bc-ink)}
+button.sr-tk:focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px}
+button.sr-tk .sr-bx{width:22px;height:22px;flex:none;border-radius:6px;border:2px solid var(--bc-ink-3);display:grid;place-items:center;box-sizing:border-box}
+button.sr-tk.on{background:#E7F5EC;border-color:#1E7B45;color:#14532D}
+button.sr-tk.on .sr-bx{background:#1E7B45;border-color:#1E7B45}
+button.sr-tk.on .sr-bx::after{content:"";width:10px;height:5px;border:solid #fff;border-width:0 0 2.5px 2.5px;transform:translate(0,-1px) rotate(-45deg)}
+button.sr-tk[disabled]{opacity:.55;cursor:default}
+.sr-ep.dn .sr-b b{color:var(--bc-ink-2)}
+.sr-ep.dn .sr-n{color:#1E7B45}
+.sr-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.sr-dn{display:block;font-size:12.5px;color:#14532D;margin-top:4px}
+.sr-new{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:99px;background:#FFE7A3;color:#5A3A00;font:700 11.5px/1.6 "Noto Sans Bengali",system-ui,sans-serif;vertical-align:2px}
+.sr-why{display:block;font-size:12.5px;color:var(--bc-ink-3);margin-top:3px}
+.sr-more{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:0 0 12px;padding:12px 14px;border-radius:12px;background:var(--bc-shelf)}
+.sr-more p{margin:0;flex:1 1 220px;font-size:13.5px;line-height:1.55;color:var(--bc-ink-2)}
+.sr-more .bc-btn{min-height:44px;background:#fff}
+@container bc (max-width:759px){
+  .sr-side{grid-column:2;align-items:flex-start}
+  .bc-pills.sr-tabs button{flex:1 1 calc(50% - 4px);justify-content:space-between}
+}
 
 </style>
 
@@ -60338,6 +60370,7 @@ button.sr-d:focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px}
     if (k === 'sites') { run = !!(r.job && r.job.state === 'running'); if (run) C.srun = 1; else if (C.srun) { C.srun = 0; toast('পরীক্ষা শেষ হলো।'); } }
     if (k === 'routine') { run = !!(r.fill && r.fill.state === 'writing'); if (run) C.frun = 1; else if (C.frun) { C.frun = 0; get('drafts', true); get('cockpit', true); } }
     if (k === 'reels') run = ks.some(function (x) { return /^(writing|drawing|joining)$/.test(jobs[x].state); });
+    if (k === 'series') { run = (r.series || []).some(function (x) { return x.more && x.more.state === 'working'; }); if (run) C.srWait = 1; else if (C.srWait) { C.srWait = 0; var srA = (r.series || []).reduce(function (a, x) { return a + ((x.more && x.more.state === 'done' && x.more.added) || 0); }, 0); toast(srA ? bn(srA) + 'টা নতুন পর্ব যোগ হলো।' : 'নতুন পর্ব লেখা শেষ হলো।', false, 7000); } }
     if (k === 'styles') run = ks.some(function (x) { return /^(reading|scouting)$/.test(jobs[x].state); });
     if (k === 'li') run = ks.some(function (x) { return jobs[x].state === 'reading'; }) || (r.tasks || []).some(function (q) { return q.state === 'drafting'; });
     if (k === 'shorts') run = ks.some(function (x) { return jobs[x].state === 'fetching' || jobs[x].state === 'making'; });
@@ -60881,30 +60914,51 @@ button.sr-d:focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px}
   // stands, and the next one to make at the top.
   var SRLV = { Basics: 'শুরু', Middle: 'মাঝারি', Deep: 'গভীর' };
   var SRST = { gone: ['গেছে', 'gone'], ready: ['যাবে', 'q'], review: ['আপনার রিভিউতে', 'wt'], none: ['এখনো বানানো হয়নি', 'tick'] };
+  // series-done-1 (owner 18 Nov 2026): "when one is complete there must be a tick; tick the videos yourself, and keep a place where I
+  // tick the ones I made myself, so one topic is never made twice; new ideas must keep coming". The AI ticks an episode when its
+  // video lands or its post goes; he ticks his own; a ticked episode is never picked again. A series that runs low gets new episodes.
+  function srTick(e) {
+    var by = e.done_by === 'owner' ? 'আপনি টিক দিয়েছেন' : 'AI নিজে টিক দিয়েছে';
+    return '<button type="button" class="sr-tk' + (e.done ? ' on' : '') + '" data-bc="srtick" data-id="' + e.idea + '" aria-pressed="' + !!e.done + '"' + (C.busy['srt' + e.idea] ? ' disabled' : '') +
+      ' aria-label="' + esc((e.done ? 'বানানো হয়েছে, ' + by + '। টিক তুলে নিতে চাপুন: ' : 'বানানো হয়ে গেলে টিক দিন: ') + e.title) + '"><span class="sr-bx" aria-hidden="true"></span>' +
+      (e.done ? 'বানানো হয়েছে' : 'বানানো হলে টিক দিন') + '</button>';
+  }
+  function srDone(e) {
+    if (!e.done) return '';
+    return '<span class="sr-dn" data-noi18n="1">' + (e.done_by === 'owner' ? 'আপনি টিক দিয়েছেন' : 'AI নিজে টিক দিয়েছে') + (e.done_note ? ' · ' + esc(e.done_note) : '') + '</span>';
+  }
   var SRWHO = { B1: 'বাংলাদেশের দোকানি আর পেজ সেলার: কোথায় কী পাইকারি পাওয়া যায়', B2: 'অল্প টাকায় ইমপোর্ট শুরু করতে চান যাঁরা', B3: 'আসল-নকল চেনা, যাচাই করা', B4: 'কোরিয়া থেকে বাংলাদেশ: শুরু থেকে শেষ, টাকার হিসাবসহ', E1: 'Foreign suppliers and buyers: the Seoul to Dhaka corridor', E2: 'Foreign brands: how South Asia buys' };
   function seriesHtml() {
     var h = headHtml('আইডিয়া', '') + ideaTabs(), g = gate(['series']); if (g) return h + g;
     var S = (C.d.series && C.d.series.series) || [];
     if (!S.length) return h + '<div class="bc-clear"><b>সিরিজ এখনো নেই</b></div>';
     var tot = S.reduce(function (a, x) { return a + x.eps.length; }, 0), done = S.reduce(function (a, x) { return a + x.done; }, 0);
-    h += '<p class="sr-intro">গবেষণা (১৬ নভেম্বর, "Video topic ranking Bangladesh"): ছয়টা নম্বরওয়ালা সিরিজ, শুরু থেকে গভীর পর্যন্ত, মোট ' + bn(tot) + 'টা পর্ব; এ পর্যন্ত ' + bn(done) + 'টা গেছে। ' +
-      'প্রতিটা পোস্টের শেষ লাইনে পর্বের নাম থাকে (যেমন "পাইকারি ম্যাপ · ৩")। রাতের লেখক আর ভিডিও স্টুডিও নিজে থেকে পরের পর্ব নেয়।</p>';
+    h += '<p class="sr-intro">গবেষণা (১৬ নভেম্বর, "Video topic ranking Bangladesh"): ছয়টা নম্বরওয়ালা সিরিজ, শুরু থেকে গভীর পর্যন্ত, মোট ' + bn(tot) + 'টা পর্ব; এ পর্যন্ত ' + bn(done) + 'টা বানানো হয়েছে (টিক)। ' +
+      'ভিডিও বা পোস্ট হলে AI নিজে টিক দেয়; আপনি নিজে কোনোটা বানালে টিক দিন। টিক দেওয়া পর্ব আর কখনো বানানো হয় না। ' +
+      'কোনো সিরিজে ' + bn((C.d.series && C.d.series.min_left) || 3) + 'টার কম পর্ব বাকি থাকলে AI প্রতিদিন সকালে খোঁজ নিয়ে পরের পর্বগুলো লিখে রাখে।</p>';
     // next to make
     h += '<section class="bc-block"><div class="bc-h2"><h2>পরের পর্বগুলো</h2></div><div class="sr-next">' + S.map(function (x) {
       var e = x.eps.filter(function (q) { return q.ep === x.next; })[0];
-      return '<button type="button" class="sr-nx" data-bc="srsel" data-id="' + esc(x.series) + '"><small>' + esc(x.name) + ' · পর্ব ' + (e ? bn(e.ep) : '—') + (e && e.level ? ' · ' + (SRLV[e.level] || e.level) : '') + '</small><b data-noi18n="1">' + esc(e ? e.title : 'সব পর্ব লেখা হয়ে গেছে') + '</b></button>';
+      return '<div class="sr-nxc"><button type="button" class="sr-nx" data-bc="srsel" data-id="' + esc(x.series) + '"><small>' + esc(x.name) + ' · পর্ব ' + (e ? bn(e.ep) : '—') + (e && e.level ? ' · ' + (SRLV[e.level] || e.level) : '') + (e && e.new ? '<span class="sr-new">নতুন</span>' : '') + '</small><b data-noi18n="1">' + esc(e ? e.title : 'সব পর্ব বানানো হয়ে গেছে; AI নতুন পর্ব লিখছে') + '</b></button>' +
+        (e ? srTick(e) : '') + '</div>';
     }).join('') + '</div></section>';
     var sel = C.srSel && S.some(function (x) { return x.series === C.srSel; }) ? C.srSel : S[0].series;
     h += '<div class="bc-pills big sr-tabs" role="tablist" aria-label="সিরিজ">' + S.map(function (x) {
       return '<button type="button" role="tab" data-bc="srsel" data-id="' + esc(x.series) + '" aria-selected="' + (x.series === sel) + '"' + (x.series === sel ? ' class="on"' : '') + '>' + esc(x.name) + ' <em>' + bn(x.done) + '/' + bn(x.eps.length) + '</em></button>';
     }).join('') + '</div>';
     var X = S.filter(function (x) { return x.series === sel; })[0];
-    h += '<section class="bc-block sr-list"><p class="sr-who">' + esc(SRWHO[X.series] || '') + (X.lang === 'en' ? ' · ইংরেজিতে (LinkedIn, Threads, Instagram)' : ' · বাংলায় (Facebook, TikTok, YouTube, Instagram)') + '</p>' + X.eps.map(function (e) {
+    var mo = X.more || {}, mw = mo.state === 'working' || C.busy['srm' + X.series];
+    h += '<section class="bc-block sr-list"><p class="sr-who">' + esc(SRWHO[X.series] || '') + (X.lang === 'en' ? ' · ইংরেজিতে (LinkedIn, Threads, Instagram)' : ' · বাংলায় (Facebook, TikTok, YouTube, Instagram)') + '</p>' +
+      '<div class="sr-more"><p>' + (mw ? 'AI এখন খোঁজ নিচ্ছে আর নতুন পর্ব লিখছে (২-৪ মিনিট)। পেজ বন্ধ করলেও চলবে।' :
+        'বাকি আছে ' + bn(X.left || 0) + 'টা পর্ব' + (X.season > 1 ? ' · এখন সিজন ' + bn(X.season) : '') + '। ' + (mo.state === 'done' && mo.added ? 'শেষবার ' + bn(mo.added) + 'টা নতুন পর্ব যোগ হয়েছে। ' : mo.state === 'failed' ? 'শেষবার লেখা যায়নি' + (mo.error ? ': ' + esc(mo.error) : '') + '। ' : '') +
+        'নতুন পর্ব: আগে কী বানানো হয়েছে, দর্শক কী জিজ্ঞেস করছে আর গবেষণার পরিকল্পনা দেখে AI পরের ৪-৬টা লেখে, পুরোনোটার সাথে না মিলিয়ে।') + '</p>' +
+      '<button type="button" class="bc-btn" data-bc="srmore" data-id="' + esc(X.series) + '"' + (mw ? ' disabled' : '') + '>' + (mw ? 'লেখা হচ্ছে…' : 'নতুন পর্ব বানান') + '</button></div>' + X.eps.map(function (e) {
       var st = SRST[e.state] || SRST.none;
-      return '<div class="sr-ep' + (e.ep === X.next ? ' nx' : '') + '"><span class="sr-n">' + bn(e.ep) + '</span><div class="sr-b"><b data-noi18n="1">' + esc(e.title) + '</b><small>' + (SRLV[e.level] || e.level || '') + (e.ep === X.next ? ' · <i>পরেরটা এটা</i>' : '') + '</small>' +
+      return '<div class="sr-ep' + (e.ep === X.next ? ' nx' : '') + (e.done ? ' dn' : '') + '"><span class="sr-n">' + bn(e.ep) + '</span><div class="sr-b"><b data-noi18n="1">' + esc(e.title) + (e.new ? '<span class="sr-new">নতুন</span>' : '') + '</b><small>' + (SRLV[e.level] || e.level || '') + (e.season > 1 ? ' · সিজন ' + bn(e.season) : '') + (e.ep === X.next ? ' · <i>পরেরটা এটা</i>' : '') + '</small>' +
+        (e.new && e.why ? '<span class="sr-why" data-noi18n="1">' + esc(e.why) + '</span>' : '') + srDone(e) +
         (e.drafts.length ? '<span class="sr-ds">' + e.drafts.map(function (d) { var s1 = SRST[d.state] || SRST.none;
           return '<button type="button" class="sr-d" data-bc="srpost" data-id="' + d.id + '|' + esc(d.platform) + '|' + esc(d.at || '') + '|' + esc(d.state) + '" title="পোস্টটা খুলুন">' + logo(netOf(d.platform), 13) + (d.at ? pnDay(d.at) + ' ' + pnDate(pnIdx(d.at)) : '') + ' · ' + s1[0] + (d.video ? (d.ai ? ' · AI ভিডিও' : ' · ভিডিও') : '') + '</button>'; }).join('') + '</span>' : '') +
-        '</div><span class="sr-st">' + pnStn(st[1]) + st[0] + '</span></div>';
+        '</div><span class="sr-side"><span class="sr-st">' + pnStn(st[1]) + st[0] + '</span>' + srTick(e) + '</span></div>';
     }).join('') + '</section>';
     return h;
   }
@@ -63526,6 +63580,9 @@ button.sr-d:focus-visible{outline:2px solid var(--bc-ink);outline-offset:2px}
     else if (w === 'pnpost') pnGoPost(Number(id));
     else if (w === 'srpost') { var sp = String(id).split('|'); pnOpenPost({ draft: Number(sp[0]), platform: sp[1], at: sp[2], state: sp[3] }); }
     else if (w === 'srsel') { C.srSel = id; draw(); }
+    else if (w === 'srtick') { var stE = null; ((C.d.series && C.d.series.series) || []).forEach(function (x) { x.eps.forEach(function (q) { if (String(q.idea) === String(id)) stE = q; }); });   // series-done-1
+      if (stE) act('srt' + id, 'erpBrandDeskSeriesAct', { act: stE.done ? 'untick' : 'tick', id: Number(id) }, function (r) { if (r && r.series) C.d.series = r; toast(stE.done ? 'টিক তুলে নেওয়া হলো। পর্বটা আবার বানানো যাবে।' : 'টিক দেওয়া হলো। এই পর্ব আর বানানো হবে না।'); }); }
+    else if (w === 'srmore') act('srm' + id, 'erpBrandDeskSeriesAct', { act: 'more', series: id }, function (r) { if (r && r.series) C.d.series = r; C.srWait = 1; poll('series'); toast('AI খোঁজ নিচ্ছে আর নতুন পর্ব লিখছে। ২-৪ মিনিট লাগবে।', false, 7000); });
     else if (w === 'pnadday') { C.pday = Number(id); C.pitem = ''; draw(); var ab = el('bc_pnad_' + id); if (ab) try { ab.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } catch (e) {} }
     else if (w === 'pnpick') { var pp = String(id).split(':'); C.pday = Number(pp[0]); C.pitem = pp[1]; draw(); var rw = el('bc_pnr_' + pp[1]); if (rw) try { rw.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } catch (e) {} }
     else if (w === 'pnstep') { var nd = Math.max(-PN_OFF, Math.min(PN_N - PN_OFF - 1, (C.pday || 0) + Number(id) * (C.pz || 7))); C.pday = nd; C.pitem = ''; pnScrollTo(nd); draw(); }
