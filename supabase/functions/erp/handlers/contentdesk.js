@@ -343,6 +343,28 @@ export async function erpContentVideoSave(ctx, payload) {
   return { video: vidOut(r[0]) };
 }
 
+// The business video studio (owner's PC/Mac) names the business in the call and proves itself with THAT business's
+// content-engine key (BRAND_BRIDGE_KEY), like erpBrandDeskHello: the owner's key keeps its own active business, so the
+// personal Brand desk is never switched (owner 19 Nov 2026: zero loss for the personal setup).
+async function studioCtx(ctx, p) {
+  if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner\'s studio uploads videos.');
+  const biz = str(p && p.biz);
+  const mine = await ctx.tx`select 1 from public.my_business_ids('owner') b(id) where b.id::text = ${biz}`;
+  if (!mine.length) throw new Error('That business is not yours.');
+  const c2 = { ...ctx, biz, memo: {} };   // own memo: the app flag of THIS business, not the active one
+  const key = await getSecret(c2, 'BRAND_BRIDGE_KEY');
+  if (!key || str(p.key) !== key) throw new Error('Wrong content engine key.');
+  return c2;
+}
+export async function erpContentStudioUploadUrl(ctx, payload) {
+  const c2 = await studioCtx(ctx, payload);
+  return erpContentVideoUploadUrl(c2, payload);
+}
+export async function erpContentStudioSave(ctx, payload) {
+  const c2 = await studioCtx(ctx, payload);
+  return erpContentVideoSave(c2, { ...(payload || {}), madeBy: str(payload && payload.madeBy) || 'studio' });
+}
+
 // ------------------------------------------------------------------ videos out (the business's own WhatsApp)
 async function waChannels(ctx) {
   try {
@@ -381,4 +403,5 @@ export async function erpContentVideoSend(ctx, payload) {
   throw new Error(h.name + '-কে WhatsApp-এ পাঠানো গেল না' + (last ? ' (' + last.slice(0, 120) + ')' : '') + '। একটু পরে আবার চেষ্টা করুন।');
 }
 
-export const HANDLERS = { erpContentDesk, erpContentVideoUrl, erpContentHandlersSave, erpContentVideoUploadUrl, erpContentVideoSave, erpContentVideoSend };
+export const HANDLERS = { erpContentDesk, erpContentVideoUrl, erpContentHandlersSave, erpContentVideoUploadUrl, erpContentVideoSave, erpContentVideoSend,
+  erpContentStudioUploadUrl, erpContentStudioSave };

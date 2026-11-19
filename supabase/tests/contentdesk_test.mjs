@@ -222,4 +222,17 @@ await newProduct('Brand kind product');
 check('no event on a brand-kind business', !(await events('new_product')).some((e) => e.payload.products.some((p) => p.name === 'Brand kind product')));
 await sql`delete from business_config where business_id = ${B} and key = 'business_kind'`;
 
+// ---- 12. the studio names the business and proves it with that business's engine key (the owner's active business stays)
+r = await owner('erpContentStudioUploadUrl', [{ biz: B, key: 'wrong-key-0000000000000', bytes: 1000 }]);
+check('studio upload with a wrong engine key is refused', r && r.error && /key/i.test(r.error), r);
+r = await owner('erpContentStudioUploadUrl', [{ biz: B2, key: KEY, bytes: 1000 }]);
+check('studio upload with another business key is refused', r && r.error, r);
+const sup = await owner('erpContentStudioUploadUrl', [{ biz: B, key: KEY, bytes: 2e6 }]);
+check('studio upload gives a content path', sup && /^content\/[0-9a-f-]{36}\.mp4$/.test(sup.path), sup);
+const ssv = await owner('erpContentStudioSave', [{ biz: B, key: KEY, path: sup.path, bytes: 2e6, title: 'Studio test', platform: 'tiktok', draftId: 7 }]);
+check('studio save stores the video in that business, made by the studio', ssv.video && ssv.video.madeBy === 'studio'
+  && (await sql`select count(*)::int n from content_videos where business_id = ${B} and file_path = ${sup.path}`)[0].n === 1, ssv);
+r = await mgr('erpContentStudioSave', [{ biz: B, key: KEY, path: sup.path, bytes: 1 }]);
+check('a manager cannot act as the studio', r && r.error, r);
+
 await done();
