@@ -179,6 +179,7 @@ export async function addProduct(ctx, data) {
     forget(ctx, 'TXN_LOG');
   }
   delete ctx.memo.catalog;
+  try { await (await import('./contentdesk.js')).contentEmit(ctx, 'new_product', '', { id }); } catch (_) { /* content-desk-1: never the reason a save fails */ }
   return { success: true, sku, id, product_name: data.product_name };
 }
 
@@ -706,6 +707,7 @@ export async function receiveShipment(ctx, payload) {
     advanceUsed = round2(goods);
   }
 
+  if (!PJ && (poId || from === 'shipment')) try { await (await import('./contentdesk.js')).contentEmit(ctx, 'shipment_arrived', poId || reference, { poId, reference, lines: lines.map((l) => ({ sku: str(l.sku), qty: num(l.qty) })) }); } catch (_) { /* content-desk-1: never the reason a save fails */ }
   return {
     ok: true, numbered, reference, billed: !!billId, joint: PJ ? PJ.pool.name : '', paidNow, advanceUsed, advanceWritten, payment, paymentNote, costs: costRows.length, currency: mode === 'rmb' ? fxCur : '', received: updated.length || lines.length,
     units: lines.reduce((n, l) => n + num(l.qty), 0),
@@ -1149,6 +1151,7 @@ export async function erpPoStage(ctx, payload) {
   const shipBy = str(payload.shipBy);
   if (shipBy && shipBy !== 'Sea' && shipBy !== 'Air') throw new Error('By sea or by air?');
   await stageSet(ctx, id, { stage, shipmentNo: str(payload.shipmentNo), agent: str(payload.agent), shipBy, kg, freightPerKg: perKg, divisor: div, eta, note: str(payload.note) });
+  if (eta) try { await (await import('./contentdesk.js')).contentEmit(ctx, 'shipment_coming', id, { eta, update: true }); } catch (_) { /* content-desk-1: never the reason a save fails */ }
   const r = (await ctx.tx`select * from po_stages where business_id = ${ctx.biz} and po_no = ${id}`)[0];
   return { ok: true, poId: id, stage: stageOut(r, order) };
 }
@@ -1338,6 +1341,7 @@ export async function erpPoCreate(ctx, payload) {
   await stageSet(ctx, id, { stage: payload.planned ? 'planned' : 'ordered', shipBy, pool: pool || null, currency: currency || null,
                             goodsFx: goodsFx || null, goodsBdt: goodsBdt || null });
   if (paidAmt > 0) await poPayWrite(ctx, { po: id, supplier, amount: paidAmt, accountId: paid.accountId, at: paidAt, pi, fx: num(paid.fx) });
+  if (!PJ) try { await (await import('./contentdesk.js')).contentEmit(ctx, 'shipment_coming', id, { eta: str(payload.eta) }); } catch (_) { /* content-desk-1: never the reason a save fails */ }
   return { ok: true, poId: id, lines: lines.length, created, stage: payload.planned ? 'planned' : 'ordered', paid: paidAmt,
            units: lines.reduce((t, l) => t + l.qty, 0),
            rmb: round2(lines.reduce((t, l) => t + l.qty * l.rmb, 0)) };

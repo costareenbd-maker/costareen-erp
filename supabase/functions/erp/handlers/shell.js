@@ -28,9 +28,12 @@ export async function erpBusinesses(ctx) {
   const list = ctx.s.memberships.filter((m) => !m.is_pool || ctx.s.memberships.every((x) => x.is_pool)).map((m) => ({ id: m.business_id, name: m.name, pool: !!m.is_pool }));
   // brand-2: a business may be of another kind (the owner's personal brand desk) - the page shows its own menu for it
   try {
-    const kinds = await ctx.tx.savepoint(() => ctx.tx`select business_id, value from business_config where key = 'business_kind' and business_id = any(${list.map((b) => b.id)})`);
-    const k = Object.fromEntries(kinds.map((r) => [String(r.business_id), String(r.value || '')]));
+    const kinds = await ctx.tx.savepoint(() => ctx.tx`select business_id, key, value from business_config where key in ('business_kind', 'brand_bridge') and business_id = any(${list.map((b) => b.id)})`);
+    const k = Object.fromEntries(kinds.filter((r) => r.key === 'business_kind').map((r) => [String(r.business_id), String(r.value || '')]));
+    const bridged = new Set(kinds.filter((r) => r.key === 'brand_bridge' && String(r.value || '').trim()).map((r) => String(r.business_id)));
     for (const b of list) if (k[String(b.id)]) b.kind = k[String(b.id)];
+    // content-desk-1: a business (not the personal brand desk) with its own content engine on the Mac
+    for (const b of list) if (bridged.has(String(b.id)) && b.kind !== 'brand') b.desk = true;
   } catch (_) { /* a kind is optional */ }
   const canAdd = roleAtLeast(ctx.s.role, 'shareholder');
   let look;

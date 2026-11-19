@@ -4775,3 +4775,27 @@ no pictures.
   state per episode, its posts open on tap.
 - Pictures: picture_prepare() hourly makes slides for posts waiting for review (4 made at once). NOT done: AI-drawn or
   stock photos - no image model is allowed for the personal brand yet (owner's call).
+
+## content-desk-1 server (19 Nov 2026): the business Content desk, server side (branch content-desk-1, not deployed)
+
+- Migration 175_content_desk.sql: `content_events` (new_product / shipment_coming / shipment_arrived, facts-only payload,
+  due_at, state waiting/sent/failed/skipped, tries, bridge_job, idea_id; unique per business+kind+ref; members may write
+  it, because the system writes it on whoever's save made the fact) and `content_videos` (file_path content/<uuid>.mp4
+  in the file store, sent = who got it; manager writes). Config `content_handlers` = [{name, phone}].
+- handlers/contentdesk.js + one-line hooks in stock.js: addProduct (so the Excel, joint, receive and order paths are
+  caught too), erpPoCreate, erpPoStage (an ETA moves "coming" to ETA - 10 days), receiveShipment (orders and shipments;
+  not local buys, not joint stock; the order's "coming" becomes skipped). Only when the business has the "Only me" app
+  `contentdesk` (apps.js) AND a brand_bridge, never on the personal brand-kind business; the hook never throws
+  (savepoint, erp_errors). New products within 2 h merge into one event (due = first + 2 h). Coming: ETA - 10 d, else
+  order + 30 d, never in the past. Minute timer (jobs.js inbox + crm jobs): due events go to the bridge POST
+  /drafts/make {text (Bangla, facts only, price and stock re-read at send time), topic cz_stock or cz_news, platforms
+  facebook/instagram/tiktok/youtube, video: true, event}; Mac off = it waits; a failure = failed + one retry after 1 h.
+- Calls: erpContentDesk, erpContentVideoUrl (1 h link; storage.url got an optional expiry) - manager reads;
+  erpContentHandlersSave (manager, max 10, BD mobiles), erpContentVideoUploadUrl / erpContentVideoSave (owner = the
+  studio, 80 MB cap), erpContentVideoSend (manager; only to a listed handler; the business's OWN WhatsApp channel from
+  the Inbox; sendOut learned kind 'video' for wa_evo, wa_cloud and wa_sender). erpBusinesses: `desk: true`.
+- Tests: contentdesk_test.mjs (66 checks).
+- NOT done: the page (Content desk screen) - built separately; the studio's upload client on the Mac (it calls
+  erpContentVideoUploadUrl, PUTs the file to the signed address, then erpContentVideoSave); the bizdesk fork itself
+  (C0b) - until a business has a brand_bridge nothing happens. The 80 MB cap is checked on the size the studio reports;
+  the signed upload itself is not size-limited by us (the bucket's own limit applies). Not deployed to dev or live.

@@ -72,6 +72,13 @@ async function crmJob(deps, sql, out) {
   try { cids = (await sql`select distinct business_id from crm_hooks where on_`).map((r) => r.business_id); } catch (_) { cids = []; }
   if (crmT && cids.length) for (const row of await owners(sql, cids)) { try { out['crm:' + row.name] = await asBusiness(deps, row, 'crm:tick', (ctx) => crmT(ctx)); } catch (e) { out['crm:' + row.name] = String((e && e.message) || e); } }
 }
+/** content-desk-1 (handlers/contentdesk.js): due Content desk events go to each business's own content engine. */
+async function contentJob(deps, sql, out) {
+  const tick = await maybe('./handlers/contentdesk.js', 'contentTick');
+  let ids = [];
+  try { ids = (await sql`select distinct business_id from content_events where due_at <= now() and (state = 'waiting' or (state = 'failed' and tries < 2))`).map((r) => r.business_id); } catch (_) { ids = []; }
+  if (tick && ids.length) for (const row of await owners(sql, ids)) { try { out['content:' + row.name] = await asBusiness(deps, row, 'content:tick', (ctx) => tick(ctx)); } catch (e) { out['content:' + row.name] = String((e && e.message) || e); } }
+}
 /** final-server (10 Nov 2026): the server's own logs do not grow for ever. Each table keeps what its screens read
  *  (errors 180 days - the provider's error list; AI log 180 days; speed samples 30 days; activity 90 days as in core.js;
  *  public-page hit counters 1 day; skill previews 7 days). Each delete is its own statement: one missing table never
@@ -189,9 +196,11 @@ async function runJobNow(deps, job) {
     if (adsTick && aids.length) for (const row of await owners(sql, aids)) { try { out['ads:' + row.name] = await asBusiness(deps, row, 'ads:tick', (ctx) => adsTick(ctx)); } catch (e) { out['ads:' + row.name] = String((e && e.message) || e); } }
     // crm-1 (handlers/crm.js): events to the addresses (n8n ...) that have not had them yet
     await crmJob(deps, sql, out);
+    await contentJob(deps, sql, out);
   } else if (job === 'crm') {
     // the same event delivery alone (n8n-1: the dev ERP's timer runs only this, no inbox/social/ads)
     await crmJob(deps, sql, out);
+    await contentJob(deps, sql, out);
   } else if (job === 'drive') {
     // copies of new files into each connected owner's Google Drive
     const tick = await maybe('./handlers/google.js', 'driveTick');

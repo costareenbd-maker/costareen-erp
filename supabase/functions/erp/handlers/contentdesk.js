@@ -1,0 +1,384 @@
+// content-desk-1 (owner 19 Nov 2026, docs/CONTENT-DESK-PLAN.md + CONTENT-DESK-BUILD.md C2c/E2): the server side of a
+// business's Content desk. Each business may have its own content engine on the owner's Mac (a "bizdesk" bridge,
+// the same protocol as the Brand desk bridge: config brand_bridge {url, seen} + secret BRAND_BRIDGE_KEY).
+//
+//   contentEmit(ctx, kind, ref, facts)   a one-line hook in stock.js: a product created (addProduct - so the Excel,
+//                                        joint, receive and order paths are caught too), a supplier order written
+//                                        (erpPoCreate, its ETA later in erpPoStage), a shipment received
+//                                        (receiveShipment). Writes a content_events row with FACTS ONLY from the ERP.
+//                                        Never throws; does nothing unless the business has app `contentdesk` on and a
+//                                        brand_bridge, and is not the personal brand desk itself (kind 'brand').
+//   contentTick(ctx)                     the minute timer (jobs.js): due events -> POST /drafts/make on the bridge
+//                                        {text (Bangla, facts only), topic, platforms, video: true}; sent / failed
+//                                        (one retry after an hour); the Mac being off is not a failure.
+//   erpContentDesk()                     events + videos + handlers (manager)
+//   erpContentVideoUrl({id})             a 1-hour download link of one video (manager)
+//   erpContentHandlersSave({handlers})   the people who run the pages: [{name, phone}] up to 10 (manager)
+//   erpContentVideoUploadUrl({bytes})    owner (the studio): a one-time upload address, path content/<uuid>.mp4
+//   erpContentVideoSave({path, title, platform, bytes, draftId, madeBy})   owner: the uploaded file becomes a row
+//   erpContentVideoSend({id, phone})     manager: the video to one handler on the business's OWN WhatsApp
+//
+// Owner rules: nothing is published from here; videos wait in the ERP. "Only me" app `contentdesk` (apps.js). The gate
+// is the BUSINESS's (the app is open for this business) plus a role, so the owner's manager can send videos too.
+import { roleAtLeast } from '../allow.js';
+import { getConfig, setConfig, getSecret } from '../lib/ext.js';
+import { formatDate } from '../lib/time.js';
+import { phone11 } from '../lib/phone.js';
+import { appIsOff } from './apps.js';
+import { platformAdmin } from './platform.js';
+
+const str = (v) => String(v == null ? '' : v).trim();
+const num = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+const KINDS = ['new_product', 'shipment_coming', 'shipment_arrived'];
+const H = 3600e3, DAY = 86400e3;
+const MERGE_DELAY = 2 * H;          // a batch of new products waits 2 h after its first product for more to join
+const COMING_BEFORE = 10 * DAY;     // "coming soon" goes out 10 days before the expected arrival
+const COMING_NO_ETA = 30 * DAY;     // ... or 30 days after the order when no arrival date is known
+const RETRY = H, MAX_TRIES = 2;
+const MAX_VIDEO = 80 * 1024 * 1024;
+const MAX_ITEMS = 30;               // products named in one event (an Excel import of 500 still makes one event)
+const PLATFORMS = ['facebook', 'instagram', 'tiktok', 'youtube'];
+const TOPIC = { new_product: 'cz_stock', shipment_arrived: 'cz_stock', shipment_coming: 'cz_news' };
+const ONLINE_MS = 3 * 60e3, BRIDGE_MS = 25000;
+const PATH_RE = /^content\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.mp4$/;
+
+// ------------------------------------------------------------------ gates
+/** Is the app open for this BUSINESS (its flag row, or its owner is the platform admin) - not for the person saving. */
+async function bizOn(ctx) {
+  if (ctx.memo && ctx.memo.cdOn !== undefined) return ctx.memo.cdOn;
+  let on = false;
+  try { on = !(await appIsOff(ctx.deps, ctx.sql, 'contentdesk', { biz: ctx.biz, s: { role: 'owner' } })); } catch (_) { on = false; }
+  if (ctx.memo) ctx.memo.cdOn = on;
+  return on;
+}
+async function gate(ctx, role) {
+  if (!roleAtLeast(ctx.s.role, role)) {
+    throw new Error(role === 'owner' ? 'কনটেন্ট ডেস্কের এই কাজটা শুধু মালিক করতে পারেন।' : 'কনটেন্ট ডেস্ক শুধু ম্যানেজার আর মালিক খুলতে পারেন।');
+  }
+  if (!(await platformAdmin(ctx)) && !(await bizOn(ctx))) throw new Error('এই ERP-তে কনটেন্ট ডেস্ক এখনো চালু হয়নি।');
+}
+
+async function logErr(ctx, what, e) {
+  console.error('contentdesk ' + what, e && e.message);
+  try {
+    await ctx.sql`insert into erp_errors (business_id, who, role, action, message, build)
+                  values (${ctx.biz}, ${str(ctx.s && ctx.s.name) || 'Content desk'}, ${str(ctx.s && ctx.s.role)}, ${'content:' + what},
+                          ${String((e && e.message) || e).slice(0, 500)}, 'contentdesk')`;
+  } catch (_) { /* never the reason a save fails */ }
+}
+
+// ------------------------------------------------------------------ facts from the ERP
+/** {sku: {sku, name, brand, category, price, stock}} for the asked skus (any case). */
+async function productFacts(ctx, skus) {
+  const keys = [...new Set(skus.map((s) => str(s).toLowerCase()).filter(Boolean))];
+  if (!keys.length) return {};
+  const rows = await ctx.tx`select sku, name, brand, category, sell_price, stock from product_stock
+                            where business_id = ${ctx.biz} and lower(btrim(sku)) = any(${keys})`;
+  const out = {};
+  for (const r of rows) out[str(r.sku).toLowerCase()] = { sku: str(r.sku), name: str(r.name), brand: str(r.brand), category: str(r.category),
+                                                        price: Math.round(num(r.sell_price)), stock: Math.round(num(r.stock)) };
+  return out;
+}
+const iso = (d) => (d ? new Date(d).toISOString() : null);
+const ymd = (d) => formatDate(new Date(d), 'yyyy-MM-dd');
+
+// ------------------------------------------------------------------ capture
+/**
+ * The hook. kind: new_product (facts {id}), shipment_coming (ref = order no; facts {eta?, update?}),
+ * shipment_arrived (ref = order no or shipment reference; facts {lines:[{sku, qty}], poId?}). Returns the event id or null.
+ */
+export async function contentEmit(ctx, kind, ref, facts) {
+  try {
+    if (!ctx || !ctx.tx || !ctx.biz || !KINDS.includes(kind)) return null;
+    if (ctx.memo && ctx.memo.cdSkip) return null;
+    if (!ctx.memo || ctx.memo.cdReady === undefined) {
+      const cfg = await ctx.tx.savepoint(() => ctx.tx`select key, value from business_config where business_id = ${ctx.biz} and key in ('brand_bridge', 'business_kind')`);
+      const m = Object.fromEntries(cfg.map((r) => [r.key, str(r.value)]));
+      const ready = !!m.brand_bridge && m.business_kind !== 'brand';
+      if (ctx.memo) ctx.memo.cdReady = ready;
+    }
+    if (ctx.memo && !ctx.memo.cdReady) return null;
+    if (!(await bizOn(ctx))) return null;
+    return await ctx.tx.savepoint(() => capture(ctx, kind, str(ref), facts || {}));
+  } catch (e) { await logErr(ctx, kind, e); return null; }
+}
+
+async function capture(ctx, kind, ref, f) {
+  const now = ctx.now instanceof Date ? ctx.now : new Date();
+  if (kind === 'new_product') {
+    const p = (await ctx.tx`select id, sku from products where business_id = ${ctx.biz} and id = ${f.id}`)[0];
+    if (!p) return null;
+    const fact = (await productFacts(ctx, [p.sku]))[str(p.sku).toLowerCase()];
+    if (!fact) return null;
+    const item = { id: String(p.id), ...fact };
+    const had = await ctx.tx`select id from content_events where business_id = ${ctx.biz} and kind = 'new_product'
+                             and payload->'products' @> ${ctx.tx.json([{ id: String(p.id) }])}`;
+    if (had.length) return had[0].id;
+    // a batch still waiting (its first product less than 2 h ago): this product joins it
+    const open = (await ctx.tx`select id, payload from content_events where business_id = ${ctx.biz} and kind = 'new_product'
+                               and state = 'waiting' and due_at > ${now} and created_at > ${new Date(now.getTime() - DAY)}
+                               order by created_at desc limit 1 for update`)[0];
+    if (open) {
+      const pl = open.payload || {};
+      const list = Array.isArray(pl.products) ? pl.products : [];
+      const total = num(pl.count) || list.length;
+      const next = { ...pl, count: total + 1, products: list.length < MAX_ITEMS ? list.concat([item]) : list };
+      await ctx.tx`update content_events set payload = ${ctx.tx.json(next)} where id = ${open.id}`;
+      return open.id;
+    }
+    const r = await ctx.tx`insert into content_events (business_id, kind, ref, payload, due_at)
+                           values (${ctx.biz}, 'new_product', ${'np-' + p.id}, ${ctx.tx.json({ products: [item], count: 1 })}, ${new Date(now.getTime() + MERGE_DELAY)})
+                           on conflict (business_id, kind, ref) do nothing returning id`;
+    return r[0] ? r[0].id : null;
+  }
+
+  if (kind === 'shipment_coming') {
+    if (!ref) return null;
+    const lines = await ctx.tx`select sku, product, qty, ordered_at from po_lines where business_id = ${ctx.biz} and po_no = ${ref} order by id`;
+    if (!lines.length) return null;
+    const st = (await ctx.tx`select eta from po_stages where business_id = ${ctx.biz} and po_no = ${ref}`)[0];
+    const etaIn = /^\d{4}-\d{2}-\d{2}$/.test(str(f.eta)) ? str(f.eta) : (st && st.eta ? ymd(st.eta) : '');
+    const ordered = lines[0].ordered_at ? new Date(lines[0].ordered_at) : now;
+    let due = etaIn ? new Date(new Date(etaIn + 'T06:00:00Z').getTime() - COMING_BEFORE) : new Date(ordered.getTime() + COMING_NO_ETA);
+    if (due < now) due = now;
+    const have = (await ctx.tx`select id, state, payload from content_events where business_id = ${ctx.biz} and kind = 'shipment_coming' and ref = ${ref} for update`)[0];
+    if (have) {
+      if (have.state === 'waiting' && etaIn && etaIn !== str((have.payload || {}).eta)) {
+        await ctx.tx`update content_events set due_at = ${due}, payload = ${ctx.tx.json({ ...(have.payload || {}), eta: etaIn })} where id = ${have.id}`;
+      }
+      return have.id;
+    }
+    if (f.update) return null;   // an ETA set on an order that had no event (from before the desk) makes none
+    const facts = await productFacts(ctx, lines.map((l) => l.sku));
+    const items = lines.slice(0, MAX_ITEMS).map((l) => { const x = facts[str(l.sku).toLowerCase()] || { sku: str(l.sku), name: str(l.product) }; return { ...x, qty: Math.round(num(l.qty)) }; });
+    const r = await ctx.tx`insert into content_events (business_id, kind, ref, payload, due_at)
+                           values (${ctx.biz}, 'shipment_coming', ${ref}, ${ctx.tx.json({ poId: ref, eta: etaIn, products: items, count: lines.length })}, ${due})
+                           on conflict (business_id, kind, ref) do nothing returning id`;
+    return r[0] ? r[0].id : null;
+  }
+
+  // shipment_arrived
+  const lines = (Array.isArray(f.lines) ? f.lines : []).filter((l) => l && str(l.sku) && num(l.qty) > 0);
+  if (!ref || !lines.length) return null;
+  const facts = await productFacts(ctx, lines.map((l) => l.sku));
+  const items = lines.slice(0, MAX_ITEMS).map((l) => ({ ...(facts[str(l.sku).toLowerCase()] || { sku: str(l.sku), name: str(l.sku) }), qty: Math.round(num(l.qty)) }));
+  const r = await ctx.tx`insert into content_events (business_id, kind, ref, payload, due_at)
+                         values (${ctx.biz}, 'shipment_arrived', ${ref}, ${ctx.tx.json({ poId: str(f.poId), reference: str(f.reference), products: items, count: lines.length })}, ${now})
+                         on conflict (business_id, kind, ref) do nothing returning id`;
+  // the order came before its "coming soon" post went out: that post is no longer true
+  if (str(f.poId)) await ctx.tx`update content_events set state = 'skipped', error = 'the shipment arrived first' where business_id = ${ctx.biz}
+                                and kind = 'shipment_coming' and ref = ${str(f.poId)} and state in ('waiting', 'failed')`;
+  return r[0] ? r[0].id : null;
+}
+
+// ------------------------------------------------------------------ the words sent to the engine (facts only)
+const tk = (n) => '৳' + Math.round(num(n)).toLocaleString('en-US');
+function itemLine(p, qtyWord) {
+  const bits = [];
+  if (p.brand && !str(p.name).toLowerCase().includes(str(p.brand).toLowerCase())) bits.push('ব্র্যান্ড ' + p.brand);
+  if (p.sku) bits.push('SKU ' + p.sku);
+  if (num(p.price) > 0) bits.push('দাম ' + tk(p.price));
+  if (qtyWord && num(p.qty) > 0) bits.push(qtyWord + ' ' + Math.round(num(p.qty)) + 'টি');
+  if (p.stock !== undefined && p.stock !== null) bits.push('এখন স্টকে ' + Math.max(0, Math.round(num(p.stock))) + 'টি');
+  return '• ' + str(p.name) + (bits.length ? ' (' + bits.join(', ') + ')' : '');
+}
+export function eventText(ev) {
+  const pl = ev.payload || {};
+  const items = Array.isArray(pl.products) ? pl.products : [];
+  const names = items.map((p) => str(p.name)).filter(Boolean);
+  const more = Math.max(0, num(pl.count) - items.length);
+  const head = ev.kind === 'new_product' ? 'নতুন এসেছে: ' + names.join(', ')
+    : ev.kind === 'shipment_coming' ? 'শিপমেন্ট আসছে: ' + names.join(', ') + (pl.eta ? '। সম্ভাব্য পৌঁছানোর দিন ' + pl.eta : '')
+    : 'শিপমেন্ট চলে এসেছে: ' + names.join(', ');
+  const lines = items.map((p) => itemLine(p, ev.kind === 'shipment_coming' ? 'আসছে' : ev.kind === 'shipment_arrived' ? 'এসেছে' : ''));
+  if (more) lines.push('• আরও ' + more + 'টি পণ্য');
+  return [head + '।', ...lines, '', 'শুধু উপরের তথ্য ব্যবহার করুন; দাম, স্টক বা তারিখ নিজে থেকে বানাবেন না।'].join('\n');
+}
+
+// ------------------------------------------------------------------ the bridge (the business's own engine on the Mac)
+async function bridgeState(ctx) {
+  let s = {}; try { s = JSON.parse(str(await getConfig(ctx, 'brand_bridge', '')) || '{}'); } catch (_) { s = {}; }
+  const seen = s.seen ? new Date(s.seen) : null;
+  const now = ctx.now instanceof Date ? ctx.now : new Date();
+  return { url: str(s.url), seen, online: !!(seen && now - seen < ONLINE_MS) };
+}
+async function bridgePost(ctx, st, key, path, body) {
+  const f = (ctx.deps && ctx.deps.fetch) || fetch;
+  let r;
+  try {
+    r = await f(st.url + path, { method: 'POST', headers: { 'X-Bridge-Key': key, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body), signal: AbortSignal.timeout(BRIDGE_MS) });
+  } catch (_) { throw new Error('Mac সাড়া দিল না।'); }
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) throw new Error('Mac চাবিটা নিল না।');
+  if (!r.ok) throw new Error(str(j.error) || ('Mac থেকে ভুল উত্তর এল (' + r.status + ')।'));
+  return j;
+}
+
+/** The minute timer for one business. */
+export async function contentTick(ctx) {
+  if (!(await bizOn(ctx))) return { skipped: 'the Content desk is not open for this business' };
+  const now = ctx.now instanceof Date ? ctx.now : new Date();
+  const due = await ctx.tx`select * from content_events where business_id = ${ctx.biz} and due_at <= ${now}
+                           and (state = 'waiting' or (state = 'failed' and tries < ${MAX_TRIES}))
+                           order by due_at, id limit 5 for update skip locked`;
+  if (!due.length) return { sent: 0 };
+  const st = await bridgeState(ctx), key = await getSecret(ctx, 'BRAND_BRIDGE_KEY');
+  if (!key || !st.url || !st.online) return { sent: 0, waiting: due.length, offline: true };   // not a failure: next minute
+  let sent = 0, failed = 0;
+  for (const ev of due) {
+    // price and stock as they are NOW (a product made on Receive had 0 in stock when the event was written)
+    try { await ctx.tx.savepoint(async () => {
+      const pl = ev.payload || {}, items = Array.isArray(pl.products) ? pl.products : [];
+      const fresh = await productFacts(ctx, items.map((p) => p.sku));
+      ev.payload = { ...pl, products: items.map((p) => { const x = fresh[str(p.sku).toLowerCase()]; return x ? { ...p, name: x.name, brand: x.brand, price: x.price, stock: x.stock } : p; }) };
+      await ctx.tx`update content_events set payload = ${ctx.tx.json(ev.payload)} where id = ${ev.id}`;
+    }); } catch (_) { /* the facts written at the time stand */ }
+    const body = { text: eventText(ev), topic: TOPIC[ev.kind], platforms: PLATFORMS, video: true,
+                   event: { id: Number(ev.id), kind: ev.kind, ref: ev.ref } };
+    try {
+      const j = await bridgePost(ctx, st, key, '/drafts/make', body);
+      const idea = Number.isFinite(Number(j.idea_id)) && j.idea_id !== null && j.idea_id !== '' ? Math.round(Number(j.idea_id)) : null;
+      await ctx.tx`update content_events set state = 'sent', sent_at = ${now}, tries = tries + 1, error = null,
+                   bridge_job = ${str(j.job).slice(0, 120) || null}, idea_id = ${idea} where id = ${ev.id}`;
+      sent++;
+    } catch (e) {
+      await ctx.tx`update content_events set state = 'failed', tries = tries + 1, error = ${String((e && e.message) || e).slice(0, 300)},
+                   due_at = ${new Date(now.getTime() + RETRY)} where id = ${ev.id}`;
+      failed++;
+    }
+  }
+  return { sent, failed };
+}
+
+// ------------------------------------------------------------------ the handlers' list
+async function handlersOf(ctx) {
+  try { const v = JSON.parse(str(await getConfig(ctx, 'content_handlers', '')) || '[]'); return Array.isArray(v) ? v.filter((h) => h && h.phone) : []; } catch (_) { return []; }
+}
+export async function erpContentHandlersSave(ctx, payload) {
+  await gate(ctx, 'manager');
+  const list = payload && Array.isArray(payload.handlers) ? payload.handlers : null;
+  if (!list) throw new Error('কার কাছে ভিডিও যাবে, তাদের নাম আর নম্বর দিন।');
+  if (list.length > 10) throw new Error('সর্বোচ্চ ১০ জন রাখা যায়।');
+  const out = [], seen = new Set();
+  for (const h of list) {
+    const name = str(h && h.name).replace(/\s+/g, ' ');
+    if (!name) throw new Error('প্রত্যেকের একটা নাম দিন।');
+    if (name.length > 60) throw new Error('নামটা ৬০ অক্ষরের মধ্যে রাখুন।');
+    let phone;
+    try { phone = phone11(h && h.phone); } catch (_) { throw new Error(name + '-এর নম্বরটা ঠিক নেই। ০১ দিয়ে শুরু ১১ সংখ্যার মোবাইল নম্বর দিন।'); }
+    if (!phone) throw new Error(name + '-এর মোবাইল নম্বর দিন।');
+    if (seen.has(phone)) throw new Error(phone + ' নম্বরটা দুবার দেওয়া হয়েছে।');
+    seen.add(phone);
+    out.push({ name, phone });
+  }
+  await setConfig(ctx, 'content_handlers', JSON.stringify(out));
+  return { handlers: out };
+}
+
+// ------------------------------------------------------------------ reads
+const evOut = (r) => ({ id: Number(r.id), kind: r.kind, ref: r.ref, payload: r.payload || {}, dueAt: iso(r.due_at), state: r.state, tries: r.tries,
+                        sentAt: iso(r.sent_at), error: str(r.error), job: str(r.bridge_job), ideaId: r.idea_id == null ? null : Number(r.idea_id), createdAt: iso(r.created_at) });
+const vidOut = (r) => ({ id: Number(r.id), draftId: r.draft_id == null ? null : Number(r.draft_id), title: str(r.title), platform: str(r.platform), path: str(r.file_path),
+                         bytes: r.bytes == null ? null : Number(r.bytes), madeBy: str(r.made_by), createdAt: iso(r.created_at), sent: Array.isArray(r.sent) ? r.sent : [] });
+export async function erpContentDesk(ctx) {
+  await gate(ctx, 'manager');
+  const st = await bridgeState(ctx);
+  const events = (await ctx.tx`select * from content_events where business_id = ${ctx.biz} order by created_at desc, id desc limit 60`).map(evOut);
+  const videos = (await ctx.tx`select * from content_videos where business_id = ${ctx.biz} order by created_at desc, id desc limit 60`).map(vidOut);
+  const wa = await waChannels(ctx);
+  return { online: st.online, seen: st.seen ? st.seen.toISOString() : null, bridge: !!st.url, events, videos,
+           handlers: await handlersOf(ctx), whatsapp: wa.length > 0, owner: roleAtLeast(ctx.s.role, 'owner'), maxBytes: MAX_VIDEO };
+}
+async function videoRow(ctx, id) {
+  const n = parseInt(id, 10);
+  if (!(n > 0)) throw new Error('কোন ভিডিও? একটা বাছুন।');
+  const v = (await ctx.tx`select * from content_videos where business_id = ${ctx.biz} and id = ${n}`)[0];
+  if (!v) throw new Error('ভিডিওটা আর এখানে নেই। পেজটা নতুন করে আনুন।');
+  return v;
+}
+async function signedUrl(ctx, path, secs) {
+  const s = ctx.deps && ctx.deps.storage;
+  if (!s || !s.url) throw new Error('এই সার্ভারে ফাইল রাখার ব্যবস্থা নেই।');
+  const name = str(path).replace(/^content\//, '');
+  const url = await s.url(ctx.biz, 'content', name, secs);
+  if (!url) throw new Error('ভিডিওর লিংক বানানো গেল না। একটু পরে আবার চেষ্টা করুন।');
+  return url;
+}
+export async function erpContentVideoUrl(ctx, payload) {
+  await gate(ctx, 'manager');
+  const v = await videoRow(ctx, payload && payload.id);
+  return { id: Number(v.id), url: await signedUrl(ctx, v.file_path, 3600), expiresIn: 3600 };
+}
+
+// ------------------------------------------------------------------ videos in (from the studio)
+export async function erpContentVideoUploadUrl(ctx, payload) {
+  await gate(ctx, 'owner');
+  const bytes = num(payload && payload.bytes);
+  if (bytes > MAX_VIDEO) throw new Error('ভিডিওটা ৮০ MB-এর বেশি। ছোট করে (কমপ্রেস করে) আবার দিন।');
+  const s = ctx.deps && ctx.deps.storage;
+  if (!s || !s.signUpload) throw new Error('এই সার্ভারে ফাইল রাখার ব্যবস্থা নেই।');
+  const name = crypto.randomUUID() + '.mp4';
+  const up = await s.signUpload(ctx.biz, 'content', name);
+  return { url: up.url, token: up.token, path: 'content/' + name, maxBytes: MAX_VIDEO, contentType: 'video/mp4' };
+}
+export async function erpContentVideoSave(ctx, payload) {
+  await gate(ctx, 'owner');
+  const p = payload || {};
+  const path = str(p.path);
+  if (!PATH_RE.test(path)) throw new Error('ভিডিওর ঠিকানাটা চেনা নেই। আগে আপলোডের ঠিকানা নিন, তারপর ফাইলটা দিন।');
+  const bytes = Math.round(num(p.bytes));
+  if (!(bytes > 0)) throw new Error('ভিডিওর আকার (bytes) দিন।');
+  if (bytes > MAX_VIDEO) throw new Error('ভিডিওটা ৮০ MB-এর বেশি। ছোট করে (কমপ্রেস করে) আবার দিন।');
+  const platform = str(p.platform).toLowerCase();
+  if (platform && !PLATFORMS.includes(platform)) throw new Error('এই নেটওয়ার্ক চেনা নেই (facebook, instagram, tiktok, youtube)।');
+  const draft = p.draftId == null || p.draftId === '' ? null : parseInt(p.draftId, 10);
+  if (draft !== null && !(draft > 0)) throw new Error('ড্রাফটের নম্বরটা ঠিক নেই।');
+  const title = str(p.title).slice(0, 200) || 'ভিডিও';
+  const r = await ctx.tx`insert into content_videos (business_id, draft_id, title, platform, file_path, bytes, made_by)
+                         values (${ctx.biz}, ${draft}, ${title}, ${platform}, ${path}, ${bytes}, ${str(p.madeBy).slice(0, 60) || str(ctx.s.name) || null})
+                         on conflict (business_id, file_path) do update set title = excluded.title, platform = excluded.platform, bytes = excluded.bytes,
+                           draft_id = coalesce(excluded.draft_id, content_videos.draft_id)
+                         returning *`;
+  return { video: vidOut(r[0]) };
+}
+
+// ------------------------------------------------------------------ videos out (the business's own WhatsApp)
+async function waChannels(ctx) {
+  try {
+    const chs = await ctx.tx`select * from inbox_channels where business_id = ${ctx.biz} and kind in ('wa_evo', 'wa_cloud', 'wa_sender') and status <> 'removed'
+                             order by (status = 'live') desc, created_at, id`;
+    // the chat number first (mgr-quiet-1: the manager's own number is not the business's voice)
+    const chat = (c) => str((c.settings || {}).purpose || 'chat') === 'chat';
+    return chs.filter(chat).concat(chs.filter((c) => !chat(c)));
+  } catch (_) { return []; }
+}
+export async function erpContentVideoSend(ctx, payload) {
+  await gate(ctx, 'manager');
+  const v = await videoRow(ctx, payload && payload.id);
+  let want;
+  try { want = phone11(payload && payload.phone); } catch (_) { want = ''; }
+  const h = (await handlersOf(ctx)).find((x) => str(x.phone) === want);
+  if (!h) throw new Error('এই নম্বরটা পেজ চালানো লোকদের তালিকায় নেই। আগে তালিকায় যোগ করুন।');
+  const chs = await waChannels(ctx);
+  if (!chs.length) throw new Error('এই ব্যবসার নিজের কোনো WhatsApp নম্বর ERP-তে যুক্ত নেই। আগে Inbox-এ ব্যবসার WhatsApp যুক্ত করুন।');
+  const url = await signedUrl(ctx, v.file_path, 3600);
+  const { sendOut } = await import('./inboxch.js');
+  const to = '880' + h.phone.slice(1);
+  const caption = str(v.title) + (v.platform ? ' (' + v.platform + ')' : '');
+  let last = '';
+  for (const ch of chs) {
+    let r;
+    try { r = await sendOut(ctx, ch, { external_id: to }, { kind: 'video', url, mime: 'video/mp4', fileName: 'video-' + v.id + '.mp4', caption }); }
+    catch (e) { r = { ok: false, error: String((e && e.message) || e) }; }
+    if (r && r.ok) {
+      const entry = { name: h.name, phone: h.phone, at: new Date().toISOString(), by: str(ctx.s.name), via: str(ch.name) };
+      await ctx.tx`update content_videos set sent = coalesce(sent, '[]'::jsonb) || ${ctx.tx.json([entry])} where id = ${v.id}`;
+      return { ok: true, sent: entry };
+    }
+    last = str(r && r.error);
+  }
+  throw new Error(h.name + '-কে WhatsApp-এ পাঠানো গেল না' + (last ? ' (' + last.slice(0, 120) + ')' : '') + '। একটু পরে আবার চেষ্টা করুন।');
+}
+
+export const HANDLERS = { erpContentDesk, erpContentVideoUrl, erpContentHandlersSave, erpContentVideoUploadUrl, erpContentVideoSave, erpContentVideoSend };

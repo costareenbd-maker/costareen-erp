@@ -161,11 +161,11 @@ function projectParts(p: Project) {
       if (!r.ok) throw new Error('The file could not be saved (' + r.status + ').');
       return { id: `${folder}/${name}`, name, url: await storage.url(biz, folder, name) };
     },
-    async url(biz: string, folder: string, name: string) {
+    async url(biz: string, folder: string, name: string, secs?: number) {
       const r = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/${BUCKET}/${enc(`${biz}/${folder}/${name}`)}`, {
         method: 'POST',
         headers: { ...svc, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expiresIn: 7 * 24 * 3600 }),
+        body: JSON.stringify({ expiresIn: secs && secs > 0 ? Math.round(secs) : 7 * 24 * 3600 }),
       });
       if (!r.ok) return '';
       const j = await r.json();

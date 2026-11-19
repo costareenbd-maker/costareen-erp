@@ -117,6 +117,7 @@ export async function sendOut(ctx, ch, contact, msg) {
     let body;
     if (msg.kind === 'document') body = { type: 'document', document: { link: msg.url, filename: str(msg.fileName) || 'file.pdf', caption: str(msg.caption).slice(0, 1024) || undefined } };
     else if (msg.kind === 'image') body = { type: 'image', image: { link: msg.url, caption: str(msg.caption).slice(0, 1024) || undefined } };
+    else if (msg.kind === 'video') body = { type: 'video', video: { link: msg.url, caption: str(msg.caption).slice(0, 1024) || undefined } };
     else if (msg.kind === 'buttons' && (msg.buttons || []).length) {
       const bs = msg.buttons.slice(0, 10);
       body = bs.length <= 3
@@ -143,6 +144,7 @@ export async function sendOut(ctx, ch, contact, msg) {
     const sendTo = async (number) => { let r;
     if (msg.kind === 'document') r = await call(ctx, base + '/message/sendMedia/' + encodeURIComponent(inst), { headers, body: { number, mediatype: 'document', mimetype: str(msg.mime) || 'application/pdf', media: msg.base64 || msg.url, fileName: str(msg.fileName) || 'file.pdf', caption: str(msg.caption) } });
     else if (msg.kind === 'image') r = await call(ctx, base + '/message/sendMedia/' + encodeURIComponent(inst), { headers, body: { number, mediatype: 'image', media: msg.url, caption: str(msg.caption) } });
+    else if (msg.kind === 'video') r = await call(ctx, base + '/message/sendMedia/' + encodeURIComponent(inst), { headers, body: { number, mediatype: 'video', mimetype: str(msg.mime) || 'video/mp4', media: msg.url, fileName: str(msg.fileName) || 'video.mp4', caption: str(msg.caption) } });
     else r = await call(ctx, base + '/message/sendText/' + encodeURIComponent(inst), { headers, body: { number, text: str(msg.kind === 'buttons' ? numbered(msg.text, msg.buttons || []) : msg.text) } });
       return r; };
     let r = await sendTo(number);
@@ -156,6 +158,7 @@ export async function sendOut(ctx, ch, contact, msg) {
     const body = { to: '+' + waTo(to) };
     if (msg.kind === 'document') { body.documentUrl = msg.url; body.fileName = str(msg.fileName) || 'file.pdf'; if (msg.caption) body.text = str(msg.caption); }
     else if (msg.kind === 'image') { body.imageUrl = msg.url; if (msg.caption) body.text = str(msg.caption); }
+    else if (msg.kind === 'video') { body.videoUrl = msg.url; if (msg.caption) body.text = str(msg.caption); }
     else body.text = str(msg.kind === 'buttons' ? numbered(msg.text, msg.buttons || []) : msg.text);
     const r = await call(ctx, 'https://www.wasenderapi.com/api/send-message', { headers: { Authorization: 'Bearer ' + key }, body });
     return { ok: r.ok, externalId: str((r.json.data && (r.json.data.msgId || r.json.data.id)) || ''), error: r.ok ? '' : why(r) };
