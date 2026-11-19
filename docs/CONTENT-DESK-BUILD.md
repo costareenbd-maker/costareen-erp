@@ -22,15 +22,15 @@ Owner rules for this build:
 - [x] C1b Oliareen 60-day calendar loaded as series/ideas; drafts generate
 - [x] C2a Costareen profile (promotional, real stock, website photos, fact lock)
 - [x] C2b Costareen 60-day plan (from R1) loaded
-- [ ] C2c ERP events: product created / PO created ("coming") / shipment received ("arrived") → bridge drafts + dedicated videos
+- [x] C2c ERP events: product created / PO created ("coming") / shipment received ("arrived") → bridge drafts + dedicated videos
 - [x] C3a Business video studio: ChatGPT writes props JSON → house template renders; owner clone voice; brand look per profile
 - [x] C3b Brand lock + fact lock + tests (no cross-brand words, clips, rules)
 - [x] C3c Queue: personal first (render + Flow); daily credit share
 - [x] C3d Side-by-side test: ChatGPT-directed vs Claude-directed video
 - [x] E1 ERP blueprint (impeccable shape) for the business Content desk screen
-- [ ] E2 ERP build: desk opens per business; download + send-to-handler WhatsApp; Only me
-- [ ] C4 Old Advertisement Content writer hidden for businesses with a Content desk (Paid ads + figures stay)
-- [ ] T1 Tests green, dev deploy, screen checked desktop + phone
+- [x] E2 ERP build: desk opens per business; download + send-to-handler WhatsApp; Only me
+- [x] C4 Old Advertisement Content writer hidden for businesses with a Content desk (Paid ads + figures stay)
+- [x] T1 Tests green, dev deploy, screen checked desktop + phone
 - [ ] T2 CHANGES.md, memory, commit, tag; report to owner; live release on his word
 
 ## Log
@@ -43,3 +43,5 @@ Owner rules for this build:
 - 19 Nov C3d side-by-side (draft 2, Costareen): Claude-directed clearly better (filled values, Bangla, bigger). Kept ChatGPT per owner rule; the Claude props became examples/costareen.json, the few-shot quality bar in the ChatGPT prompt. Sheet: out/costareen/side-by-side-d2.jpg.
 - 19 Nov C3c: Windows task "Business video studio" hourly :45 (run_all.cmd), personal lock first, max 2/day/brand (ElevenLabs chars shared). No Flow/Veo in business videos yet (no credit clash).
 - 19 Nov C3b: bizdesk/tests_locks.py 17/17 pass (brand lock both ways, fact lock, layout numbers, Oliareen selling + drug claims, foreign clips, empty items).
+- 19 Nov: ERP server content-desk-1 (+1b studio upload) and page content-desk-ui-1/1b/1c merged to main by devsync and deployed to DEV; both test videos uploaded into their dev businesses; screen checked on dev (video plays, handlers save, 375 px ok); personal baseline unchanged after everything (bridge md5 same, not restarted, 31.6 drafts/day). Event videos skip the daily cap.
+- LEFT: T2 live release on owner word; owner inputs (page handler numbers, Oliareen WhatsApp + own ChatGPT later).

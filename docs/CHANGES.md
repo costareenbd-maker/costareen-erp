@@ -4799,3 +4799,45 @@ no pictures.
   erpContentVideoUploadUrl, PUTs the file to the signed address, then erpContentVideoSave); the bizdesk fork itself
   (C0b) - until a business has a brand_bridge nothing happens. The 80 MB cap is checked on the size the studio reports;
   the signed upload itself is not size-limited by us (the bucket's own limit applies). Not deployed to dev or live.
+
+## content-desk-1b / ui-1 (19 Nov 2026) - business Content desk: studio upload, screen, old writer hidden
+Owner: "the Brand desk engine works; give Costareen and Oliareen the same, build it all in one go". Plan
+docs/CONTENT-DESK-PLAN.md, checklist docs/CONTENT-DESK-BUILD.md, blueprint .impeccable/shape/content-desk.md.
+
+**Server, next to content-desk-1**
+- erpContentStudioUploadUrl and erpContentStudioSave let the business video studio put a finished video into one
+  business's Content desk.
+- The call names the business and proves it with that business's engine key, the same way erpBrandDeskHello does, so
+  the owner key's active business is never switched. erpCrmAi got its activity-log words, which turns serverfinal green.
+- Tests: contentdesk 71/71, apps 51/51, serverfinal 34/34.
+
+**Page (content-desk-ui-1)**
+- A separate light "কনটেন্ট ডেস্ক" screen in the Line Map world. It does not touch the personal Brand desk cockpit at
+  all, which was the owner's zero-loss rule. App `contentdesk` ("Only me"). It shows on a business whose content
+  engine checks in (`desk` flag).
+- Tabs:
+  - আজ: waiting drafts. তৈরি marks a draft ready and publishes nothing. Also: copy caption, reject, the video.
+  - ভিডিও: watch, download, or send on WhatsApp from the business's own number to a page handler.
+  - ঘটনা: ERP events.
+  - পরিকল্পনা: 60-day series progress.
+  - পেজ চালান যারা: the page handlers list.
+- C4: on such a business, the old Advertisement Content writer buttons are hidden. Paid ads, posts and figures stay.
+- web/_headers media-src now allows the file store hosts (`*.supabase.co`, `*.costareen.com`), so videos can play.
+- Checked on dev, Demo 3D Shop: the test video plays (31.7 s), the handlers list saves, there is no sideways scroll at
+  375 px. The owner key was switched back to the brand business.
+
+**Engines (not in this repo; G:\bendar-brand\bizdesk)**
+- Each brand has a fork of the Brand desk bridge with its own profile, database, key and port. They run on the Mac at
+  /opt/brand/bizdesk and check in with dev Oliareen (demo) and Demo 3D Shop.
+- Video studio: templates/biz-house plus bizvideo.py. ChatGPT writes the props, the brand lock and fact lock check
+  them, the owner's voice clone reads them, and the brand colours are applied, with no AI chip. A self-critique writes
+  lessons after each video. The studio runs hourly (Windows task "Business video studio"), max 2 videos a day per brand;
+  ERP event videos are not held by that cap.
+
+**NOT done**
+- Live release, which waits for the owner's word. On live, each business needs its own engine check-in and
+  BRAND_BRIDGE_KEY, and app `contentdesk` must be on.
+- Page handlers' real numbers are not filled in.
+- Oliareen's own WhatsApp channel and its own ChatGPT account.
+- No Veo clips in business videos yet.
+- No posting through Postiz.
