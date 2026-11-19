@@ -64081,5 +64081,230 @@ Nothing about what the screens show or do changes; only how a redraw lands. Moti
 })();
 </script>
 
+<!-- content-desk-ui-1 (19 Nov 2026): the business Content desk screen (Costareen, Oliareen ...). Blueprint:
+     .impeccable/shape/content-desk.md; world = Brand Cockpit "Line Map" (.impeccable/surfaces/web-app-html.md). A SEPARATE
+     light screen, so the owner's personal Brand desk cockpit is not touched at all (owner 19 Nov: zero loss). Shows on a
+     business whose content engine checks in (BIZ.businesses[].desk) and app `contentdesk` ("Only me"). Drafts come from
+     the business engine through erpBrandDesk* (owner); videos, events and page handlers through erpContentDesk*.
+     Nothing is published from here: "তৈরি" marks a draft ready, then the page handler downloads it or gets it on WhatsApp. -->
+<style>
+#nav button[data-view="contentdesk"]{display:none}
+.cd{--ink:#16181D;--soft:#5B6070;--pan:#F2F3F5;--rule:#E4E6EA;--red:#E0301E;--amb:#F2A900;--fb:#1877F2;--ig:#C13584;--yt:#E62117;--tt:#111;
+  font-family:Pretendard,'Hind Siliguri','Noto Sans Bengali',system-ui,sans-serif;color:var(--ink);background:#fff;max-width:1180px;margin:0 auto;padding:4px 0 40px}
+.cd *{box-sizing:border-box}
+.cd-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:6px 0 14px;border-bottom:1px solid var(--rule)}
+.cd-top h1{font-size:24px;line-height:1.25;margin:0;font-weight:700}
+.cd-dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex:none}.cd-dot.on{background:#1FA05B}
+.cd-sub{font-size:13.5px;color:var(--soft)}
+.cd-sp{flex:1}
+.cd-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 16px}
+.cd-tab{border:1px solid var(--rule);background:#fff;border-radius:999px;padding:8px 15px;font:inherit;font-size:14.5px;cursor:pointer;min-height:40px;color:var(--ink)}
+.cd-tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.cd-tab em{font-style:normal;font-variant-numeric:tabular-nums;margin-left:6px;background:var(--amb);color:var(--ink);border-radius:999px;padding:0 7px;font-size:12.5px}
+.cd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.cd-card{border:1px solid var(--rule);border-radius:14px;background:#fff;overflow:hidden;display:flex;flex-direction:column}
+.cd-hd{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--rule);font-size:13.5px}
+.cd-net{display:inline-flex;align-items:center;gap:6px;font-weight:700}
+.cd-net i{width:10px;height:10px;border-radius:50%;background:var(--c,#999)}
+.cd-body{padding:12px 14px;font-size:15.5px;line-height:1.62;white-space:pre-wrap;overflow-wrap:anywhere;max-height:13.5em;overflow:hidden;position:relative}
+.cd-body.open{max-height:none}
+.cd-more{border:0;background:none;color:var(--soft);font:inherit;font-size:13.5px;padding:0 14px 8px;text-align:left;cursor:pointer}
+.cd-flag{margin:0 14px 10px;border-left:3px solid var(--red);background:#FDECEA;padding:7px 10px;font-size:13.5px;border-radius:0 8px 8px 0}
+.cd-flag.w{border-color:var(--amb);background:#FFF6DA}
+.cd-act{display:flex;gap:8px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--rule);margin-top:auto;background:var(--pan)}
+.cd-btn{border:1px solid var(--rule);background:#fff;color:var(--ink);border-radius:10px;padding:9px 14px;font:inherit;font-size:14.5px;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;gap:7px}
+.cd-btn.dark{background:var(--ink);color:#fff;border-color:var(--ink)}
+.cd-btn[disabled]{opacity:.45;cursor:not-allowed}
+.cd-vid{display:block;width:100%;aspect-ratio:9/16;max-height:520px;background:#000;object-fit:contain}
+.cd-ph{aspect-ratio:9/16;max-height:520px;background:var(--pan);display:flex;align-items:center;justify-content:center;color:var(--soft);font-size:14px;border:0;width:100%;cursor:pointer;font-family:inherit}
+.cd-row{display:flex;gap:10px;align-items:center;padding:11px 14px;border-top:1px solid var(--rule);font-size:14.5px}
+.cd-row:first-child{border-top:0}
+.cd-row .c{flex:1;min-width:0}
+.cd-row small{display:block;color:var(--soft);font-size:12.5px}
+.cd-pill{font-size:12px;border-radius:999px;padding:2px 9px;background:var(--pan);flex:none;white-space:nowrap}
+.cd-pill.wait{background:#FFF3C4}.cd-pill.sent{background:#E3F4EA}.cd-pill.failed{background:#FDECEA;color:#8F1D12}
+.cd-panel{border:1px solid var(--rule);border-radius:14px;background:#fff}
+.cd-series{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.cd-bar{height:8px;background:var(--pan);border-radius:99px;overflow:hidden;margin-top:7px}.cd-bar b{display:block;height:100%;background:var(--ink)}
+.cd-empty{padding:28px 16px;text-align:center;color:var(--soft);font-size:15px}
+.cd-in{border:1px solid var(--rule);border-radius:10px;padding:9px 11px;font:inherit;font-size:15px;min-height:44px;width:100%}
+.cd-hrow{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;padding:8px 14px;align-items:center}
+.cd-sheet{position:fixed;inset:0;background:rgba(22,24,29,.42);display:flex;align-items:flex-end;justify-content:center;z-index:9000}
+.cd-sheet>div{background:#fff;border-radius:16px 16px 0 0;width:min(520px,100%);max-height:80vh;overflow:auto;padding:14px 0 18px}
+.cd-sheet h3{margin:0 16px 8px;font-size:17px}
+@media (min-width:760px){.cd-sheet{align-items:center}.cd-sheet>div{border-radius:16px}}
+@media (max-width:759px){.cd-top h1{font-size:21px}.cd-grid{grid-template-columns:1fr}.cd-hrow{grid-template-columns:1fr;}}
+</style>
+<script>
+(function () {
+  var CD = { tab: 'today', drafts: null, desk: null, series: null, busy: {}, open: {}, url: {}, send: null, h: null, err: '' };
+  var ICON = '<path d="M4 5h16v11H4z"/><path d="M10 9l4 2.5-4 2.5z"/><path d="M8 20h8"/>';
+  var NETC = { facebook: '#1877F2', instagram: '#C13584', tiktok: '#111', youtube: '#E62117' };
+  var NETN = { facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube' };
+  function bizRow() { var b = (typeof BIZ !== 'undefined' && BIZ) || {}; return (b.businesses || []).filter(function (x) { return x.id === b.active; })[0] || {}; }
+  function on() {
+    if (!ME || !(ME.role === 'owner' || ME.role === 'manager')) return false;
+    if (!bizRow().desk) return false;
+    var a = ME.apps || {}; return !!ME.platform || (a.off || []).indexOf('contentdesk') < 0;
+  }
+  var owner = function () { return ME && ME.role === 'owner'; };
+  if (typeof fdxNav === 'function') fdxNav('contentdesk', 'Content desk', ICON, 'dash');
+  try { VIEW_NAMES.contentdesk = 'Content desk'; FDH_SUB.contentdesk = 'This business: ready posts and videos for the page, from its own content engine'; SRV_SLOW.erpBrandDeskDrafts = 40000; SRV_SLOW.erpBrandDeskSeries = 40000; } catch (e) {}
+  try { if (typeof BN_DICT !== 'undefined') { BN_DICT['Content desk'] = 'কনটেন্ট ডেস্ক'; } } catch (e) {}
+  var bn = function (n) { return String(n).replace(/[0-9]/g, function (d) { return '০১২৩৪৫৬৭৮৯'[d]; }); };
+  function when(t) { if (!t) return ''; var d = new Date(t); if (isNaN(d)) return ''; var m = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'][d.getMonth()];
+    return bn(d.getDate()) + ' ' + m + ', ' + bn(d.getHours() % 12 || 12) + ':' + bn(('0' + d.getMinutes()).slice(-2)); }
+  function navSync() {
+    var b = document.querySelector('#nav button[data-view="contentdesk"]'); var o = on();
+    if (b) b.style.display = o ? 'flex' : 'none';
+    // C4: once a business has its Content desk, the old Advertisement "Content" writer is hidden there (Paid ads and figures stay)
+    if (o) document.documentElement.setAttribute('data-cdesk', '1'); else document.documentElement.removeAttribute('data-cdesk');
+    if (!o && typeof VIEW !== 'undefined' && VIEW === 'contentdesk' && typeof go === 'function') setTimeout(function () { if (VIEW === 'contentdesk') go('dash'); }, 0);
+  }
+  function load(force) {
+    if (owner() && (force || !CD.drafts) && !CD.busy.d) { CD.busy.d = 1; srv('erpBrandDeskDrafts', [], function (r) { CD.busy.d = 0; CD.drafts = r; CD.err = ''; paint(); }, function (e) { CD.busy.d = 0; CD.err = (e && e.message) || String(e); paint(); }); }
+    if ((force || !CD.desk) && !CD.busy.k) { CD.busy.k = 1; srv('erpContentDesk', [], function (r) { CD.busy.k = 0; CD.desk = r; CD.h = null; paint(); }, function (e) { CD.busy.k = 0; CD.err = (e && e.message) || String(e); paint(); }); }
+    if (owner() && CD.tab === 'plan' && (force || !CD.series) && !CD.busy.s) { CD.busy.s = 1; srv('erpBrandDeskSeries', [], function (r) { CD.busy.s = 0; CD.series = r; paint(); }, function (e) { CD.busy.s = 0; paint(); }); }
+  }
+  function flags(d) {
+    var f = Array.isArray(d.legal_flags) ? d.legal_flags : [];
+    var block = f.filter(function (x) { return x && x.severity === 'block'; }), warn = f.filter(function (x) { return x && x.severity !== 'block'; });
+    return { block: block, html: block.map(function (x) { return '<div class="cd-flag">' + esc(x.reason || 'আটকানো') + '</div>'; }).join('') +
+      warn.slice(0, 2).map(function (x) { return '<div class="cd-flag w">' + esc(x.reason || '') + '</div>'; }).join('') };
+  }
+  function vidFor(draftId) { var vs = (CD.desk && CD.desk.videos) || []; return vs.filter(function (v) { return String(v.draftId) === String(draftId); })[0]; }
+  function vidBox(v) {
+    if (!v) return '';
+    if (CD.url[v.id]) return '<video class="cd-vid" controls playsinline preload="metadata" src="' + esc(CD.url[v.id]) + '"></video>';
+    return '<button type="button" class="cd-ph" data-cd="play" data-id="' + v.id + '">▶ ভিডিওটা দেখুন</button>';
+  }
+  function vidBtns(v) {
+    if (!v) return '';
+    var wa = CD.desk && CD.desk.whatsapp;
+    return '<button type="button" class="cd-btn" data-cd="dl" data-id="' + v.id + '">ভিডিও নামান</button>' +
+      '<button type="button" class="cd-btn" data-cd="wa" data-id="' + v.id + '"' + (wa ? '' : ' disabled title="এই ব্যবসার নিজের WhatsApp নম্বর ERP-তে যুক্ত নেই"') + '>WhatsApp-এ পাঠান</button>';
+  }
+  function draftCard(d) {
+    var f = flags(d), v = vidFor(d.id), op = !!CD.open[d.id], net = d.platform;
+    return '<article class="cd-card"><div class="cd-hd"><span class="cd-net" style="--c:' + (NETC[net] || '#999') + '"><i></i>' + esc(NETN[net] || net) + '</span>' +
+      '<span class="cd-sub">' + esc(d.title_working ? String(d.title_working).slice(0, 60) : '') + '</span></div>' + vidBox(v) +
+      '<div class="cd-body' + (op ? ' open' : '') + '" data-noi18n="1">' + esc(d.body || '') + '</div>' +
+      (String(d.body || '').length > 320 ? '<button type="button" class="cd-more" data-cd="more" data-id="' + d.id + '">' + (op ? 'কম দেখুন' : 'পুরোটা দেখুন') + '</button>' : '') + f.html +
+      '<div class="cd-act">' + (owner() ? '<button type="button" class="cd-btn dark" data-cd="ready" data-id="' + d.id + '"' + (f.block.length || CD.busy['r' + d.id] ? ' disabled' : '') + '>তৈরি</button>' : '') +
+      '<button type="button" class="cd-btn" data-cd="copy" data-id="' + d.id + '">ক্যাপশন কপি করুন</button>' + vidBtns(v) +
+      (owner() ? '<button type="button" class="cd-btn" data-cd="drop" data-id="' + d.id + '">বাদ দিন</button>' : '') + '</div></article>';
+  }
+  function todayHtml() {
+    if (!owner()) return '<div class="cd-panel cd-empty">ড্রাফট শুধু মালিক দেখেন। তৈরি ভিডিওগুলো "ভিডিও" ট্যাবে আছে।</div>';
+    if (!CD.drafts) return '<div class="cd-panel cd-empty">' + (CD.err ? esc(CD.err) : 'আনা হচ্ছে…') + '</div>';
+    var w = CD.drafts.waiting || [];
+    if (!w.length) return '<div class="cd-panel cd-empty">এখন অপেক্ষায় কোনো পোস্ট নেই। পরিকল্পনা থেকে রাতে নতুন ড্রাফট আসবে।</div>';
+    return '<div class="cd-grid">' + w.map(draftCard).join('') + '</div>';
+  }
+  function videosHtml() {
+    var vs = (CD.desk && CD.desk.videos) || [];
+    if (!vs.length) return '<div class="cd-panel cd-empty">এখনো কোনো ভিডিও আসেনি। স্টুডিও প্রতি ঘণ্টায় অপেক্ষায় থাকা ড্রাফট থেকে ভিডিও বানায়।</div>';
+    return '<div class="cd-grid">' + vs.map(function (v) {
+      var sent = (v.sent || []).map(function (s) { return '✓ ' + esc(s.name || s.phone) + ' · ' + when(s.at); }).join('<br>');
+      return '<article class="cd-card"><div class="cd-hd"><span class="cd-net" style="--c:' + (NETC[v.platform] || '#999') + '"><i></i>' + esc(NETN[v.platform] || 'ভিডিও') + '</span><span class="cd-sub" data-noi18n="1">' + esc(v.title || '') + '</span><span class="cd-sp"></span><span class="cd-sub">' + when(v.createdAt) + '</span></div>' +
+        vidBox(v) + (sent ? '<div class="cd-row"><div class="c"><small>পাঠানো হয়েছে</small>' + sent + '</div></div>' : '') + '<div class="cd-act">' + vidBtns(v) + '</div></article>';
+    }).join('') + '</div>';
+  }
+  var EVN = { new_product: 'নতুন প্রোডাক্ট', shipment_coming: 'শিপমেন্ট আসছে', shipment_arrived: 'শিপমেন্ট এসেছে' };
+  var EVS = { waiting: ['অপেক্ষায়', 'wait'], sent: ['ড্রাফট হয়েছে', 'sent'], failed: ['হয়নি', 'failed'], skipped: ['বাদ', ''] };
+  function eventsHtml() {
+    var es = (CD.desk && CD.desk.events) || [];
+    if (!es.length) return '<div class="cd-panel cd-empty">ERP-তে নতুন প্রোডাক্ট বা শিপমেন্ট এন্ট্রি দিলে এখানে দেখাবে, আর তা থেকে আলাদা ভিডিও হবে।</div>';
+    return '<div class="cd-panel">' + es.map(function (e) {
+      var p = e.payload || {}, names = (p.products || []).map(function (x) { return x.name; }).slice(0, 3).join(', '), st = EVS[e.state] || [e.state, ''];
+      return '<div class="cd-row"><div class="c"><b>' + esc(EVN[e.kind] || e.kind) + '</b> <span data-noi18n="1">' + esc(names) + (p.count > 3 ? ' +' + bn(p.count - 3) : '') + '</span>' +
+        '<small>' + (e.state === 'waiting' ? 'যাবে ' + when(e.dueAt) : when(e.sentAt || e.createdAt)) + (e.error ? ' · ' + esc(String(e.error).slice(0, 120)) : '') + '</small></div><span class="cd-pill ' + st[1] + '">' + st[0] + '</span></div>';
+    }).join('') + '</div>';
+  }
+  function planHtml() {
+    if (!owner()) return '<div class="cd-panel cd-empty">পরিকল্পনা মালিক দেখেন।</div>';
+    if (!CD.series) return '<div class="cd-panel cd-empty">আনা হচ্ছে…</div>';
+    var s = CD.series.series || [], tot = 0, done = 0;
+    s.forEach(function (x) { tot += x.eps || 0; done += x.done || 0; });
+    return '<p class="cd-sub" style="margin:0 0 12px">৬০ দিনের পরিকল্পনা: ' + bn(done) + ' / ' + bn(tot) + ' পর্ব হয়েছে</p><div class="cd-series">' + s.map(function (x) {
+      var pc = x.eps ? Math.round(100 * (x.done || 0) / x.eps) : 0;
+      return '<div class="cd-panel" style="padding:12px 14px"><b data-noi18n="1">' + esc(x.name || x.series) + '</b><small class="cd-sub" style="display:block">' + bn(x.done || 0) + ' / ' + bn(x.eps || 0) + ' · পরের পর্ব ' + bn(x.next || 1) + '</small><div class="cd-bar"><b style="width:' + pc + '%"></b></div></div>';
+    }).join('') + '</div>';
+  }
+  function handlersHtml() {
+    var list = CD.h || ((CD.desk && CD.desk.handlers) || []).map(function (x) { return { name: x.name, phone: x.phone }; });
+    CD.h = list;
+    return '<div class="cd-panel"><div class="cd-row"><div class="c"><b>পেজ চালান যারা</b><small>এঁদের WhatsApp-এ এই ব্যবসার নিজের নম্বর থেকে ভিডিও যাবে (সর্বোচ্চ ১০ জন)</small></div></div>' +
+      list.map(function (x, i) { return '<div class="cd-hrow"><input class="cd-in" data-cdh="name" data-i="' + i + '" value="' + esc(x.name || '') + '" placeholder="নাম" aria-label="নাম"><input class="cd-in" data-cdh="phone" data-i="' + i + '" value="' + esc(x.phone || '') + '" placeholder="01XXXXXXXXX" inputmode="tel" aria-label="WhatsApp নম্বর"><button type="button" class="cd-btn" data-cd="hdel" data-i="' + i + '" aria-label="সরান">সরান</button></div>'; }).join('') +
+      '<div class="cd-act">' + (list.length < 10 ? '<button type="button" class="cd-btn" data-cd="hadd">+ একজন যোগ করুন</button>' : '') + '<button type="button" class="cd-btn dark" data-cd="hsave"' + (CD.busy.hs ? ' disabled' : '') + '>সেভ করুন</button></div></div>';
+  }
+  function sheetHtml() {
+    if (!CD.send) return '';
+    var hs = (CD.desk && CD.desk.handlers) || [];
+    return '<div class="cd-sheet" data-cd="shclose"><div role="dialog" aria-modal="true" aria-label="WhatsApp-এ পাঠান"><h3>কাকে পাঠাবেন?</h3>' +
+      (hs.length ? hs.map(function (x) { return '<div class="cd-row"><div class="c"><b data-noi18n="1">' + esc(x.name) + '</b><small>' + esc(x.phone) + '</small></div><button type="button" class="cd-btn dark" data-cd="send" data-id="' + CD.send + '" data-ph="' + esc(x.phone) + '"' + (CD.busy['s' + x.phone] ? ' disabled' : '') + '>পাঠান</button></div>'; }).join('')
+        : '<div class="cd-empty">কেউ যোগ করা নেই। <button type="button" class="cd-btn" data-cd="tab" data-id="people">পেজ চালান যারা</button></div>') +
+      '<div class="cd-act" style="background:#fff;border:0"><button type="button" class="cd-btn" data-cd="shclose">বন্ধ করুন</button></div></div></div>';
+  }
+  function view() {
+    var b = bizRow(), k = CD.desk, wn = CD.drafts && CD.drafts.waiting ? CD.drafts.waiting.length : 0, ve = k && k.videos ? k.videos.length : 0;
+    var tabs = [['today', 'আজ', wn], ['videos', 'ভিডিও', ve], ['events', 'ঘটনা', 0], ['plan', 'পরিকল্পনা', 0], ['people', 'পেজ চালান যারা', 0]];
+    var body = CD.tab === 'videos' ? videosHtml() : CD.tab === 'events' ? eventsHtml() : CD.tab === 'plan' ? planHtml() : CD.tab === 'people' ? handlersHtml() : todayHtml();
+    return '<div class="cd"><div class="cd-top"><span class="cd-dot' + (k && k.online ? ' on' : '') + '" aria-hidden="true"></span><h1 data-noi18n="1">' + esc(b.name || '') + ' · কনটেন্ট ডেস্ক</h1>' +
+      '<span class="cd-sub">' + (k ? (k.online ? 'কনটেন্ট ইঞ্জিন চালু' : 'কনটেন্ট ইঞ্জিন বন্ধ (Mac)') : '') + '</span><span class="cd-sp"></span><button type="button" class="cd-btn" data-cd="reload">নতুন করে আনুন</button></div>' +
+      '<div class="cd-tabs" role="tablist">' + tabs.map(function (t) { return '<button type="button" role="tab" class="cd-tab' + (CD.tab === t[0] ? ' on' : '') + '" aria-selected="' + (CD.tab === t[0]) + '" data-cd="tab" data-id="' + t[0] + '">' + t[1] + (t[2] ? '<em>' + bn(t[2]) + '</em>' : '') + '</button>'; }).join('') + '</div>' +
+      body + '</div>' + sheetHtml();
+  }
+  function paint() { navSync(); if (typeof VIEW === 'undefined' || VIEW !== 'contentdesk') return; var v = el('view'); if (v) v.innerHTML = view(); }
+  var rp = repaint;
+  repaint = function () { navSync(); if (typeof VIEW === 'undefined' || VIEW !== 'contentdesk') return rp.apply(this, arguments); paint(); load(); };
+  function draftOf(id) { return ((CD.drafts && CD.drafts.waiting) || []).filter(function (d) { return String(d.id) === String(id); })[0]; }
+  function vurl(id, cb) {
+    if (CD.url[id]) return cb(CD.url[id]);
+    srv('erpContentVideoUrl', [{ id: Number(id) }], function (r) { CD.url[id] = r.url; setTimeout(function () { delete CD.url[id]; }, 50 * 60e3); cb(r.url); }, function (e) { toast(esc((e && e.message) || String(e)), true); });
+  }
+  document.addEventListener('input', function (e) {
+    var t = e.target; if (!t || !t.getAttribute || !t.getAttribute('data-cdh') || !CD.h) return;
+    var i = Number(t.getAttribute('data-i')); if (CD.h[i]) CD.h[i][t.getAttribute('data-cdh')] = t.value;
+  });
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-cd]'); if (!t || typeof VIEW === 'undefined' || VIEW !== 'contentdesk') return;
+    var w = t.getAttribute('data-cd'), id = t.getAttribute('data-id');
+    if (w === 'shclose') { if (e.target !== t && t.classList.contains('cd-sheet')) return; CD.send = null; paint(); return; }
+    if (w === 'tab') { CD.tab = id; CD.send = null; paint(); load(); }
+    else if (w === 'reload') { CD.drafts = null; CD.desk = null; CD.series = null; paint(); load(true); }
+    else if (w === 'more') { CD.open[id] = !CD.open[id]; paint(); }
+    else if (w === 'copy') { var d = draftOf(id); if (d) { try { navigator.clipboard.writeText(d.body || ''); toast('ক্যাপশন কপি হলো।'); } catch (x) { toast('কপি হলো না।', true); } } }
+    else if (w === 'ready' || w === 'drop') {
+      var dd = draftOf(id); if (!dd) return; CD.busy['r' + id] = 1; paint();
+      var args = w === 'ready' ? { id: Number(id), action: 'approve', networks: [{ id: 'page-handler', platform: dd.platform }] } : { id: Number(id), action: 'reject', note: 'content desk' };
+      srv('erpBrandDeskDraftDecide', [args], function () { CD.busy['r' + id] = 0; toast(w === 'ready' ? 'তৈরি: পেজ যিনি চালান তাঁকে পাঠান।' : 'বাদ দেওয়া হলো।'); load(true); },
+        function (x) { CD.busy['r' + id] = 0; toast(esc((x && x.message) || String(x)), true, 9000); paint(); });
+    }
+    else if (w === 'play') { vurl(id, function () { paint(); }); }
+    else if (w === 'dl') { vurl(id, function (u) { var a = document.createElement('a'); a.href = u; a.download = 'video-' + id + '.mp4'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove(); }); }
+    else if (w === 'wa') { CD.send = id; paint(); }
+    else if (w === 'send') {
+      var ph = t.getAttribute('data-ph'); CD.busy['s' + ph] = 1; paint();
+      srv('erpContentVideoSend', [{ id: Number(id), phone: ph }], function () { CD.busy['s' + ph] = 0; CD.send = null; toast('পাঠানো হলো।'); CD.desk = null; load(true); },
+        function (x) { CD.busy['s' + ph] = 0; toast(esc((x && x.message) || String(x)), true, 9000); paint(); });
+    }
+    else if (w === 'hadd') { CD.h = CD.h || []; CD.h.push({ name: '', phone: '' }); paint(); }
+    else if (w === 'hdel') { CD.h.splice(Number(t.getAttribute('data-i')), 1); paint(); }
+    else if (w === 'hsave') {
+      CD.busy.hs = 1; paint();
+      srv('erpContentHandlersSave', [{ handlers: (CD.h || []).filter(function (x) { return (x.name || '').trim() || (x.phone || '').trim(); }) }], function (r) { CD.busy.hs = 0; CD.desk = Object.assign({}, CD.desk || {}, { handlers: r.handlers }); CD.h = null; toast('সেভ হলো।'); paint(); },
+        function (x) { CD.busy.hs = 0; toast(esc((x && x.message) || String(x)), true, 9000); paint(); });
+    }
+  });
+  setTimeout(navSync, 0);
+})();
+</script>
+<style>
+/* C4 (content-desk-ui-1): a business with its Content desk writes posts there; the old Advertisement "Content" writer is
+   hidden for it. Paid ads, posts list and figures stay. */
+html[data-cdesk="1"] [data-cf="new"],html[data-cdesk="1"] [data-cf="clip"]{display:none!important}
+</style>
+
 </body>
 </html>
