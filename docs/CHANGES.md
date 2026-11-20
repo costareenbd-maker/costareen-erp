@@ -4931,3 +4931,31 @@ Owner: one login (erp.costareen.com), switch to the Brand desk business and do e
   skills = delete the Oliareen rows whose `why` starts with "Copied from Costareen 20 Nov 2026".
 - **Live function vs main after this release:** equal except 4 non-Brand files left alone: handlers/factory.js, push.js,
   socialmake.js (reel-ctx-1, 12 Nov) and lib/ai.js (gemini-1, 17 Nov). a2365ba (free-1) is the Mac AI gateway, not the function.
+
+
+## channels-1 (21 Nov 2026, release #51): the Content desk "চ্যানেল" tab - each business posts through its own Postiz workspace
+
+Owner approved the mockup (.impeccable/mocks/content-desk-postiz.html) with "Yes, build it".
+- **Mac (bizdesk, G:endar-brandizdesk):** a posting line per business, `brand-bizpacer-costareen` /
+  `brand-bizpacer-oliareen` (mac/pacer_biz.py, own sqlite /data/brand/bizdesk/<brand>/pacer/pacer.db). It holds the
+  business's OWN Postiz workspace key (POSTIZ_KEY in /opt/brand/bizdesk/.env.<brand>, empty until the workspace exists),
+  checks every channel against that workspace on add and again before send, and adds the key on the bridge's only door
+  to Postiz (/postiz/integrations, /postiz/upload). Rules: gap per network (default 20 min), daily max (3/2/2/1),
+  one channel on a break, emergency stop, cancel, link after it goes out; YouTube public with a title, TikTok as a
+  SELF_ONLY draft. 33 local tests (mac/test_pacer_biz.py), incl. the personal channel being refused.
+- **Bridge fork (make_fork.py -> bridge_biz.py):** approve with real channels -> its own pacer; "তৈরি" (page-handler)
+  unchanged. No autopilot, no Story copies, no Telegram approve in the business engine. New POST /biz/state|rules|cancel|
+  connect for the ERP. The personal bridge, its DB, pacer and studio were not touched (md5 same).
+- **ERP:** erpContentChannels / RulesSave / Stop / Cancel / Connect (owner only) talk only to this business's engine.
+  Page block channels-1 + three hooks in content-desk-ui-1 (deploy/channels1_page.py): the tab (pages with status and
+  connect / reconnect / break, rules, today's line), and on each draft card the channel chips + "অনুমোদন · রুটিনের সময়ে
+  যাবে" / "সময় বদলান" (Dhaka time) / "এখনই". The desk now uses the Clean look's colours (dark too); the app's
+  one-lime-row rule keeps the tabs lime and the primary buttons ink-filled.
+- **Live:** function file-by-file (allow.js, handlers/contentdesk.js, handlers/security.js; live was = HEAD before),
+  backup /data/backups/live-function/erp-20261120T161703Z-before-channels1.tgz; page = #50 live source + channels-1 only,
+  sw cz-shell-v4-native-channels1-f61931f on costareen-erp + office-erp (prev private/live-web-index-before-channels1-20261121.html).
+  Bizdesk compose/bridge backups *.bak-channels1-20261120T155951Z. Checked live on Costareen and Oliareen (tab, 4 network
+  cards, rules, no errors, no sideways scroll on phone).
+- **NOT done:** the two business Postiz workspaces do not exist yet (Postiz has no "new workspace" screen for an existing
+  user; script ready, waits for the owner's yes), so no page is connected and nothing can post yet. The personal Postiz
+  workspace is still named "Costareen" (rename waits for his yes). Nothing was posted during testing.
