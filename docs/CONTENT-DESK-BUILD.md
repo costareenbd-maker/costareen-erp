@@ -31,7 +31,7 @@ Owner rules for this build:
 - [x] E2 ERP build: desk opens per business; download + send-to-handler WhatsApp; Only me
 - [x] C4 Old Advertisement Content writer hidden for businesses with a Content desk (Paid ads + figures stay)
 - [x] T1 Tests green, dev deploy, screen checked desktop + phone
-- [ ] T2 CHANGES.md, memory, commit, tag; report to owner; live release on his word
+- [x] T2 CHANGES.md, memory, commit, tag; report to owner; live release on his word (LIVE 20 Nov 2026, release #47)
 
 ## Log
 - 19 Nov: R1 research notes in bendar-brand/research_notes/Costareen 60 day plan; plans in bizdesk/profiles/<brand>/PLAN.md + series_s1.json (60 each).

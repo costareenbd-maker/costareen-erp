@@ -4841,3 +4841,30 @@ docs/CONTENT-DESK-PLAN.md, checklist docs/CONTENT-DESK-BUILD.md, blueprint .impe
 - Oliareen's own WhatsApp channel and its own ChatGPT account.
 - No Veo clips in business videos yet.
 - No posting through Postiz.
+
+## content-desk LIVE (20 Nov 2026, release #47) - owner: "Do not keep everything on dev; make it LIVE on the ERP now"
+Live is not plain main, so only the content-desk diffs (060548a..d5401db) went onto the live files.
+- **DB:** migration 175_content_desk on postgres + tenant_suef*_native + tenant_aycts*_native (as supabase_admin, recorded in
+  _erp_migrations). pg_dump of each DB first: Mac /data/backups/live-deploy/20261120T0248*-(db)-before-contentdesk.dump.
+- **Function, file by file:** handlers/contentdesk.js (new), apps.js, inboxch.js, index.js, shell.js, stock.js, index.ts,
+  jobs.js (live copies were byte-equal to 060548a, so the d5401db copies went in whole); allow.js + handlers/security.js got
+  only the content-desk insertions (live keeps its own brand lines; the unreleased voice-idea / series-act calls on main are
+  still NOT live). Backup /data/backups/live-function/erp-20261120T024832Z-before-contentdesk.tgz; docker restart, 11 ERP_
+  env, smoke OK. Tested first in a temp tree (live function + patch): 21 suites, no new failures (contentdesk 71, apps 51,
+  serverfinal 34 green; branddesk 2 red on both trees = the unreleased voice-idea calls).
+- **Web:** app.html at a4306ab (its rebuild is byte-equal to the live page) + the content-desk-ui-1 block + 2 SRV_READS
+  names; live _headers media-src + https://*.supabase.co https://*.costareen.com. sw cz-shell-v4-native-contentdesk1-d5401db
+  on costareen-erp + office-erp. Previous page private/live-web-index-before-contentdesk-20261120.html (+ sw).
+- **Switched on:** BRAND_BRIDGE_KEY rows in live business_secrets for Costareen (81e318e7) and Oliareen (1d1ed79e), each =
+  its engine's BRIDGE_KEY (written straight to the table, NOT erpBrandDeskSetup; no business_kind row). Engines
+  brand-bizdesk-costareen / -oliareen: .env.(brand) backed up (.bak-live-20261120T024857Z), dev ERP_URL/KEY/BIZ kept as
+  comments, live ERP_* added, containers recreated; both checked in (brand_bridge on live). App contentdesk needs no flag
+  row: as an "Only me" app it is open on businesses the platform admin owns, so only the owner sees it (managers do not).
+- **Checked on live** (owner key; active business switched and put back to the brand business after): erpBusinesses
+  desk=true, erpContentDesk online on both, drafts Costareen 3 / Oliareen 2 (made earlier by the engines), screen opens on
+  desktop + 390 px, no page errors, no sideways scroll.
+- **Rollback:** function = untar the tgz over the live mount + docker restart supabase-edge-functions; web = deploy the
+  previous page + sw over site-fx; engines = copy .env.(brand).bak-live-* back + compose up -d --force-recreate; DB additive.
+- **NOT done:** no test upload (upload.py would put a test video into the live desk); the dev Content desks (Oliareen demo,
+  Demo 3D Shop) no longer get check-ins; page handler numbers, Oliareen's own WhatsApp channel and its own ChatGPT still
+  missing; nothing posted.
