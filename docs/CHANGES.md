@@ -4899,3 +4899,35 @@ judged, each part's score, what was changed and what is left". Then: "use Impecc
   then fills via POST /drafts/scorecard); the stand-alone Brand desk (brand.costareen.com, social.costareen.com/brand/) was
   built (desk dist from main + score-ui-1; it talks to the dev ERP function) but its copy to /opt/brand/desk-web was
   refused by the auto-mode check - backup index.html.bak-scoreui1-20261120 is already on the Mac; nothing posted.
+
+## 20 Nov 2026 - brand-live-1: the rest of the Brand desk LIVE (#49) + Oliareen AI skills
+
+Owner: one login (erp.costareen.com), switch to the Brand desk business and do everything there; live now.
+- **Released to live:** brand-prov-3 (made-with skill links), brand-deeplink-1 (`?bd=<draft>` opens Posts > waiting at
+  that draft), brand-done-1 (series episode ticks + idea engine button, `erpBrandDeskSeriesAct`), voice-idea-1 (Ideas >
+  "ভয়েস নোট থেকে", `erpBrandDeskVoiceIdeas` / `erpBrandDeskVoiceAct`), tick-box-1 (tick box at the start of the title),
+  notes-1's missing part (the corner chat's `my_notes` tool in assistant.js; `erpBrandDeskNotes` itself was already live).
+- **Function:** file-by-file on the Mac (md5 check of the 4 live files first): allow.js + security.js (only the 3 new names
+  / words / ERP_READS entry), branddesk.js (= main; live was exactly main-before-these-commits), assistant.js (+ my_notes only).
+  Suites in a temp tree (live function + patch, main's tests): branddesk 263, assistant 18, serverfinal 34, shellfinal 29,
+  contentdesk 71, apps 51 - all 0 failures. Backup /data/backups/live-function/erp-20261120T073911Z-before-brandlive1.tgz.
+- **Web:** live source #48 + the 5 page commits (437e923..7fe4e0d) + `erpBrandDeskVoiceIdeas` in SRV_READS = byte-equal to
+  main's web/app.html, so the live page = main again. sw `cz-shell-v4-native-brandlive1-7fe4e0d` on costareen-erp + office-erp.
+  Previous page private/live-web-index-before-brandlive1-20261120.html (+ live-web-sw-before-brandlive1-20261120.js).
+- **Checked live:** on the brand business (Rahman Abidur) erpBrandDeskVoiceIdeas ok (2 ideas), erpBrandDeskSeries ok,
+  erpBrandDeskNotes ok; the page opens Ideas > ভয়েস নোট থেকে with tick boxes, desktop + phone, 0 page errors, no sideways
+  scroll; the active business was switched back afterwards.
+- **Stand-alone desk page:** G:\bendar-brand\desk-web\build_desk.py now takes DESK_SRC (the live source); the rebuilt dist is
+  byte-equal (md5 3c6be7e4) to the Mac's /opt/brand/desk-web/index.html (score-ui-1), so nothing had to be copied. The old
+  PC dist is kept as desk-web/dist.bak-brandlive1-20261120.
+- **Oliareen AI skills:** skills are rows in `engine_skills` per business; the 22 were installed (library 22 Oct, GitHub
+  1 Nov) while Costareen was the active business, and nothing seeds other businesses. Copied 11 to Oliareen (content/seo
+  agents only, the `ads` agent removed): ai-seo, copy-editing, copywriting, customer-research, image, marketing-psychology,
+  schema, seo-audit, seo-content, social, video. Left out (selling, prices, paid ads, outbound or shop numbers): ad-creative,
+  ads, offers, cold-email, prospecting, competitors, product-marketing, product-scout, numbers-explainer,
+  influencer-marketing, seo-local. Snapshot /data/backups/live-deploy/20261120T074353Z-postgres-engine_skills-before-oliareen-skills.dump.
+- **Rollback:** function = untar the backup above into /opt/erp-migration/supabase/volumes/functions and restart
+  supabase-edge-functions; web = redeploy the #48 folder (session e677c13d scratchpad score/site) or the saved index/sw;
+  skills = delete the Oliareen rows whose `why` starts with "Copied from Costareen 20 Nov 2026".
+- **Live function vs main after this release:** equal except 4 non-Brand files left alone: handlers/factory.js, push.js,
+  socialmake.js (reel-ctx-1, 12 Nov) and lib/ai.js (gemini-1, 17 Nov). a2365ba (free-1) is the Mac AI gateway, not the function.
