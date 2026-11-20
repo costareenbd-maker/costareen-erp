@@ -58,7 +58,7 @@ button.go:disabled{opacity:.55;cursor:default}
 <script>
 (function () {
   var q = new URLSearchParams(location.search);
-  var API = (q.get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+  var API = (q.get('api') || 'https://erp-api.costareen.com/functions/v1/erp').replace(/\/+$/, '');
   var P = q.get('p') || '';
   var URL0 = API + (API.indexOf('?') >= 0 ? '&' : '?') + 'inbox=land&p=' + encodeURIComponent(P);
   var L = null, D = null, qty = 1, done = false, VIS = '', draftT = null, lastDraft = '', startedFb = false;

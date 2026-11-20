@@ -61,7 +61,7 @@ footer{font-size:12px;color:var(--mute);text-align:center;margin-top:22px}
   <footer>Read-only. Numbers marked "verified" were fetched from YouTube by the system; "reported" numbers were typed by the creator. Every line shows when it was recorded.</footer>
 </main>
 <script>
-var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var API = (new URLSearchParams(location.search).get('api') || 'https://erp-api.costareen.com/functions/v1/erp').replace(/\/+$/, '');
 var TOKEN = new URLSearchParams(location.search).get('t') || '';
 var BRAND_LOGOS = { polymaker: 'brand/polymaker.svg' };
 var D = null, out = document.getElementById('out');

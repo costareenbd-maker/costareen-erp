@@ -61,7 +61,7 @@ footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
   <footer><span data-t="foot">An open community platform. The designer you choose makes the file and you pay the designer directly. The desk holds no money and gives your name and number to nobody else.</span><br><a href="print" data-t="print">Get it printed</a> · <a href="find" data-t="find">Find stock</a> · <a href="doctor" data-t="doctor">Print Doctor</a> · <a href="check" data-t="check">Printer Passport</a> · <a href="choose" data-t="choose">Help me choose</a> · <a href="ideas" data-t="ideas">Ideas</a></footer>
 </main>
 <script>
-var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var API = (new URLSearchParams(location.search).get('api') || 'https://erp-api.costareen.com/functions/v1/erp').replace(/\/+$/, '');
 var Q = new URLSearchParams(location.search), TOKEN = Q.get('t') || '', DTOKEN = Q.get('d') || '', SLUG = Q.get('p') || '', JOIN = Q.get('join') === '1';
 var T = {
   en: { title: 'Design desk', sub: 'A sketch or a broken part becomes a 3D file', loading: 'Loading…', foot: 'An open community platform. The designer you choose makes the file and you pay the designer directly. The desk holds no money and gives your name and number to nobody else.', print: 'Get it printed', find: 'Find stock', doctor: 'Print Doctor', check: 'Printer Passport', choose: 'Help me choose', ideas: 'Ideas', net: 'Could not reach the server. Check your connection and try again.',

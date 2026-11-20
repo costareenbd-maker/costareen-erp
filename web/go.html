@@ -12,7 +12,7 @@
 <script>
 // a creator's project link: counted, then on to the product (handlers/creatorportal.js, ?pub=go)
 (function () {
-  var Q = new URLSearchParams(location.search), API = (Q.get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+  var Q = new URLSearchParams(location.search), API = (Q.get('api') || 'https://erp-api.costareen.com/functions/v1/erp').replace(/\/+$/, '');
   var c = (Q.get('c') || '').trim(), m = document.getElementById('m');
   var fallback = 'https://costareen.com/';
   if (!c) { location.replace(fallback); return; }

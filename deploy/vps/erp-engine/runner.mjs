@@ -18,7 +18,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const ERP_URL = process.env.ERP_URL || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp';
+const ERP_URL = process.env.ERP_URL || 'https://erp-api.costareen.com/functions/v1/erp';
 const KEY = process.env.ERP_ENGINE_KEY || '';
 const MAX_PAR = Number(process.env.MAX_PARALLEL || 2);
 const ALLOW_CLAUDE = process.env.ALLOW_CLAUDE === '1';

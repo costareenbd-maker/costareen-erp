@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ERP">
-<link rel="preconnect" href="https://oqzcuuytytqadqjlwdsh.supabase.co" crossorigin>
+<link rel="preconnect" href="https://erp-api.costareen.com" crossorigin>
 <script>window.ERP_HASH0 = location.hash || "";</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -8427,9 +8427,9 @@ function erpToken() {
 }
 
 // ---- web app: the server is the `erp` Edge Function on Supabase ----------
-var ERP_API = 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp';
-var SB_URL = 'https://oqzcuuytytqadqjlwdsh.supabase.co';
-var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xemN1dXl0eXRxYWRxamx3ZHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4Nzk4MDEsImV4cCI6MjEwNTQ1NTgwMX0.fwdCTTde1fS2SPfT5ULNqLI4-YQLa__3pHjufarZG_0';
+var ERP_API = 'https://erp-api.costareen.com/functions/v1/erp';
+var SB_URL = 'https://erp-api.costareen.com';
+var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjogImFub24iLCAiaXNzIjogInN1cGFiYXNlIiwgImlhdCI6IDE3OTM4MDczOTUsICJleHAiOiAyMTA5MTY3Mzk1fQ.S8A7g4JwCg4fgq8JuD7XRO420PFJajU3Nfi9TGbKCPw';
 var CONTROL_API = ERP_API;   // the provider's server: installs are always asked there
 var ERP_BACKEND = null;
 try { ERP_BACKEND = JSON.parse(localStorage.getItem('erp_backend') || 'null'); } catch (e) { ERP_BACKEND = null; }

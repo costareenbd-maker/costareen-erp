@@ -48,7 +48,7 @@ a.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
 <script>
 (function () {
   var q = new URLSearchParams(location.search);
-  var API = (q.get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+  var API = (q.get('api') || 'https://erp-api.costareen.com/functions/v1/erp').replace(/\/+$/, '');
   var tok = q.get('o') || '';
   var L = null, D = null;
   try { L = localStorage.getItem('orderLang'); } catch (e) {}

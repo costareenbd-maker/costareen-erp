@@ -53,7 +53,7 @@ button.send:disabled{opacity:.6}
 (function () {
   var q = new URLSearchParams(location.search);
   var F = q.get('f') || '', AS = q.get('as') === 'supplier' ? 'supplier' : 'reseller';
-  var API = (q.get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+  var API = (q.get('api') || 'https://erp-api.costareen.com/functions/v1/erp').replace(/\/+$/, '');
   var URL0 = API + (API.indexOf('?') >= 0 ? '&' : '?') + 'inbox=join&f=' + encodeURIComponent(F);
   var LANG = (function () { try { return localStorage.getItem('join_lang') || ''; } catch (e) { return ''; } })() || (/^bn/i.test(navigator.language || '') ? 'bn' : 'bn');
   var S = { data: null, sent: false, busy: false, err: '', vals: {} };

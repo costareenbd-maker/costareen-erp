@@ -55,8 +55,8 @@ button { font:inherit; font-weight:700; border:0; border-radius:999px; height:44
 (function () {
   var q = new URLSearchParams(location.search);
   var T = q.get('t') || '';
-  var API = q.get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp';
-  if (!/^https:\/\/[a-z0-9.-]+\/functions\/v1\/erp$|^http:\/\/localhost:\d+\/$/.test(API)) API = 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp';
+  var API = q.get('api') || 'https://erp-api.costareen.com/functions/v1/erp';
+  if (!/^https:\/\/[a-z0-9.-]+\/functions\/v1\/erp$|^http:\/\/localhost:\d+\/$/.test(API)) API = 'https://erp-api.costareen.com/functions/v1/erp';
   try { history.replaceState(null, '', location.pathname); } catch (e) {}     // the secret leaves the address bar
   var app = document.getElementById('app');
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }

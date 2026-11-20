@@ -46,7 +46,7 @@ footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
   <footer data-t="foot">The shop quotes and prints; payment is between you and the shop. Your name and number stay with the shop only.</footer>
 </main>
 <script>
-var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var API = (new URLSearchParams(location.search).get('api') || 'https://erp-api.costareen.com/functions/v1/erp').replace(/\/+$/, '');
 var Q = new URLSearchParams(location.search), B = Q.get('b') || '', TOKEN = Q.get('t') || '';
 var T = {
   en: { title: 'Ask for a print quote', loading: 'Loading…', foot: 'The shop quotes and prints; payment is between you and the shop. Your name and number stay with the shop only.', nolink: 'This link is not complete. Ask the shop for its quote link.', net: 'Could not reach the server. Check your connection and try again.',

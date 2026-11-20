@@ -63,7 +63,7 @@ textarea{min-height:76px;resize:vertical}
 <script>
 (function () {
   var q = new URLSearchParams(location.search);
-  var API = (q.get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+  var API = (q.get('api') || 'https://erp-api.costareen.com/functions/v1/erp').replace(/\/+$/, '');
   var C = q.get('c') || '', SKU = q.get('sku') || '';
   var URL0 = API + (API.indexOf('?') >= 0 ? '&' : '?') + 'inbox=item&c=' + encodeURIComponent(C);
   var L = null, D = null, qty = 1, intentSent = false;

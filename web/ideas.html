@@ -47,7 +47,7 @@ footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}footer
   <footer><a href="find" data-t="find">Find stock</a> · <a href="doctor" data-t="doc">Print Doctor</a> · <a href="check" data-t="pp">Printer Passport</a> · <a href="choose">Help me choose</a> · <a href="print">Get it printed</a> · <a href="design">Design desk</a></footer>
 </main>
 <script>
-var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var API = (new URLSearchParams(location.search).get('api') || 'https://erp-api.costareen.com/functions/v1/erp').replace(/\/+$/, '');
 var Q = new URLSearchParams(location.search);
 var T = {
   en: { title: 'Ideas and updates', sub: 'Made with its community: propose, vote, see what is built', tIdeas: 'Ideas', tUpdates: 'Updates', tCredits: 'Credits', loading: 'Loading…', net: 'Could not reach the server. Check your connection and try again.', find: 'Find stock', doc: 'Print Doctor', pp: 'Printer Passport',

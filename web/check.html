@@ -90,7 +90,7 @@ footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
 
 <script>
 // where the register is (the ERP server's public routes). ?api= overrides it for a local check.
-var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var API = (new URLSearchParams(location.search).get('api') || 'https://erp-api.costareen.com/functions/v1/erp').replace(/\/+$/, '');
 var T = {
   en: { title: 'Printer Passport', sub: 'Check a serial number', label: 'Type or scan the serial number on the machine or its box', scan: 'Scan', check: 'Check',
     hint: 'Spaces and dashes do not matter. The sticker is usually on the back or under the machine, and on the box.', foot: 'A public register, filled by sellers at the time of sale or by owners with proof. Buyer details are never shown.',

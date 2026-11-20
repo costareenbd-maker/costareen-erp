@@ -56,7 +56,7 @@ a.btn{display:inline-block;margin-top:14px;padding:13px 18px;border-radius:14px;
 <script>
 (function () {
   var q = new URLSearchParams(location.search);
-  var API = (q.get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+  var API = (q.get('api') || 'https://erp-api.costareen.com/functions/v1/erp').replace(/\/+$/, '');
   var tok = q.get('r') || '';
   var URL_ = API + (API.indexOf('?') >= 0 ? '&' : '?') + 'inbox=review&r=' + encodeURIComponent(tok);
   var D = null, R = { shop: 0, items: {} }, sending = false;

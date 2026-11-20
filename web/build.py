@@ -10,7 +10,7 @@ longer followed). This only stamps in where the server is.
 import os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-LIVE = 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp'
+LIVE = 'https://erp-api.costareen.com/functions/v1/erp'
 api = os.environ.get('ERP_API', LIVE)
 out = os.path.join(HERE, os.environ.get('ERP_OUT', 'index.html'))
 
@@ -27,7 +27,7 @@ if os.environ.get('ERP_SB_URL') and os.environ.get('ERP_SB_ANON'):
         sys.exit('SB_URL / SB_ANON line not found in app.html')
 # the shared demo/dev copy opens with no sign-in at all; never the live server
 if os.environ.get('ERP_OPEN_KEY'):
-    if api == LIVE or 'oqzcuuytytqadqjlwdsh' in api:
+    if api == LIVE or 'oqzcuuytytqadqjlwdsh' in api or 'erp-api.costareen.com' in api:
         sys.exit('ERP_OPEN_KEY is for the dev copy only - refused for the live server')
     s, n3 = re.subn(r"^var ERP_OPEN_KEY = '[^']*';", "var ERP_OPEN_KEY = '%s';" % os.environ['ERP_OPEN_KEY'], s, count=1, flags=re.M)
     if n3 != 1:

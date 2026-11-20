@@ -60,7 +60,7 @@ footer{font-size:13px;color:var(--mute);text-align:center;margin-top:22px}
   <footer><span data-t="foot">An open community platform. The farm you choose prints, invoices and delivers; you pay the farm. The board holds no money and gives your name and number to nobody else.</span><br><a href="find" data-t="find">Find stock</a> · <a href="doctor" data-t="doctor">Print Doctor</a> · <a href="check" data-t="check">Printer Passport</a> · <a href="choose" data-t="choose">Help me choose</a> · <a href="ideas" data-t="ideas">Ideas</a> · <a href="design" data-t="design">Design desk</a></footer>
 </main>
 <script>
-var API = (new URLSearchParams(location.search).get('api') || 'https://oqzcuuytytqadqjlwdsh.supabase.co/functions/v1/erp').replace(/\/+$/, '');
+var API = (new URLSearchParams(location.search).get('api') || 'https://erp-api.costareen.com/functions/v1/erp').replace(/\/+$/, '');
 var Q = new URLSearchParams(location.search), TOKEN = Q.get('t') || '';
 var T = {
   en: { title: 'Get it printed', sub: 'Post the file, see a fair estimate, let print farms offer', loading: 'Loading…', foot: 'An open community platform. The farm you choose prints, invoices and delivers; you pay the farm. The board holds no money and gives your name and number to nobody else.', find: 'Find stock', doctor: 'Print Doctor', check: 'Printer Passport', choose: 'Help me choose', ideas: 'Ideas', design: 'Design desk', fromDesk: 'From the design desk', noFile: 'No file yet? The design desk makes one from a sketch or a broken part.', askDesk: 'Ask the design desk', net: 'Could not reach the server. Check your connection and try again.',
