@@ -4868,3 +4868,34 @@ Live is not plain main, so only the content-desk diffs (060548a..d5401db) went o
 - **NOT done:** no test upload (upload.py would put a test video into the live desk); the dev Content desks (Oliareen demo,
   Demo 3D Shop) no longer get check-ins; page handler numbers, Oliareen's own WhatsApp channel and its own ChatGPT still
   missing; nothing posted.
+
+## score-ui-1 (20 Nov 2026, live release #48) - one universal score on every draft, the number is a button
+Owner: "every video, picture and post gets one score on top (e.g. 91); clicking the number shows which checks ran, who
+judged, each part's score, what was changed and what is left". Then: "use Impeccable and do proper research first".
+- **Research + shape:** `.impeccable/shape/score-popup-research.md` (Lighthouse weights + run-to-run variability,
+  Grammarly's clickable overall score, Credit Karma impact labels, Surfer/Clearscope bands vs false precision, A/B
+  "chance to win", LLM-as-judge variance papers, progressive disclosure for explainable AI) and the shape brief. Impeccable
+  context + shape + craft floor, inside the Brand Cockpit "Line Map" world (no new hues).
+- **Page (block `score-ui-1` + 7 one-line hooks):** Brand desk waiting-draft card: score chip next to "প্ল্যানের সাথে মিল"
+  (>=85 Ink ring, 60-84 waiting amber, <60 stuck red, Bangla digits, aria-label "সব চেকের স্কোর ৯১, কী কী দিয়ে দেখুন",
+  "এখনো যাচাই হয়নি" when the engine sends no score). Popup "স্কোর কীভাবে এল" on pnSheet: big number labelled
+  "AI-এর আনুমানিক স্কোর" with the band word and the engine's ±spread, virality before -> after, the usual ±3-5 judge drift
+  and how many judge questions the two runs disagreed on, hard stops in red, one row per part (share of the total, bar,
+  who-judged chips typed কোড / AI / মাপ / ছবি দেখে), a row opens to its checks (tick/cross), the AI judge's answers, what
+  AI changed and what is left (audit fixes), and the engine's note / "শেষ কথা আপনার রিভিউ". The plan-fit sheet shows the
+  same score as a button on top (opens the popup, back button returns). Plan departure rows show the chip if the plan ever
+  sends `uscore`. Content desk draft cards: the same chip with the block's own bottom sheet (Esc closes, focus returns).
+- **Server:** no change. erpBrandDeskFit / erpBrandDeskDrafts already pass the bridge JSON through (`scorecard`,
+  `uscore`); `scoreui_test.mjs` (36 checks) pins that and runs the page block in a fake window. branddesk 263, contentdesk
+  71, apps 51, serverfinal 34, shellfinal 29 green on main; scoreui + contentdesk green on the live function tree too.
+- **Live (web only):** live is not plain main, so the page = the #47 live source (a4306ab app.html + content-desk block,
+  rebuilt byte-equal to the deployed page first) + only the score-ui-1 hooks/block; sw `cz-shell-v4-native-scoreui1-13a645a`
+  on costareen-erp + office-erp. Checked on erp.costareen.com (owner key, reads only, writes blocked in the check):
+  chips on every waiting card at 38 px desktop / 44 px phone, popup and plan-sheet top button open, back works, no page
+  errors, no sideways scroll at 390 px. Mock-score screenshots (engine not yet sending `scorecard`) from the same build.
+- **Rollback:** deploy `private/live-web-index-before-scoreui-20261120.html` (+ `live-web-sw-before-scoreui-20261120.js`)
+  as index.html/sw.js over the #47 folder (session e677c13d scratchpad cdrel/site-cd) to both Pages projects.
+- **NOT done:** the engine's `scorecard` was not on the Mac yet, so live shows "এখনো যাচাই হয়নি" until it lands (draft 227
+  then fills via POST /drafts/scorecard); the stand-alone Brand desk (brand.costareen.com, social.costareen.com/brand/) was
+  built (desk dist from main + score-ui-1; it talks to the dev ERP function) but its copy to /opt/brand/desk-web was
+  refused by the auto-mode check - backup index.html.bak-scoreui1-20261120 is already on the Mac; nothing posted.
