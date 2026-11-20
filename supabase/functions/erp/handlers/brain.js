@@ -130,7 +130,8 @@ export async function erpBrainFact(ctx, payload) {
   if (p.add) {
     const text = str(p.add.text).slice(0, 500);
     if (text.length < 4) throw new Error('Write the fact.');
-    await addFact(ctx, { kind: p.add.kind, text, source: 'owner', confidence: 1 });
+    const r = await addFact(ctx, { kind: p.add.kind, text, source: 'owner', confidence: 1 });
+    if (r.refused) throw new Error(r.refused);
   } else if (p.invalidate) {
     if (!UUID.test(str(p.invalidate))) throw new Error('Which fact?');
     await ctx.tx`update engine_facts set invalid_at = now(), invalid_why = ${str(p.why).slice(0, 200) || 'Removed by the owner'} where business_id = ${ctx.biz} and id = ${str(p.invalidate)} and invalid_at is null`;
@@ -156,9 +157,20 @@ export async function erpBrainFact(ctx, payload) {
   return erpBrain(ctx);
 }
 
+// brand-fence-1 (owner 20 Nov 2026, STRICT): the owner's brands (Oliareen, Costareen, his personal Brand desk) never
+// share facts. business_config 'brand_fence' = words of the OTHER brands; a fact with one is refused / never shown.
+export async function brandFence(ctx) {
+  let v = await getConfig(ctx, 'brand_fence', '');
+  try { v = typeof v === 'string' ? (v ? JSON.parse(v) : []) : v; } catch (_) { v = []; }
+  return (Array.isArray(v) ? v : []).map((w) => str(w).toLowerCase()).filter((w) => w.length > 1);
+}
+export const fenceHit = (fence, text) => { const t = str(text).toLowerCase(); return fence.find((w) => t.includes(w)) || ''; };
+
 /** A lasting fact for this business (the same words twice are kept once). */
 export async function addFact(ctx, f) {
   const text = str(f.text).slice(0, 500);
+  const hit = fenceHit(await brandFence(ctx), text);
+  if (hit) return { id: null, existed: false, refused: 'This fact belongs to another of the owner\'s brands ("' + hit + '"); each brand keeps only its own facts.' };
   const dup = (await ctx.tx`select id from engine_facts where business_id = ${ctx.biz} and invalid_at is null and lower(text) = lower(${text})`)[0];
   if (dup) return { id: dup.id, existed: true };
   const kw = [...new Set((Array.isArray(f.keywords) ? f.keywords : []).map((k) => str(k).toLowerCase().slice(0, 40)).filter(Boolean))].slice(0, 10);
@@ -182,7 +194,9 @@ export async function brainText(ctx) {
     lines.push(b.status === 'approved' ? '(Business Brain version ' + b.version + ', approved by the owner ' + when(b.approved_at) + ')' : '(Business Brain DRAFT - not yet confirmed by the owner: likely, not certain)');
     for (const k of BLOCKS) { const v = val(k); if (v) lines.push('- ' + k.title + ': ' + v + (str((bl[k.key] || {}).value) ? '' : ' [draft]')); }
   }
-  const facts = await ctx.tx`select kind, text, valid_from from engine_facts where business_id = ${ctx.biz} and invalid_at is null order by confidence desc, valid_from desc limit 40`;
+  const fence = await brandFence(ctx);
+  const facts = (await ctx.tx`select kind, text, valid_from from engine_facts where business_id = ${ctx.biz} and invalid_at is null order by confidence desc, valid_from desc limit 60`)
+    .filter((f) => !fenceHit(fence, f.text)).slice(0, 40);
   if (facts.length) {
     lines.push('', '# What this business has learned (notes; the request and the profile above come first)');
     for (const f of facts) lines.push('- [' + f.kind + '] ' + str(f.text) + ' (' + when(f.valid_from) + ')');
@@ -190,6 +204,7 @@ export async function brainText(ctx) {
   const start = str(await getConfig(ctx, 'data_start', ''));
   if (/^\d{4}-\d{2}-\d{2}$/.test(start)) lines.push('', 'This business\'s real records start on ' + start + '. Anything dated before that is old imported data: ignore it - never report problems in it and never base figures or suggestions on it.');
   lines.push('', 'Work only for this business. Limits and never-do rules above are binding. Figures only from the ERP functions or cited sources.');
+  if (fence.length) lines.push('Brand fence (owner, strict): never use, mention or remember anything about these other brands of the owner: ' + fence.slice(0, 30).join(', ') + '.');
   return lines.join('\n');
 }
 
@@ -233,6 +248,7 @@ export async function brainTool(ctx, name, a, job) {
     const text = str(a.text);
     if (text.length < 8) return { error: 'Write the fact in a full sentence.' };
     const r = await addFact(ctx, { kind: a.kind, text, keywords: a.keywords, source: 'engine', ref: 'job:' + job.id, jobId: job.id, confidence: 0.7 });
+    if (r.refused) return { kept: false, refused: r.refused };
     return { kept: true, already: r.existed };
   }
   if (name === 'forget_fact') {

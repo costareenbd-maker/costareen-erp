@@ -100,6 +100,18 @@ check('...its numbers are its own', r.ok && r.result.business !== (await sql`sel
 await eng('erpEngineDone', { id: J4, ok: true, result: 'Bake more chocolate cake.' });
 check('...and its answer lands in its own business', (await sql`select business_id, status from engine_jobs where id = ${J4}`)[0].status === 'done', '');
 
+// ---- brand-fence-1 (owner 20 Nov 2026, STRICT): a brand never takes in or hands out another brand's facts
+await sql`insert into business_config (business_id, key, value) values (${B2}, 'brand_fence', ${sql.json(['3D print', 'Costareen'])}) on conflict (business_id, key) do update set value = excluded.value`;
+await sql`insert into engine_facts (business_id, kind, text, source) values (${B2}, 'fact', 'Costareen sells Silk PLA at a low price.', 'engine')`;
+const J5 = (await sql`insert into engine_jobs (business_id, agent, title, ask) values (${B2}, 'command', 'Fence', 'x') returning id`)[0].id;
+r = await eng('erpEngineClaim', { runner: 'vps1' });
+const C5 = r.result || {};
+check('brand fence: a fact naming another brand never reaches the job', r.ok && C5.job && C5.job.id === J5 && !/Silk PLA at a low price/.test(C5.brain) && /Brand fence/.test(C5.brain), C5.brain);
+r = await eng('erpEngineTool', { id: J5, tool: 'remember', args: { text: 'Our 3D printing customers like PETG.' } });
+check('...and the Engine cannot remember one', r.ok && r.result && r.result.kept === false && /another of the owner/.test(r.result.refused || ''), r.result);
+check('...nothing was stored', !(await sql`select 1 from engine_facts where text like 'Our 3D printing customers%'`).length, '');
+await eng('erpEngineDone', { id: J5, ok: true, result: 'ok' });
+
 r = await owner('erpEngineSwitch', [{ on: false }]);
 await owner('erpEngineAsk', [{ ask: 'While off' }]).catch(() => null);
 await sql`insert into engine_jobs (business_id, agent, title, ask) values (${B}, 'command', 'While off', 'x')`;

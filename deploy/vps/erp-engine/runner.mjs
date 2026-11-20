@@ -77,6 +77,13 @@ function prepare(c) {
   }
   writeFileSync(path.join(dir, 'tools.json'), JSON.stringify(c.tools || []));
   writeFileSync(path.join(dir, 'system.txt'), systemText(c));
+  // brand-fence-1 (owner 20 Nov 2026): Oliareen, Costareen and the Brand desk never see each other's files or facts -
+  // the job may read only its own folder; everything else on the machine is denied (other jobs, /root memories, caches)
+  const fence = ['//root/**', '//opt/**', '//home/**', '//etc/**', '//srv/**', '//data/**', '//mnt/**', '//tmp/**', '//usr/**', '//var/log/**',
+    '//var/lib/docker/**', '//var/backups/**'];
+  writeFileSync(path.join(dir, '.claude', 'settings.json'), JSON.stringify({ permissions: {
+    allow: ['Read(./**)', 'Glob(./**)', 'Grep(./**)'],
+    deny: [].concat(...['Read', 'Glob', 'Grep', 'Edit', 'Write'].map((t) => fence.map((f) => t + '(' + f + ')'))) } }, null, 1));
   writeFileSync(path.join(dir, 'mcp.json'), JSON.stringify({ mcpServers: { erp: { command: process.execPath, args: [path.join(HERE, 'erp-mcp.mjs')],
     env: { ERP_URL, ERP_ENGINE_KEY: KEY, JOB_ID: c.job.id, TOOLS_FILE: path.join(dir, 'tools.json'), RUNNER_NAME: RUNNER, BIZ: String(c.business.id || ''), AGENT: String(c.agent.key || '') } } } }));
   return dir;
@@ -87,7 +94,7 @@ function runClaude(dir, model, ask, slugs, onStep) {
   return new Promise((ok) => {
     const args = ['-p', '--output-format', 'stream-json', '--verbose', '--model', model, '--append-system-prompt-file', path.join(dir, 'system.txt'),
       '--setting-sources', 'project', '--strict-mcp-config', '--mcp-config', path.join(dir, 'mcp.json'),
-      '--tools', 'Skill,WebSearch,WebFetch,Read,Glob,Grep', '--allowedTools', 'Skill,WebSearch,WebFetch,Read,Glob,Grep,mcp__erp', '--no-session-persistence'];
+      '--tools', 'Skill,WebSearch,WebFetch,Read,Glob,Grep', '--allowedTools', 'Skill,WebSearch,WebFetch,Read(./**),Glob(./**),Grep(./**),mcp__erp', '--no-session-persistence'];
     const p = spawn(CLAUDE, args, { cwd: dir, env: { ...process.env, HOME: '/root' } });
     const used = new Set(); let buf = '', err = '', final = null;
     const timer = setTimeout(() => { p.kill('SIGKILL'); }, JOB_MS);
