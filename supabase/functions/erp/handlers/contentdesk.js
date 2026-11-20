@@ -53,7 +53,8 @@ async function bizOn(ctx) {
 }
 async function gate(ctx, role) {
   if (!roleAtLeast(ctx.s.role, role)) {
-    throw new Error(role === 'owner' ? 'কনটেন্ট ডেস্কের এই কাজটা শুধু মালিক করতে পারেন।' : 'কনটেন্ট ডেস্ক শুধু ম্যানেজার আর মালিক খুলতে পারেন।');
+    throw new Error(role === 'owner' ? 'কনটেন্ট ডেস্কের এই কাজটা শুধু মালিক করতে পারেন।'
+      : role === 'sales' ? 'কনটেন্ট ডেস্ক এই ব্যবসার লোকজনই খুলতে পারেন।' : 'এই কাজটা ম্যানেজার বা তার উপরের কেউ করতে পারেন (অনুমোদন, সময়, বাতিল, নিয়ম)।');
   }
   if (!(await platformAdmin(ctx)) && !(await bizOn(ctx))) throw new Error('এই ERP-তে কনটেন্ট ডেস্ক এখনো চালু হয়নি।');
 }
@@ -282,13 +283,14 @@ const evOut = (r) => ({ id: Number(r.id), kind: r.kind, ref: r.ref, payload: r.p
 const vidOut = (r) => ({ id: Number(r.id), draftId: r.draft_id == null ? null : Number(r.draft_id), title: str(r.title), platform: str(r.platform), path: str(r.file_path),
                          bytes: r.bytes == null ? null : Number(r.bytes), madeBy: str(r.made_by), createdAt: iso(r.created_at), sent: Array.isArray(r.sent) ? r.sent : [] });
 export async function erpContentDesk(ctx) {
-  await gate(ctx, 'manager');
+  await gate(ctx, 'sales');
   const st = await bridgeState(ctx);
   const events = (await ctx.tx`select * from content_events where business_id = ${ctx.biz} order by created_at desc, id desc limit 60`).map(evOut);
   const videos = (await ctx.tx`select * from content_videos where business_id = ${ctx.biz} order by created_at desc, id desc limit 60`).map(vidOut);
   const wa = await waChannels(ctx);
   return { online: st.online, seen: st.seen ? st.seen.toISOString() : null, bridge: !!st.url, events, videos,
-           handlers: await handlersOf(ctx), whatsapp: wa.length > 0, owner: roleAtLeast(ctx.s.role, 'owner'), maxBytes: MAX_VIDEO };
+           handlers: await handlersOf(ctx), whatsapp: wa.length > 0, owner: roleAtLeast(ctx.s.role, 'owner'), maxBytes: MAX_VIDEO,
+           canAct: roleAtLeast(ctx.s.role, 'manager'), role: str(ctx.s.role) };
 }
 async function videoRow(ctx, id) {
   const n = parseInt(id, 10);
@@ -306,7 +308,7 @@ async function signedUrl(ctx, path, secs) {
   return url;
 }
 export async function erpContentVideoUrl(ctx, payload) {
-  await gate(ctx, 'manager');
+  await gate(ctx, 'sales');
   const v = await videoRow(ctx, payload && payload.id);
   return { id: Number(v.id), url: await signedUrl(ctx, v.file_path, 3600), expiresIn: 3600 };
 }
@@ -407,7 +409,8 @@ export async function erpContentVideoSend(ctx, payload) {
 // Each business posts through ITS OWN Postiz workspace and its own posting line (the pacer next to its content engine on
 // the Mac). The ERP only talks to THIS business's engine (its brand_bridge + BRAND_BRIDGE_KEY), so one business can never
 // see or touch another's channels. Posting itself is the owner's approve on a draft (erpBrandDeskDraftDecide).
-//   erpContentChannels()                      channels + status, posting rules, today's line (owner)
+//   erpContentChannels()                      channels + status, posting rules, today's line (everyone in the business;
+//                                             the writes below are manager and up - owner 21 Nov 2026)
 //   erpContentRulesSave({gap, caps, hold})    gap between two posts on one network (min), daily max per network, one
 //                                             channel on a break ({hold: {id, on}}: its posts wait, the others go on)
 //   erpContentStop({on})                      the emergency stop: true = nothing goes out, false = the line runs again
@@ -430,7 +433,7 @@ function capsIn(v) {
   return out;
 }
 export async function erpContentChannels(ctx) {
-  await gate(ctx, 'owner');
+  await gate(ctx, 'sales');
   const st = await bridgeState(ctx);
   const base = { online: st.online, bridge: !!st.url, pacer: false, workspace: false, paused: false, gap: 20, caps: {}, hardCaps: CAP_MAX, channels: [], line: [], error: '' };
   if (!st.url) return { ...base, error: 'এই ব্যবসার কনটেন্ট ইঞ্জিন যুক্ত নেই।' };
@@ -441,7 +444,7 @@ export async function erpContentChannels(ctx) {
            line: (Array.isArray(r.line) ? r.line : []).map(lineOut), error: str(r.error) };
 }
 export async function erpContentRulesSave(ctx, payload) {
-  await gate(ctx, 'owner');
+  await gate(ctx, 'manager');
   const p = payload || {}, body = {};
   if (p.gap !== undefined) {
     const g = Math.round(num(p.gap));
@@ -464,20 +467,20 @@ export async function erpContentRulesSave(ctx, payload) {
   return { gap: Math.round(num(r.gap)), caps: capsIn(r.caps), paused: !!r.paused, held: Array.isArray(r.held) ? r.held.map(str) : [] };
 }
 export async function erpContentStop(ctx, payload) {
-  await gate(ctx, 'owner');
+  await gate(ctx, 'manager');
   const on = !!(payload && payload.on);
   const r = await engine(ctx, '/biz/rules', { paused: on });
   return { paused: !!r.paused };
 }
 export async function erpContentCancel(ctx, payload) {
-  await gate(ctx, 'owner');
+  await gate(ctx, 'manager');
   const id = str(payload && payload.id);
   if (!LINE_ID.test(id)) throw new Error('কোন পোস্টটা বাতিল করবেন? একটা বাছুন।');
   await engine(ctx, '/biz/cancel', { id });
   return { ok: true, id };
 }
 export async function erpContentConnect(ctx, payload) {
-  await gate(ctx, 'owner');
+  await gate(ctx, 'manager');
   const platform = str(payload && payload.platform).toLowerCase();
   if (!PLATFORMS.includes(platform)) throw new Error('কোন নেটওয়ার্ক যুক্ত করবেন? (Facebook, Instagram, TikTok, YouTube)');
   const refresh = str(payload && payload.refresh);
@@ -488,5 +491,70 @@ export async function erpContentConnect(ctx, payload) {
   return { url };
 }
 
+// ------------------------------------------------------------------ desk-open-1 (owner 21 Nov 2026): the business runs its own desk
+// "Whoever runs Oliareen and Costareen (managers, partners, the others) sees and controls all of this, and THEY approve;
+// I approve only my Brand desk." So the business desk has its own doors, NOT the owner-only erpBrandDesk* ones:
+//   erpContentDrafts()            the drafts waiting in this business's engine (everyone in the business)
+//   erpContentSeries()            the 60-day plan (everyone)
+//   erpContentPosts()             this business's own Postiz workspace: scheduled / posted / failed posts (everyone)
+//   erpContentDraftDecide({id, action: approve|reject, networks, at?})   manager and up; written to the activity log
+// The personal Brand desk (business_kind 'brand') never answers here: it stays owner-only through erpBrandDesk*.
+async function notBrand(ctx) {
+  const k = str(await getConfig(ctx, 'business_kind', ''));
+  if (k === 'brand') throw new Error('এটা মালিকের নিজের ব্র্যান্ড ডেস্ক; এখানে খোলে না।');
+}
+async function engineGet(ctx, path) {
+  const st = await bridgeState(ctx), key = await getSecret(ctx, 'BRAND_BRIDGE_KEY');
+  if (!key || !st.url) throw new Error('এই ব্যবসার কনটেন্ট ইঞ্জিন যুক্ত নেই।');
+  const f = (ctx.deps && ctx.deps.fetch) || fetch;
+  let r;
+  try { r = await f(st.url + path, { method: 'GET', headers: { 'X-Bridge-Key': key }, signal: AbortSignal.timeout(40000) }); } catch (_) { throw new Error('Mac সাড়া দিল না।'); }
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) throw new Error('Mac চাবিটা নিল না।');
+  if (!r.ok) throw new Error(str(j.error) || ('Mac থেকে ভুল উত্তর এল (' + r.status + ')।'));
+  return j;
+}
+export async function erpContentDrafts(ctx) {
+  await gate(ctx, 'sales'); await notBrand(ctx);
+  const j = await engineGet(ctx, '/drafts');
+  return { waiting: Array.isArray(j.waiting) ? j.waiting : [], canAct: roleAtLeast(ctx.s.role, 'manager') };
+}
+export async function erpContentSeries(ctx) {
+  await gate(ctx, 'sales'); await notBrand(ctx);
+  return engine(ctx, '/series', {});
+}
+const postOut = (x) => ({ id: str(x.id), platform: str(x.platform), channel: str(x.channel).slice(0, 120), at: str(x.at), state: str(x.state).toUpperCase().slice(0, 20),
+                          link: /^https:\/\//i.test(str(x.link)) ? str(x.link) : '', head: str(x.head).slice(0, 160), error: str(x.error).slice(0, 200) });
+export async function erpContentPosts(ctx) {
+  await gate(ctx, 'sales'); await notBrand(ctx);
+  const r = await engine(ctx, '/biz/posts', {});
+  return { workspace: !!r.workspace, posts: (Array.isArray(r.posts) ? r.posts : []).map(postOut).filter((x) => PLATFORMS.includes(x.platform)).slice(0, 300) };
+}
+export async function erpContentDraftDecide(ctx, payload) {
+  await gate(ctx, 'manager'); await notBrand(ctx);
+  const p = payload || {}, id = parseInt(p.id, 10), action = str(p.action);
+  if (!(id > 0)) throw new Error('একটা ড্রাফট বাছুন।');
+  if (!['approve', 'reject'].includes(action)) throw new Error('অনুমোদন দিন বা বাদ দিন।');
+  if (action === 'reject') return engine(ctx, '/drafts/decide', { id, action, note: (str(p.note) || 'content desk').slice(0, 500) });
+  const nets = Array.isArray(p.networks) ? p.networks.filter((n) => n && str(n.id) && str(n.platform)).map((n) => ({ id: str(n.id).slice(0, 64), platform: str(n.platform).toLowerCase().slice(0, 30) })) : [];
+  if (!nets.length) throw new Error('কোথায় যাবে, বাছুন।');
+  if (nets.length > 8) throw new Error('একবারে ৮টার বেশি চ্যানেলে দেওয়া যায় না।');
+  const handler = nets.every((n) => n.id === 'page-handler');
+  if (!handler && nets.some((n) => n.id === 'page-handler')) throw new Error('পেজ চালানো লোকের জন্য "তৈরি" আর চ্যানেলে পোস্ট একসাথে হয় না।');
+  if (!handler && nets.some((n) => !PLATFORMS.includes(n.platform) || !/^[A-Za-z0-9_-]{6,64}$/.test(n.id))) throw new Error('এই চ্যানেলটা চেনা নেই।');
+  let at = null;
+  if (p.at) {
+    const d = new Date(p.at);
+    if (isNaN(d)) throw new Error('সময়টা ঠিক নেই। আবার বাছুন।');
+    if (d.getTime() > Date.now() + 60 * DAY) throw new Error('৬০ দিনের বেশি পরের সময় দেওয়া যায় না।');
+    at = d.toISOString();
+  }
+  const out = { id, action, networks: nets, at };
+  const text = str(p.body);
+  if (text) { if (text.length > 63000) throw new Error('পোস্টটা অনেক লম্বা। ছোট করুন।'); out.body = text; }
+  return engine(ctx, '/drafts/decide', out);
+}
+
 export const HANDLERS = { erpContentDesk, erpContentVideoUrl, erpContentHandlersSave, erpContentVideoUploadUrl, erpContentVideoSave, erpContentVideoSend,
-  erpContentStudioUploadUrl, erpContentStudioSave, erpContentChannels, erpContentRulesSave, erpContentStop, erpContentCancel, erpContentConnect };
+  erpContentStudioUploadUrl, erpContentStudioSave, erpContentChannels, erpContentRulesSave, erpContentStop, erpContentCancel, erpContentConnect,
+  erpContentDrafts, erpContentSeries, erpContentPosts, erpContentDraftDecide };

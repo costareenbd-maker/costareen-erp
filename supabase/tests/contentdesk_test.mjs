@@ -149,7 +149,8 @@ let desk = await mgr('erpContentDesk', []);
 check('the manager opens the desk', desk && Array.isArray(desk.events) && desk.events.length >= 5 && desk.online === true && desk.whatsapp === false, desk && (desk.error || Object.keys(desk)));
 check('the desk never shows the bridge key', !JSON.stringify(desk).includes(KEY));
 r = await sales('erpContentDesk', []);
-check('a salesperson is refused the desk', r && r.error, r);
+check('desk-open-1: a salesperson of the business sees the desk, cannot act', r && Array.isArray(r.events) && r.canAct === false && !JSON.stringify(r).includes(KEY), r && (r.error || Object.keys(r)));
+check('desk-open-1: the manager can act', desk.canAct === true);
 
 // ---- 7. handlers' list
 r = await mgr('erpContentHandlersSave', [{ handlers: [{ name: 'Page Admin', phone: '01711111111' }, { name: 'Reel Maker', phone: '+8801822222222' }] }]);
@@ -188,7 +189,7 @@ const vid = sv.video.id;
 r = await mgr('erpContentVideoUrl', [{ id: vid }]);
 check('a 1-hour download link', r && r.url && r.url.includes(B + '/content/') && r.expiresIn === 3600, r);
 r = await sales('erpContentVideoUrl', [{ id: vid }]);
-check('a salesperson gets no link', r && r.error, r);
+check('desk-open-1: a salesperson may watch / download the video', r && r.url, r);
 
 // ---- 9. send by the business's own WhatsApp
 r = await mgr('erpContentVideoSend', [{ id: vid, phone: '01711111111' }]);
@@ -257,8 +258,10 @@ let cs = await owner('erpContentChannels', []);
 check('channels: this business only, four networks (others dropped), status kept', cs && cs.workspace === true && cs.channels.length === 2
   && cs.channels.find((c) => c.platform === 'tiktok').status === 'reconnect' && bz13[0].url === URL + '/biz/state' && bz13[0].key === KEY, cs);
 check('channels: rules + today line, unsafe link dropped', cs.gap === 20 && cs.caps.youtube === 1 && cs.line.length === 2 && cs.line[0].link === '' && cs.line[1].link === 'https://facebook.com/1', cs.line);
-r = await mgr('erpContentChannels', []);
-check('a manager cannot open the channels (owner only)', r && r.error, r);
+r = await sales('erpContentChannels', []);
+check('desk-open-1: a salesperson sees the channels', r && Array.isArray(r.channels) && r.channels.length === 2, r);
+r = await sales('erpContentRulesSave', [{ gap: 30 }]);
+check('desk-open-1: a salesperson cannot change the rules (server gate)', r && r.error, r);
 r = await owner('erpContentRulesSave', [{ gap: 2 }]);
 check('gap below 5 minutes refused', r && r.error && /৫ থেকে ২৪০/.test(r.error), r);
 r = await owner('erpContentRulesSave', [{ caps: { youtube: 9 } }]);
@@ -278,8 +281,11 @@ r = await owner('erpContentStop', [{ on: true }]);
 check('emergency stop on', r && r.paused === true && bz13[bz13.length - 1].body.paused === true, r);
 r = await owner('erpContentStop', [{ on: false }]);
 check('emergency stop off', r && r.paused === false, r);
+r = await sales('erpContentStop', [{ on: true }]);
+check('desk-open-1: a salesperson cannot use the stop', r && r.error && pz.paused === false, r);
 r = await mgr('erpContentStop', [{ on: true }]);
-check('a manager cannot use the stop', r && r.error && pz.paused === false, r);
+check('desk-open-1: the manager can use the stop', r && r.paused === true, r);
+await mgr('erpContentStop', [{ on: false }]);
 r = await owner('erpContentCancel', [{ id: 'abc' }]);
 check('cancel needs a line id', r && r.error, r);
 r = await owner('erpContentCancel', [{ id: '11111111-2222-4333-8444-555555555555' }]);
@@ -303,5 +309,53 @@ await sql`insert into business_config (business_id, key, value) values (${B}, 'b
 // the activity log words exist for the writes
 const secSrc = (await import('node:fs')).readFileSync(path.join(fnDir, 'handlers', 'security.js'), 'utf8');
 check('activity words for the channel writes', ['erpContentRulesSave', 'erpContentStop', 'erpContentCancel', 'erpContentConnect'].every((k) => secSrc.includes(k + ": '")));
+
+// ---- 14. desk-open-1: the business runs its own desk (manager and up approves; everyone in it sees)
+const dec = [];
+let drafts14 = [{ id: 71, platform: 'facebook', body: 'Marble White', planned_at: new Date(Date.now() + 3600e3).toISOString() }];
+web.on(/^https:\/\/bizdesk-test\.trycloudflare\.com\/(drafts|series|biz\/posts)/, (url, opts) => {
+  if (opts.headers['X-Bridge-Key'] !== KEY) return { status: 401, body: { error: 'wrong key' } };
+  const body = opts.body ? JSON.parse(opts.body) : null;
+  if (url.endsWith('/drafts')) return { body: { waiting: drafts14, networks: [] } };
+  if (url.endsWith('/series')) return { body: { series: [{ series: 'S1', name: 'New in', eps: [1, 2], done: 1 }] } };
+  if (url.endsWith('/biz/posts')) return { body: { workspace: true, posts: [
+    { id: 'p1', platform: 'facebook', channel: 'Costareen', at: '2026-11-21T04:00:00Z', state: 'published', link: 'https://facebook.com/x', head: 'Hello' },
+    { id: 'p2', platform: 'linkedin', channel: 'x', at: '2026-11-21T05:00:00Z', state: 'QUEUE', head: 'not ours' },
+    { id: 'p3', platform: 'facebook', channel: 'Costareen', at: '2026-11-22T05:00:00Z', state: 'QUEUE', link: 'javascript:x', head: 'Next' }] } };
+  if (url.endsWith('/drafts/decide')) { dec.push(body); return { body: { queued: ['q1'], waiting: [] } }; }
+  return { status: 404, body: { error: 'not found' } };
+});
+r = await sales('erpContentDrafts', []);
+check('drafts: a salesperson sees them, cannot act', r && r.waiting.length === 1 && r.canAct === false, r);
+r = await mgr('erpContentDrafts', []);
+check('drafts: the manager can act', r && r.canAct === true, r);
+r = await sales('erpContentSeries', []);
+check('series: everyone in the business', r && r.series && r.series.length === 1, r);
+r = await sales('erpContentPosts', []);
+check('posts: own workspace only, four networks, unsafe link dropped', r && r.workspace === true && r.posts.length === 2 && r.posts[0].state === 'PUBLISHED' && r.posts[1].link === '', r);
+r = await sales('erpContentDraftDecide', [{ id: 71, action: 'approve', networks: [{ id: 'cz-fb-1', platform: 'facebook' }] }]);
+check('decide: a salesperson is refused (server side)', r && r.error && dec.length === 0, r);
+r = await mgr('erpContentDraftDecide', [{ id: 71, action: 'approve', networks: [{ id: 'cz-fb-1', platform: 'facebook' }, { id: 'page-handler', platform: 'facebook' }] }]);
+check('decide: handler + channel mixed refused', r && r.error && dec.length === 0, r);
+r = await mgr('erpContentDraftDecide', [{ id: 71, action: 'approve', networks: [{ id: 'cz li 1', platform: 'linkedin' }] }]);
+check('decide: odd channel refused', r && r.error && dec.length === 0, r);
+r = await mgr('erpContentDraftDecide', [{ id: 71, action: 'approve', networks: [{ id: 'cz-fb-1', platform: 'facebook' }], at: new Date(Date.now() + 400 * 86400e3).toISOString() }]);
+check('decide: a time far away refused', r && r.error && dec.length === 0, r);
+const at14 = new Date(Date.now() + 2 * 3600e3).toISOString();
+r = await mgr('erpContentDraftDecide', [{ id: 71, action: 'approve', networks: [{ id: 'cz-fb-1', platform: 'facebook' }], at: at14 }]);
+check('decide: the manager approves with a channel and a time', r && !r.error && dec.length === 1 && dec[0].networks[0].id === 'cz-fb-1' && dec[0].at === at14, { r, dec });
+r = await mgr('erpContentDraftDecide', [{ id: 71, action: 'approve', networks: [{ id: 'page-handler', platform: 'facebook' }] }]);
+check('decide: "ready for the page handler" still works', r && !r.error && dec.length === 2 && dec[1].networks[0].id === 'page-handler', r);
+r = await mgr('erpContentDraftDecide', [{ id: 71, action: 'reject' }]);
+check('decide: drop', r && !r.error && dec[2].action === 'reject', r);
+const act14 = await sql`select who, role, action, detail from erp_activity where business_id = ${B} and (action = 'erpContentDraftDecide' or detail like '%Content desk post%') order by id desc limit 5`;
+check('decide: written to the activity log with the person', act14.length >= 3 && act14.every((a) => a.who && a.role === 'manager'), act14);
+// the personal Brand desk never answers through these doors
+await sql`insert into business_config (business_id, key, value) values (${B}, 'business_kind', 'brand') on conflict (business_id, key) do update set value = 'brand'`;
+r = await owner('erpContentDrafts', []);
+const r2 = await owner('erpContentDraftDecide', [{ id: 71, action: 'reject' }]);
+check('the personal Brand desk is not reachable here', r && r.error && r2 && r2.error && dec.length === 3, { r, r2 });
+await sql`delete from business_config where business_id = ${B} and key = 'business_kind'`;
+check('the other business is untouched', (await sql`select count(*)::int n from business_config where business_id = ${B2} and key in ('brand_bridge', 'content_handlers')`)[0].n === 0);
 
 await done();
