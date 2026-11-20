@@ -4984,3 +4984,19 @@ controls it, and THEY approve; I approve only my Brand desk".
 - **NOT done:** the "Only me" app flag for contentdesk is still on live (an `erp_app_flags` row contentdesk=true on the
   postgres DB opens it; my write was refused by the permission check, needs the owner's yes). Until then managers do not
   see the Content desk menu item (shareholders and the owner do); the server already lets managers act.
+
+## reel-ctx-1 released (21 Nov 2026, release #53): content writers know THIS business on live
+
+Owner 21 Nov approved ("HIGH সব করো"). reel-ctx-1 (af0dfb3) had been on main since 12 Nov, but live still told the
+reel script, ad of the day, weekly ad factory and What to push copy that every business is "a small 3D-printing
+supplies shop".
+- **Live:** function FILE-BY-FILE handlers/factory.js, push.js, socialmake.js = main d6eaf16 (diff vs live = only the
+  reel-ctx-1 lines; bizctx.js was already live and equal to main; no notes-1 parts in these files). Live copies matched
+  the expected md5 first. Backup /data/backups/live-function/erp-20261120T170314Z-before-reelctx1.tgz; docker restart
+  supabase-edge-functions, 11 ERP_ env. Live function now = main except lib/ai.js. No migration, no web change.
+- **Checks:** socialmake_test 51 pass, push_test 22 pass, factory_test 27 pass / 1 fail (the same failure with the old
+  factory.js: "best one first by engagement per reach"). smoke-public OK; reads erpFactory, erpPushList, erpSocialLearn,
+  erpSocialAssets, erpSocialAiModels 200 ok. Live bizText run read-only per business: Costareen = its Business Brain
+  (3D printing); Oliareen = no "3D-printing shop" line, its owner facts (cast, look rules) + brand fence.
+- **Gap:** Oliareen has NO Business Brain on live (no engine_brain row), 0 products and no store_url, so its writers get
+  only the facts + "do not assume its trade". Drafting and approving Oliareen's Brain on live would make beauty explicit.
