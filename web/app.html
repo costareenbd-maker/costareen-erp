@@ -64242,6 +64242,55 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
 .cd-sheet>div{background:var(--card);color:var(--ink);border:1px solid var(--rule);border-radius:18px 18px 0 0;width:min(520px,100%);max-height:80vh;overflow:auto;padding:16px 0 18px}
 .cd-sheet h3{margin:0 18px 8px;font-size:17px}
 @media (min-width:760px){.cd-sheet{align-items:center}.cd-sheet>div{border-radius:18px}}
+.cd-sh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.cd-sh h2{margin:0}
+.cd-wknav{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--rule);border-radius:999px;padding:3px;background:var(--card)}
+.cd-wknav button{border:0;background:transparent;color:var(--ink);font:inherit;font-size:14px;min-height:34px;min-width:34px;border-radius:999px;cursor:pointer;padding:0 10px}
+.cd-wknav button:hover{background:var(--pan)}
+.cd-wknav b{font-size:13.5px;padding:0 6px;font-weight:600;white-space:nowrap}
+.cd-flt{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+.cd-flt button{border:1px solid var(--rule);background:transparent;color:var(--ink2);border-radius:999px;padding:6px 12px;font:inherit;font-size:13.5px;min-height:36px;cursor:pointer}
+.cd-flt button[aria-pressed="true"]{border-color:var(--pri);background:var(--pri);color:var(--on-pri);font-weight:600}
+.cd-flt em{font-style:normal;margin-left:6px;font-variant-numeric:tabular-nums;opacity:.85}
+.cd-wk{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:start}
+.cd-col{background:var(--card);border:1px solid var(--rule);border-radius:16px;padding:8px;min-height:160px;display:flex;flex-direction:column;gap:6px}
+.cd-col.today{border-color:var(--pri)}
+.cd-col.past{opacity:.78}
+.cd-col header{display:flex;align-items:baseline;justify-content:space-between;padding:2px 4px 6px;border-bottom:1px solid var(--rule);margin-bottom:2px}
+.cd-col header span{font-size:13px;color:var(--soft)}.cd-col header b{font-size:17px;font-variant-numeric:tabular-nums}
+.cd-col.today header span{color:var(--ink);font-weight:700}
+.cd-none{margin:auto 0;text-align:center;color:var(--faint);font-size:12.5px}
+.cd-it{display:block;width:100%;text-align:left;border:1px solid var(--rule);background:var(--pan);color:var(--ink);border-radius:12px;padding:7px 8px;font:inherit;cursor:pointer}
+.cd-it:hover{border-color:var(--rule2)}
+.cd-it time{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+.cd-it time i{width:7px;height:7px;border-radius:50%;background:var(--c,#999);flex:none}
+.cd-it span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px;line-height:1.4;margin-top:3px;overflow-wrap:anywhere}
+.cd-it.gone{background:transparent}.cd-it.gone time::after{content:'✓';color:var(--ok);margin-left:auto}
+.cd-it.stuck{border-color:color-mix(in srgb,var(--bad) 45%,var(--rule))}.cd-it.stuck time::after{content:'!';color:var(--bad);margin-left:auto;font-weight:800}
+.cd-it.wait{border-style:dashed;background:transparent}
+.cd-it.on{outline:2px solid var(--pri);outline-offset:1px}
+.cd-days{display:none;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 12px}
+.cd-days::-webkit-scrollbar{display:none}
+.cd-days button{flex:none;border:1px solid var(--rule);background:var(--card);color:var(--ink2);border-radius:14px;padding:6px 10px;min-width:52px;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px}
+.cd-days button b{font-size:16px;color:var(--ink)}.cd-days button i{font-style:normal;font-size:11px}
+.cd-days button.today{border-color:var(--pri)}
+.cd-days button[aria-pressed="true"]{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}.cd-days button[aria-pressed="true"] b{color:var(--on-pri)}
+.cd-pick{margin-top:12px;padding:14px 16px}
+.cd-nlw{display:none}
+@media (max-width:1100px){.cd-nlw{display:block}}
+/* the Dashboard card (this business only) */
+.cdh{margin:0 0 16px;background:var(--card);border:1px solid var(--rule);border-radius:20px;padding:16px 18px;color:var(--ink)}
+.cdh-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.cdh-top h3{margin:0;font-size:17px;font-weight:700}
+.cdh-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-bottom:12px}
+.cdh-days button{border:1px solid var(--rule);background:var(--pan);color:var(--ink2);border-radius:12px;padding:6px 4px;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;min-height:58px}
+.cdh-days button b{font-size:16px;color:var(--ink);font-variant-numeric:tabular-nums}.cdh-days button i{font-style:normal;font-size:11.5px;color:var(--soft)}
+.cdh-days button.today{border-color:var(--pri);background:var(--card)}.cdh-days button.past{opacity:.7}
+.cdh-next{display:flex;flex-direction:column}
+.cdh .cd-line{grid-template-columns:auto minmax(0,1fr) auto}
+.cdh-sum{display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px;color:var(--ink2);margin-top:10px}
+.cdh-sum b{color:var(--ink);font-variant-numeric:tabular-nums}
+@media (max-width:1100px){.cd-wk{display:none}.cd-days{display:flex}}
 @media (max-width:1100px){.cd-split{grid-template-columns:1fr}.cd-rail{position:static;order:-1}.cd-rail .cd-panel.line{display:none}}
 @media (max-width:759px){.cd-vgrid{grid-template-columns:1fr}.cd-head h1{font-size:21px}.cd-ch,.cd-title,.cd-body,.cd-notes,.cd-vrow{margin-left:0;margin-right:0}.cd-ch{padding:14px 14px 0}.cd-title,.cd-body,.cd-notes,.cd-vrow{margin-left:14px;margin-right:14px}.cd-more{padding-left:14px}.cd-pub{padding:14px}.cd-vid{margin-left:14px}
   .cd-rule{grid-template-columns:1fr}.cd-caps{justify-content:flex-start}.cd-hrow{grid-template-columns:1fr}.cd-sec{padding:16px}.cd-line{grid-template-columns:auto minmax(0,1fr)}.cd-line>:nth-child(3){grid-column:1/-1;justify-self:start}}
@@ -64310,7 +64359,7 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
     get('drafts', 'erpContentDrafts', [], force);
     get('ch', 'erpContentChannels', [], force);
     if (CD.tab === 'plan') get('series', 'erpContentSeries', [], force);
-    if (CD.tab === 'posts') get('posts', 'erpContentPosts', [], force);
+    if (CD.tab === 'posts') get('sched', 'erpContentSchedule', [], force);
   }
   // ---------------------------------------------------------------- shared bits
   function chans(net) { return ((CD.ch && CD.ch.channels) || []).filter(function (c) { return c.platform === net; }); }
@@ -64409,22 +64458,55 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
     var rail = '<aside class="cd-rail">' + pages + '<div class="cd-panel line"><h3>আজ যা যাবে</h3>' + (L.length ? '<div class="cd-lines">' + lineRows(L, true) + '</div>' : '<p class="cd-meta" style="margin:0">লাইনে এখন কিছু নেই।</p>') + '</div></aside>';
     return '<div class="cd-split">' + main + rail + '</div>';
   }
-  var PST = { PUBLISHED: ['গেছে', 'ok'], QUEUE: ['অপেক্ষায়', ''], ERROR: ['হয়নি', 'bad'], DRAFT: ['খসড়া', 'warn'] };
+  // sched-1 (owner 21 Nov 2026): "what goes out when" - the week board, like the Brand desk's Home, for THIS business only
+  var SST = { wait: ['অনুমোদনের অপেক্ষায়', 'warn'], next: ['যাবে', ''], gone: ['গেছে', 'ok'], stuck: ['আটকে', 'bad'] };
+  var RD = ['শনি', 'রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র'];
+  function dkey(t) { var x = dh(t); return x ? x.y + '-' + x.mo + '-' + x.d : ''; }
+  function weekDays(off) {   // Saturday-first week in Dhaka time, as on the Brand desk
+    var n = dh(Date.now()), base = Date.UTC(n.y, n.mo, n.d), wd = (new Date(base).getUTCDay() + 1) % 7, out = [];
+    for (var i = 0; i < 7; i++) { var d = new Date(base + (i - wd + 7 * (off || 0)) * 864e5); out.push({ i: i, y: d.getUTCFullYear(), mo: d.getUTCMonth(), d: d.getUTCDate(), key: d.getUTCFullYear() + '-' + d.getUTCMonth() + '-' + d.getUTCDate(), today: !off && i === wd, past: (off || 0) < 0 || (!off && i < wd) }); }
+    return { days: out, todayIdx: off ? -1 : wd };
+  }
+  function schedItems(flt) { return ((CD.sched && CD.sched.items) || []).filter(function (x) { return !flt || flt === 'all' || x.state === flt; }); }
+  function itemBtn(x) {
+    return '<button type="button" class="cd-it ' + x.state + (CD.spick === x.key ? ' on' : '') + '" data-cd="spick" data-id="' + esc(x.key) + '" style="--c:' + (NETC[x.platform] || '#999') + '" title="' + esc(SST[x.state][0]) + '"><time><i></i>' + hm(x.at) + '</time><span data-noi18n="1">' + esc(x.head || NETN[x.platform] || '') + '</span></button>';
+  }
+  function pickedHtml() {
+    var x = schedItems().filter(function (y) { return y.key === CD.spick; })[0]; if (!x) return '';
+    var st = SST[x.state], acts = '';
+    if (x.src === 'line' && canAct()) acts += '<button type="button" class="cd-btn" data-cd="cancel" data-id="' + esc(x.id) + '"' + (CD.busy['x' + x.id] ? ' disabled' : '') + '>বাতিল</button>';
+    if (x.src === 'draft') acts += '<button type="button" class="cd-btn pri" data-cd="tab" data-id="today">' + (canAct() ? 'দেখে অনুমোদন দিন' : 'ড্রাফটটা দেখুন') + '</button>';
+    if (x.link) acts += '<a class="cd-btn" href="' + esc(x.link) + '" target="_blank" rel="noopener">পোস্টটা খুলুন</a>';
+    if (x.state === 'stuck' && x.src === 'postiz') acts += '<button type="button" class="cd-btn" data-cd="tab" data-id="channels">চ্যানেল দেখুন</button>';
+    return '<div class="cd-panel cd-pick"><div class="cd-row">' + netTag(x.platform) + '<span class="cd-meta">' + when(x.at) + '</span><span class="cd-pill ' + st[1] + '">' + st[0] + (x.late ? ' · সময় পেরিয়েছে' : '') + '</span><span class="cd-sp"></span><button type="button" class="cd-btn ghost" data-cd="spick" data-id="" aria-label="বন্ধ করুন">✕</button></div>' +
+      '<p style="margin:10px 0 0;font-size:15px;line-height:1.6" data-noi18n="1">' + esc(x.head || '') + '</p>' + (x.error ? '<p class="cd-meta" style="color:var(--bad);margin:6px 0 0">' + esc(x.error) + '</p>' : '') +
+      (acts ? '<div class="cd-row" style="margin-top:12px">' + acts + '</div>' : '') + '</div>';
+  }
   function postsHtml() {
-    if (!CD.posts) return '<div class="cd-panel cd-empty">' + (CD.err.posts ? esc(CD.err.posts) : 'আনা হচ্ছে…') + '</div>';
-    var P = CD.posts.posts || [];
-    var head = '<h2>এই ব্যবসার পোস্ট</h2><p class="cd-lead">শুধু এই ব্যবসার নিজের Postiz workspace: গত ৭ দিন আর সামনের ১৪ দিন। কোনটা গেছে, কোনটা অপেক্ষায়, কোনটা হয়নি।</p>';
-    if (!CD.posts.workspace) return head + '<div class="cd-panel cd-empty">এই ব্যবসার Postiz workspace যুক্ত নেই।</div>';
-    if (!P.length) return head + '<div class="cd-panel cd-empty">এই সময়ে কোনো পোস্ট নেই। “আজ” ট্যাবে ড্রাফটে অনুমোদন দিলে এখানে দেখাবে।</div>';
-    var groups = [], by = {};
-    P.forEach(function (x) { var dw = dayWord(x.at); if (!by[dw]) { by[dw] = []; groups.push(dw); } by[dw].push(x); });
-    return head + groups.map(function (dw) {
-      return '<div class="cd-day">' + dw + '</div><div class="cd-panel cd-sheetwrap"><div class="cd-lines">' + by[dw].map(function (x) {
-        var st = PST[x.state] || [x.state ? x.state.toLowerCase() : '', ''];
-        return '<div class="cd-line"><time>' + hm(x.at) + '</time><div class="x"><b data-noi18n="1">' + esc(x.head || '(ছবি/ভিডিও)') + '</b><small>' + netTag(x.platform) +
-          (x.link ? ' · <a href="' + esc(x.link) + '" target="_blank" rel="noopener">দেখুন</a>' : '') + (x.error ? ' · ' + esc(x.error) : '') + '</small></div><span class="cd-pill ' + st[1] + '">' + esc(st[0]) + '</span></div>';
-      }).join('') + '</div></div>';
-    }).join('');
+    var S = CD.sched;
+    if (!S) return '<div class="cd-panel cd-empty">' + (CD.err.sched ? esc(CD.err.sched) : 'আনা হচ্ছে…') + '</div>';
+    var off = CD.wk || 0, W = weekDays(off), flt = CD.sflt || 'all', all = schedItems();
+    var inWeek = function (x) { return W.days.some(function (d) { return d.key === dkey(x.at); }); };
+    var wk = all.filter(inWeek), cnt = function (k) { return wk.filter(function (x) { return k === 'all' || x.state === k; }).length; };
+    var label = off === 0 ? 'এই সপ্তাহ' : off === 1 ? 'পরের সপ্তাহ' : off === -1 ? 'গত সপ্তাহ' : bn(W.days[0].d) + ' ' + MON[W.days[0].mo];
+    var h = '<div class="cd-sh"><h2>কী কখন যাবে</h2><span class="cd-sp"></span><span class="cd-wknav" role="group" aria-label="সপ্তাহ"><button type="button" data-cd="wk" data-id="' + (off - 1) + '"' + (off <= -1 ? ' disabled' : '') + ' aria-label="আগের সপ্তাহ">‹</button><b>' + label + '</b><button type="button" data-cd="wk" data-id="' + (off + 1) + '"' + (off >= 2 ? ' disabled' : '') + ' aria-label="পরের সপ্তাহ">›</button></span></div>' +
+      '<p class="cd-lead">শুধু এই ব্যবসার নিজের পোস্ট-লাইন আর নিজের Postiz workspace। অনুমোদনের অপেক্ষায় থাকা ড্রাফট রুটিনের সময়ে দাগ কাটা ঘরে দেখায়।' + (S.paused ? ' <b style="color:var(--bad)">সব পোস্ট থামানো আছে।</b>' : '') + '</p>';
+    if (S.errors && S.errors.length && !all.length) h += '<div class="cd-note" style="margin-bottom:12px">সব তথ্য আনা যায়নি; একটু পরে “নতুন করে আনুন” চাপুন।</div>';
+    h += '<div class="cd-flt" role="group" aria-label="কোনগুলো দেখাবে">' + [['all', 'সব'], ['wait', 'অনুমোদনের অপেক্ষায়'], ['next', 'যাবে'], ['gone', 'গেছে'], ['stuck', 'আটকে']].map(function (f) {
+      return '<button type="button" data-cd="sflt" data-id="' + f[0] + '" aria-pressed="' + (flt === f[0]) + '">' + f[1] + '<em>' + bn(cnt(f[0])) + '</em></button>'; }).join('') + '</div>';
+    var shown = schedItems(flt);
+    if (CD.sday == null || CD.sday < 0) CD.sday = W.todayIdx >= 0 ? W.todayIdx : 0;
+    // phone / narrow: a day strip and the chosen day's list
+    h += '<div class="cd-days" role="group" aria-label="দিন">' + W.days.map(function (d) { var n = shown.filter(function (x) { return dkey(x.at) === d.key; }).length;
+      return '<button type="button" data-cd="sday" data-id="' + d.i + '" aria-pressed="' + (CD.sday === d.i) + '"' + (d.today ? ' class="today"' : '') + '><span>' + RD[d.i] + '</span><b>' + bn(d.d) + '</b><i>' + (n ? bn(n) + 'টা' : '·') + '</i></button>'; }).join('') + '</div>';
+    var dsel = W.days[CD.sday] || W.days[0], dl = shown.filter(function (x) { return dkey(x.at) === dsel.key; });
+    var narrowList = '<div class="cd-panel cd-sheetwrap cd-nl">' + (dl.length ? '<div class="cd-lines">' + dl.map(function (x) { var st = SST[x.state];
+      return '<div class="cd-line" data-cd="spick" data-id="' + esc(x.key) + '" style="cursor:pointer"><time>' + hm(x.at) + '</time><div class="x"><b data-noi18n="1">' + esc(x.head || '') + '</b><small>' + netTag(x.platform) + (x.link ? ' · <a href="' + esc(x.link) + '" target="_blank" rel="noopener">দেখুন</a>' : '') + '</small></div><span class="cd-pill ' + st[1] + '">' + st[0] + '</span></div>'; }).join('') + '</div>'
+      : '<p class="cd-meta" style="margin:8px 0">' + RD[dsel.i] + ', ' + bn(dsel.d) + ' ' + MON[dsel.mo] + ': কিছু নেই।</p>') + '</div>';
+    h += '<div class="cd-wk">' + W.days.map(function (d) { var di = shown.filter(function (x) { return dkey(x.at) === d.key; });
+      return '<section class="cd-col' + (d.today ? ' today' : '') + (d.past ? ' past' : '') + '" aria-label="' + RD[d.i] + ' ' + bn(d.d) + '"><header><span>' + RD[d.i] + (d.today ? ' · আজ' : '') + '</span><b>' + bn(d.d) + '</b></header>' +
+        (di.length ? di.map(itemBtn).join('') : '<p class="cd-none">কিছু নেই</p>') + '</section>'; }).join('') + '</div>';
+    return h + '<div class="cd-nlw">' + narrowList + '</div>' + pickedHtml();
   }
   function videosHtml() {
     var vs = (CD.desk && CD.desk.videos) || [];
@@ -64520,7 +64602,7 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
   function view() {
     var b = bizRow(), k = CD.desk, wn = CD.drafts && CD.drafts.waiting ? CD.drafts.waiting.length : 0, ve = k && k.videos ? k.videos.length : 0;
     var lw = ((CD.ch && CD.ch.line) || []).filter(function (x) { return x.state === 'waiting'; }).length;
-    var tabs = [['today', 'আজ', wn], ['posts', 'পোস্ট', 0], ['videos', 'ভিডিও', ve], ['events', 'ঘটনা', 0], ['plan', 'পরিকল্পনা', 0], ['channels', 'চ্যানেল', lw], ['people', 'পেজ চালান যারা', 0]];
+    var tabs = [['today', 'আজ', wn], ['posts', 'কী কখন যাবে', 0], ['videos', 'ভিডিও', ve], ['events', 'ঘটনা', 0], ['plan', 'পরিকল্পনা', 0], ['channels', 'চ্যানেল', lw], ['people', 'পেজ চালান যারা', 0]];
     var body = { videos: videosHtml, events: eventsHtml, plan: planHtml, people: handlersHtml, channels: channelsHtml, posts: postsHtml }[CD.tab] || todayHtml;
     return '<div class="cd"><div class="cd-head"><h1 data-noi18n="1">' + esc(b.name || '') + ' · কনটেন্ট ডেস্ক</h1>' +
       (k ? '<span class="cd-state' + (k.online ? ' on' : '') + '"><i></i>' + (k.online ? 'কনটেন্ট ইঞ্জিন চালু' : 'কনটেন্ট ইঞ্জিন বন্ধ (Mac)') + '</span>' : '') +
@@ -64529,7 +64611,7 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
       body() + '</div>' + sheetHtml();
   }
   function paint() { navSync(); if (typeof VIEW === 'undefined' || VIEW !== 'contentdesk') return; var v = el('view'); if (!v) return; var y = window.scrollY; v.innerHTML = view(); if (Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y);
-    var tb = v.querySelector('.cd-tab.on'), row = tb && tb.parentNode; if (row && row.scrollWidth > row.clientWidth) { var l = tb.offsetLeft - row.offsetLeft; if (l < row.scrollLeft || l + tb.offsetWidth > row.scrollLeft + row.clientWidth) row.scrollLeft = Math.max(0, l - 16); } }
+    [v.querySelector('.cd-tab.on'), v.querySelector('.cd-days button[aria-pressed="true"]')].forEach(function (tb) { var row = tb && tb.parentNode; if (row && row.scrollWidth > row.clientWidth) { var l = tb.offsetLeft - row.offsetLeft; if (l < row.scrollLeft || l + tb.offsetWidth > row.scrollLeft + row.clientWidth) row.scrollLeft = Math.max(0, l - 16); } }); }
   var rp = repaint;
   repaint = function () { navSync(); if (typeof VIEW === 'undefined' || VIEW !== 'contentdesk') return rp.apply(this, arguments); paint(); load(); };
   function draftOf(id) { return ((CD.drafts && CD.drafts.waiting) || []).filter(function (d) { return String(d.id) === String(id); })[0]; }
@@ -64544,7 +64626,7 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
     srv('erpContentDraftDecide', [{ id: Number(id), action: 'approve', networks: nets, at: at.toISOString() }], function () {
       CD.busy['a' + id] = 0; delete CD.pick[id]; delete CD.when[id];
       toast('লাইনে উঠল: ' + when(at) + '-এ যাবে (' + nets.map(function (n) { return NETN[n.platform]; }).join(', ') + ')।');
-      load(true);
+      CD.sched = null; HC.at = 0; load(true);
     }, function (e) { CD.busy['a' + id] = 0; toast(esc(errOf(e)), true, 9000); paint(); });
   }
   document.addEventListener('input', function (e) {
@@ -64567,7 +64649,7 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
     var w = t.getAttribute('data-cd'), id = t.getAttribute('data-id'), did = t.getAttribute('data-d');
     if (w === 'shclose') { if (e.target !== t && t.classList.contains('cd-sheet')) return; CD.send = null; paint(); return; }
     if (w === 'tab') { CD.tab = id; CD.send = null; paint(); load(); window.scrollTo(0, 0); }
-    else if (w === 'reload') { CD.drafts = CD.desk = CD.series = CD.posts = CD.ch = null; CD.pick = {}; CD.err = {}; paint(); load(true); }
+    else if (w === 'reload') { CD.drafts = CD.desk = CD.series = CD.posts = CD.ch = CD.sched = null; CD.pick = {}; CD.err = {}; paint(); load(true); }
     else if (w === 'more') { CD.open[id] = !CD.open[id]; paint(); }
     else if (w === 'copy') { var d = draftOf(id); if (d) { try { navigator.clipboard.writeText(d.body || ''); toast('ক্যাপশন কপি হলো।'); } catch (x) { toast('কপি হলো না।', true); } } }
     else if (w === 'ready' || w === 'drop') {
@@ -64576,6 +64658,10 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
       srv('erpContentDraftDecide', [args], function () { CD.busy['r' + id] = 0; toast(w === 'ready' ? 'তৈরি: পেজ যিনি চালান তাঁকে পাঠান।' : 'বাদ দেওয়া হলো।'); CD.drafts = null; load(true); },
         function (x) { CD.busy['r' + id] = 0; toast(esc(errOf(x)), true, 9000); paint(); });
     }
+    else if (w === 'wk') { CD.wk = Number(id) || 0; CD.sday = -1; CD.spick = null; paint(); }
+    else if (w === 'sflt') { CD.sflt = id; CD.spick = null; paint(); }
+    else if (w === 'sday') { CD.sday = Number(id); CD.spick = null; paint(); }
+    else if (w === 'spick') { if (e.target.closest('a')) return; CD.spick = id && CD.spick !== id ? id : null; paint(); }
     else if (w === 'pick') { var pk = CD.pick[did] || (CD.pick[did] = {}); if (pk[id]) delete pk[id]; else pk[id] = 1; paint(); }
     else if (w === 'ok') { var d1 = draftOf(did); var s1 = d1 && slot(d1); approve(did, s1 || new Date(Date.now() + 60e3)); }
     else if (w === 'now') approve(did, new Date());
@@ -64625,13 +64711,52 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
     }
     else if (w === 'cancel') {
       CD.busy['x' + id] = 1; paint();
-      srv('erpContentCancel', [{ id: id }], function () { CD.busy['x' + id] = 0; toast('বাতিল হলো: এই পোস্ট যাবে না।'); CD.ch = null; load(); },
+      srv('erpContentCancel', [{ id: id }], function () { CD.busy['x' + id] = 0; toast('বাতিল হলো: এই পোস্ট যাবে না।'); CD.ch = null; CD.sched = null; CD.spick = null; load(); },
         function (x) { CD.busy['x' + id] = 0; toast(esc(errOf(x)), true, 9000); CD.ch = null; load(); });
     }
   });
+  // sched-1: the business Dashboard gets "this week's posts" (this business only; the Brand desk keeps its own Home)
+  var HC = { d: null, at: 0, busy: 0, err: '' };
+  function homeCard() {
+    if (!on()) return '';
+    if (!HC.busy && Date.now() - HC.at > 5 * 60e3) {
+      HC.busy = 1;
+      srv('erpContentSchedule', [], function (r) { HC.busy = 0; HC.d = r; HC.at = Date.now(); HC.err = ''; if (typeof VIEW !== 'undefined' && VIEW === 'dash' && typeof repaint === 'function') repaint(); },
+        function (e) { HC.busy = 0; HC.at = Date.now(); HC.err = errOf(e); });
+    }
+    var d = HC.d, W = weekDays(0), items = (d && d.items) || [];
+    var wk = items.filter(function (x) { return W.days.some(function (q) { return q.key === dkey(x.at); }); });
+    var c = function (k) { return wk.filter(function (x) { return x.state === k; }).length; };
+    var nowIso = new Date().toISOString(), next = items.filter(function (x) { return (x.state === 'next' || x.state === 'wait') && x.at >= nowIso; }).slice(0, 3);
+    var stuck = items.filter(function (x) { return x.state === 'stuck'; }).length;
+    var days = '<div class="cdh-days" role="group" aria-label="এই সপ্তাহ">' + W.days.map(function (q) { var n = wk.filter(function (x) { return dkey(x.at) === q.key; }).length;
+      return '<button type="button" data-cdh="day" data-id="' + q.i + '" class="' + (q.today ? 'today' : q.past ? 'past' : '') + '"><span style="font-size:12px">' + RD[q.i] + '</span><b>' + bn(q.d) + '</b><i>' + (n ? bn(n) + 'টা' : '—') + '</i></button>'; }).join('') + '</div>';
+    var body = !d ? '<p class="cd-meta" style="margin:0">' + (HC.err ? esc(HC.err) : 'আনা হচ্ছে…') + '</p>'
+      : days + (next.length ? '<div class="cdh-next">' + next.map(function (x) { var st = SST[x.state];
+        return '<div class="cd-line"><time>' + hm(x.at) + '<small>' + dayWord(x.at) + '</small></time><div class="x"><b data-noi18n="1">' + esc(x.head || '') + '</b><small>' + netTag(x.platform) + '</small></div><span class="cd-pill ' + st[1] + '">' + st[0] + '</span></div>'; }).join('') + '</div>'
+        : '<p class="cd-meta" style="margin:0">সামনে কোনো পোস্ট সাজানো নেই।</p>') +
+        '<div class="cdh-sum"><span>এ সপ্তাহে গেছে <b>' + bn(c('gone')) + '</b></span><span>যাবে <b>' + bn(c('next')) + '</b></span><span>অনুমোদনের অপেক্ষায় <b>' + bn(c('wait')) + '</b></span>' + (stuck ? '<span style="color:var(--bad)">আটকে <b style="color:var(--bad)">' + bn(stuck) + '</b></span>' : '') + (d.paused ? '<span style="color:var(--bad)">সব পোস্ট থামানো</span>' : '') + '</div>';
+    return '<section class="cd cdh" aria-label="এই সপ্তাহের পোস্ট"><div class="cdh-top"><h3>এই সপ্তাহের পোস্ট</h3><span class="cd-meta" data-noi18n="1">' + esc(bizRow().name || '') + '</span><span class="cd-sp"></span><button type="button" class="cd-btn" data-cdh="open">কী কখন যাবে</button></div>' + body + '</section>';
+  }
+  if (typeof viewDash === 'function') {
+    var vdCd = viewDash;
+    viewDash = function () {
+      var h = String(vdCd.apply(this, arguments)), card = '';
+      try { card = homeCard(); } catch (e) { card = ''; }
+      if (!card) return h;
+      var i = h.indexOf('<div class="fdd-grid');
+      return i >= 0 ? h.slice(0, i) + card + h.slice(i) : card + h;
+    };
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-cdh]'); if (!t || typeof VIEW === 'undefined' || VIEW !== 'dash') return;
+    CD.tab = 'posts'; CD.wk = 0; CD.spick = null;
+    if (t.getAttribute('data-cdh') === 'day') CD.sday = Number(t.getAttribute('data-id'));
+    if (typeof go === 'function') go('contentdesk');
+  });
   // switching business: everything of the old business is forgotten (brand fence on screen too)
   var lastBiz = null;
-  setInterval(function () { var b = (typeof BIZ !== 'undefined' && BIZ && BIZ.active) || null; if (b !== lastBiz) { lastBiz = b; CD.drafts = CD.desk = CD.series = CD.posts = CD.ch = null; CD.pick = {}; CD.url = {}; CD.h = null; CD.err = {}; } }, 1500);
+  setInterval(function () { var b = (typeof BIZ !== 'undefined' && BIZ && BIZ.active) || null; if (b !== lastBiz) { lastBiz = b; CD.drafts = CD.desk = CD.series = CD.posts = CD.ch = CD.sched = null; CD.pick = {}; CD.url = {}; CD.h = null; CD.err = {}; HC.d = null; HC.at = 0; } }, 1500);
   setTimeout(navSync, 0);
 })();
 </script>

@@ -358,4 +358,33 @@ check('the personal Brand desk is not reachable here', r && r.error && r2 && r2.
 await sql`delete from business_config where business_id = ${B} and key = 'business_kind'`;
 check('the other business is untouched', (await sql`select count(*)::int n from business_config where business_id = ${B2} and key in ('brand_bridge', 'content_handlers')`)[0].n === 0);
 
+// ---- 15. sched-1: "what goes out when" for this business only
+web.on(/^https:\/\/bizdesk-test\.trycloudflare\.com\/biz\/(state|posts)$/, (url, opts) => {
+  if (opts.headers['X-Bridge-Key'] !== KEY) return { status: 401, body: { error: 'wrong key' } };
+  if (url.endsWith('/biz/state')) return { body: { workspace: true, paused: false, channels: [], line: [
+    { id: '11111111-2222-4333-8444-000000000001', platform: 'facebook', at: '2026-11-22T04:00:00+00:00', state: 'waiting', head: 'Next one' },
+    { id: '11111111-2222-4333-8444-000000000002', platform: 'instagram', at: '2026-11-20T04:00:00+00:00', state: 'ask', head: 'Late one' },
+    { id: '11111111-2222-4333-8444-000000000003', platform: 'facebook', at: '2026-11-21T02:00:00+00:00', state: 'sent', head: 'Sent (Postiz shows it)' },
+    { id: '11111111-2222-4333-8444-000000000004', platform: 'facebook', at: '2026-11-21T03:00:00+00:00', state: 'cancelled', head: 'Cancelled' }] } };
+  return { body: { workspace: true, posts: [
+    { id: 'p1', platform: 'facebook', at: '2026-11-21T02:00:00Z', state: 'PUBLISHED', link: 'https://facebook.com/1', head: 'Gone one' },
+    { id: 'p2', platform: 'tiktok', at: '2026-11-21T05:00:00Z', state: 'ERROR', head: 'Stuck one', error: 'token expired' },
+    { id: 'p3', platform: 'linkedin', at: '2026-11-21T05:00:00Z', state: 'PUBLISHED', head: 'not a business network' }] } };
+});
+drafts14 = [{ id: 81, platform: 'youtube', title_working: 'Waiting for approval', planned_at: '2026-11-23T13:00:00Z' }, { id: 82, platform: 'facebook', body: 'no slot' }];
+r = await sales('erpContentSchedule', []);
+const byKey = Object.fromEntries((r.items || []).map((x) => [x.key, x]));
+check('schedule: line waiting -> next, ask -> stuck (late), sent/cancelled not doubled', byKey['l11111111-2222-4333-8444-000000000001'].state === 'next'
+  && byKey['l11111111-2222-4333-8444-000000000002'].state === 'stuck' && byKey['l11111111-2222-4333-8444-000000000002'].late === true
+  && !byKey['l11111111-2222-4333-8444-000000000003'] && !byKey['l11111111-2222-4333-8444-000000000004'], r);
+check('schedule: Postiz published -> gone with link, error -> stuck, other networks dropped', byKey.pp1.state === 'gone' && byKey.pp1.link === 'https://facebook.com/1' && byKey.pp2.state === 'stuck' && !byKey.pp3, r.items);
+check('schedule: a waiting draft at its routine slot -> wait; no slot -> not on the board', byKey.d81 && byKey.d81.state === 'wait' && !byKey.d82, r.items);
+check('schedule: sorted by time, a salesperson reads it but cannot act', r.items.every((x, i, a) => !i || a[i - 1].at <= x.at) && r.canAct === false && r.workspace === true, r);
+r = await mgr('erpContentSchedule', []);
+check('schedule: the manager can act', r && r.canAct === true, r);
+await sql`insert into business_config (business_id, key, value) values (${B}, 'business_kind', 'brand') on conflict (business_id, key) do update set value = 'brand'`;
+r = await owner('erpContentSchedule', []);
+check('schedule: the personal Brand desk is not reachable here', r && r.error, r);
+await sql`delete from business_config where business_id = ${B} and key = 'business_kind'`;
+
 await done();

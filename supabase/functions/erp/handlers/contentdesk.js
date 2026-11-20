@@ -555,6 +555,50 @@ export async function erpContentDraftDecide(ctx, payload) {
   return engine(ctx, '/drafts/decide', out);
 }
 
+// ------------------------------------------------------------------ sched-1 (owner 21 Nov 2026): "what goes out when", per business
+// "My Brand desk shows what goes out when (on Home and a few other places). Build the same for Costareen and Oliareen."
+// One read for this business only, from its own engine: the posting line (pacer: waiting / late / failed), its own Postiz
+// workspace (published / failed / queued) and the drafts still waiting for approval at their routine slot. Each source
+// may fail on its own; the others still show. Items: {key, src: line|postiz|draft, platform, at, state: wait|next|gone|
+// stuck, head, link, id, error}. Everyone in the business reads it (the Dashboard card and the Content desk).
+const SCHED_STATE = { waiting: 'next', ask: 'stuck', failed: 'stuck' };
+export async function erpContentSchedule(ctx) {
+  await gate(ctx, 'sales'); await notBrand(ctx);
+  const st = await bridgeState(ctx);
+  const out = { online: st.online, bridge: !!st.url, workspace: null, paused: false, items: [], errors: [], canAct: roleAtLeast(ctx.s.role, 'manager') };
+  if (!st.url) return out;
+  const [ln, pz, dr] = await Promise.allSettled([engine(ctx, '/biz/state', {}), engine(ctx, '/biz/posts', {}), engineGet(ctx, '/drafts')]);
+  const items = [];
+  if (ln.status === 'fulfilled') {
+    out.workspace = !!ln.value.workspace; out.paused = !!ln.value.paused;
+    for (const x of Array.isArray(ln.value.line) ? ln.value.line : []) {
+      const state = SCHED_STATE[str(x.state)];
+      if (!state) continue;   // sent: its Postiz post shows (with the link); cancelled: gone from the plan
+      const o = lineOut(x);
+      items.push({ key: 'l' + o.id, src: 'line', id: o.id, platform: o.platform, at: o.at, state, head: o.head, link: '', error: o.error, late: str(x.state) === 'ask' });
+    }
+  } else out.errors.push('line: ' + String(ln.reason && ln.reason.message || ln.reason).slice(0, 160));
+  if (pz.status === 'fulfilled') {
+    if (out.workspace === null) out.workspace = !!pz.value.workspace;
+    for (const x of Array.isArray(pz.value.posts) ? pz.value.posts : []) {
+      const o = postOut(x);
+      if (!PLATFORMS.includes(o.platform)) continue;
+      const state = o.state === 'PUBLISHED' ? 'gone' : o.state === 'ERROR' ? 'stuck' : 'next';
+      items.push({ key: 'p' + o.id, src: 'postiz', id: o.id, platform: o.platform, at: o.at, state, head: o.head, link: o.link, error: o.error });
+    }
+  } else out.errors.push('postiz: ' + String(pz.reason && pz.reason.message || pz.reason).slice(0, 160));
+  if (dr.status === 'fulfilled') {
+    for (const d of Array.isArray(dr.value.waiting) ? dr.value.waiting : []) {
+      if (!d || !d.planned_at) continue;
+      const t = new Date(d.planned_at); if (isNaN(t)) continue;
+      items.push({ key: 'd' + d.id, src: 'draft', id: String(d.id), platform: str(d.platform).toLowerCase(), at: t.toISOString(), state: 'wait',
+                   head: str(d.title_working || String(d.body || '').split('\n')[0]).slice(0, 160), link: '', error: '' });
+    }
+  } else out.errors.push('drafts: ' + String(dr.reason && dr.reason.message || dr.reason).slice(0, 160));
+  out.items = items.filter((x) => x.at && !isNaN(new Date(x.at))).sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0)).slice(0, 400);
+  return out;
+}
+
 export const HANDLERS = { erpContentDesk, erpContentVideoUrl, erpContentHandlersSave, erpContentVideoUploadUrl, erpContentVideoSave, erpContentVideoSend,
   erpContentStudioUploadUrl, erpContentStudioSave, erpContentChannels, erpContentRulesSave, erpContentStop, erpContentCancel, erpContentConnect,
-  erpContentDrafts, erpContentSeries, erpContentPosts, erpContentDraftDecide };
+  erpContentDrafts, erpContentSeries, erpContentPosts, erpContentDraftDecide, erpContentSchedule };
