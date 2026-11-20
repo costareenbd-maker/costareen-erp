@@ -4959,3 +4959,28 @@ Owner approved the mockup (.impeccable/mocks/content-desk-postiz.html) with "Yes
 - **NOT done:** the two business Postiz workspaces do not exist yet (Postiz has no "new workspace" screen for an existing
   user; script ready, waits for the owner's yes), so no page is connected and nothing can post yet. The personal Postiz
   workspace is still named "Costareen" (rename waits for his yes). Nothing was posted during testing.
+
+
+## content-desk-ui-2 + desk-open-1 (21 Nov 2026, release #52): Content desk redesign; the business runs its own desk
+
+Owner 21 Nov: "the Content desk does not look made with impeccable" and "whoever runs Oliareen and Costareen sees and
+controls it, and THEY approve; I approve only my Brand desk".
+- **Page:** content-desk-ui-2 replaces content-desk-ui-1 + channels-1 (deploy/deskui2_page.py). Critique of live (desktop
+  1568 + phone 390, dark + light): tall empty 9:16 video boxes, cramped card headers, big white score pill, long yellow
+  notes, tabs wrapping to 3 rows on a phone, 3 uneven columns. Now: review list + side rail (pages, today's line), compact
+  video row / small poster, suggestions folded ("২টা পরামর্শ"), quiet score chip (owner opens the score sheet), tabs scroll
+  sideways on a phone, Clean tokens in light and dark (one lime row = the tabs). New "পোস্ট" tab: this business's own
+  Postiz posts (7 days back, 14 ahead) with state and link.
+- **desk-open-1:** reads for everyone in the business (erpContentDesk / VideoUrl / Channels / Drafts / Series / Posts =
+  sales); approve, schedule, cancel, rules, stop, connect = manager and up (erpContentDraftDecide is new; written to the
+  activity log with the person). The personal Brand desk (business_kind brand) is refused through these doors and stays
+  owner-only (erpBrandDesk*). contentdesk_test 110 pass.
+- **Mac:** pacers now hold their own workspace keys (Costareen fec3eded, Oliareen 6f84be9f; workspaces made by the main
+  session; keys copied straight from Postiz into .env.<brand>, never printed, all three keys distinct); new pacer /posts and
+  bridge /biz/posts; backups *.bak-ch2-20261120T164053Z and .env.<brand>.bak-keys-20261120T162312Z.
+- **Live:** function file-by-file (allow, contentdesk, security; live = #51 before), backup
+  erp-20261120T164150Z-before-deskui2.tgz; page = #51 live source + the new block, sw cz-shell-v4-native-deskui2-20c4e6f
+  (prev private/live-web-index-before-deskui2-20261121.html). Before/after shots private/deskui2-before-after-*.png.
+- **NOT done:** the "Only me" app flag for contentdesk is still on live (an `erp_app_flags` row contentdesk=true on the
+  postgres DB opens it; my write was refused by the permission check, needs the owner's yes). Until then managers do not
+  see the Content desk menu item (shareholders and the owner do); the server already lets managers act.
