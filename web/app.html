@@ -64204,6 +64204,7 @@ Nothing about what the screens show or do changes; only how a redraw lands. Moti
       '<span class="cd-sub">' + esc(d.title_working ? String(d.title_working).slice(0, 60) : '') + '</span>' + (window.scUi ? '<span class="cd-sp"></span>' + scUi.chip(d.uscore, 'data-sccd="' + d.id + '"') : '') + '</div>' + vidBox(v) +   // score-ui-1
       '<div class="cd-body' + (op ? ' open' : '') + '" data-noi18n="1">' + esc(d.body || '') + '</div>' +
       (String(d.body || '').length > 320 ? '<button type="button" class="cd-more" data-cd="more" data-id="' + d.id + '">' + (op ? 'কম দেখুন' : 'পুরোটা দেখুন') + '</button>' : '') + f.html +
+      (window.cdxAct ? cdxAct(d, f) : '') +   // channels-1
       '<div class="cd-act">' + (owner() ? '<button type="button" class="cd-btn dark" data-cd="ready" data-id="' + d.id + '"' + (f.block.length || CD.busy['r' + d.id] ? ' disabled' : '') + '>তৈরি</button>' : '') +
       '<button type="button" class="cd-btn" data-cd="copy" data-id="' + d.id + '">ক্যাপশন কপি করুন</button>' + vidBtns(v) +
       (owner() ? '<button type="button" class="cd-btn" data-cd="drop" data-id="' + d.id + '">বাদ দিন</button>' : '') + '</div></article>';
@@ -64264,7 +64265,9 @@ Nothing about what the screens show or do changes; only how a redraw lands. Moti
   function view() {
     var b = bizRow(), k = CD.desk, wn = CD.drafts && CD.drafts.waiting ? CD.drafts.waiting.length : 0, ve = k && k.videos ? k.videos.length : 0;
     var tabs = [['today', 'আজ', wn], ['videos', 'ভিডিও', ve], ['events', 'ঘটনা', 0], ['plan', 'পরিকল্পনা', 0], ['people', 'পেজ চালান যারা', 0]];
+    if (window.cdxTabs) tabs = cdxTabs(tabs);   // channels-1
     var body = CD.tab === 'videos' ? videosHtml() : CD.tab === 'events' ? eventsHtml() : CD.tab === 'plan' ? planHtml() : CD.tab === 'people' ? handlersHtml() : todayHtml();
+    if (window.cdxBody) body = cdxBody(CD.tab) || body;   // channels-1
     return '<div class="cd"><div class="cd-top"><span class="cd-dot' + (k && k.online ? ' on' : '') + '" aria-hidden="true"></span><h1 data-noi18n="1">' + esc(b.name || '') + ' · কনটেন্ট ডেস্ক</h1>' +
       '<span class="cd-sub">' + (k ? (k.online ? 'কনটেন্ট ইঞ্জিন চালু' : 'কনটেন্ট ইঞ্জিন বন্ধ (Mac)') : '') + '</span><span class="cd-sp"></span><button type="button" class="cd-btn" data-cd="reload">নতুন করে আনুন</button></div>' +
       '<div class="cd-tabs" role="tablist">' + tabs.map(function (t) { return '<button type="button" role="tab" class="cd-tab' + (CD.tab === t[0] ? ' on' : '') + '" aria-selected="' + (CD.tab === t[0]) + '" data-cd="tab" data-id="' + t[0] + '">' + t[1] + (t[2] ? '<em>' + bn(t[2]) + '</em>' : '') + '</button>'; }).join('') + '</div>' +
@@ -64273,6 +64276,7 @@ Nothing about what the screens show or do changes; only how a redraw lands. Moti
   function paint() { navSync(); if (typeof VIEW === 'undefined' || VIEW !== 'contentdesk') return; var v = el('view'); if (v) v.innerHTML = view(); }
   var rp = repaint;
   repaint = function () { navSync(); if (typeof VIEW === 'undefined' || VIEW !== 'contentdesk') return rp.apply(this, arguments); paint(); load(); };
+  window.cdxApi = { st: CD, paint: function () { paint(); }, load: function (f) { load(f); }, draft: function (id) { return draftOf(id); }, owner: owner };   // channels-1
   function draftOf(id) { return ((CD.drafts && CD.drafts.waiting) || []).filter(function (d) { return String(d.id) === String(id); })[0]; }
   function vurl(id, cb) {
     if (CD.url[id]) return cb(CD.url[id]);
@@ -64576,6 +64580,280 @@ html[data-cdesk="1"] [data-cf="new"],html[data-cdesk="1"] [data-cf="clip"]{displ
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && L.id) { e.preventDefault(); closeL(); } });
   // leaving the Content desk closes its sheet
   window.addEventListener('hashchange', function () { if (L.id) closeL(); });
+})();
+</script>
+<!-- channels-1 (owner 21 Nov 2026, approved mockup .impeccable/mocks/content-desk-postiz.html): the Content desk's
+     "চ্যানেল" tab and the approve controls on every draft card. Each business posts through ITS OWN Postiz workspace and
+     its own posting line (pacer) next to its content engine on the Mac; the ERP only talks to this business's engine
+     (erpContentChannels / RulesSave / Stop / Cancel / Connect). Approve = erpBrandDeskDraftDecide with real channels
+     and a time; nothing goes out without the owner's approve. Also: the desk follows the Clean look's own colours
+     (light and dark) instead of a white sheet. Hooks: three one-liners in content-desk-ui-1 (deploy/channels1_hooks.py). -->
+<style>
+.cd{--ink:var(--fd-text,#16181D);--soft:var(--fd-text-3,#5B6070);--pan:var(--fd-surface-2,#F2F3F5);--rule:var(--fd-border,#E4E6EA);
+  --cd-card:var(--fd-card,#fff);--cd-acc:var(--fd-lime,var(--fd-accent,#16181D));--cd-on-acc:var(--fd-lime-text,var(--fd-text-on-accent,#fff));
+  --cd-pri:var(--fd-text,#16181D);--cd-on-pri:var(--fd-card,#fff);
+  --ok:var(--fd-positive-text,#1A8A4E);--warn:var(--fd-warning-text,#9A5B00);
+  background:var(--cd-card);border:1px solid var(--rule);border-radius:20px;padding:6px 20px 28px;max-width:1180px}
+.cd-tab,.cd-card,.cd-btn,.cd-panel,.cd-sheet>div,.cd-in{background:var(--cd-card);color:var(--ink)}
+/* the app keeps ONE lime row per screen (the tabs); primary buttons are a solid ink fill, like + New */
+.cd-tab.on{background:var(--cd-acc);color:var(--cd-on-acc);border-color:var(--cd-acc)}
+.cd-btn.dark{background:var(--cd-pri);color:var(--cd-on-pri);border-color:var(--cd-pri);font-weight:600}
+.cd-flag{background:color-mix(in srgb,var(--red) 13%,var(--cd-card))}
+.cd-flag.w{background:color-mix(in srgb,var(--amb) 15%,var(--cd-card))}
+.cd-pill.wait{background:color-mix(in srgb,var(--amb) 24%,var(--cd-card))}
+.cd-pill.sent{background:color-mix(in srgb,var(--ok) 20%,var(--cd-card))}
+.cd-pill.failed{background:color-mix(in srgb,var(--red) 18%,var(--cd-card));color:var(--ink)}
+.cd-act{background:var(--pan)}
+.cd-btn:focus-visible,.cd-tab:focus-visible,.cx-chip:focus-visible,.cx-sel:focus-visible{outline:2px solid var(--cd-pri);outline-offset:2px}
+.cd-btn:not([disabled]):hover{border-color:var(--fd-border-strong,#C9CCD3)}
+.cd-btn.dark:not([disabled]):hover{background:color-mix(in srgb,var(--cd-pri) 86%,var(--cd-card))}
+/* the Channels tab */
+.cx-sec{padding:20px 0;border-top:1px solid var(--rule)}
+.cx-sec:first-child{border-top:0;padding-top:4px}
+.cx-sec h2{font-size:20px;line-height:1.3;margin:0 0 4px;font-weight:700;text-wrap:balance}
+.cx-sec>p{margin:0 0 14px;color:var(--soft);font-size:14px;max-width:70ch}
+.cx-ch{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.cx-c{border:1px solid var(--rule);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--pan)}
+.cx-t{display:flex;align-items:center;gap:10px;min-width:0}
+.cx-t b{display:block;font-size:15.5px}.cx-t small{display:block;color:var(--soft);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cx-lg{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none;color:#fff}
+.cx-lg svg{width:20px;height:20px}
+.cx-st{font-size:12.5px;padding:3px 10px;border-radius:999px;align-self:flex-start;font-weight:600}
+.cx-st.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.cx-st.warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.cx-st.off{background:var(--fd-surface-3,#E7E8EC);color:var(--soft)}
+.cx-c .cd-btn{align-self:flex-start;min-height:40px}
+.cx-c .why{font-size:12.5px;color:var(--soft);overflow-wrap:anywhere}
+.cx-rule{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--rule);font-size:15px}
+.cx-rule:first-of-type{border-top:0}
+.cx-rule em{font-style:normal;font-weight:700}
+.cx-sel{font:inherit;font-size:15px;font-weight:700;color:var(--ink);background:var(--pan);border:1px solid var(--rule);border-radius:10px;padding:7px 10px;min-height:40px;font-variant-numeric:tabular-nums}
+.cx-caps{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.cx-caps label{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--soft)}
+.cx-stop{border-color:color-mix(in srgb,var(--red) 55%,var(--rule))!important;color:var(--red)!important}
+.cx-paused{border:1px solid color-mix(in srgb,var(--red) 45%,var(--rule));background:color-mix(in srgb,var(--red) 10%,var(--cd-card));border-radius:14px;padding:12px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;font-size:15px}
+.cx-paused b{flex:1;min-width:200px}
+.cx-q{display:grid;grid-template-columns:72px 1fr auto;gap:12px;align-items:center;padding:11px 14px;border:1px solid var(--rule);border-radius:14px;margin-bottom:8px;background:var(--pan)}
+.cx-q time{font-weight:700;font-size:16px;font-variant-numeric:tabular-nums}.cx-q time small{display:block;color:var(--soft);font-weight:500;font-size:12px}
+.cx-q .x{min-width:0;font-size:15px}.cx-q .x small{display:block;color:var(--soft);font-size:13px;overflow-wrap:anywhere}
+.cx-q .x>span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cx-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.cx-q a{color:var(--ink);text-underline-offset:3px}
+.cx-note{padding:12px 14px;border:1px solid color-mix(in srgb,var(--amb) 40%,var(--rule));background:color-mix(in srgb,var(--amb) 9%,var(--cd-card));border-radius:12px;font-size:14px;line-height:1.6}
+.cx-empty{padding:18px;border:1px dashed var(--rule);border-radius:14px;color:var(--soft);font-size:14.5px}
+/* on a draft card */
+.cx-ap{padding:12px 14px;border-top:1px solid var(--rule);display:flex;flex-direction:column;gap:10px}
+.cx-nets{display:flex;gap:6px;flex-wrap:wrap}
+.cx-chip{border:1px solid var(--rule);background:transparent;color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13.5px;min-height:36px;cursor:pointer}
+.cx-chip.on{border-color:var(--cd-pri);background:var(--cd-pri);color:var(--cd-on-pri);font-weight:600}
+.cx-chip[disabled]{opacity:.5;cursor:not-allowed}
+.cx-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cx-when{font-size:13px;color:var(--soft)}
+.cx-dt{font:inherit;font-size:15px;color:var(--ink);background:var(--pan);border:1px solid var(--rule);border-radius:10px;padding:8px 10px;min-height:44px;color-scheme:light dark}
+@media (max-width:759px){.cd{padding:4px 14px 22px;border-radius:16px}.cx-rule{grid-template-columns:1fr}.cx-caps{justify-content:flex-start}.cx-q{grid-template-columns:auto 1fr;gap:10px}.cx-q time{font-size:15px;white-space:nowrap}.cx-q>:last-child{grid-column:1/-1;justify-self:start}}
+</style>
+<script>
+(function () {
+  if (!window.cdxApi) return;
+  var X = { st: null, busy: {}, err: '', pick: {}, open: {}, dt: {} };
+  var NETS = ['facebook', 'instagram', 'tiktok', 'youtube'];
+  var NAME = { facebook: 'Facebook পেজ', instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube' };
+  var SHORT = { facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube' };
+  var COL = { facebook: '#1877F2', instagram: '#C13584', tiktok: '#111', youtube: '#E62117' };
+  var SVG = {
+    facebook: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 21v-7.2h2.4l.4-2.9h-2.8V9.1c0-.8.3-1.4 1.4-1.4h1.5V5.2c-.3 0-1.2-.1-2.2-.1-2.2 0-3.6 1.3-3.6 3.7v2.1H8.2v2.9h2.4V21z"/></svg>',
+    instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17" cy="7" r=".6" fill="currentColor"/></svg>',
+    tiktok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4.2c.6 2.3 2.2 3.8 4.6 4"/></svg>',
+    youtube: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10 8.3v7.4l6.2-3.7z"/></svg>'
+  };
+  try { SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpContentChannels|')); SRV_SLOW.erpContentChannels = 30000; } catch (e) {}
+  var bn = function (n) { return String(n).replace(/[0-9]/g, function (d) { return '০১২৩৪৫৬৭৮৯'[d]; }); };
+  var api = window.cdxApi, own = function () { return api.owner(); };
+  function bizName() { var b = (typeof BIZ !== 'undefined' && BIZ) || {}; var r = (b.businesses || []).filter(function (x) { return x.id === b.active; })[0]; return (r && r.name) || 'এই ব্যবসা'; }
+  // Dhaka clock for every time shown and picked (the businesses are in Bangladesh)
+  function dh(t) { var d = new Date(t); if (isNaN(d)) return null; var u = new Date(d.getTime() + 6 * 3600e3); return { y: u.getUTCFullYear(), mo: u.getUTCMonth(), d: u.getUTCDate(), h: u.getUTCHours(), mi: u.getUTCMinutes() }; }
+  function hm(t) { var x = dh(t); return x ? bn(x.h % 12 || 12) + ':' + bn(('0' + x.mi).slice(-2)) + (x.h < 12 ? ' AM' : ' PM') : ''; }
+  function dayWord(t) { var x = dh(t), n = dh(Date.now()); if (!x) return ''; var a = Date.UTC(x.y, x.mo, x.d), b = Date.UTC(n.y, n.mo, n.d), k = Math.round((a - b) / 864e5);
+    return k === 0 ? 'আজ' : k === 1 ? 'কাল' : k === -1 ? 'গতকাল' : bn(x.d) + '/' + bn(x.mo + 1); }
+  function load(force) {
+    if (!own() || X.busy.l || (X.st && !force)) return;
+    X.busy.l = 1;
+    srv('erpContentChannels', [], function (r) { X.busy.l = 0; X.st = r; X.err = ''; api.paint(); }, function (e) { X.busy.l = 0; X.err = (e && e.message) || String(e); X.st = X.st || { channels: [], line: [], error: X.err }; api.paint(); });
+  }
+  function chansOf(net) { return ((X.st && X.st.channels) || []).filter(function (c) { return c.platform === net; }); }
+  function live(c) { return c && c.status === 'ok' && !c.held; }
+  // ---------------------------------------------------------------- the tab
+  window.cdxTabs = function (tabs) {
+    if (!own()) return tabs;
+    load(false);
+    var wait = ((X.st && X.st.line) || []).filter(function (x) { return x.state === 'waiting'; }).length;
+    var out = tabs.slice(), i = out.map(function (t) { return t[0]; }).indexOf('people');
+    out.splice(i < 0 ? out.length : i, 0, ['channels', 'চ্যানেল', wait]);
+    return out;
+  };
+  window.cdxBody = function (tab) {
+    if (tab !== 'channels') return '';
+    if (!own()) return '<div class="cd-panel cd-empty">চ্যানেল আর পোস্টের নিয়ম মালিক দেখেন।</div>';
+    if (!X.st) return '<div class="cd-panel cd-empty">' + (X.err ? esc(X.err) : 'আনা হচ্ছে…') + '</div>';
+    return '<div class="cx">' + chHtml() + rulesHtml() + lineHtml() +
+      '<div class="cx-sec"><div class="cx-note"><b>ব্র্যান্ডের দেয়াল:</b> প্রতিটা ব্যবসার নিজের Postiz workspace আর নিজের পোস্ট-লাইন। <span data-noi18n="1">' + esc(bizName()) + '</span>-এর পোস্ট অন্য ব্যবসার বা আপনার নিজের পেজে যাবে না, ভুলেও না।</div></div></div>';
+  };
+  function chHtml() {
+    var s = X.st, b = esc(bizName());
+    var head = '<div class="cx-sec"><h2>এই ব্যবসার পেজগুলো</h2><p>শুধু <span data-noi18n="1">' + b + '</span>-এর নিজের Postiz workspace। অন্য ব্যবসা বা আপনার নিজের Brand desk-এর চ্যানেল এখানে কখনো দেখাবে না।</p>';
+    var warn = '';
+    if (s.error && s.bridge !== false) warn = '<div class="cx-paused" style="border-color:var(--rule);background:var(--pan)"><b>' + esc(s.error) + '</b><button type="button" class="cd-btn" data-cx="reload">আবার আনুন</button></div>';
+    else if (s.bridge === false) warn = '<div class="cx-empty">' + esc(s.error || 'এই ব্যবসার কনটেন্ট ইঞ্জিন যুক্ত নেই।') + '</div>';
+    else if (!s.workspace) warn = '<div class="cx-empty" style="margin-bottom:12px">এই ব্যবসার Postiz workspace এখনো তৈরি হয়নি, তাই পেজ যুক্ত করা যাচ্ছে না। workspace তৈরি হলে এখানে “যুক্ত করুন” চাপলেই Postiz খুলবে; লগইন আর Allow আপনি নিজে দেবেন।</div>';
+    var cards = NETS.map(function (net) {
+      var cs = chansOf(net), c = cs[0], st, btn = '', who = 'এখনো যুক্ত হয়নি', why = '';
+      if (!c) { st = '<span class="cx-st off">যুক্ত নয়</span>'; btn = '<button type="button" class="cd-btn dark" data-cx="connect" data-net="' + net + '"' + (s.workspace && !X.busy['c' + net] ? '' : ' disabled') + '>যুক্ত করুন</button>'; }
+      else {
+        who = c.name + (cs.length > 1 ? ' +' + bn(cs.length - 1) : '');
+        if (c.status === 'reconnect') { st = '<span class="cx-st warn">আবার সংযোগ দিন</span>'; btn = '<button type="button" class="cd-btn dark" data-cx="connect" data-net="' + net + '" data-ref="' + esc(c.id) + '"' + (X.busy['c' + net] ? ' disabled' : '') + '>সংযোগ নবায়ন</button>'; why = c.error; }
+        else if (c.status === 'off') { st = '<span class="cx-st off">Postiz-এ বন্ধ</span>'; btn = '<button type="button" class="cd-btn" data-cx="connect" data-net="' + net + '" data-ref="' + esc(c.id) + '">সংযোগ নবায়ন</button>'; }
+        else if (c.held) { st = '<span class="cx-st warn">বিরতিতে · পোস্ট অপেক্ষায়</span>'; btn = '<button type="button" class="cd-btn dark" data-cx="hold" data-id="' + esc(c.id) + '" data-on="0"' + (X.busy['h' + c.id] ? ' disabled' : '') + '>আবার চালু</button>'; }
+        else { st = '<span class="cx-st ok">যুক্ত · ঠিক আছে' + (c.sentToday ? ' · আজ ' + bn(c.sentToday) + 'টা গেছে' : '') + '</span>'; btn = '<button type="button" class="cd-btn" data-cx="hold" data-id="' + esc(c.id) + '" data-on="1"' + (X.busy['h' + c.id] ? ' disabled' : '') + '>বিরতি</button>'; }
+      }
+      return '<div class="cx-c"><div class="cx-t"><span class="cx-lg" style="background:' + COL[net] + (net === 'tiktok' ? ';box-shadow:inset 0 0 0 1px #3a3d45' : '') + '">' + SVG[net] + '</span><div style="min-width:0"><b>' + NAME[net] + '</b><small data-noi18n="1">' + esc(who) + '</small></div></div>' +
+        st + (why ? '<span class="why">' + esc(String(why).slice(0, 140)) + '</span>' : '') + '<div class="cx-row">' + btn + '</div></div>';
+    }).join('');
+    return head + warn + '<div class="cx-ch">' + cards + '</div></div>';
+  }
+  function opt(v, cur, label) { return '<option value="' + v + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + label + '</option>'; }
+  function rulesHtml() {
+    var s = X.st, caps = s.caps || {}, hard = s.hardCaps || {}, dis = s.workspace ? '' : ' disabled';
+    var gaps = [10, 15, 20, 30, 45, 60, 90, 120], g = s.gap || 20;
+    if (gaps.indexOf(g) < 0) gaps.push(g), gaps.sort(function (a, b) { return a - b; });
+    var capSel = NETS.map(function (n) {
+      var mx = Math.min(hard[n] || 10, 10), o = '';
+      for (var i = 0; i <= mx; i++) o += opt(i, caps[n] == null ? '' : caps[n], bn(i));
+      return '<label>' + SHORT[n] + ' <select class="cx-sel" data-cx="cap" data-net="' + n + '" aria-label="' + SHORT[n] + ': দিনে সর্বোচ্চ"' + dis + '>' + o + '</select></label>';
+    }).join('');
+    return '<div class="cx-sec"><h2>কখন, কত, কোথায়</h2><p>একবার ঠিক করে দিন; পোস্ট-লাইন এই নিয়মে পোস্ট পাঠাবে।</p>' +
+      (s.paused ? '<div class="cx-paused" role="status"><b>সব পোস্ট থামানো আছে। কিছুই যাচ্ছে না; লাইনের পোস্টগুলো অপেক্ষায়।</b><button type="button" class="cd-btn dark" data-cx="stop" data-on="0"' + (X.busy.stop ? ' disabled' : '') + '>আবার চালু করুন</button></div>' : '') +
+      '<div class="cx-rule"><span>আপনার অনুমোদন ছাড়া কিছুই যাবে না</span><em>সবসময় চালু</em></div>' +
+      '<div class="cx-rule"><span>একই নেটওয়ার্কে দুই পোস্টের মাঝে ফাঁক</span><select class="cx-sel" data-cx="gap" aria-label="দুই পোস্টের মাঝে ফাঁক"' + dis + '>' + gaps.map(function (m) { return opt(m, g, bn(m) + ' মিনিট'); }).join('') + '</select></div>' +
+      '<div class="cx-rule"><span>দিনে সর্বোচ্চ পোস্ট</span><div class="cx-caps">' + capSel + '</div></div>' +
+      '<div class="cx-rule"><span>পোস্টের সময় (ঢাকা)</span><em>রুটিন অনুযায়ী · কার্ডে বদলানো যায়</em></div>' +
+      (s.paused ? '' : '<div class="cx-rule"><span>সব পোস্ট এখনই থামান (জরুরি বোতাম)</span><button type="button" class="cd-btn cx-stop" data-cx="stop" data-on="1"' + (X.busy.stop || !s.workspace ? ' disabled' : '') + '>থামান</button></div>') + '</div>';
+  }
+  var QS = { waiting: '', ask: ['অনেক দেরি · আপনার উত্তরের অপেক্ষায়', 'wait'], failed: ['হয়নি', 'failed'], cancelled: ['বাতিল হয়েছে', ''], dropped: ['বাদ', ''], sent: ['গেছে', 'sent'] };
+  function lineHtml() {
+    var L = ((X.st && X.st.line) || []).slice().sort(function (a, b) { return String(a.state === 'sent' ? a.sentAt : a.at) < String(b.state === 'sent' ? b.sentAt : b.at) ? -1 : 1; });
+    var rows = L.map(function (x) {
+      var t = x.state === 'sent' ? x.sentAt : x.at, st = QS[x.state] || [x.state, ''];
+      var right = x.state === 'waiting' || x.state === 'ask' || x.state === 'failed'
+        ? '<button type="button" class="cd-btn" data-cx="cancel" data-id="' + esc(x.id) + '"' + (X.busy['x' + x.id] ? ' disabled' : '') + '>বাতিল</button>'
+        : '<span class="cd-pill ' + st[1] + '">' + st[0] + '</span>';
+      var sub = '<span class="cx-dot" style="background:' + (COL[x.platform] || '#999') + '"></span>' + (SHORT[x.platform] || esc(x.platform)) +
+        (x.platform === 'tiktok' && x.state !== 'sent' ? ' · খসড়া হিসেবে TikTok inbox-এ যাবে' : '') +
+        (x.state === 'sent' ? ' · ✓ গেছে ' + hm(x.sentAt) + (x.link ? ' · <a href="' + esc(x.link) + '" target="_blank" rel="noopener">দেখুন</a>' : ' · লিংক আসছে') : '') +
+        ((x.state === 'ask' || x.state === 'failed') && st[0] ? ' · ' + st[0] : '') + (x.error ? ' · ' + esc(x.error) : '');
+      return '<div class="cx-q"><time>' + hm(t) + '<small>' + dayWord(t) + '</small></time><div class="x"><span data-noi18n="1">' + esc(x.head || '') + '</span><small>' + sub + '</small></div>' + right + '</div>';
+    }).join('');
+    return '<div class="cx-sec"><h2>আজ যা যাবে</h2><p>অনুমোদিত পোস্ট, সময় ধরে। যাওয়ার আগে পর্যন্ত বাতিল করা যায়; গেলে লিংক আসে।</p>' +
+      (rows || '<div class="cx-empty">লাইনে এখন কিছু নেই। “আজ” ট্যাবে কোনো ড্রাফটে অনুমোদন দিলে এখানে সময়সহ দেখাবে।</div>') + '</div>';
+  }
+  // ---------------------------------------------------------------- the approve controls on a draft card
+  function netOf(p) { p = String(p || '').toLowerCase(); for (var i = 0; i < NETS.length; i++) if (p.indexOf(NETS[i]) === 0) return NETS[i]; return p; }
+  function picked(d) {
+    if (!X.pick[d.id]) {
+      var m = {}, first = chansOf(netOf(d.platform)).filter(live)[0];
+      if (first) m[first.id] = 1;
+      X.pick[d.id] = m;
+    }
+    return X.pick[d.id];
+  }
+  function slot(d) { var t = d.planned_at ? new Date(d.planned_at) : null; return t && !isNaN(t) && t.getTime() > Date.now() + 60e3 ? t : null; }
+  window.cdxAct = function (d, f) {
+    if (!own() || !X.st || !X.st.workspace) return '';
+    var all = (X.st.channels || []).filter(function (c) { return NETS.indexOf(c.platform) >= 0; });
+    if (!all.some(live)) return '';
+    var pk = picked(d), any = Object.keys(pk).length > 0, block = f && f.block && f.block.length, busy = X.busy['a' + d.id];
+    var chips = NETS.map(function (n) {
+      var cs = chansOf(n);
+      if (!cs.length) return '<button type="button" class="cx-chip" disabled>' + SHORT[n] + ' (যুক্ত নয়)</button>';
+      return cs.map(function (c) {
+        var ok = live(c), on = !!pk[c.id] && ok;
+        return '<button type="button" class="cx-chip' + (on ? ' on' : '') + '" data-cx="pick" data-d="' + d.id + '" data-id="' + esc(c.id) + '" aria-pressed="' + on + '"' + (ok ? '' : ' disabled') + '>' + (on ? '✓ ' : '') + SHORT[n] + (cs.length > 1 ? ' · <span data-noi18n="1">' + esc(c.name) + '</span>' : '') + (ok ? '' : c.held ? ' (বিরতি)' : ' (সংযোগ দিন)') + '</button>';
+      }).join('');
+    }).join('');
+    var s = slot(d), dis = (!any || block || busy || X.st.paused) ? ' disabled' : '';
+    var when = s ? 'রুটিনের সময়: ' + dayWord(s) + ' ' + hm(s) : 'রুটিনের সময় পেরিয়ে গেছে: অনুমোদন দিলে এখনই লাইনে যাবে';
+    var dt = X.open[d.id] ? '<div class="cx-row"><input type="datetime-local" class="cx-dt" data-cx-dt="' + d.id + '" value="' + esc(X.dt[d.id] || '') + '" aria-label="কখন যাবে (ঢাকা সময়)"><button type="button" class="cd-btn dark" data-cx="at" data-d="' + d.id + '"' + dis + '>এই সময়ে পাঠান</button></div>' : '';
+    return '<div class="cx-ap"><div class="cx-nets" role="group" aria-label="কোথায় যাবে">' + chips + '</div>' +
+      '<div class="cx-row"><button type="button" class="cd-btn dark" data-cx="ok" data-d="' + d.id + '"' + dis + '>অনুমোদন · রুটিনের সময়ে যাবে</button>' +
+      '<button type="button" class="cd-btn" data-cx="time" data-d="' + d.id + '"' + (block ? ' disabled' : '') + '>সময় বদলান</button>' +
+      '<button type="button" class="cd-btn" data-cx="now" data-d="' + d.id + '"' + dis + '>এখনই</button></div>' + dt +
+      '<span class="cx-when">' + (X.st.paused ? 'সব পোস্ট থামানো আছে (চ্যানেল ট্যাব)' : block ? 'আটকানো লেখা: ঠিক না হলে যাবে না' : !any ? 'কোথায় যাবে, অন্তত একটা বাছুন' : when) + '</span></div>';
+  };
+  function approve(id, at) {
+    var d = api.draft(id); if (!d) return;
+    var nets = (X.st.channels || []).filter(function (c) { return X.pick[id] && X.pick[id][c.id] && live(c); }).map(function (c) { return { id: c.id, platform: c.platform }; });
+    if (!nets.length) { toast('কোথায় যাবে, অন্তত একটা বাছুন।', true); return; }
+    X.busy['a' + id] = 1; api.paint();
+    srv('erpBrandDeskDraftDecide', [{ id: Number(id), action: 'approve', networks: nets, at: at.toISOString() }], function () {
+      X.busy['a' + id] = 0; delete X.pick[id]; delete X.open[id];
+      toast('লাইনে উঠল: ' + dayWord(at) + ' ' + hm(at) + '-এ যাবে (' + nets.map(function (n) { return SHORT[n.platform]; }).join(', ') + ')।');
+      api.st.drafts = null; api.load(true); load(true);
+    }, function (e) { X.busy['a' + id] = 0; toast(esc((e && e.message) || String(e)), true, 9000); api.paint(); });
+  }
+  function dtLocal(t) { var x = dh(t); var p = function (n) { return ('0' + n).slice(-2); }; return x.y + '-' + p(x.mo + 1) + '-' + p(x.d) + 'T' + p(x.h) + ':' + p(x.mi); }
+  document.addEventListener('input', function (e) { var t = e.target; if (t && t.getAttribute && t.getAttribute('data-cx-dt')) X.dt[t.getAttribute('data-cx-dt')] = t.value; });
+  document.addEventListener('change', function (e) {
+    var t = e.target; if (!t || !t.getAttribute || typeof VIEW === 'undefined' || VIEW !== 'contentdesk') return;
+    var w = t.getAttribute('data-cx'); if (w !== 'gap' && w !== 'cap') return;
+    var args = w === 'gap' ? { gap: Number(t.value) } : { caps: {} };
+    if (w === 'cap') args.caps[t.getAttribute('data-net')] = Number(t.value);
+    t.disabled = true;
+    srv('erpContentRulesSave', [args], function (r) { X.st.gap = r.gap; X.st.caps = r.caps; toast('নিয়ম সেভ হলো।'); api.paint(); },
+      function (x) { toast(esc((x && x.message) || String(x)), true, 9000); api.paint(); });
+  });
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-cx],[data-cd="reload"]'); if (!t || typeof VIEW === 'undefined' || VIEW !== 'contentdesk') return;
+    if (t.getAttribute('data-cd') === 'reload') { X.st = null; X.pick = {}; load(true); return; }
+    var w = t.getAttribute('data-cx'), id = t.getAttribute('data-id'), did = t.getAttribute('data-d');
+    if (w === 'reload') { X.st = null; api.paint(); load(true); }
+    else if (w === 'pick') { var pk = X.pick[did] || (X.pick[did] = {}); if (pk[id]) delete pk[id]; else pk[id] = 1; api.paint(); }
+    else if (w === 'ok') { var d = api.draft(did); var s = d && slot(d); approve(did, s || new Date(Date.now() + 60e3)); }
+    else if (w === 'now') { approve(did, new Date()); }
+    else if (w === 'time') { X.open[did] = !X.open[did]; if (X.open[did] && !X.dt[did]) { var d2 = api.draft(did); X.dt[did] = dtLocal((d2 && slot(d2)) || new Date(Date.now() + 3600e3)); } api.paint(); }
+    else if (w === 'at') {
+      var v = X.dt[did] || ''; var at = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v) ? new Date(v + ':00+06:00') : null;
+      if (!at || isNaN(at)) { toast('সময়টা বাছুন (ঢাকা সময়)।', true); return; }
+      if (at.getTime() < Date.now() - 60e3) { toast('এই সময় পেরিয়ে গেছে। সামনের একটা সময় দিন, বা “এখনই” চাপুন।', true); return; }
+      approve(did, at);
+    }
+    else if (w === 'connect') {
+      var net = t.getAttribute('data-net'), ref = t.getAttribute('data-ref');
+      // open the tab now (inside the click) so the browser does not block it, then send it to Postiz's page
+      var win = null; try { win = window.open('about:blank', '_blank'); } catch (x) {}
+      X.busy['c' + net] = 1; api.paint();
+      srv('erpContentConnect', [ref ? { platform: net, refresh: ref } : { platform: net }], function (r) {
+        X.busy['c' + net] = 0; api.paint();
+        if (win && !win.closed) { try { win.opener = null; win.location.href = r.url; } catch (x) { window.location.href = r.url; } } else window.open(r.url, '_blank', 'noopener');
+        toast('Postiz খুলেছে: লগইন করে Allow দিন, তারপর এখানে “নতুন করে আনুন” চাপুন।', false, 9000);
+      }, function (x) { X.busy['c' + net] = 0; if (win) try { win.close(); } catch (y) {} toast(esc((x && x.message) || String(x)), true, 9000); api.paint(); });
+    }
+    else if (w === 'hold') {
+      var on = t.getAttribute('data-on') === '1'; X.busy['h' + id] = 1; api.paint();
+      srv('erpContentRulesSave', [{ hold: { id: id, on: on } }], function () { X.busy['h' + id] = 0; toast(on ? 'বিরতি: এই চ্যানেলের পোস্ট অপেক্ষায় থাকবে।' : 'আবার চালু হলো।'); load(true); },
+        function (x) { X.busy['h' + id] = 0; toast(esc((x && x.message) || String(x)), true, 9000); api.paint(); });
+    }
+    else if (w === 'stop') {
+      var stop = t.getAttribute('data-on') === '1';
+      if (stop && !confirm('সব পোস্ট এখনই থামাবেন? লাইনের পোস্টগুলো অপেক্ষায় থাকবে, কিছুই মুছবে না।')) return;
+      X.busy.stop = 1; api.paint();
+      srv('erpContentStop', [{ on: stop }], function (r) { X.busy.stop = 0; X.st.paused = r.paused; toast(r.paused ? 'সব পোস্ট থামানো হলো।' : 'পোস্ট-লাইন আবার চালু।'); api.paint(); },
+        function (x) { X.busy.stop = 0; toast(esc((x && x.message) || String(x)), true, 9000); api.paint(); });
+    }
+    else if (w === 'cancel') {
+      X.busy['x' + id] = 1; api.paint();
+      srv('erpContentCancel', [{ id: id }], function () { X.busy['x' + id] = 0; toast('বাতিল হলো: এই পোস্ট যাবে না।'); load(true); },
+        function (x) { X.busy['x' + id] = 0; toast(esc((x && x.message) || String(x)), true, 9000); load(true); });
+    }
+  });
 })();
 </script>
 </body>

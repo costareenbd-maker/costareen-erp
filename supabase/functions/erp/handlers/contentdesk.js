@@ -403,5 +403,90 @@ export async function erpContentVideoSend(ctx, payload) {
   throw new Error(h.name + '-কে WhatsApp-এ পাঠানো গেল না' + (last ? ' (' + last.slice(0, 120) + ')' : '') + '। একটু পরে আবার চেষ্টা করুন।');
 }
 
+// ------------------------------------------------------------------ channels-1 (owner 21 Nov 2026): the Channels tab
+// Each business posts through ITS OWN Postiz workspace and its own posting line (the pacer next to its content engine on
+// the Mac). The ERP only talks to THIS business's engine (its brand_bridge + BRAND_BRIDGE_KEY), so one business can never
+// see or touch another's channels. Posting itself is the owner's approve on a draft (erpBrandDeskDraftDecide).
+//   erpContentChannels()                      channels + status, posting rules, today's line (owner)
+//   erpContentRulesSave({gap, caps, hold})    gap between two posts on one network (min), daily max per network, one
+//                                             channel on a break ({hold: {id, on}}: its posts wait, the others go on)
+//   erpContentStop({on})                      the emergency stop: true = nothing goes out, false = the line runs again
+//   erpContentCancel({id})                    a waiting post leaves the line before it goes
+//   erpContentConnect({platform, refresh?})   Postiz's connect page for this business's workspace (the owner logs in)
+const LINE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const CAP_MAX = { facebook: 50, instagram: 25, tiktok: 15, youtube: 6 };
+async function engine(ctx, path, body) {
+  const st = await bridgeState(ctx), key = await getSecret(ctx, 'BRAND_BRIDGE_KEY');
+  if (!key || !st.url) throw new Error('এই ব্যবসার কনটেন্ট ইঞ্জিন যুক্ত নেই।');
+  return bridgePost(ctx, st, key, path, body || {});
+}
+const chOut = (c) => ({ id: str(c.id), name: str(c.name), platform: str(c.platform), picture: str(c.picture), profile: str(c.profile),
+                        status: ['ok', 'reconnect', 'off'].includes(c.status) ? c.status : 'ok', error: str(c.error).slice(0, 200), sentToday: Math.round(num(c.sentToday)), held: !!c.held });
+const lineOut = (x) => ({ id: str(x.id), platform: str(x.platform), integration: str(x.integration), at: str(x.at), state: str(x.state), sentAt: str(x.sentAt),
+                          link: /^https:\/\//i.test(str(x.link)) ? str(x.link) : '', head: str(x.head).slice(0, 90), error: str(x.error).slice(0, 200), urgent: !!x.urgent });
+function capsIn(v) {
+  const out = {};
+  for (const k of PLATFORMS) if (v && v[k] !== undefined && v[k] !== null && v[k] !== '') out[k] = Math.round(num(v[k]));
+  return out;
+}
+export async function erpContentChannels(ctx) {
+  await gate(ctx, 'owner');
+  const st = await bridgeState(ctx);
+  const base = { online: st.online, bridge: !!st.url, pacer: false, workspace: false, paused: false, gap: 20, caps: {}, hardCaps: CAP_MAX, channels: [], line: [], error: '' };
+  if (!st.url) return { ...base, error: 'এই ব্যবসার কনটেন্ট ইঞ্জিন যুক্ত নেই।' };
+  let r;
+  try { r = await engine(ctx, '/biz/state', {}); } catch (e) { return { ...base, error: String((e && e.message) || e) }; }
+  return { ...base, pacer: r.pacer !== false, workspace: !!r.workspace, paused: !!r.paused, gap: Math.round(num(r.gap)) || 20, caps: capsIn(r.caps),
+           channels: (Array.isArray(r.channels) ? r.channels : []).map(chOut).filter((c) => PLATFORMS.includes(c.platform)),
+           line: (Array.isArray(r.line) ? r.line : []).map(lineOut), error: str(r.error) };
+}
+export async function erpContentRulesSave(ctx, payload) {
+  await gate(ctx, 'owner');
+  const p = payload || {}, body = {};
+  if (p.gap !== undefined) {
+    const g = Math.round(num(p.gap));
+    if (!(g >= 5 && g <= 240)) throw new Error('দুই পোস্টের মাঝে ফাঁক ৫ থেকে ২৪০ মিনিটের মধ্যে দিন।');
+    body.gap = g;
+  }
+  if (p.caps !== undefined) {
+    for (const k of Object.keys(p.caps || {})) if (!PLATFORMS.includes(k)) throw new Error('এই নেটওয়ার্ক চেনা নেই: ' + k);
+    const caps = capsIn(p.caps);
+    for (const [k, v] of Object.entries(caps)) if (!(v >= 0 && v <= CAP_MAX[k])) throw new Error(k + '-এ দিনে ০ থেকে ' + CAP_MAX[k] + '-টা পোস্ট রাখা যায়।');
+    body.caps = caps;
+  }
+  if (p.hold !== undefined) {
+    const hid = str(p.hold && p.hold.id);
+    if (!/^[A-Za-z0-9_-]{6,64}$/.test(hid)) throw new Error('কোন চ্যানেলে বিরতি দেবেন? একটা বাছুন।');
+    body.hold = { id: hid, on: !!(p.hold && p.hold.on) };
+  }
+  if (!Object.keys(body).length) throw new Error('কী বদলাবেন? ফাঁক বা দিনে সর্বোচ্চ পোস্ট দিন।');
+  const r = await engine(ctx, '/biz/rules', body);
+  return { gap: Math.round(num(r.gap)), caps: capsIn(r.caps), paused: !!r.paused, held: Array.isArray(r.held) ? r.held.map(str) : [] };
+}
+export async function erpContentStop(ctx, payload) {
+  await gate(ctx, 'owner');
+  const on = !!(payload && payload.on);
+  const r = await engine(ctx, '/biz/rules', { paused: on });
+  return { paused: !!r.paused };
+}
+export async function erpContentCancel(ctx, payload) {
+  await gate(ctx, 'owner');
+  const id = str(payload && payload.id);
+  if (!LINE_ID.test(id)) throw new Error('কোন পোস্টটা বাতিল করবেন? একটা বাছুন।');
+  await engine(ctx, '/biz/cancel', { id });
+  return { ok: true, id };
+}
+export async function erpContentConnect(ctx, payload) {
+  await gate(ctx, 'owner');
+  const platform = str(payload && payload.platform).toLowerCase();
+  if (!PLATFORMS.includes(platform)) throw new Error('কোন নেটওয়ার্ক যুক্ত করবেন? (Facebook, Instagram, TikTok, YouTube)');
+  const refresh = str(payload && payload.refresh);
+  if (refresh && !/^[A-Za-z0-9_-]{6,64}$/.test(refresh)) throw new Error('এই চ্যানেলটা চেনা নেই।');
+  const r = await engine(ctx, '/biz/connect', refresh ? { platform, refresh } : { platform });
+  const url = str(r && r.url);
+  if (!/^https:\/\//i.test(url)) throw new Error('Postiz যুক্ত করার লিংক দিল না। একটু পরে আবার চেষ্টা করুন।');
+  return { url };
+}
+
 export const HANDLERS = { erpContentDesk, erpContentVideoUrl, erpContentHandlersSave, erpContentVideoUploadUrl, erpContentVideoSave, erpContentVideoSend,
-  erpContentStudioUploadUrl, erpContentStudioSave };
+  erpContentStudioUploadUrl, erpContentStudioSave, erpContentChannels, erpContentRulesSave, erpContentStop, erpContentCancel, erpContentConnect };

@@ -235,4 +235,73 @@ check('studio save stores the video in that business, made by the studio', ssv.v
 r = await mgr('erpContentStudioSave', [{ biz: B, key: KEY, path: sup.path, bytes: 1 }]);
 check('a manager cannot act as the studio', r && r.error, r);
 
+// ---- 13. channels-1: the Channels tab talks only to THIS business's engine (its own Postiz workspace + pacer)
+await sql`update business_config set value = ${JSON.stringify({ url: URL, seen: new Date().toISOString() })} where business_id = ${B} and key = 'brand_bridge'`;
+const bz13 = [];
+let pz = { workspace: true, paused: false, gap: 20, caps: { facebook: 3, instagram: 2, tiktok: 2, youtube: 1 },
+  channels: [{ id: 'cz-fb-1', name: 'Costareen', platform: 'facebook', status: 'ok', sentToday: 1 }, { id: 'cz-tt-1', name: '@costareen', platform: 'tiktok', status: 'reconnect', error: 'token expired' },
+             { id: 'cz-li-1', name: 'x', platform: 'linkedin', status: 'ok' }],
+  line: [{ id: '11111111-2222-4333-8444-555555555555', platform: 'facebook', at: '2026-11-21T04:30:00+00:00', state: 'waiting', head: 'Marble White PLA', link: 'javascript:alert(1)' },
+         { id: '11111111-2222-4333-8444-666666666666', platform: 'facebook', at: '2026-11-21T02:00:00+00:00', state: 'sent', head: 'A1 Mini', link: 'https://facebook.com/1' }] };
+web.on(/^https:\/\/bizdesk-test\.trycloudflare\.com\/biz\//, (url, opts) => {
+  const body = opts.body ? JSON.parse(opts.body) : null;
+  bz13.push({ url, key: opts.headers && opts.headers['X-Bridge-Key'], body });
+  if (opts.headers['X-Bridge-Key'] !== KEY) return { status: 401, body: { error: 'wrong key' } };
+  if (url.endsWith('/biz/state')) return { body: { ...pz, pacer: true } };
+  if (url.endsWith('/biz/rules')) { pz = { ...pz, ...(body.gap ? { gap: body.gap } : {}), ...(body.caps ? { caps: { ...pz.caps, ...body.caps } } : {}), ...('paused' in body ? { paused: body.paused } : {}) }; return { body: { gap: pz.gap, caps: pz.caps, paused: pz.paused } }; }
+  if (url.endsWith('/biz/cancel')) return body.id.endsWith('666') ? { status: 400, body: { error: 'পোস্টটা আর লাইনে নেই (চলে গেছে বা আগেই বাতিল)।' } } : { body: { ok: true } };
+  if (url.endsWith('/biz/connect')) return { body: { url: 'https://www.tiktok.com/v2/auth/authorize?state=s1&p=' + body.platform + (body.refresh ? '&r=' + body.refresh : '') } };
+  return { status: 404, body: { error: 'not found' } };
+});
+let cs = await owner('erpContentChannels', []);
+check('channels: this business only, four networks (others dropped), status kept', cs && cs.workspace === true && cs.channels.length === 2
+  && cs.channels.find((c) => c.platform === 'tiktok').status === 'reconnect' && bz13[0].url === URL + '/biz/state' && bz13[0].key === KEY, cs);
+check('channels: rules + today line, unsafe link dropped', cs.gap === 20 && cs.caps.youtube === 1 && cs.line.length === 2 && cs.line[0].link === '' && cs.line[1].link === 'https://facebook.com/1', cs.line);
+r = await mgr('erpContentChannels', []);
+check('a manager cannot open the channels (owner only)', r && r.error, r);
+r = await owner('erpContentRulesSave', [{ gap: 2 }]);
+check('gap below 5 minutes refused', r && r.error && /৫ থেকে ২৪০/.test(r.error), r);
+r = await owner('erpContentRulesSave', [{ caps: { youtube: 9 } }]);
+check('youtube over 6 a day refused', r && r.error, r);
+r = await owner('erpContentRulesSave', [{ caps: { myspace: 1 } }]);
+check('unknown network refused', r && r.error && /চেনা নেই/.test(r.error), r);
+r = await owner('erpContentRulesSave', [{}]);
+check('nothing to change refused', r && r.error, r);
+const n13 = bz13.length;
+r = await owner('erpContentRulesSave', [{ gap: 30, caps: { facebook: 2, youtube: 1 } }]);
+check('rules saved through the engine', r && r.gap === 30 && r.caps.facebook === 2 && bz13.length === n13 + 1 && bz13[n13].url === URL + '/biz/rules' && bz13[n13].body.gap === 30, { r, b: bz13[n13] });
+r = await owner('erpContentRulesSave', [{ hold: { id: 'cz-fb-1', on: true } }]);
+check('one channel on a break', r && !r.error && bz13[bz13.length - 1].body.hold.id === 'cz-fb-1' && bz13[bz13.length - 1].body.hold.on === true, { r, b: bz13[bz13.length - 1] });
+r = await owner('erpContentRulesSave', [{ hold: { id: 'x y', on: true } }]);
+check('break on an odd id refused', r && r.error, r);
+r = await owner('erpContentStop', [{ on: true }]);
+check('emergency stop on', r && r.paused === true && bz13[bz13.length - 1].body.paused === true, r);
+r = await owner('erpContentStop', [{ on: false }]);
+check('emergency stop off', r && r.paused === false, r);
+r = await mgr('erpContentStop', [{ on: true }]);
+check('a manager cannot use the stop', r && r.error && pz.paused === false, r);
+r = await owner('erpContentCancel', [{ id: 'abc' }]);
+check('cancel needs a line id', r && r.error, r);
+r = await owner('erpContentCancel', [{ id: '11111111-2222-4333-8444-555555555555' }]);
+check('cancel a waiting post', r && r.ok === true && bz13[bz13.length - 1].url === URL + '/biz/cancel', r);
+r = await owner('erpContentCancel', [{ id: '11111111-2222-4333-8444-666666666666' }]);
+check('cancel after it went: the engine\'s sentence', r && r.error && /আর লাইনে নেই/.test(r.error), r);
+r = await owner('erpContentConnect', [{ platform: 'linkedin' }]);
+check('connect: only the four networks', r && r.error, r);
+r = await owner('erpContentConnect', [{ platform: 'tiktok', refresh: 'cz-tt-1' }]);
+check('reconnect gives the Postiz page for this workspace', r && /^https:\/\/www\.tiktok\.com\//.test(r.url) && bz13[bz13.length - 1].body.refresh === 'cz-tt-1', r);
+r = await owner('erpContentConnect', [{ platform: 'youtube', refresh: 'bad id with spaces' }]);
+check('odd channel id refused', r && r.error, r);
+// no engine: a plain answer, no call
+await sql`delete from business_config where business_id = ${B} and key = 'brand_bridge'`;
+const n13b = bz13.length;
+cs = await owner('erpContentChannels', []);
+check('no engine: says so, nothing called', cs && cs.bridge === false && cs.error && bz13.length === n13b, cs);
+r = await owner('erpContentStop', [{ on: true }]);
+check('no engine: stop refused plainly', r && r.error && /যুক্ত নেই/.test(r.error), r);
+await sql`insert into business_config (business_id, key, value) values (${B}, 'brand_bridge', ${JSON.stringify({ url: URL, seen: new Date().toISOString() })})`;
+// the activity log words exist for the writes
+const secSrc = (await import('node:fs')).readFileSync(path.join(fnDir, 'handlers', 'security.js'), 'utf8');
+check('activity words for the channel writes', ['erpContentRulesSave', 'erpContentStop', 'erpContentCancel', 'erpContentConnect'].every((k) => secSrc.includes(k + ": '")));
+
 await done();
