@@ -60768,6 +60768,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     h += '<div class="ph-meta"><span>' + (v('a' + id) ? 'যাবে ' + whenWords(v('a' + id)) : 'পরের ফাঁকা সময়ে যাবে') + '</span><span id="bc_cnt_' + id + '" class="' + (body.length > lim ? 'over' : '') + '"' + (body.length > lim * .8 ? '' : ' hidden') + '>' + bn(body.length) + ' / ' + bn(lim) + ' অক্ষর</span>' + (mine.length > 1 ? '<span class="bc-sp"></span>' + mine.map(function (n) { return '<button type="button" class="bc-nc bclg' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" data-noi18n="1">' + logo(n.platform, 15) + esc(n.name || '') + '</button>'; }).join('') : '') + '</div>';
     h += '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : btn(svg('copy') + 'কপি করুন', 'data-bc="copy" data-id="' + id + '"', 'dark', '')) + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
       '<button type="button" class="bc-btn ghost" data-bc="pedit" data-id="' + id + '" aria-pressed="' + !!editing + '">' + (editing ? 'বদল শেষ' : 'লেখা বদলান') + '</button>' + (pickWhy(x) ? '' : mediaButton(id)) +
+      (window.scUi ? scUi.chip(x.uscore, 'data-bc="score" data-id="' + id + '"') : '') +   // score-ui-1
       '<button type="button" class="bc-btn ghost" data-bc="fit" data-id="' + id + '" aria-haspopup="dialog">' + svg('plan') + 'প্ল্যানের সাথে মিল' + (x.fit ? pnFitChip(x.fit) : '') + '</button>' +
       '<button type="button" class="bc-btn ghost" data-bc="more" data-id="' + id + '" aria-expanded="' + !!C.open[id] + '">আরও' + svg('right') + '</button></div>';
     // brand-19 decision inline (was a 9-second toast): no lived detail in this text
@@ -61726,6 +61727,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
   function sheetHtml() {
     if (!C.sheet) return '';
     if (String(C.sheet).indexOf('fit:') === 0) return fitSheetHtml(String(C.sheet).slice(4));
+    if (String(C.sheet).indexOf('score:') === 0) return scoreSheetHtml(String(C.sheet).slice(6));   // score-ui-1
     if (String(C.sheet).indexOf('doc:') === 0) return docSheetHtml(String(C.sheet).slice(4));
     var S = SHEET[C.sheet];
     if (!S) { C.sheet = ''; return ''; }
@@ -62920,7 +62922,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
   function pnRow(w, i) {
     var st = PNST[w.state] || [w.state, 'tick'];
     if (w.state === 'video' && PNMK[w.maker]) st = [PNMK[w.maker][0], w.maker === 'ai' ? 'need' : 'wt']; what = '<b>' + (RFMT[w.format] || w.format) + '</b>' + (w.series_name ? ' · ' + esc(w.series_name) : '') + (w.lang ? ' · ' + (w.lang === 'en' ? 'English' : 'বাংলা') : '');
-    var act = w.draft ? '<button type="button" class="bc-btn sm pn-fitb" data-bc="pnpost" data-id="' + i + '">পোস্ট দেখুন</button><button type="button" class="bc-btn ghost sm pn-fitb" data-bc="fit" data-id="' + w.draft + '" aria-haspopup="dialog">' + svg('plan') + 'প্ল্যান মিল' + pnFitChip(w.fit) + '</button>'
+    var act = w.draft ? '<button type="button" class="bc-btn sm pn-fitb" data-bc="pnpost" data-id="' + i + '">পোস্ট দেখুন</button><button type="button" class="bc-btn ghost sm pn-fitb" data-bc="fit" data-id="' + w.draft + '" aria-haspopup="dialog">' + svg('plan') + 'প্ল্যান মিল' + pnFitChip(w.fit) + '</button>' + (w.uscore !== undefined && window.scUi ? scUi.chip(w.uscore, 'data-bc="score" data-id="' + w.draft + '"', 'sm') : '')
       : w.state === 'later' ? '' : '<button type="button" class="bc-btn ghost sm pn-fitb" data-bc="slotfit" data-id="' + i + '" aria-haspopup="dialog">' + svg('plan') + 'প্ল্যান</button>';
     return '<div class="bc-dep pn-dep' + (w.state === 'later' ? ' pn-later' : '') + (C.pitem === String(i) ? ' pn-sel' : '') + '" id="bc_pnr_' + i + '"><span class="tm">' + pnTime(w.at) + '</span>' + lb(w.platform) +
       '<p><span class="pn-what">' + what + (w.ad ? '<span class="pn-flag">বিজ্ঞাপন: ' + esc(w.ad_type || PNADT[w.ad] || w.ad) + '</span>' : '') + (w.ai_video ? '<span class="pn-flag">AI ভিডিও</span>' : '') + '</span>' +
@@ -63085,6 +63087,15 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
       '<header class="cs-h"><span class="cs-grab" aria-hidden="true"></span><h2 id="bc_cs_t">' + (net ? logo(net, 18) : '') + title + '</h2>' +
       '<button type="button" class="cs-x" data-bc="ctclose" aria-label="বন্ধ করুন">' + svg('x') + '</button></header><div class="cs-b pf-b" aria-live="polite" aria-busy="' + !!busy + '">' + body + '</div></div></div>';
   }
+  // score-ui-1 (owner 20 Nov 2026): "স্কোর কীভাবে এল" - the universal score, its parts, who judged, what changed and what is left
+  function scoreSheetHtml(id) {
+    var f = C.fits[id] || {}, body;
+    if (f.busy || (!f.id && !f.err)) body = '<div class="pf-load">' + skel(80) + skel(160) + '</div>';
+    else if (f.err) body = '<div class="bc-call"><span>' + esc(hasBn(f.err) ? f.err : 'হিসাব আনা গেল না।') + '</span><span class="bc-sp"></span><button type="button" class="bc-btn sm" data-bc="fitretry" data-id="' + esc(id) + '">আবার চেষ্টা করুন</button></div>';
+    else body = window.scUi ? scUi.body(f, id) : '';
+    var back = C.docBack ? '<button type="button" class="bc-btn ghost sm dv-back" data-bc="pfback">' + svg('left') + 'প্ল্যান মিলে ফিরুন</button>' : '';
+    return pnSheet('স্কোর কীভাবে এল', f.platform, back + body, f.busy);
+  }
   function fitSheetHtml(id) {
     if (String(id).indexOf('slot') === 0) return slotSheetHtml(Number(String(id).slice(4)));
     var f = C.fits[id] || {}, body;
@@ -63092,7 +63103,8 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     else if (f.err) body = '<div class="bc-call"><span>' + esc(hasBn(f.err) ? f.err : 'হিসাব আনা গেল না।') + '</span><span class="bc-sp"></span><button type="button" class="bc-btn sm" data-bc="fitretry" data-id="' + esc(id) + '">আবার চেষ্টা করুন</button></div>';
     else {
       var sl = f.slot, cy = f.cycle || {}, okN = (f.score || [0, 0])[0], all = (f.score || [0, 0])[1], bad = okN < all;
-      body = '<div class="pf-sum' + (bad ? ' bad' : '') + '"><span class="pf-fig">' + bn(okN) + '<small>/' + bn(all) + '</small></span><p><b>' + (bad ? bn(all - okN) + 'টা জায়গায় প্ল্যানের সাথে মেলে না' : 'প্ল্যান আর গবেষণার সাথে পুরো মিলে') + '</b>' +
+      body = (window.scUi ? scUi.top(f.scorecard, 'data-bc="score" data-id="' + f.id + '"') : '') +   // score-ui-1
+        '<div class="pf-sum' + (bad ? ' bad' : '') + '"><span class="pf-fig">' + bn(okN) + '<small>/' + bn(all) + '</small></span><p><b>' + (bad ? bn(all - okN) + 'টা জায়গায় প্ল্যানের সাথে মেলে না' : 'প্ল্যান আর গবেষণার সাথে পুরো মিলে') + '</b>' +
         '<small data-noi18n="1">' + esc(f.hook || '') + '</small></p></div>' +
         (bad ? '<div class="pf-act"><span>' + (f.status === 'awaiting_final_approval' ? 'ঠিক করতে: AI-কে নিয়মগুলো মেনে আবার লিখতে দিন (একই ঘর, একই সময়; পুরনোটা সরে যাবে), না হলে লেখাটা খুলে নিজে বদলান।' : 'এটা আগেই অনুমোদিত, সারিতে আছে। না পাঠাতে চাইলে পোস্ট পাতায় সারি থেকে সরান; পরের লেখা নতুন নিয়মে হবে।') + '</span>' + (f.status === 'awaiting_final_approval' ? '<span class="pf-btns"><button type="button" class="bc-btn sm dark" data-bc="fitfix" data-id="' + f.id + '"' + (C.busy['fx' + f.id] ? ' disabled' : '') + '>' + (C.busy['fx' + f.id] ? '<span class="bc-spin"></span>' : '') + 'নিয়ম মেনে আবার লিখুন</button><button type="button" class="bc-btn sm ghost" data-bc="fitgo" data-id="' + f.id + '">লেখাটা খুলুন</button></span>' : '') + '</div>' : '') +
         '<h3 class="pf-h">প্ল্যানের কোন ঘর</h3><div class="pf-kv">' +
@@ -63676,6 +63688,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     else if (w === 'fitretry') { C.fits[id] = null; fitLoad(id); draw(); var pr = el('bc_cs_p'); if (pr) try { pr.focus({ preventScroll: true }); } catch (e) {} }
     else if (w === 'fitfix') { act('fx' + id, 'erpBrandDeskDraftFix', { id: Number(id) }, function (r) { C.fits[id] = null; closeSheet(); toast('AI নিয়ম মেনে আবার লিখছে, ১-২ মিনিট। নতুন লেখা পোস্টে আর এখানে আসবে।'); get('drafts', true); setTimeout(function () { get('plan', true); }, 90000); }); }
     else if (w === 'fitpart') { C.fitPart = Number(id); draw(); }
+    else if (w === 'score') { var fromFit = String(C.sheet).indexOf('fit:') === 0; C.docBack = fromFit ? C.sheet : ''; if (!fromFit) { C.csFromEl = t; C.csFrom = ''; } C.sheet = 'score:' + id; C.csIn = 1; if (!C.fits[id]) fitLoad(id); draw(); setTimeout(function () { var ps = el('bc_cs_p'); if (ps) try { ps.focus({ preventScroll: true }); ps.querySelector('.cs-b').scrollTop = 0; } catch (e) {} }, 30); }   // score-ui-1
     else if (w === 'pfgo') {   // brand-prov-2: a skill or source opens where it lives
       var go = {}; try { go = JSON.parse(t.getAttribute('data-go') || '{}'); } catch (e) {}
       if (go.doc) { C.docBack = C.sheet; C.sheet = 'doc:' + go.doc; draw(); setTimeout(function () { var pd = el('bc_cs_p'); if (pd) try { pd.focus({ preventScroll: true }); pd.querySelector('.cs-b').scrollTop = 0; } catch (e) {} }, 30); }
@@ -64187,7 +64200,7 @@ Nothing about what the screens show or do changes; only how a redraw lands. Moti
   function draftCard(d) {
     var f = flags(d), v = vidFor(d.id), op = !!CD.open[d.id], net = d.platform;
     return '<article class="cd-card"><div class="cd-hd"><span class="cd-net" style="--c:' + (NETC[net] || '#999') + '"><i></i>' + esc(NETN[net] || net) + '</span>' +
-      '<span class="cd-sub">' + esc(d.title_working ? String(d.title_working).slice(0, 60) : '') + '</span></div>' + vidBox(v) +
+      '<span class="cd-sub">' + esc(d.title_working ? String(d.title_working).slice(0, 60) : '') + '</span>' + (window.scUi ? '<span class="cd-sp"></span>' + scUi.chip(d.uscore, 'data-sccd="' + d.id + '"') : '') + '</div>' + vidBox(v) +   // score-ui-1
       '<div class="cd-body' + (op ? ' open' : '') + '" data-noi18n="1">' + esc(d.body || '') + '</div>' +
       (String(d.body || '').length > 320 ? '<button type="button" class="cd-more" data-cd="more" data-id="' + d.id + '">' + (op ? 'কম দেখুন' : 'পুরোটা দেখুন') + '</button>' : '') + f.html +
       '<div class="cd-act">' + (owner() ? '<button type="button" class="cd-btn dark" data-cd="ready" data-id="' + d.id + '"' + (f.block.length || CD.busy['r' + d.id] ? ' disabled' : '') + '>তৈরি</button>' : '') +
@@ -64307,5 +64320,262 @@ Nothing about what the screens show or do changes; only how a redraw lands. Moti
 html[data-cdesk="1"] [data-cf="new"],html[data-cdesk="1"] [data-cf="clip"]{display:none!important}
 </style>
 
+<!-- score-ui-1 (owner 20 Nov 2026): "every video, picture and post gets one universal score on top (e.g. 91); the number is a
+     button; the popup shows which checks ran, who judged, each part's score, what was changed and what is left".
+     Data: the engine's fit report `scorecard` {score, parts[{key,name,score,who,items,before,changed,gate,audit}], learned}
+     (erpBrandDeskFit) and `uscore` on each waiting draft (erpBrandDeskDrafts); both handlers pass the bridge JSON through.
+     Research + shape brief: .impeccable/shape/score-popup-research.md. World: Brand Cockpit "Line Map" - bands use the
+     world's own signals (good = Ink, mid = waiting amber, weak = stuck red), no new hues. The number is labelled as an AI
+     estimate with its usual spread; the owner's review stays final. Brand desk: rides on pnSheet (hooks in the cockpit
+     block). Content desk: the chip in each card header opens this block's own bottom sheet. -->
+<style>
+.sc-chip{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 13px 0 11px;border-radius:999px;border:1.5px solid #16181D;background:#fff;color:#16181D;font:600 13.5px/1 'Hind Siliguri','Noto Sans Bengali',Pretendard,system-ui,sans-serif;cursor:pointer;white-space:nowrap;font-variant-numeric:tabular-nums;transition:background .15s ease-out,box-shadow .15s ease-out}
+.sc-chip b{font:800 17px/1 'Pretendard Variable',Pretendard,system-ui,sans-serif;letter-spacing:-.01em}
+.sc-chip:hover{box-shadow:0 2px 8px rgba(22,24,29,.14)}
+.sc-chip:focus-visible,.sc-top:focus-visible,.sc-row:focus-visible,.sc-x:focus-visible{outline:2px solid #16181D;outline-offset:2px}
+.sc-chip.sm{min-height:32px;padding:0 10px 0 9px;font-size:12.5px}.sc-chip.sm b{font-size:15px}
+.sc-chip.mid{border-color:#F2A900;background:#FFF4D6;color:#5C3D00}
+.sc-chip.weak{border-color:#E0301E;background:#FDECEA;color:#A8260F}
+.sc-chip.na{border:1.5px dashed #8A909B;color:#454A55;font-weight:600}
+.sc{font-family:'Hind Siliguri','Noto Sans Bengali',Pretendard,system-ui,sans-serif;color:#16181D;font-variant-numeric:tabular-nums}
+.sc-hero{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center;padding:14px 16px;border-radius:14px;border:1px solid #E4E6EA;background:#fff}
+.sc-figw{grid-row:span 2;display:flex;flex-direction:column;align-items:center;gap:6px}
+.sc-hero .sc-fig{display:flex;align-items:center;justify-content:center;width:68px;height:68px;border-radius:50%;border:4px solid #16181D;font:800 30px/1 'Pretendard Variable',Pretendard,system-ui,sans-serif;letter-spacing:-.02em}
+.sc-hero.mid .sc-fig{border-color:#F2A900;background:#FFF4D6}.sc-hero.weak .sc-fig{border-color:#E0301E;background:#FDECEA;color:#A8260F}
+.sc-hero.na .sc-fig{border-style:dashed;border-color:#8A909B;color:#5C626E;font-size:22px}
+.sc-hero b{font-size:17px;line-height:1.3}.sc-hero small{font-size:13px;color:#5C626E;line-height:1.45}
+.sc-band{display:inline-block;margin-right:6px;padding:1px 9px;border-radius:999px;font-size:12.5px;font-weight:600;background:#16181D;color:#fff;vertical-align:2px}
+.sc-hero.mid .sc-band{background:#F2A900;color:#16181D}.sc-hero.weak .sc-band{background:#E0301E;color:#fff}.sc-hero.na .sc-band{background:#F2F3F5;color:#454A55}
+.sc-spr{display:inline-block;padding:0 8px;border-radius:999px;border:1px solid #8A909B;font:700 13px/1.5 Pretendard,system-ui,sans-serif;color:#454A55;vertical-align:1px}
+.sc-move{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 2px 0;font-size:14px}
+.sc-move s{color:#5C626E;text-decoration:none;font:700 15px Pretendard,system-ui,sans-serif}.sc-move strong{font:800 15px Pretendard,system-ui,sans-serif}
+.sc-move em{font-style:normal;font-size:12.5px;font-weight:600;padding:1px 8px;border-radius:999px;background:#F2F3F5}
+.sc-note{margin:8px 2px 0;font-size:13px;line-height:1.55;color:#454A55}
+.sc-stop{margin:12px 0 0;padding:10px 12px;border:2px solid #E0301E;border-radius:14px;font-size:13.5px;line-height:1.5}
+.sc-stop b{display:block;color:#A8260F;margin-bottom:2px}
+.sc-h{margin:18px 2px 8px;font-size:15px;font-weight:700}
+.sc-parts{list-style:none;margin:0;padding:0;border-top:1px solid #E4E6EA}
+.sc-parts>li{border-bottom:1px solid #E4E6EA}
+.sc-row{display:grid;grid-template-columns:1fr auto 18px;grid-template-areas:"nm n cv" "bar bar cv" "who who cv";gap:6px 10px;align-items:center;width:100%;min-height:44px;padding:12px 4px;border:0;background:none;text-align:left;font:inherit;color:inherit;cursor:pointer;border-radius:10px}
+.sc-row:hover{background:#F7F8F9}
+.sc-nm{grid-area:nm;min-width:0}.sc-nm b{font-size:14.5px;font-weight:700}.sc-nm small{margin-left:8px;font-size:12px;color:#5C626E;white-space:nowrap}
+.sc-n{grid-area:n;font:800 18px/1 Pretendard,system-ui,sans-serif}
+.sc-cv{grid-area:cv;width:18px;height:18px;color:#5C626E;transition:transform .2s ease-out}
+.sc-row[aria-expanded="true"] .sc-cv{transform:rotate(90deg)}
+.sc-bar{grid-area:bar;display:block;height:6px;border-radius:99px;background:#F2F3F5;overflow:hidden}
+.sc-bar i{display:block;height:100%;border-radius:99px;background:#16181D}
+.mid>.sc-row .sc-bar i,.sc-it.mid .sc-bar i{background:#F2A900}.weak>.sc-row .sc-bar i,.sc-it.weak .sc-bar i{background:#E0301E}
+.weak>.sc-row .sc-n{color:#A8260F}
+.sc-who{grid-area:who;display:flex;flex-wrap:wrap;gap:5px}
+.sc .sc-who .sc-wh{margin:0}   /* a cockpit rule gives some spans an auto left margin */
+.sc-wh{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:2px 9px 2px 3px;border-radius:999px;background:#F2F3F5;font-size:12.5px;line-height:1.5;color:#454A55}
+.sc-wh i{font-style:normal;flex:none;padding:0 6px;border-radius:999px;font-size:11.5px;font-weight:700;background:#fff;color:#16181D;border:1px solid #D5D8DD}
+.sc-wh.ai i{background:#16181D;color:#fff;border-color:#16181D}
+.sc-wh span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-det{padding:2px 4px 14px}
+.sc-it{padding:10px 0;border-top:1px dashed #E4E6EA}.sc-it:first-child{border-top:0}
+.sc-ih{display:grid;grid-template-columns:1fr auto;grid-template-areas:"t n" "bar bar";gap:5px 10px;align-items:center}
+.sc-ih b{grid-area:t;font-size:14px}.sc-ih .sc-n{font-size:15px}.sc-ih .sc-bar{height:4px}
+.sc-ck{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:5px}
+.sc-ck li{display:grid;grid-template-columns:18px 1fr;gap:7px;font-size:13.5px;line-height:1.5}
+.sc-ck svg{width:16px;height:16px;margin-top:3px}
+.sc-ck .ok svg{color:#16181D}.sc-ck .bad svg{color:#E0301E}.sc-ck .bad{color:#16181D}.sc-ck .info svg{color:#8A909B}
+.sc-ck em{font-style:normal;font-weight:600;margin-right:5px}
+.sc-jd{margin:7px 0 0;font-size:13px;color:#454A55}
+.sc-sub{margin:12px 0 6px;font-size:13px;font-weight:700;color:#16181D}
+.sc-left{margin:0;padding-left:22px;display:grid;gap:5px;font-size:13.5px;line-height:1.55}
+.sc-left li::marker{font-weight:700}
+.sc-tag{display:inline-block;margin-right:6px;padding:0 7px;border-radius:999px;background:#F2F3F5;font-size:12px;font-weight:600}
+.sc-chg{display:flex;flex-wrap:wrap;gap:5px}.sc-chg span{padding:2px 9px;border-radius:999px;border:1px solid #16181D;font-size:12.5px;font-weight:600}
+.sc-ok{font-size:13.5px;color:#454A55;margin:4px 0 0}
+.sc-final{display:flex;gap:8px;align-items:flex-start;margin:16px 2px 4px;padding:11px 12px;border-radius:14px;background:#F2F3F5;font-size:13.5px;line-height:1.5}
+.sc-final svg{flex:none;width:18px;height:18px;margin-top:2px}
+.sc-top{display:grid;grid-template-columns:auto 1fr 18px;gap:12px;align-items:center;width:100%;margin:0 0 12px;padding:10px 12px;border:1px solid #E4E6EA;border-radius:14px;background:#fff;font:inherit;color:inherit;text-align:left;cursor:pointer;min-height:56px}
+.sc-top:hover{background:#F7F8F9}
+.sc-top .sc-fig{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:50%;border:3px solid #16181D;font:800 19px/1 Pretendard,system-ui,sans-serif}
+.sc-top.mid .sc-fig{border-color:#F2A900;background:#FFF4D6}.sc-top.weak .sc-fig{border-color:#E0301E;background:#FDECEA;color:#A8260F}.sc-top.na .sc-fig{border-style:dashed;border-color:#8A909B}
+.sc-top b{display:block;font-size:14.5px}.sc-top small{font-size:12.5px;color:#5C626E}
+.sc-top svg{width:18px;height:18px;color:#5C626E}.sc-top .sc-cv{grid-area:auto}
+.sc-layer{position:fixed;inset:0;z-index:9100;display:flex;align-items:flex-end;justify-content:center;background:rgba(22,24,29,.42)}
+.sc-pan{width:min(560px,100%);max-height:88vh;display:flex;flex-direction:column;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 10px 30px rgba(22,24,29,.18);outline:none}
+.sc-pan header{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;border-bottom:1px solid #E4E6EA}
+.sc-pan h2{flex:1;margin:0;font:700 18px/1.3 'Hind Siliguri','Noto Sans Bengali',system-ui,sans-serif;color:#16181D}
+.sc-x{width:44px;height:44px;border:0;border-radius:10px;background:#F2F3F5;color:#16181D;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sc-x svg{width:18px;height:18px}
+.sc-pb{overflow:auto;padding:14px 16px calc(18px + env(safe-area-inset-bottom))}
+.sc-load{height:68px;border-radius:14px;margin-bottom:10px;background:linear-gradient(90deg,#F2F3F5 0,#E7E9EC 50%,#F2F3F5 100%);background-size:200% 100%;animation:scShim 1.4s linear infinite}
+@keyframes scShim{to{background-position:-200% 0}}
+@media (min-width:760px){.sc-layer{align-items:center}.sc-pan{border-radius:16px}}
+@media (max-width:759px){.sc-chip{min-height:44px}.sc-chip.sm{min-height:40px}.sc-hero .sc-fig{width:60px;height:60px;font-size:26px}}
+@media (prefers-reduced-motion:reduce){.sc-chip,.sc-cv{transition:none}.sc-load{animation:none}}
+</style>
+<script>
+(function () {
+  var OPEN = {};   // which part rows are open, kept across redraws
+  var W = { virality: 45, plan: 25, context: 15, claims: 10, made: 5 };
+  var MOD = { hook: 'হুক', caption: 'লেখা', hashtags: 'হ্যাশট্যাগ', comment: 'প্রথম কমেন্ট', media: 'মিডিয়া', timing: 'সময়', plan: 'মিডিয়া প্ল্যান' };
+  var BAND = { good: 'ভালো', mid: 'মাঝারি', weak: 'দুর্বল', na: 'এখনো যাচাই হয়নি' };
+  var I = {
+    ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>',
+    bad: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>',
+    dot: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>',
+    cv: '<svg class="sc-cv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6"/></svg>'
+  };
+  function B(n) { return String(n).replace(/[0-9]/g, function (d) { return '০১২৩৪৫৬৭৮৯'[d]; }); }   // counts/scores: Bangla digits (the desk page has no bn)
+  function E(t) { return typeof esc === 'function' ? esc(t) : String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
+  function num(s) { return s == null || s === '' || isNaN(Number(s)) ? null : Math.max(0, Math.min(100, Math.round(Number(s)))); }
+  function band(s) { return s == null ? 'na' : s >= 85 ? 'good' : s >= 60 ? 'mid' : 'weak'; }
+  function bar(s) { return '<span class="sc-bar" aria-hidden="true"><i style="width:' + (s == null ? 0 : s) + '%"></i></span>'; }
+  // the button on a card: the number is the button
+  function chip(score, attrs, size) {
+    var s = num(score), b = band(s);
+    return '<button type="button" class="sc-chip ' + b + (size ? ' ' + size : '') + '" ' + attrs + ' aria-haspopup="dialog" aria-label="' +
+      (s == null ? 'স্কোর এখনো যাচাই হয়নি, কী কী চেক হয় দেখুন' : 'সব চেকের স্কোর ' + B(s) + ', কী কী দিয়ে দেখুন') + '">' +
+      (s == null ? '<span>এখনো যাচাই হয়নি</span>' : '<b>' + B(s) + '</b><span>স্কোর</span>') + '</button>';
+  }
+  // the same number on top of the plan-fit sheet
+  function top(sc, attrs) {
+    var s = num(sc && sc.score), b = band(s);
+    return '<button type="button" class="sc-top ' + b + '" ' + attrs + ' aria-haspopup="dialog"><span class="sc-fig">' + (s == null ? '–' : B(s)) + '</span>' +
+      '<span><b>' + (s == null ? 'সব চেকের স্কোর: এখনো যাচাই হয়নি' : 'সব চেকের স্কোর · ' + BAND[b]) + '</b><small>AI-এর আনুমানিক স্কোর; কে বিচার করেছে আর কী বাকি, দেখুন</small></span>' + I.cv + '</button>';
+  }
+  function kind(t) {
+    t = String(t || '');
+    if (/ffmpeg/i.test(t)) return ['ms', 'মাপ'];
+    if (/ভিশন/.test(t)) return ['ai', 'ছবি দেখে'];
+    if (/AI/.test(t)) return ['ai', 'AI'];
+    return ['cd', 'কোড'];
+  }
+  function who(list) {
+    return (list || []).filter(function (t) { return t && t !== '—'; }).map(function (t) {
+      var k = kind(t), tx = String(t).replace(/^কোড:?\s*/, '');
+      return '<span class="sc-wh ' + k[0] + '" title="' + E(t) + '"><i>' + k[1] + '</i><span>' + E(tx) + '</span></span>';
+    }).join('');
+  }
+  // the AI judge's answers per item: 2 = clearly yes, 1 = partly, 0 = no; .5 = the two runs disagreed
+  function judgeOf(j) {
+    var v = []; for (var k in j || {}) if (j[k] != null && !isNaN(j[k])) v.push(Number(j[k]));
+    if (!v.length) return null;
+    var y = 0, p = 0, n = 0, sp = 0;
+    v.forEach(function (x) { if (x % 1) sp++; else if (x >= 2) y++; else if (x >= 1) p++; else n++; });
+    return { y: y, p: p, n: n, sp: sp, all: v.length };
+  }
+  function judgeLine(J) {
+    if (!J) return '';
+    var a = [];
+    if (J.y) a.push(B(J.y) + 'টা হ্যাঁ'); if (J.p) a.push(B(J.p) + 'টা আংশিক'); if (J.n) a.push(B(J.n) + 'টা না');
+    if (J.sp) a.push(B(J.sp) + 'টায় দুই বিচারের মত আলাদা');
+    return '<p class="sc-jd">AI বিচারকের উত্তর (' + B(J.all) + 'টা প্রশ্ন): ' + a.join(' · ') + '</p>';
+  }
+  function ck(ok, inner) { var c = ok === false ? 'bad' : ok ? 'ok' : 'info'; return '<li class="' + c + '">' + I[ok === false ? 'bad' : ok ? 'ok' : 'dot'] + '<span>' + inner + '</span></li>'; }
+  function itemsHtml(P) {
+    var it = P.items || [];
+    if (P.key === 'virality') return it.map(function (x) {
+      var s = num(x.score);
+      return '<div class="sc-it ' + band(s) + '"><div class="sc-ih"><b>' + E(x.name) + '</b><span class="sc-n">' + (s == null ? '–' : B(s)) + '</span>' + bar(s) + '</div>' +
+        ((x.checks || []).length ? '<ul class="sc-ck">' + x.checks.map(function (c) { return ck(c.ok, '<span data-noi18n="1">' + E(c.t) + '</span>'); }).join('') + '</ul>' : '') +
+        judgeLine(judgeOf(x.judge)) + '</div>';
+    }).join('');
+    if (!it.length) return P.key === 'claims' ? '<p class="sc-ok">কোনো নিষেধ ভাঙেনি, কোনো দাবি আটকায়নি।</p>' : '';
+    return '<ul class="sc-ck">' + it.map(function (x) {
+      return ck(x.ok, (x.name ? '<em>' + E(x.name) + '</em>' : '') + (x.t ? '<span data-noi18n="1">' + E(x.t) + '</span>' : ''));
+    }).join('') + '</ul>';
+  }
+  function leftOf(P) {
+    var a = (P.audit || []).map(function (x) { return { m: x.module, f: x.fix }; });
+    if (!a.length) (P.items || []).forEach(function (x) { (x.fixes || []).slice(0, 2).forEach(function (f) { a.push({ m: '', n: x.name, f: f }); }); });
+    if (!a.length && P.key !== 'virality') (P.items || []).forEach(function (x) { if (x.ok === false && x.name && P.key !== 'claims') a.push({ m: '', n: '', f: x.name }); });
+    return a.slice(0, 6);
+  }
+  function partHtml(P, key) {
+    var s = num(P.score), b = band(s), k = key + '_' + P.key, on = !!OPEN[k];
+    var chg = (P.changed || []).map(function (m) { return '<span>' + E(MOD[m] || m) + '</span>'; }).join('');
+    var left = leftOf(P);
+    var det = (P.gate || []).length ? '<div class="sc-stop"><b>বাধা: এগুলো থাকলে স্কোর ৪৫-এর বেশি ওঠে না</b><span data-noi18n="1">' + P.gate.map(E).join('<br>') + '</span></div>' : '';
+    det += itemsHtml(P);
+    if (chg) det += '<h4 class="sc-sub">AI যা বদলেছে</h4><div class="sc-chg">' + chg + '</div>';
+    if (left.length) det += '<h4 class="sc-sub">যা এখনও ভালো করা যায়</h4><ol class="sc-left">' + left.map(function (x) {
+      return '<li>' + (x.m || x.n ? '<span class="sc-tag">' + E(MOD[x.m] || x.m || x.n) + '</span>' : '') + '<span data-noi18n="1">' + E(x.f) + '</span></li>'; }).join('') + '</ol>';
+    else if (s != null && s >= 100) det += '<p class="sc-ok">এই অংশে কিছু বাকি নেই।</p>';
+    return '<li class="' + b + '"><button type="button" class="sc-row" data-scp="' + E(k) + '" aria-expanded="' + on + '" aria-controls="sc_d_' + E(k) + '">' +
+      '<span class="sc-nm"><b>' + E(P.name) + '</b>' + (W[P.key] ? '<small>মোটের ' + B(W[P.key]) + '% ভাগ</small>' : '') + '</span>' +
+      '<span class="sc-n">' + (s == null ? '–' : B(s)) + '</span>' + I.cv + bar(s) + '<span class="sc-who">' + who(P.who) + '</span></button>' +
+      '<div class="sc-det" id="sc_d_' + E(k) + '"' + (on ? '' : ' hidden') + '>' + det + '</div></li>';
+  }
+  var FIN0 = 'শেষ কথা আপনার রিভিউ। স্কোর শুধু কোথায় দেখবেন তা দেখায়; কম স্কোরের লেখাও আপনি পাঠাতে পারেন, বেশি স্কোরের লেখাও বাদ দিতে পারেন।';
+  function fin(sc) { return '<p class="sc-final">' + I.eye + '<span>' + E((sc && sc.note) || FIN0) + '</span></p>'; }
+  // the popup body: f = the fit report (needs f.scorecard); key keeps open rows apart per draft
+  function body(f, key) {
+    var sc = f && f.scorecard, s = num(sc && sc.score), b = band(s), spr = sc && sc.spread != null && !isNaN(sc.spread) ? Math.abs(Math.round(Number(sc.spread))) : null;
+    var hero = '<div class="sc-hero ' + b + '"><span class="sc-figw"><span class="sc-fig">' + (s == null ? '–' : B(s)) + '</span>' + (s != null && spr != null ? '<span class="sc-spr" title="দুই বারের AI বিচারের পার্থক্য">±' + B(spr) + '</span>' : '') + '</span>' +
+      '<b><span class="sc-band">' + BAND[b] + '</span>' + (s == null ? '' : 'AI-এর আনুমানিক স্কোর') + '</b>' +
+      '<small>' + (s == null ? 'এই লেখাটা এখনো সব চেক দিয়ে যাচাই হয়নি।' : '১০০-র মধ্যে, নিচের অংশগুলোর ভাগ মিলিয়ে। ৮৫+ ভালো, ৬০-৮৪ মাঝারি, ৬০-এর নিচে দুর্বল।') + '</small></div>';
+    if (!sc || !(sc.parts || []).length) return '<div class="sc">' + hero + '<p class="sc-note">ভাইরাল চেক চললে এখানে আসবে: কোন কোন চেক চলেছে, কে বিচার করেছে (কোড নিয়ম, AI বিচারক, ffmpeg, ছবি দেখা AI), প্রতিটা অংশের নম্বর, AI কী বদলেছে আর কী বাকি।</p>' + fin(sc) + '</div>';
+    var parts = sc.parts, vir = parts.filter(function (p) { return p.key === 'virality'; })[0];
+    var h = hero;
+    if (vir && num(vir.before) != null && num(vir.score) != null) {
+      var d = num(vir.score) - num(vir.before);
+      h += '<p class="sc-move">ভাইরাল অংশ: <s>আগে ' + B(num(vir.before)) + '</s> → <strong>এখন ' + B(num(vir.score)) + '</strong>' + (d ? '<em>' + (d > 0 ? 'AI ঠিক করে +' : '') + B(d) + '</em>' : '<em>বদল হয়নি</em>') + '</p>';
+    }
+    var runs = 0, sp = 0;
+    if (vir) {
+      (vir.who || []).forEach(function (t) { var m = String(t).match(/×\s*([0-9০-৯]+)/); if (m) runs = Number(m[1].replace(/[০-৯]/g, function (c) { return '০১২৩৪৫৬৭৮৯'.indexOf(c); })); });
+      (vir.items || []).forEach(function (x) { var J = judgeOf(x.judge); if (J) sp += J.sp; });
+    }
+    h += '<p class="sc-note">AI বিচারকের নম্বর এক বার থেকে আরেক বারে সাধারণত ±৩-৫ ওঠানামা করে, তাই ৮৮ আর ৯১ প্রায় একই।' +
+      (spr != null ? ' এখানে বিচারক দুই বার পড়েছে; দুই বারের স্কোরে ±' + B(spr) + ' পার্থক্য' + (sp ? ', ' + B(sp) + 'টা প্রশ্নে মত আলাদা' : '') + '।'
+        : runs >= 2 ? ' এখানে বিচারক ' + B(runs) + ' বার পড়ে গড় নিয়েছে' + (sp ? '; ' + B(sp) + 'টা প্রশ্নে দুই বারের মত আলাদা ছিল।' : '; দুই বারের মত একই ছিল।') : vir ? ' এখানে বিচারক এক বার পড়েছে (এই নেটওয়ার্কে তার মত স্থির)।' : '') +
+      (sc.learned ? ' লেখার আগে AI এখন ' + B(sc.learned) + 'টা শেখা নিয়ম মানে।' : '') + '</p>';
+    var gates = vir && (vir.gate || []).length;
+    if (gates) h += '<div class="sc-stop"><b>বাধা আছে: ঠিক না করলে পোস্ট ঝুঁকিতে</b><span data-noi18n="1">' + vir.gate.map(E).join('<br>') + '</span></div>';
+    h += '<h3 class="sc-h">কোন কোন চেক চলেছে · ' + B(parts.length) + 'টা</h3><ol class="sc-parts">' + parts.map(function (P) { return partHtml(P, String(key)); }).join('') + '</ol>';
+    return '<div class="sc">' + h + fin(sc) + '</div>';
+  }
+  window.scUi = { chip: chip, top: top, body: body, band: band };
+
+  // open/close a part row in place (works inside the cockpit's sheet and the Content desk sheet alike)
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-scp]'); if (!t) return;
+    var k = t.getAttribute('data-scp'), on = !OPEN[k]; OPEN[k] = on;
+    t.setAttribute('aria-expanded', String(on));
+    var d = document.getElementById('sc_d_' + k); if (d) d.hidden = !on;
+  });
+
+  // ---- Content desk: its own bottom sheet (the desk has no plan-fit sheet)
+  var L = { id: null, fit: {}, from: null };
+  function layer() { var x = document.getElementById('sc_layer'); if (!x) { x = document.createElement('div'); x.id = 'sc_layer'; document.body.appendChild(x); } return x; }
+  function paintL() {
+    var x = layer();
+    if (!L.id) { x.innerHTML = ''; return; }
+    var f = L.fit[L.id] || {}, b;
+    if (f.busy) b = '<div class="sc-load"></div><div class="sc-load" style="height:140px"></div>';
+    else if (f.err) b = '<div class="sc-stop"><b>হিসাব আনা গেল না</b><span>' + E(f.err) + '</span></div><p><button type="button" class="sc-chip" data-scr="' + E(L.id) + '">আবার চেষ্টা করুন</button></p>';
+    else b = body(f, 'cd' + L.id);
+    x.innerHTML = '<div class="sc-layer" data-scx="bg"><div class="sc-pan" role="dialog" aria-modal="true" aria-labelledby="sc_lt" tabindex="-1">' +
+      '<header><h2 id="sc_lt">স্কোর কীভাবে এল</h2><button type="button" class="sc-x" data-scx="x" aria-label="বন্ধ করুন">' + I.x + '</button></header>' +
+      '<div class="sc-pb" aria-live="polite" aria-busy="' + !!f.busy + '">' + b + '</div></div></div>';
+  }
+  function loadL(id) {
+    L.fit[id] = { busy: 1 }; paintL();
+    srv('erpBrandDeskFit', [{ id: Number(id) }], function (r) { L.fit[id] = r || {}; if (L.id === id) paintL(); },
+      function (er) { L.fit[id] = { err: (er && er.message) || String(er) }; if (L.id === id) paintL(); });
+  }
+  function closeL() { L.id = null; paintL(); if (L.from && document.contains(L.from)) try { L.from.focus({ preventScroll: true }); } catch (e) {} L.from = null; }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-sccd],[data-scx],[data-scr]'); if (!t) return;
+    if (t.hasAttribute('data-sccd')) {
+      L.id = t.getAttribute('data-sccd'); L.from = t;
+      if (!L.fit[L.id] || L.fit[L.id].err) loadL(L.id); else paintL();
+      setTimeout(function () { var p = document.querySelector('#sc_layer .sc-pan'); if (p) try { p.focus({ preventScroll: true }); } catch (x) {} }, 30);
+    } else if (t.hasAttribute('data-scr')) loadL(t.getAttribute('data-scr'));
+    else if (t.getAttribute('data-scx') === 'x' || e.target === t) closeL();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && L.id) { e.preventDefault(); closeL(); } });
+  // leaving the Content desk closes its sheet
+  window.addEventListener('hashchange', function () { if (L.id) closeL(); });
+})();
+</script>
 </body>
 </html>
