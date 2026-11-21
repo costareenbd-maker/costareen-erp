@@ -5090,3 +5090,25 @@ platform filter on the Posts page like the other filters)
 - Web only; page = #60 source + this block, sw cz-shell-v4-native-keep1, both Pages projects (prev
   private/live-web-index-before-keep1-20261121.html). Checked live with a throw-away test list on the real page (landed
   on the next item's top at the top bar + 12 px, highlight on). Not clicked through on real records (they would act).
+
+2026-11-21 — #62 gen-pic-1 (owner, phone screenshot: "it says no fitting picture and describes a picture I cannot see;
+when nothing fits, MAKE a fitting picture - Flow is not logged in, so use the backup ChatGPT or Gemini")
+- Brand bridge media_pick: when no album picture fits (or the album has none) the AI now MAKES one: Claude writes a photo
+  prompt from the post (documentary photo of the post's moment; no readable text/logos, no real or recognisable person,
+  never the owner, no fake documents or figures), the Mac's AI gateway makes it with gpt-image-2 on the ChatGPT plan, the
+  picture goes into the Brand album (like his own photos) and onto the draft with an info note "AI-made picture: add the
+  AI label when posting". Max 12 made pictures a day. The no-fit line is plain now ("no album picture goes with this
+  text") instead of the AI's reason about a picture he never saw.
+- Gemini cannot do it: the personal Gemini key answers 429 (quota 0) on every image model (free tier; would need billing).
+- ChatGPT plan resting (usage limit): the draft says so and waits; gen_pic_loop tries one waiting draft every 30 minutes
+  (settings gen_pic_wait; drafts older than 2 days dropped). Only made pictures count toward the day's 12.
+- Gateway (Mac /opt/erp-ai-gateway/gateway.mjs, backup gateway.mjs.bak-genpic1): picture jobs can be {keep: true} (no
+  upload address); the caller fetches the picture once with GET /v1/images/jobs/<id>/file. Repo copy synced to live (it
+  also carries the 19 Nov model-remap that was only on the Mac).
+- Page: "AI মানানসই ছবি বানাচ্ছে (১-২ মিনিট)…" while making; a made picture drops the "AI বেছেছে:" prefix (its line
+  already starts "AI দিয়ে বানানো ছবি"). sw cz-shell-v4-native-genpic1, both Pages projects (prev
+  private/live-web-index-before-genpic1-20261121.html).
+- Tested on live draft 158 (the screenshot): the whole path ran up to ChatGPT, which answered "usage limit reached"; the
+  draft now shows the plain waiting line and is in gen_pic_wait. A made picture has NOT been seen yet (plan resting).
+- Not carried to the business bridges (bizdesk): their pictures would run on the owner's personal ChatGPT plan, which
+  his AI-split rule keeps for himself; needs his decision.

@@ -345,11 +345,23 @@ function asText(body) {
 // ChatGPT through OpenClaw; when the plan's usage window is spent (429), OpenClaw is down or the model is refused, the
 // same question goes to Claude (text) so the ERP and the sites keep working - photos are not Claude's here: that error
 // goes back and the caller moves on to its next AI (Gemini)
+
+// 19 Nov 2026 (owner: "always the newest models, old and fallback names updated too"): the weekly openclaw-update.py
+// writes /etc/erp-ai-gateway.models.json; old ChatGPT names are sent to the newest working model of the same tier,
+// and if that one fails the asked-for name is tried once more.
+const MODEL_MAP_FILE = '/etc/erp-ai-gateway.models.json';
+let _mm = { at: 0, map: {} };
+function remapModel(m) {
+  if (Date.now() - _mm.at > 60000) { try { _mm = { at: Date.now(), map: (JSON.parse(readFileSync(MODEL_MAP_FILE, 'utf8')).map) || {} }; } catch (_) { _mm = { at: Date.now(), map: {} }; } }
+  return _mm.map[m] || m;
+}
 async function openclawChat(body, res) {
   let token = '';
   try { token = JSON.parse(readFileSync('/home/admin/.openclaw/openclaw.json', 'utf8')).gateway.auth.token; } catch (_) { token = ''; }
-  const model = GPT_ALIAS[body.model] || body.model;
+  const asked = GPT_ALIAS[body.model] || body.model;
+  const model = body['x-no-remap'] ? asked : remapModel(asked);
   const fwd = { ...asText(body), model: 'openclaw/erp', stream: false };
+  delete fwd['x-no-remap']; delete fwd.__retried;
   let why = '';
   try {
     const r = await fetch('http://127.0.0.1:18789/v1/chat/completions', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token, 'x-openclaw-model': 'openai/' + model },
@@ -362,6 +374,8 @@ async function openclawChat(body, res) {
       why = 'odd answer: ' + txt.slice(0, 160);
     } else why = r.status + ' ' + txt.slice(0, 200);
   } catch (e) { why = 'openclaw down: ' + String(e && e.message || e).slice(0, 120); }
+  if (model !== asked && !body.__retried) { console.log('mapped model ' + model + ' failed (' + why.slice(0, 80) + '), back to ' + asked);
+    return openclawChat({ ...body, model: asked, 'x-no-remap': true, __retried: true }, res); }
   if (!ALLOW_CLAUDE || hasImage(body.messages || [])) { console.log('chatgpt failed (no claude fallback): ' + why); return err(res, 503, 'ChatGPT is not available right now (' + why.slice(0, 120) + ').'); }
   console.log('gpt fallback to claude: ' + why);
   res.setHeader('x-erp-ai-engine', 'claude:fallback');
@@ -406,8 +420,11 @@ async function imgWork(job) {
     const j = await runOpenclaw(args, 240000);
     const o = (j.outputs || [])[0] || {};
     const bytes = readFileSync(o.path || out);
+    if (job.keep) { job.file = IMG_DIR + '/' + job.id + '.keep.' + job.ext; writeFileSync(job.file, bytes, { mode: 0o600 }); }   // gen-pic-1
+    else {
     const r = await fetch(job.upload.url, { method: 'PUT', headers: { 'Content-Type': job.upload.contentType, 'x-upsert': 'true' }, body: bytes });
     if (!r.ok) throw new Error('upload ' + r.status + ' ' + (await r.text()).slice(0, 120));
+    }
     Object.assign(job, { state: 'done', bytes: bytes.length, width: o.width || 0, height: o.height || 0, revisedPrompt: String(o.revisedPrompt || '').slice(0, 1500), model: j.model || 'gpt-image-2' });
   } catch (e) {
     Object.assign(job, { state: 'failed', error: String(e && e.message || e).slice(0, 300) });
@@ -422,13 +439,13 @@ async function imgPump() {
   imgBusy = true;
   try { while (imgQueue.length) await imgWork(imgQueue.shift()); } finally { imgBusy = false; }
   const old = Date.now() - 2 * 3600e3;
-  for (const [id, j] of imgJobs) if (j.created < old) imgJobs.delete(id);
+  for (const [id, j] of imgJobs) if (j.created < old) { if (j.file) { try { unlinkSync(j.file); } catch (_) { /* gone */ } } imgJobs.delete(id); }
 }
 function imgStart(body, res) {
   const prompt = String(body.prompt || '').trim().slice(0, 4000);
   if (!prompt) return err(res, 400, 'prompt?', 'invalid_request_error');
-  const up = body.upload || {};
-  if (!STORE_RE.test(String(up.url || ''))) return err(res, 400, 'nowhere to upload', 'invalid_request_error');
+  const up = body.upload || {}, keep = body.keep === true && !up.url;   // gen-pic-1: keep = the caller fetches the picture itself
+  if (!keep && !STORE_RE.test(String(up.url || ''))) return err(res, 400, 'nowhere to upload', 'invalid_request_error');
   if (imgQueue.length >= 6) return err(res, 429, 'Too many pictures waiting; try again in a few minutes.');
   const id = randomUUID().replace(/-/g, '');
   mkdirSync(IMG_DIR, { recursive: true, mode: 0o1777 }); chmodSync(IMG_DIR, 0o1777);
@@ -437,14 +454,14 @@ function imgStart(body, res) {
   if (m) { input = IMG_DIR + '/' + id + '-in.' + (m[1] === 'jpeg' ? 'jpg' : m[1]); writeFileSync(input, Buffer.from(m[2], 'base64'), { mode: 0o644 }); }
   const job = { id, state: 'queued', created: Date.now(), prompt, input, size: SIZES.includes(body.size) ? body.size : '1024x1024',
     quality: ['low', 'medium', 'high'].includes(body.quality) ? body.quality : 'medium', ext: /png/.test(up.contentType || '') ? 'png' : 'jpg',
-    upload: { url: up.url, contentType: /png/.test(up.contentType || '') ? 'image/png' : 'image/jpeg' } };
+    keep, upload: { url: up.url || '', contentType: /png/.test(up.contentType || '') ? 'image/png' : 'image/jpeg' } };
   imgJobs.set(id, job); imgQueue.push(job); imgPump();
   return send(res, 200, { id, state: 'queued', waiting: imgQueue.length });
 }
 function imgStatus(id, res) {
   const j = imgJobs.get(id);
   if (!j) return err(res, 404, 'no such job');
-  const { input, upload, prompt, ...pub } = j;
+  const { input, upload, prompt, file, ...pub } = j;
   return send(res, 200, pub);
 }
 
@@ -457,6 +474,14 @@ const HANDLER = (req, res) => {
   if (req.method === 'GET' && path === '/v1/models') return send(res, 200, { object: 'list', data: MODELS.map((id) => ({ id, object: 'model', owned_by: 'erp-gateway' })) });
   const im = /^\/v1\/images\/jobs\/([0-9a-f]{32})$/.exec(path);
   if (req.method === 'GET' && im) return imgStatus(im[1], res);
+  const imf = /^\/v1\/images\/jobs\/([0-9a-f]{32})\/file$/.exec(path);   // gen-pic-1: one fetch of a kept picture, then it is gone
+  if (req.method === 'GET' && imf) {
+    const j = imgJobs.get(imf[1]);
+    if (!j || j.state !== 'done' || !j.file) return err(res, 404, 'no picture');
+    let b; try { b = readFileSync(j.file); } catch (_) { return err(res, 404, 'no picture'); }
+    try { unlinkSync(j.file); } catch (_) { /* gone */ } j.file = '';
+    res.writeHead(200, { 'Content-Type': j.upload.contentType, 'Content-Length': b.length }); return res.end(b);
+  }
   if (req.method !== 'POST' || (path !== '/v1/chat/completions' && path !== '/v1/images/jobs')) return err(res, 404, 'not found');
   let raw = '';
   req.on('data', (d) => { raw += d; if (raw.length > 20e6) req.destroy(); });

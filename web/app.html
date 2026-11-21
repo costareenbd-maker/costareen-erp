@@ -60777,12 +60777,12 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
   function mediaButton(k) { return '<button type="button" class="bc-btn ghost" data-bc="mopen" data-id="' + k + '" aria-expanded="' + (String(C.mpk) === String(k)) + '">' + pi('media') + (C.media[k] ? 'ছবি বদলান' : 'ছবি দিন') + '</button>'; }
   function measureAspect(m) { if (!m || !m.thumb || C.ar[m.asset]) return; var im = new Image(); im.onload = function () { if (im.naturalWidth) { C.ar[m.asset] = im.naturalHeight / im.naturalWidth; draw(); } }; im.src = m.thumb; }
   // brand-21: why the AI chose this picture (or that nothing fitted), and the two ways to change it
-  function pickBusy(id) { var j = (C.d.drafts && C.d.drafts.mjobs) || {}; return Object.keys(j).some(function (k) { return j[k].state === 'picking' && String(j[k].draft) === String(id); }); }
+  function pickBusy(id) { var j = (C.d.drafts && C.d.drafts.mjobs) || {}, hit = null; Object.keys(j).forEach(function (k) { if (j[k].state === 'picking' && String(j[k].draft) === String(id)) hit = j[k]; }); return hit; }
   function pickWhy(x) {
     var id = x.id, m = C.media[id], auto = m && x.media && x.media.auto && m.id === x.media.id;
-    if (pickBusy(id)) return '<p class="pm-why"><span class="bc-spin"></span><span class="pm-t">AI অন্য ছবি খুঁজছে…</span></p>';
+    var pb = pickBusy(id); if (pb) return '<p class="pm-why"><span class="bc-spin"></span><span class="pm-t">' + (pb.gen ? 'AI মানানসই ছবি বানাচ্ছে (১-২ মিনিট)…' : 'AI অন্য ছবি খুঁজছে…') + '</span></p>';
     if (!x.media_why || (m && !auto)) return '';
-    return '<div class="pm-why' + (m ? '' : ' none') + '"><span class="pm-t">' + (m ? '<b>AI বেছেছে:</b> ' : '') + '<span data-noi18n="1">' + esc(x.media_why) + '</span></span>' +
+    return '<div class="pm-why' + (m ? '' : ' none') + '"><span class="pm-t">' + (m ? (x.media && x.media.ai && m.id === x.media.id ? '' : '<b>AI বেছেছে:</b> ') : '') + '<span data-noi18n="1">' + esc(x.media_why) + '</span></span>' +
       '<span class="pm-a">' + btn(m ? 'অন্য ছবি' : 'আবার খুঁজুন', 'data-bc="repick" data-id="' + id + '"', 'sm', 'rp' + id) + '<button type="button" class="bc-btn ghost sm" data-bc="mopen" data-id="' + id + '">নিজে বাছুন</button></span></div>';
   }
   // a draft on the wall: its phone card, then what he can do with it
