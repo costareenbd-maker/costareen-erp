@@ -224,6 +224,7 @@ tr.pick:hover td { background:var(--field); }
   padding:30px 26px; box-shadow:var(--shadow-lg); text-align:center; }
 .gatetitle { font-size:19px; font-weight:700; letter-spacing:-.02em; }
 .gatehead { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+.gatemark.bngate{background:transparent!important;padding:0}.gatemark.bngate svg{width:44px;height:44px;display:block}
 .gatemark { width:44px; height:44px; border-radius:12px; background:var(--series-1); color:#fff; display:flex; align-items:center;
   justify-content:center; font-weight:800; font-size:20px; flex:none; }
 .gatetabs { display:flex; gap:4px; padding:4px; background:var(--plane); border:1px solid var(--ring); border-radius:11px; margin-bottom:16px; }
@@ -10364,7 +10365,7 @@ function gateScreen() {
   var busy = GATE_BUSY, owner = GATE_TAB === 'owner';
   var mark = String(gateName()).charAt(0).toUpperCase();
   return '<div class="gate"><div class="gatecard">' +
-    '<div class="gatehead"><div class="gatemark">' + esc(mark) + '</div>' +
+    '<div class="gatehead">' + (typeof fdLogoSvg === 'function' ? '<div class="gatemark bngate">' + fdLogoSvg() + '</div>' : '<div class="gatemark">' + esc(mark) + '</div>') +   /* bnlogo-1: Benndar B */
     '<div><div class="gatetitle">' + esc(gateName()) + '</div><div class="sub">Sign in to the ERP</div></div></div>' +
     '<div class="gatetabs" role="tablist">' +
       '<button type="button" role="tab" id="gate_t_staff" aria-selected="' + (!owner) + '">Staff</button>' +
@@ -12188,7 +12189,7 @@ var gateScreenLink = function () {
   var mark = String(gateName()).charAt(0).toUpperCase();
   var bad = ME_MSG && !/private system/i.test(ME_MSG);
   return '<div class="gate"><div class="gatecard">' +
-    '<div class="gatehead"><div class="gatemark">' + esc(mark) + '</div>' +
+    '<div class="gatehead">' + (typeof fdLogoSvg === 'function' ? '<div class="gatemark bngate">' + fdLogoSvg() + '</div>' : '<div class="gatemark">' + esc(mark) + '</div>') +   /* bnlogo-1: Benndar B */
     '<div><div class="gatetitle">' + esc(gateName()) + '</div><div class="sub">Private system</div></div></div>' +
     (bad ? '<div class="note err" style="margin-bottom:14px"><div class="ico">✕</div><div>' + esc(ME_MSG) + '</div></div>' : '') +
     '<div class="sub" style="margin-bottom:12px">This device has not been given access. Open the access link the owner sent you — once is enough, the device is remembered.</div>' +
