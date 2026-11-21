@@ -5050,3 +5050,19 @@ Owner 21 Nov: "my Brand desk shows what goes out when; build the same for Costar
   and overscroll-behavior:auto: the page scrolls and the reply box sticks above the tab bar. Web only; page = #57 source +
   this rule, sw cz-shell-v4-native-ibscroll1, both Pages projects (prev private/live-web-index-before-ibscroll1-20261121.html).
   Checked live at a 412px column: the box is in view on open and while scrolling.
+
+2026-11-21 — #59 calm-1 (owner: the AI-fix screen is a spinning stick, unprofessional; approving makes the page blink and
+jump so he loses his place; /impeccable polish)
+- The AI-fix running state was a 13px spinner that `.bc-call>span:first-child{flex:1 0 100%}` stretched to full width (a
+  flat spinning "stick" in a red alert box). Now a calm station track on shelf grey (both desks): ছবি / ভিডিও -> নোট ->
+  প্ল্যান -> রিচ, the current station breathing, passed ones filled, with the bridge's step text (window.afTrack).
+- Approve / reject / posted-by-hand on a Brand desk card: the card stays where it is; its action row turns into an
+  in-card progress line ("লাইনে দেওয়া হচ্ছে…"), then a green done line, then after 1.3 s the card folds away (0.28 s)
+  and only then is the drafts list swapped, so nothing jumps (a card fully above the screen folds at once and the
+  scroll is corrected). The desk's "next draft" switch waits for the fold. No toast when the card itself shows it.
+- Content desk: same in-card states for approve / ready / drop (the list is no longer blanked with CD.drafts = null);
+  the page is painted by morph with keyed cards (cd_d_<id>) instead of innerHTML, so pictures and videos stop reloading
+  on every paint (the blink). Unicode glyphs in the Content desk AI box replaced with SVG.
+- Reduced motion: no bar animation, no fold. Web only; page = #58 source + this, sw cz-shell-v4-native-calm1, both
+  Pages projects (prev private/live-web-index-before-calm1-20261121.html). Checked live: states rendered on real cards,
+  Content desk morph paint across tabs and views. NOT checked with a real approval (that would post).
