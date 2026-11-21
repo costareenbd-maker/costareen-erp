@@ -5000,3 +5000,16 @@ supplies shop".
   (3D printing); Oliareen = no "3D-printing shop" line, its owner facts (cast, look rules) + brand fence.
 - **Gap:** Oliareen has NO Business Brain on live (no engine_brain row), 0 products and no store_url, so its writers get
   only the facts + "do not assume its trade". Drafting and approving Oliareen's Brain on live would make beauty explicit.
+
+
+## sched-1 (21 Nov 2026, release #54): "what goes out when" for each business
+
+Owner 21 Nov: "my Brand desk shows what goes out when; build the same for Costareen and Oliareen". Owner's yes in chat for live.
+- erpContentSchedule (everyone in the business; Brand desk refused): this business's own pacer line + own Postiz workspace +
+  drafts waiting at their routine slot, merged into items wait / next / gone / stuck.
+- Content desk tab "কী কখন যাবে": Saturday-first week board like the Brand desk Home (week arrows, filters, picked item with
+  cancel / open / approve for manager and up; phone = day strip + list). Business Dashboard card "এই সপ্তাহের পোস্ট".
+- Live: function file-by-file allow.js + handlers/contentdesk.js (live = #52 before; #53 reel-ctx-1 touched other files),
+  backup /data/backups/live-function/erp-20261121T000735Z-before-sched1.tgz; page = #52 source + the new block, sw
+  cz-shell-v4-native-sched1-28452dd (prev private/live-web-index-before-sched1-20261121.html). Checked live on Costareen and
+  Oliareen, dark + light, 1568 + 390: no errors, no sideways scroll. Nothing posted; erp_app_flags not touched.
