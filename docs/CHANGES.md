@@ -5150,3 +5150,13 @@ and if not, whichever ChatGPT account is logged in")
   that were waiting as urgent and would have gone out). Backup /data/brand/pacer/pacer.db.bak-fbfix-20261121.
 - Not checked yet: whether the first re-sent post is public with views (Meta may need time); posts made while the app was
   in development may stay limited.
+
+2026-11-22 — #65 stuck-1 (owner: stuck count 8 -> 16 -> 27; why black 'এখন পাঠান', red 'আবার পাঠান', and no 'বাদ দিন' on the red ones)
+- Count rose because posts parked for him (pacer 'ask') are counted as stuck. Owner: no reposting old posts, so the 5
+  re-sends and the 11 parked items all wait as 'ask' for HIS 'বাদ দিন' (a bulk drop by Claude was refused by the safety check).
+- Every stuck post now has the same pair: a dark send button + a plain 'বাদ দিন', with a one-line note: line posts
+  "সময় পেরিয়েছে, এখনো যায়নি" (send = now), refused ones "<network> নেয়নি · আবার পাঠালে নতুন কপি যাবে" (send = a new copy).
+  'বাদ দিন' on a refused post takes it off the list on this device (it already failed; nothing to unsend). New
+  'সব বাদ দিন (N)' on top of the stuck tab (drops line posts on the PC's line, takes refused ones off the list).
+- Checked live: 32 stuck (16 line + 16 refused), new buttons and the bulk button shown. sw cz-shell-v4-native-stuck1.
+- Facebook works again: the 15:23 UTC post on 21 Nov was PUBLISHED.

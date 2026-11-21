@@ -60503,9 +60503,10 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
   function findSt(key) { return stations().filter(function (s) { return s.key === key; })[0]; }
   function stActs(s) {
     var a = '';
-    if (s.src === 'postiz' && s.st === 'x' && needMedia(s.net)) a += '<span class="bc-sub">ভিডিও ছাড়া ' + esc(netName(s.net)) + '-এ যায় না</span>' + btn('লুকান', 'data-bc="hidest" data-id="' + esc(s.key) + '"', 'sm');
-    else if (s.src === 'postiz' && s.st === 'x') a += btn('আবার পাঠান', 'data-bc="resend" data-id="' + esc(s.key) + '"', 'red sm', 'rs' + s.key);
-    if (s.src === 'pacer' && s.st === 'x') a += btn('এখন পাঠান', 'data-bc="decide" data-act="send" data-id="' + esc(s.id) + '"', 'dark sm', 'dc' + s.id) + btn('বাদ দিন', 'data-bc="decide" data-act="drop" data-id="' + esc(s.id) + '"', 'sm', 'dd' + s.id);
+    // stuck-1: the same pair on every stuck post; the note says what the send button really does
+    if (s.src === 'postiz' && s.st === 'x' && needMedia(s.net)) a += '<span class="bc-sub">ভিডিও ছাড়া ' + esc(netName(s.net)) + '-এ যায় না</span>' + btn('বাদ দিন', 'data-bc="hidest" data-id="' + esc(s.key) + '"', 'sm');
+    else if (s.src === 'postiz' && s.st === 'x') a += '<span class="bc-sub">' + esc(netName(s.net)) + ' নেয়নি · আবার পাঠালে নতুন কপি যাবে</span>' + btn('আবার পাঠান', 'data-bc="resend" data-id="' + esc(s.key) + '"', 'dark sm', 'rs' + s.key) + btn('বাদ দিন', 'data-bc="hidest" data-id="' + esc(s.key) + '"', 'sm');
+    if (s.src === 'pacer' && s.st === 'x') a += '<span class="bc-sub">সময় পেরিয়েছে, এখনো যায়নি</span>' + btn('এখন পাঠান', 'data-bc="decide" data-act="send" data-id="' + esc(s.id) + '"', 'dark sm', 'dc' + s.id) + btn('বাদ দিন', 'data-bc="decide" data-act="drop" data-id="' + esc(s.id) + '"', 'sm', 'dd' + s.id);
     if (s.url && /^https?:/.test(s.url)) a += '<a class="bc-btn ghost sm" href="' + esc(s.url) + '" target="_blank" rel="noopener">পোস্টটা খুলুন</a>';
     return a;
   }
@@ -60990,9 +60991,9 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
   }
   function deps(kind) {
     var list = stations().filter(function (s) { return s.st === kind && pnetOk(s.net); }).sort(function (a, b) { return kind === 'q' ? new Date(a.at) - new Date(b.at) : new Date(b.at) - new Date(a.at); });
-    var nh = kind === 'x' ? Object.keys(HID).length : 0, unh = nh ? '<div class="bc-row"><button type="button" class="bc-lnk" data-bc="unhide">লুকানো ' + bn(nh) + 'টা ফিরিয়ে আনুন</button></div>' : '';
+    var nh = kind === 'x' ? Object.keys(HID).length : 0, unh = nh ? '<div class="bc-row"><button type="button" class="bc-lnk" data-bc="unhide">বাদ দেওয়া ' + bn(nh) + 'টা ফিরিয়ে আনুন</button></div>' : '';
     if (!list.length) return '<div class="bc-clear"><b>' + (kind === 'q' ? 'সামনে কিছু যাবে না' : kind === 'go' ? 'এখনো কিছু যায়নি' : 'কিছু আটকে নেই') + '</b></div>' + unh;
-    var today = new Date().toDateString(), last = '', h = '';
+    var today = new Date().toDateString(), last = '', h = kind === 'x' && list.length > 1 ? '<div class="bc-row" style="margin:0 0 12px">' + btn('সব বাদ দিন (' + bn(list.length) + ')', 'data-bc="stclear"', 'sm', 'stclear') + '</div>' : '';
     list.forEach(function (s) {
       var t = new Date(s.at), dk = t.toDateString();
       if (dk !== last) { last = dk; h += '<div class="bc-day' + (dk === today ? ' t' : '') + '">' + (dk === today ? 'আজ' : DAY[t.getDay()]) + ' · ' + dDate(t) + '</div>'; }
@@ -63603,7 +63604,16 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
       })();
       return;
     }
-    if (w === 'hidest') { HID[id] = 1; try { localStorage.setItem('bc_hidden', JSON.stringify(HID)); } catch (e8) {} C.pick = ''; toast('লুকানো হলো। আটকে ট্যাবে “ফিরিয়ে আনুন” আছে।'); draw(); return; }
+    if (w === 'hidest') { HID[id] = 1; try { localStorage.setItem('bc_hidden', JSON.stringify(HID)); } catch (e8) {} C.pick = ''; toast('বাদ দেওয়া হলো। আটকে ট্যাবে “ফিরিয়ে আনুন” আছে।'); draw(); return; }
+    // stuck-1: clear the whole stuck list in one go (line posts are dropped on the PC's line, refused ones leave the list)
+    if (w === 'stclear') {
+      var sx = stations().filter(function (q) { return q.st === 'x' && pnetOk(q.net); }), drops = sx.filter(function (q) { return q.src === 'pacer'; }), k3 = 0;
+      sx.forEach(function (q) { if (q.src !== 'pacer') HID[q.key] = 1; }); try { localStorage.setItem('bc_hidden', JSON.stringify(HID)); } catch (e9) {}
+      C.busy.stclear = 1; draw();
+      (function nx3() { if (!drops.length) { C.busy.stclear = 0; toast(bn(sx.length) + 'টা আটকানো পোস্ট বাদ দেওয়া হলো।'); get('cockpit', true); draw(); return; }
+        var q3 = drops.shift(); srv('erpBrandDeskDecide', [{ id: q3.id, action: 'drop' }], function () { k3++; nx3(); }, function (e10) { C.busy.stclear = 0; toast(msg(e10), true, 9000); get('cockpit', true); draw(); }); })();
+      return;
+    }
     if (w === 'unhide') { HID = {}; try { localStorage.removeItem('bc_hidden'); } catch (e8) {} toast('ফিরিয়ে আনা হলো।'); draw(); return; }
     if (w === 'lvans') { C.fold['q' + id] = 1; draw(); setTimeout(function () { var b = el('bci_qa' + id); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.focus({ preventScroll: true }); } }, 40); return; }
     if (w === 'skip') { e.preventDefault(); var mn = el('bc_main'); if (mn) try { mn.focus(); } catch (er) {} return; }
