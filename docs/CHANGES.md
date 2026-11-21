@@ -5128,3 +5128,11 @@ and if not, whichever ChatGPT account is logged in")
   picture quota), ChatGPT usage limit (the Video desk's test runs used the same plan today) -> both drafts wait in
   gen_pic_wait with a plain line. No made picture has been seen yet. Backups: bridge.py.bak-genpic2, bridge_biz.py.bak-genpic2
   (PC + Mac). Not checked: whether a business Postiz upload path is public for the networks (same Postiz as the personal desk).
+
+2026-11-21 — #64 score-now-1 (owner: "many contents have no score; scoring must start right after a draft is made")
+- Cause: the 11 unscored Brand desk drafts were all trade-news drafts (news-1): news_make wrote them without the virality
+  check that the normal writer runs, so no score (scorecard) was ever made.
+- news_make now scores each draft the moment it is written. New score_loop in the personal bridge and both business
+  engines: every 2 minutes any waiting draft without a score (any path: news, reels, autopilot, a restart mid-job) is
+  scored oldest first, 4 per round; 3 failures and it is left alone (logged). Backups bridge.py.bak-score-now1 /
+  bridge_biz.py.bak-score-now1 (PC + Mac). Bridges only; no page change.
