@@ -58176,7 +58176,7 @@ select.bc-in{padding-right:28px}
 .bc-tk-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px}
 .bc-tk-h .acc{font-size:13px;color:var(--bc-ink-3)}
 .bc-tk-p{margin:0;font:14.5px/1.5 "Noto Sans Bengali","Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
-.ph-state{display:flex;align-items:center;gap:12px;min-height:44px;margin-top:12px;padding:0 14px;border-radius:12px;background:var(--bc-shelf);color:var(--bc-ink);font-size:14.5px}.ph-state.ok{background:#EAF5EE;color:var(--bc-good)}.ph-state svg{width:18px;height:18px;flex:none}.ph-prog{position:relative;flex:none;width:48px;height:3px;border-radius:3px;background:var(--bc-rule);overflow:hidden}.ph-prog i{position:absolute;top:0;bottom:0;left:0;width:45%;border-radius:3px;background:var(--bc-ink);animation:phProg 1.15s cubic-bezier(.65,0,.35,1) infinite}@keyframes phProg{from{transform:translateX(-100%)}to{transform:translateX(225%)}}.ph-slot.ph-busy>:not(.ph-state):not(.ph-top),.ph-slot.ph-done>:not(.ph-state):not(.ph-top){opacity:.5;pointer-events:none;transition:opacity .2s ease-out}.ph-slot.ph-fold-out{overflow:hidden;transition:height .28s cubic-bezier(.22,1,.36,1),opacity .2s ease-out,margin .28s cubic-bezier(.22,1,.36,1);opacity:0;margin-top:0;margin-bottom:0}@media (prefers-reduced-motion:reduce){.ph-prog i{animation:none;width:100%}.ph-slot.ph-fold-out{transition:none}}.af-box{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin:12px 0 6px}.af-run{display:flex;align-items:center;gap:10px;margin:12px 0 6px}.af-res{display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.45}.af-res b{font-weight:600}.af-res .ok{display:flex;gap:6px;align-items:flex-start}.af-res .ok svg{flex:none;width:16px;height:16px;margin-top:3px;color:var(--bc-good)}.af-res .left{color:var(--bc-ink-2);padding-left:22px}.bc-flag{display:flex;gap:8px;align-items:baseline;font-size:13.5px;margin-top:8px;color:var(--bc-ink-2)}
+.ps-net{margin:-10px 0 20px}.ps-net em{font-variant-numeric:tabular-nums}.ps-net svg{width:16px;height:16px;flex:none}.ph-state{display:flex;align-items:center;gap:12px;min-height:44px;margin-top:12px;padding:0 14px;border-radius:12px;background:var(--bc-shelf);color:var(--bc-ink);font-size:14.5px}.ph-state.ok{background:#EAF5EE;color:var(--bc-good)}.ph-state svg{width:18px;height:18px;flex:none}.ph-prog{position:relative;flex:none;width:48px;height:3px;border-radius:3px;background:var(--bc-rule);overflow:hidden}.ph-prog i{position:absolute;top:0;bottom:0;left:0;width:45%;border-radius:3px;background:var(--bc-ink);animation:phProg 1.15s cubic-bezier(.65,0,.35,1) infinite}@keyframes phProg{from{transform:translateX(-100%)}to{transform:translateX(225%)}}.ph-slot.ph-busy>:not(.ph-state):not(.ph-top),.ph-slot.ph-done>:not(.ph-state):not(.ph-top){opacity:.5;pointer-events:none;transition:opacity .2s ease-out}.ph-slot.ph-fold-out{overflow:hidden;transition:height .28s cubic-bezier(.22,1,.36,1),opacity .2s ease-out,margin .28s cubic-bezier(.22,1,.36,1);opacity:0;margin-top:0;margin-bottom:0}@media (prefers-reduced-motion:reduce){.ph-prog i{animation:none;width:100%}.ph-slot.ph-fold-out{transition:none}}.af-box{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin:12px 0 6px}.af-run{display:flex;align-items:center;gap:10px;margin:12px 0 6px}.af-res{display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.45}.af-res b{font-weight:600}.af-res .ok{display:flex;gap:6px;align-items:flex-start}.af-res .ok svg{flex:none;width:16px;height:16px;margin-top:3px;color:var(--bc-good)}.af-res .left{color:var(--bc-ink-2);padding-left:22px}.bc-flag{display:flex;gap:8px;align-items:baseline;font-size:13.5px;margin-top:8px;color:var(--bc-ink-2)}
 .bc-flag .bc-tag{flex:none}
 .bc-more{margin-top:12px;background:var(--bc-shelf);border-radius:12px;padding:12px 14px}
 .bc-pics{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:10px}
@@ -60822,17 +60822,27 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
   function leaveCard(id, r, word, after) {
     C.leave = C.leave || {}; C.leave[id] = word; draw();
     C.folding = C.folding || {};
-    var fin = function () { delete C.leave[id]; delete C.folding[id]; if (r) C.d.drafts = r; draw(); if (after) after(); };
+    var nextId = '';
+    var fin = function () { delete C.leave[id]; delete C.folding[id]; if (r) C.d.drafts = r; draw(); if (after) after(); if (nextId) phLand(nextId); };
     setTimeout(function () {
       var n = el('bc_tk_' + id); if (!n || !C.leave[id]) return fin();
+      var all = [].slice.call(document.querySelectorAll('.ph-slot[id^="bc_tk_"]:not(.ph-done):not(.ph-busy)')), after0 = all.filter(function (q) { return n.compareDocumentPosition(q) & 4; })[0];
+      nextId = after0 ? after0.id : '';
       var b = n.getBoundingClientRect(), h = n.offsetHeight;
-      if (b.bottom <= 0) { fin(); window.scrollBy(0, -h); return; }
+      if (b.bottom <= 0) { nextId = ''; fin(); window.scrollBy(0, -h); return; }
       if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return fin();
       n.style.height = h + 'px'; void n.offsetHeight;
       C.folding[id] = 1; n.classList.add('ph-fold-out'); n.style.height = '0px';
       setTimeout(fin, 300);
     }, 1300);
   }
+  // pnet-1: after a card leaves, the next post's top sits just under the top bar (smooth unless reduced motion)
+  function phLand(nid) {
+    requestAnimationFrame(function () { var q = el(nid); if (!q) return;
+      var top = q.getBoundingClientRect().top + window.scrollY - phTopGap();
+      try { window.scrollTo({ top: Math.max(0, top), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } catch (e) { window.scrollTo(0, Math.max(0, top)); } });
+  }
+  function phTopGap() { var t = document.querySelector('.topbar, #topbar, header.top, .fd-top'); var g = 12; if (t) { var r0 = t.getBoundingClientRect(); if (getComputedStyle(t).position === 'fixed' || getComputedStyle(t).position === 'sticky') g += Math.max(0, r0.bottom); } return g; }
   function draftCard(x) {
     if (x.media && !C.media[x.id] && x.media.path) C.media[x.id] = { id: x.media.id, path: x.media.path, type: x.media.type || 'image', name: x.media.name || '', asset: x.media.asset || '', thumb: x.media.type === 'video' ? '' : x.media.path };
     if (x.planned_at && C.v['a' + x.id] === undefined && new Date(x.planned_at) > new Date()) C.v['a' + x.id] = x.planned_at;
@@ -60889,8 +60899,23 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
       '<div class="bc-row" style="margin-top:6px">' + btn('উত্তর দিয়ে আবার লিখুন', 'data-bc="qans" data-id="' + id + '"', 'dark sm', 'qa' + id) + '</div></div>';
   }
   function picOf(id) { var c = C.cards[id]; return c && c.pictures && c.pictures[0] ? c.pictures[0].src : ''; }
+  // pnet-1: the platform filter (C.pnet) on the Posts page
+  function pnetOk(p) { return !C.pnet || netOf(p) === C.pnet; }
+  function pnetHtml(tab) {
+    if (tab === 'new') return '';
+    var cnt = {}, tot = 0;
+    var add = function (p) { var k = netOf(p); if (!k) return; cnt[k] = (cnt[k] || 0) + 1; tot++; };
+    if (tab === 'wait') waitingList().forEach(function (x) { add(x.platform); });
+    else { var kd = tab === 'next' ? 'q' : tab === 'gone' ? 'go' : 'x'; stations().forEach(function (s) { if (s.st === kd) add(s.net); }); }
+    var ks = PLATS.filter(function (p) { return cnt[p]; }).concat(Object.keys(cnt).filter(function (p) { return PLATS.indexOf(p) < 0; }));
+    if (C.pnet && !cnt[C.pnet]) ks.push(C.pnet);
+    if (ks.length < 2 && !C.pnet) return '';
+    var b = function (k, label, n) { var on = (C.pnet || '') === k; return '<button type="button" data-bc="pnet" data-id="' + k + '" aria-pressed="' + on + '"' + (on ? ' class="on"' : '') + '>' + label + '<em>' + bn(n || 0) + '</em></button>'; };
+    return '<div class="bc-pills ps-net" role="group" aria-label="কোন প্ল্যাটফর্ম">' + b('', 'সব', tot) + ks.map(function (k) { return b(k, logo(k, 16) + esc(netName(k)), cnt[k]); }).join('') + '</div>';
+  }
   function wallHtml() {
-    var gs = groups();
+    var gs = groups().map(function (g) { return C.pnet ? Object.assign({}, g, { list: g.list.filter(function (x) { return pnetOk(x.platform); }) }) : g; }).filter(function (g) { return g.list.length; });
+    if (C.pnet && !gs.length) return '<div class="bc-clear"><b>' + esc(netName(C.pnet)) + '-এর কোনো লেখা অপেক্ষায় নেই</b></div>';
     if (!gs.length) return draftsHtml(false);
     var cut = !C.fold.pgall && gs.length > 3, jump = gs.length > 3 ? '<nav class="ph-jump" aria-label="আইডিয়া ধরে যান">' + gs.map(function (g, i) {
       return '<button type="button" data-bc="pgjump" data-id="' + i + '">' + esc(String(g.title || '').slice(0, 42)) + ' <b>' + bn(g.list.length) + '</b></button>'; }).join('') + '</nav>' : '';
@@ -60964,7 +60989,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
       '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark sm', 'ap' + id) : '') + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', 'sm', 'rj' + id) + '<button type="button" class="bc-btn ghost sm" data-bc="edit" data-id="' + id + '">লেখা বদলান</button></div></div>';
   }
   function deps(kind) {
-    var list = stations().filter(function (s) { return s.st === kind; }).sort(function (a, b) { return kind === 'q' ? new Date(a.at) - new Date(b.at) : new Date(b.at) - new Date(a.at); });
+    var list = stations().filter(function (s) { return s.st === kind && pnetOk(s.net); }).sort(function (a, b) { return kind === 'q' ? new Date(a.at) - new Date(b.at) : new Date(b.at) - new Date(a.at); });
     var nh = kind === 'x' ? Object.keys(HID).length : 0, unh = nh ? '<div class="bc-row"><button type="button" class="bc-lnk" data-bc="unhide">লুকানো ' + bn(nh) + 'টা ফিরিয়ে আনুন</button></div>' : '';
     if (!list.length) return '<div class="bc-clear"><b>' + (kind === 'q' ? 'সামনে কিছু যাবে না' : kind === 'go' ? 'এখনো কিছু যায়নি' : 'কিছু আটকে নেই') + '</b></div>' + unh;
     var today = new Date().toDateString(), last = '', h = '';
@@ -60987,7 +61012,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     C.ptabNow = tab;
     var h = headHtml('পোস্ট', '', '<button type="button" class="bc-btn' + (tab === 'new' ? ' dark' : '') + '" data-bc="ptab" data-id="new">' + svg('plus') + 'নতুন পোস্ট</button>') + '<div class="bc-pills big ps-tabs" role="tablist" style="margin-bottom:22px">' + T.map(function (t) {
       return '<button type="button" role="tab" aria-selected="' + (tab === t[0]) + '" data-bc="ptab" data-id="' + t[0] + '"' + (tab === t[0] ? ' class="on"' : '') + '>' + t[1] + (t[2] ? '<em class="' + (t[2] ? t[3] : '') + '">' + bn(t[2]) + '</em>' : '') + '</button>';
-    }).join('') + '</div>';
+    }).join('') + '</div>' + pnetHtml(tab);
     if (tab === 'wait') h += jobsBar() + wallHtml();
     else if (tab === 'new') h += cmpHtml();
     else h += deps(tab === 'next' ? 'q' : tab === 'gone' ? 'go' : 'x');
@@ -63599,6 +63624,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     else if (w === 'dep') { if (e.target.closest('button,a') && e.target.closest('button,a') !== t) return; C.dep = C.dep === id ? '' : id; draw(); }
     else if (w === 'hcap') { C.itab = ''; C.capFocus = 1; goSec('ideas', false, true); }   // the idea box gets focus on the first draw that has it (the page may still be loading)
     else if (w === 'ptab') { C.ptab = id; goSec('posts', false, C.sec === 'posts'); }
+    else if (w === 'pnet') { C.pnet = id || ''; draw(); }
     else if (w === 'todrafts') { var fd = el('bc_root').querySelector('#bc_sidehd'); var tk = el('bc_root').querySelector('.bc-side .bc-tk, #bc_side_drafts .bc-tk'); if (tk) { tk.scrollIntoView({ behavior: 'smooth', block: 'center' }); tk.classList.remove('bc-flash'); void tk.offsetWidth; tk.classList.add('bc-flash'); var fa = tk.querySelector('[data-bc="approve"]'); if (fa) setTimeout(function () { fa.focus({ preventScroll: true }); }, 400); } else if (fd) fd.scrollIntoView({ behavior: 'smooth' }); }
     else if (w === 'resend') {
       var rs = findSt(id); if (!rs || !rs.raw || !rs.raw.integration) return toast('এই পোস্টটা আবার পাঠানো যাচ্ছে না।', true);

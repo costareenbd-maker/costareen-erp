@@ -5066,3 +5066,14 @@ jump so he loses his place; /impeccable polish)
 - Reduced motion: no bar animation, no fold. Web only; page = #58 source + this, sw cz-shell-v4-native-calm1, both
   Pages projects (prev private/live-web-index-before-calm1-20261121.html). Checked live: states rendered on real cards,
   Content desk morph paint across tabs and views. NOT checked with a real approval (that would post).
+
+2026-11-21 — #60 pnet-1 (owner: after approving, land on the start of the NEXT post, not somewhere random; and a
+platform filter on the Posts page like the other filters)
+- Brand desk Posts: after a card folds away (calm-1), the page scrolls smoothly so the next post's top sits just under
+  the sticky top bar (phLand; reduced motion = instant). The next post is the next waiting card in page order.
+- New pill row beside the Posts tabs: সব / LinkedIn / Facebook / Instagram / YouTube / TikTok with counts for the tab
+  in view (waiting, going, gone, stuck); filters the waiting wall (empty groups hidden) and the going/gone/stuck lists.
+  Shown only when there are 2+ platforms. Kept for the session, not saved.
+- Web only; page = #59 source + this, sw cz-shell-v4-native-pnet1b, both Pages projects (prev
+  private/live-web-index-before-pnet1-20261121.html). Checked live: filter counts, Facebook/Instagram filtering. The
+  landing after a real approval was NOT clicked through (it would post).
