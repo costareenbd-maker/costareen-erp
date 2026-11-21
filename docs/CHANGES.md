@@ -5019,3 +5019,15 @@ Owner 21 Nov: "my Brand desk shows what goes out when; build the same for Costar
   when the draft was made, like the network does: "12:45 AM", "Yesterday 4:36 PM", "Nov 19, 6:18 AM". A new post in the
   composer still says এখন. Web only: page = #54 live source + this patch, sw cz-shell-v4-native-drafttime1, both Pages
   projects (prev private/live-web-index-before-drafttime1-20261121.html). Checked live on the Brand desk posts.
+
+2026-11-21 — #56 autofix-1 (owner: "a button where one tap and the AI tries to fix it")
+- Brand desk draft card: "AI দিয়ে ঠিক করুন" shows when a draft has a block or warn note. One tap runs every fix the desk has, in
+  order: media on another topic -> caption rewritten from the video's script (video) or another picture picked (picture);
+  too many hashtags -> trimmed by rule (no AI); other check notes -> one editor pass that must keep every fact (kept only when
+  fewer notes are left); plan rules broken -> rewritten to the plan (text/picture posts, a new draft replaces the old);
+  virality -> hook, tags, caption, first comment. The card shows each step, then the score before -> after, what was fixed
+  and what is left for him (his own story; a video that itself is off-topic). New erpBrandDeskDraftAutofix (owner) ->
+  bridge /drafts/autofix + /drafts/autofix/job. Live: function file-by-file allow.js + handlers/branddesk.js +
+  handlers/security.js (backup /data/backups/live-function/erp-20261121T010148Z-before-autofix1.tgz); page = #55 source +
+  this block, sw cz-shell-v4-native-autofix1 (prev private/live-web-index-before-autofix1-20261121.html). Tested on live
+  drafts 198 (hashtags 5 -> 3, score 78 -> 82), 197 (video off-topic: said plainly), 237 (rewritten to the plan).

@@ -58158,7 +58158,7 @@ select.bc-in{padding-right:28px}
 .bc-tk-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px}
 .bc-tk-h .acc{font-size:13px;color:var(--bc-ink-3)}
 .bc-tk-p{margin:0;font:14.5px/1.5 "Noto Sans Bengali","Pretendard Variable",Pretendard,system-ui,sans-serif;color:var(--bc-ink-2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
-.bc-flag{display:flex;gap:8px;align-items:baseline;font-size:13.5px;margin-top:8px;color:var(--bc-ink-2)}
+.af-box{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin:12px 0 6px}.af-run{display:flex;align-items:center;gap:10px;margin:12px 0 6px}.af-res{display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.45}.af-res b{font-weight:600}.af-res .ok{display:flex;gap:6px;align-items:flex-start}.af-res .ok svg{flex:none;width:16px;height:16px;margin-top:3px;color:var(--bc-good)}.af-res .left{color:var(--bc-ink-2);padding-left:22px}.bc-flag{display:flex;gap:8px;align-items:baseline;font-size:13.5px;margin-top:8px;color:var(--bc-ink-2)}
 .bc-flag .bc-tag{flex:none}
 .bc-more{margin-top:12px;background:var(--bc-shelf);border-radius:12px;padding:12px 14px}
 .bc-pics{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:10px}
@@ -60765,6 +60765,25 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
       '<span class="pm-a">' + btn(m ? 'অন্য ছবি' : 'আবার খুঁজুন', 'data-bc="repick" data-id="' + id + '"', 'sm', 'rp' + id) + '<button type="button" class="bc-btn ghost sm" data-bc="mopen" data-id="' + id + '">নিজে বাছুন</button></span></div>';
   }
   // a draft on the wall: its phone card, then what he can do with it
+  // autofix-1 (owner 21 Nov 2026): one tap - the AI tries every fix it has (caption from the video, another picture, the plan,
+  // hook/tags/caption); what it cannot do (his own story, a video that is itself off-topic) is said plainly
+  function afHtml(id, a) {
+    if (a && a.state === 'fixing') return '<div class="bc-call af-run" role="status" aria-live="polite"><span class="bc-spin"></span><span>AI ঠিক করছে: ' + esc(a.step || 'শুরু') + '…</span></div>';
+    var res = '';
+    if (a && a.state === 'done') res = '<div class="af-res" role="status">' + (a.before != null && a.after != null ? '<b>স্কোর ' + bn(a.before) + ' → ' + bn(a.after) + '</b>' : '') +
+      (a.done || []).map(function (t) { return '<span class="ok">' + svg('check') + esc(t) + '</span>'; }).join('') +
+      (a.left || []).map(function (t) { return '<span class="left">' + esc(t) + '</span>'; }).join('') +
+      (!(a.done || []).length && !(a.left || []).length ? '<span class="left">AI নতুন কিছু বদলাতে পারল না।</span>' : '') + '</div>';
+    if (a && a.state === 'failed') res = '<div class="af-res" role="alert"><span class="left">' + esc(a.error || 'ঠিক করা গেল না') + '</span></div>';
+    return '<div class="af-box">' + btn(svg('spark') + (a && a.state === 'done' ? 'আবার AI দিয়ে ঠিক করুন' : 'AI দিয়ে ঠিক করুন'), 'data-bc="autofix" data-id="' + id + '"', 'dark sm', 'af' + id) + res + '</div>';
+  }
+  function afPoll(id) {
+    setTimeout(function () {
+      var a = C.af[id]; if (!a || a.state !== 'fixing') return;
+      srv('erpBrandDeskDraftAutofix', [{ job: a.job }], function (r) { C.af[id] = Object.assign({ job: a.job }, r || {}); if (C.af[id].state === 'fixing') afPoll(id); else { if (C.af[id].state === 'unknown') C.af[id] = { state: 'failed', error: 'Mac আবার চালু হয়েছে, আবার চাপুন।' }; get('drafts', true); } draw(); },
+        function (e) { C.af[id] = { state: 'failed', error: msg(e) }; draw(); });
+    }, 5000);
+  }
   function draftCard(x) {
     if (x.media && !C.media[x.id] && x.media.path) C.media[x.id] = { id: x.media.id, path: x.media.path, type: x.media.type || 'image', name: x.media.name || '', asset: x.media.asset || '', thumb: x.media.type === 'video' ? '' : x.media.path };
     if (x.planned_at && C.v['a' + x.id] === undefined && new Date(x.planned_at) > new Date()) C.v['a' + x.id] = x.planned_at;
@@ -60783,6 +60802,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
       '<button type="button" class="bc-btn ghost" data-bc="more" data-id="' + id + '" aria-expanded="' + !!C.open[id] + '">আরও' + svg('right') + '</button></div>';
     // brand-19 decision inline (was a 9-second toast): no lived detail in this text
     if (C.fold['lv' + id] && !String(v('qa' + id)).trim()) h += '<div class="bc-call ph-lv"><span>নিজের কোনো ঘটনা নেই</span><span class="bc-sp"></span>' + ((x.questions || []).length ? '<button type="button" class="bc-btn sm" data-bc="lvans" data-id="' + id + '">প্রশ্নের উত্তর দিন</button>' : '') + btn('তবুও পাঠান', 'data-bc="approve" data-id="' + id + '"', 'dark sm', 'ap' + id, !sel.length) + '</div>';
+    if ((C.af || {})[id] || flagsOf(x).some(function (f) { return f.severity === 'block' || f.severity === 'warn'; })) h += afHtml(id, (C.af || {})[id]);
     h += flagsHtml(x);
     // brand-18 (owner 14 Nov): the AI's questions made every card very tall; they hide behind a button and stay open while he is answering
     if ((x.questions || []).length) {
@@ -63696,6 +63716,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     else if (w === 'pnjump') { var jt = el(id); if (jt) try { jt.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } catch (e) {} }
     else if (w === 'fit' || w === 'slotfit') { C.fitPart = 0; C.csFromEl = t; C.csFrom = ''; C.sheet = 'fit:' + (w === 'slotfit' ? 'slot' + id : id); C.csIn = 1; if (w === 'fit' && !C.fits[id]) fitLoad(id); draw(); setTimeout(function () { var pf = el('bc_cs_p'); if (pf) try { pf.focus({ preventScroll: true }); } catch (e) {} }, 30); }
     else if (w === 'fitretry') { C.fits[id] = null; fitLoad(id); draw(); var pr = el('bc_cs_p'); if (pr) try { pr.focus({ preventScroll: true }); } catch (e) {} }
+    else if (w === 'autofix') act('af' + id, 'erpBrandDeskDraftAutofix', { id: Number(id) }, function (r) { C.af = C.af || {}; C.af[id] = { state: 'fixing', step: 'শুরু', job: r && r.job }; afPoll(id); });
     else if (w === 'fitfix') { act('fx' + id, 'erpBrandDeskDraftFix', { id: Number(id) }, function (r) { C.fits[id] = null; closeSheet(); toast('AI নিয়ম মেনে আবার লিখছে, ১-২ মিনিট। নতুন লেখা পোস্টে আর এখানে আসবে।'); get('drafts', true); setTimeout(function () { get('plan', true); }, 90000); }); }
     else if (w === 'fitpart') { C.fitPart = Number(id); draw(); }
     else if (w === 'score') { var fromFit = String(C.sheet).indexOf('fit:') === 0; C.docBack = fromFit ? C.sheet : ''; if (!fromFit) { C.csFromEl = t; C.csFrom = ''; } C.sheet = 'score:' + id; C.csIn = 1; if (!C.fits[id]) fitLoad(id); draw(); setTimeout(function () { var ps = el('bc_cs_p'); if (ps) try { ps.focus({ preventScroll: true }); ps.querySelector('.cs-b').scrollTop = 0; } catch (e) {} }, 30); }   // score-ui-1
