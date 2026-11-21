@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ERP</title>
-<meta name="theme-color" content="#2a78d6">
+<meta name="theme-color" content="#00565A">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -546,6 +546,24 @@ html.erp-boot body::after{content:"";position:fixed;left:50%;top:46%;width:34px;
 @keyframes erpBootSpin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){html.erp-boot body::after{animation:none}}
 </style>
+<!-- bnsplash-1 (21 Nov 2026, owner): Benndar poster on the loading screen. Phone = once per visit, computer/tablet = every load; random of two. -->
+<style>
+html.bn-splash::before{content:"";position:fixed;inset:0;z-index:2147483646;background:var(--bn-sp-bg,#F4F1EE) var(--bn-sp) center/contain no-repeat;opacity:1;transition:opacity .45s ease}
+html.bn-splash.bn-splash-out::before{opacity:0}
+@media (prefers-reduced-motion:reduce){html.bn-splash::before{transition:none}}
+</style>
+<script>(function(){try{var d=document.documentElement,mm=window.matchMedia,phone=!!(mm&&mm('(max-width:767px)').matches);
+var k='bn_splash_seen',ss=null;try{ss=window.sessionStorage}catch(e){}
+if(phone&&ss&&ss.getItem(k))return;if(phone&&ss)try{ss.setItem(k,'1')}catch(e){}
+var n=Math.random()<.5?1:2,u='/icons/splash-'+(phone?'phone':'pc')+'-'+n+'.webp';
+d.style.setProperty('--bn-sp','url("'+u+'")');d.style.setProperty('--bn-sp-bg',n===1?'#F4F1EE':'#141414');d.classList.add('bn-splash');
+try{(new Image()).src=u}catch(e){}
+var t0=Date.now(),MIN=1800,done=false;
+function out(){if(done)return;done=true;d.classList.add('bn-splash-out');setTimeout(function(){d.classList.remove('bn-splash','bn-splash-out')},500)}
+var iv=setInterval(function(){if(!d.classList.contains('erp-boot')&&Date.now()-t0>=MIN){clearInterval(iv);out()}},120);
+setTimeout(function(){clearInterval(iv);out()},35000);
+d.addEventListener('pointerdown',function(){if(Date.now()-t0>600&&!d.classList.contains('erp-boot')){clearInterval(iv);out()}},{once:false});
+}catch(e){}})();</script>
 <script>document.documentElement.classList.add('erp-boot');window.__erpBoot={ready:false,parsed:false};window.erpBootShow=function(){if(__erpBoot.ready&&__erpBoot.parsed){document.documentElement.classList.remove('erp-boot');var x=document.getElementById('bootHide');if(x)x.remove();}};document.addEventListener('DOMContentLoaded',function(){__erpBoot.parsed=true;erpBootShow();});var __erpBootSafe=function(){document.documentElement.classList.remove('erp-boot');var x=document.getElementById('bootHide');if(x)x.remove();};document.addEventListener('DOMContentLoaded',function(){setTimeout(__erpBootSafe,30000);});setTimeout(__erpBootSafe,120000);</script>   <!-- boot-1 (9 Nov 2026): no classic-shell flash - shown only when every block has run AND the sign-in answered -->
 </head>
 <body>
@@ -25117,6 +25135,8 @@ try { HG.lang = localStorage.getItem('erp_help_lang') || ''; } catch (e) {}
 :root[data-skin="fd"] .brand { padding:0 16px 0 20px; margin-bottom:26px; gap:10px; align-items:center; }
 :root[data-skin="fd"] .brand .logo:not(.has-img) { width:44px; height:44px; flex:0 0 44px; background:none !important; box-shadow:none !important; border-radius:0; padding:0; color:transparent; font-size:0; }
 :root[data-skin="fd"] .brand .logo:not(.has-img) .fdlogo { width:44px; height:44px; display:block; }
+.bnmark .bn-t{fill:#00565A}.bnmark .bn-c{fill:#FF746B}:root[data-theme="dark"] .bnmark .bn-t{fill:#F3EDE4}
+.brand .logo:not(.has-img):has(.bnmark){background:transparent}
 :root[data-skin="fd"] .brand h1 { font-size:20px; font-weight:800; letter-spacing:-.03em; line-height:1.1; max-width:140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--fd-text); }
 :root[data-skin="fd"] .brand h1 b { color:var(--fd-accent); font-weight:800; }
 :root[data-skin="fd"] .brand .tag { font-size:11px; font-weight:600; color:var(--fd-text-3); line-height:1.3; margin-top:2px; }
@@ -25324,12 +25344,9 @@ var FD17I = {
   add: '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>'
 };
 function fdI(n, sz) { return '<svg viewBox="0 0 24 24" width="' + (sz || 18) + '" height="' + (sz || 18) + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (FD17I[n] || '') + '</svg>'; }
-function fdLogoSvg() {
-  return '<svg class="fdlogo" viewBox="0 0 44 44" aria-hidden="true"><defs><linearGradient id="fdlg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--fd-logo-1)"/>' +
-    '<stop offset=".55" style="stop-color:var(--fd-logo-2)"/><stop offset="1" style="stop-color:var(--fd-logo-3)"/></linearGradient></defs>' +
-    '<path d="M22 2.5 39.5 12.5v19L22 41.5 4.5 31.5v-19Zm0 9.3-9.2 5.2v10L22 32.2l9.2-5.2v-10Z" fill="url(#fdlg)" fill-rule="evenodd"/>' +
-    '<path d="M22 11.8 31.2 17 22 22.2 12.8 17Z" style="fill:var(--fd-logo-1);opacity:.55"/><path d="M12.8 17 22 22.2v10L12.8 27Z" style="fill:var(--fd-logo-2);opacity:.35"/>' +
-    '<path d="M31.2 17 22 22.2v10l9.2-5.2Z" style="fill:var(--fd-logo-3);opacity:.22"/></svg>';
+function fdLogoSvg() {   // bnlogo-1 (21 Nov 2026, owner): the ERP's own mark = the Benndar B (was a cube)
+  return '<svg class="fdlogo bnmark" viewBox="383 320 1313 1309" aria-hidden="true"><path class="bn-t" d="M1381 1422C1381 1422 1384 1418 1387 1415C1391 1412 1396 1407 1398 1404C1405 1397 1413 1388 1419 1384C1422 1381 1426 1376 1430 1372C1433 1368 1441 1362 1446 1357C1457 1349 1460 1346 1476 1324C1483 1314 1487 1307 1489 1302C1491 1297 1494 1291 1496 1288C1499 1284 1502 1279 1504 1276C1506 1272 1510 1266 1515 1261C1529 1244 1550 1206 1555 1184C1560 1161 1560 1160 1560 1140C1560 1079 1522 1034 1452 1013C1414 1002 1360 999 1316 1007C1277 1014 1222 1030 1186 1045C1156 1058 1148 1061 1141 1063C1137 1064 1130 1067 1125 1069C1076 1087 1004 1090 993 1073C982 1055 996 1035 1033 1021C1040 1018 1053 1013 1062 1010C1070 1006 1082 1000 1088 998C1102 992 1186 949 1197 943C1266 901 1301 875 1343 834C1388 791 1407 767 1431 720C1448 688 1452 670 1452 640C1452 610 1449 598 1438 576C1421 546 1393 519 1362 503C1276 460 1177 458 1038 496C1007 504 980 513 958 524C953 526 945 529 940 531C928 536 885 557 875 563C872 565 863 570 857 574C819 594 755 640 725 670C659 734 616 791 594 844C591 850 588 859 586 863C578 880 573 897 564 936C561 953 560 998 563 1024C569 1073 585 1116 620 1179C636 1207 633 1212 613 1192C579 1160 536 1085 524 1037C522 1029 519 1022 519 1020C516 1012 510 966 510 949C510 926 516 880 520 864C522 860 524 852 525 846C530 825 550 782 564 760C567 754 572 745 575 740C581 730 602 699 610 688C621 674 643 647 649 640C670 618 688 599 699 590C705 585 714 577 719 572C730 562 777 526 792 516C837 485 897 451 925 440C929 438 938 434 945 431C952 428 963 423 970 421C978 418 988 414 994 412C1000 409 1009 406 1014 404C1023 401 1030 399 1066 389C1130 372 1207 361 1264 361C1329 361 1402 374 1459 396C1585 444 1652 548 1624 651C1606 716 1562 776 1486 843C1472 855 1429 887 1408 902C1369 927 1368 931 1406 931C1415 931 1425 932 1429 932C1433 932 1440 933 1446 934C1544 943 1626 998 1649 1072C1676 1154 1614 1267 1486 1365C1450 1392 1381 1430 1381 1422Z"/>' +
+    '<path class="bn-c" d="M424 1587C418 1576 434 1538 459 1503C495 1452 561 1393 652 1330C683 1308 678 1316 708 1252C717 1232 808 1050 810 1048C810 1047 814 1040 818 1033C822 1026 830 1012 836 1002C842 992 848 980 851 976C886 914 966 806 1013 754C1023 744 1035 730 1041 724C1078 681 1132 635 1160 622C1204 601 1249 631 1231 668C1226 679 1212 693 1186 715C1175 724 1162 736 1156 741C1128 764 1061 835 1025 878C989 923 924 1009 901 1043C893 1055 882 1070 877 1077C872 1084 865 1094 861 1100C858 1106 853 1113 851 1116C821 1161 774 1240 774 1247C774 1254 779 1253 821 1231C860 1212 878 1203 896 1196C903 1194 915 1189 923 1186C954 1171 970 1165 991 1158C1000 1155 1010 1151 1015 1149C1020 1147 1030 1143 1038 1141C1046 1139 1060 1135 1070 1132C1079 1129 1093 1126 1100 1124C1107 1122 1120 1119 1128 1117C1148 1112 1171 1108 1212 1102C1248 1097 1254 1097 1292 1096C1380 1095 1436 1110 1477 1146C1520 1184 1525 1240 1492 1300C1464 1350 1388 1421 1330 1450C1324 1454 1314 1459 1310 1462C1295 1471 1244 1496 1225 1502C1222 1503 1212 1507 1204 1510C1178 1521 1167 1525 1161 1526C1158 1527 1152 1529 1147 1530C1142 1532 1130 1535 1120 1538C1109 1541 1096 1545 1090 1546C1085 1547 1074 1550 1067 1552C1060 1553 1051 1555 1048 1556C1012 1563 1002 1564 986 1566C959 1568 904 1568 899 1566C893 1562 892 1555 898 1552C900 1551 909 1549 919 1547C954 1541 964 1539 972 1536C977 1535 987 1533 994 1531C1017 1526 1098 1499 1118 1489C1126 1485 1138 1480 1143 1478C1158 1472 1194 1454 1210 1444C1218 1439 1228 1433 1233 1431C1249 1422 1286 1396 1310 1378C1399 1306 1430 1245 1394 1210C1374 1190 1353 1182 1305 1177C1282 1174 1223 1174 1204 1176C1197 1177 1184 1179 1176 1179C1168 1180 1155 1182 1148 1183C1119 1188 1102 1191 1092 1193C1074 1197 1014 1212 1000 1217C995 1219 986 1221 980 1223C974 1225 965 1228 960 1230C955 1232 946 1235 940 1237C934 1239 923 1243 916 1246C910 1249 899 1253 893 1255C843 1272 732 1328 720 1341C715 1347 694 1385 662 1446C635 1495 612 1535 607 1539C597 1548 607 1502 627 1446C647 1391 647 1390 640 1390C631 1390 551 1448 538 1464C537 1466 531 1471 525 1476C499 1498 458 1545 444 1570C433 1588 427 1593 424 1587Z"/></svg>';
 }
 
 /* ---------- popover menus (his FD.ui.menu) ---------- */
