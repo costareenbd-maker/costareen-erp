@@ -60708,22 +60708,31 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     if (!o.ck) return '<span>' + inner + '</span>';
     return '<button type="button" class="ph-cm" data-bc="ctopen" data-id="' + esc(o.ck) + '" aria-haspopup="dialog"' + (iconOnly ? ' aria-label="মন্তব্য' + (o.cn ? ' (' + bn(o.cn) + ')' : '') + '"' : '') + '>' + inner + '</button>';
   }
+  // draft-time-1 (owner 21 Nov 2026): a draft's preview shows when it was made, like the network does ("1:05 AM"); new posts still say এখন
+  function phWhen(at) {
+    var d = at ? new Date(at) : null; if (!d || isNaN(d)) return 'এখন';
+    var t = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }), n = new Date();
+    if (d.toDateString() === n.toDateString()) return t;
+    var y = new Date(n); y.setDate(n.getDate() - 1);
+    if (d.toDateString() === y.toDateString()) return 'Yesterday ' + t;
+    return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }) + (d.getFullYear() === n.getFullYear() ? '' : ' ' + d.getFullYear()) + ', ' + t;
+  }
   function phoneCard(net, acc, text, key, o) {
     o = o || {}; var p = netOf(net), nm = esc((acc && acc.name) || myName()), ed = o.edit, m = o.media, mode = modeOf(p, m), L = (FOLDL[p] || {})[mode];
     if (o.pic && !m && mode === 'text') { mode = 'media'; L = (FOLDL[p] || {}).media || L; }
     var noAcc = !acc ? '<div class="ph-warn">অ্যাকাউন্ট নেই · নিজে পোস্ট করুন</div>' : '';
     if (mode === 'reel') return noAcc + reelCard(p, acc, text, key, o);
     var body = bodyBlock(p, text, key, ed, L), mb = mediaBox(m, '', o.pic, o.npic);
-    if (p === 'facebook') return '<article data-noi18n="1" class="ph ph-fb">' + noAcc + '<header>' + avatar(acc, 40) + '<div><b>' + nm + '</b><small>এখন · ' + pi('globe') + '</small></div>' + pi('dots') + '</header>' + body + mb +
+    if (p === 'facebook') return '<article data-noi18n="1" class="ph ph-fb">' + noAcc + '<header>' + avatar(acc, 40) + '<div><b>' + nm + '</b><small>' + phWhen(o.at) + ' · ' + pi('globe') + '</small></div>' + pi('dots') + '</header>' + body + mb +
       '<div class="ph-cnt"><span class="rx"><i class="l"></i><i class="h"></i></span>0<span class="bc-sp"></span>' + (o.cn || 0) + ' comment' + (o.cn === 1 ? '' : 's') + (m && m.type === 'video' ? ' · 0 views' : '') + '</div><footer><span>' + pi('like') + 'Like</span>' + phCm(o, pi('comment') + 'Comment') + '<span>' + pi('share') + 'Share</span></footer></article>';
-    if (p === 'linkedin') return '<article data-noi18n="1" class="ph ph-li">' + noAcc + '<header>' + avatar(acc, 44) + '<div><b>' + nm + ' <em>• You</em></b>' + (myPos() ? '<small>' + esc(myPos()) + '</small>' : '') + '<small>এখন • ' + pi('globe') + '</small></div>' + pi('dots') + '</header>' + body + mb +
+    if (p === 'linkedin') return '<article data-noi18n="1" class="ph ph-li">' + noAcc + '<header>' + avatar(acc, 44) + '<div><b>' + nm + ' <em>• You</em></b>' + (myPos() ? '<small>' + esc(myPos()) + '</small>' : '') + '<small>' + phWhen(o.at) + ' • ' + pi('globe') + '</small></div>' + pi('dots') + '</header>' + body + mb +
       '<footer><span>' + pi('like') + 'Like</span>' + phCm(o, pi('comment') + 'Comment') + '<span>' + pi('repost') + 'Repost</span><span>' + pi('send') + 'Send</span></footer></article>';
     if (p === 'instagram') return '<article data-noi18n="1" class="ph ph-ig">' + noAcc + '<header>' + avatar(acc, 32) + '<b>' + esc(handle(acc)) + '</b><span class="bc-sp"></span>' + pi('dots') + '</header>' + (mb ? mb.replace('ph-mbox ', 'ph-mbox sq4 ') : emptyMedia(p, 'sq')) +
       '<div class="ph-ic">' + pi('heart') + (o.ck ? phCm(o, pi('comment'), 1) : pi('comment')) + pi('send') + '<span class="bc-sp"></span>' + pi('save') + '</div><div class="ph-cap"><b>' + esc(handle(acc)) + '</b> ' + body + '</div></article>';
-    if (p === 'youtube') return '<article data-noi18n="1" class="ph ph-yt">' + noAcc + (mb ? mb.replace('ph-mbox ', 'ph-mbox wide ') : emptyMedia(p, 'wide')) + '<div class="ph-yh">' + avatar(acc, 36) + '<div><b>' + esc(o.title || String(text).split('\n')[0].slice(0, 100)) + '</b><small>' + nm + ' · 0 views · এখন</small></div></div>' +
+    if (p === 'youtube') return '<article data-noi18n="1" class="ph ph-yt">' + noAcc + (mb ? mb.replace('ph-mbox ', 'ph-mbox wide ') : emptyMedia(p, 'wide')) + '<div class="ph-yh">' + avatar(acc, 36) + '<div><b>' + esc(o.title || String(text).split('\n')[0].slice(0, 100)) + '</b><small>' + nm + ' · 0 views · ' + phWhen(o.at) + '</small></div></div>' +
       '<div class="ph-desc">' + body + '</div>' + (o.ck ? '<button type="button" class="ph-cm ph-ytc" data-bc="ctopen" data-id="' + esc(o.ck) + '" aria-haspopup="dialog"><b>Comments</b><span>' + (o.cn || 0) + '</span><i>Add a comment…</i></button>' : '') + '</article>';
     if (p === 'tiktok') return noAcc + reelCard(p, acc, text, key, o);
-    return '<article data-noi18n="1" class="ph ph-gen" style="--c:' + netCol(p) + '">' + noAcc + '<header>' + avatar(acc, 40) + '<div><b>' + nm + '</b><small>@' + esc(handle(acc)) + ' · এখন · ' + esc(netName(p)) + '</small></div></header>' + body + (mb ? '<div class="ph-genm">' + mb + '</div>' : '') +
+    return '<article data-noi18n="1" class="ph ph-gen" style="--c:' + netCol(p) + '">' + noAcc + '<header>' + avatar(acc, 40) + '<div><b>' + nm + '</b><small>@' + esc(handle(acc)) + ' · ' + phWhen(o.at) + ' · ' + esc(netName(p)) + '</small></div></header>' + body + (mb ? '<div class="ph-genm">' + mb + '</div>' : '') +
       '<footer>' + phCm(o, pi('comment'), 1) + '<span>' + pi('repost') + '</span><span>' + pi('heart') + '</span><span>' + pi('share') + '</span></footer></article>';
   }
   // ---------- the Brand album picker: a photo or video goes with the post (uploaded to Postiz when picked)
@@ -60763,8 +60772,8 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     // brand-24: one tag at most on top; the picture's reason sits under the picture; approve right under the card
     var tag = block ? '<span class="bc-tag x">আটকাবে</span>' : x._old ? '<span class="bc-tag">পুরনো</span>' : (x.pillar && RPIL[x.pillar] ? '<span class="bc-tag">' + RPIL[x.pillar][0] + '</span>' : '');
     var h = '<div class="ph-slot' + (x._old ? ' old' : '') + '" id="bc_tk_' + id + '"><div class="ph-top">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sp"></span>' + tag + '</div>' +
-      phoneCard(x.platform, mine[0] || null, body, 'd' + id, { edit: editing ? 'e' + id : '', title: (x.title_options || [])[0], pic: picOf(id), npic: ((C.cards[id] || {}).pictures || []).length, media: C.media[id], ck: 'draft' + id, cn: critOf('draft', id).length }) + ctSum('draft', id) + pickWhy(x) + pickerHtml(id);
-    ctReg('draft', id, { ai: 1, net: x.platform, acc: mine[0] || null, top: function () { return '<div class="cs-card">' + phoneCard(x.platform, mine[0] || null, v('e' + id, x.body || ''), 'sd' + id, { title: (x.title_options || [])[0], pic: picOf(id), npic: ((C.cards[id] || {}).pictures || []).length, media: C.media[id], cn: critOf('draft', id).length, ck: 'draft' + id }) + '</div>'; } });
+      phoneCard(x.platform, mine[0] || null, body, 'd' + id, { at: x.created_at, edit: editing ? 'e' + id : '', title: (x.title_options || [])[0], pic: picOf(id), npic: ((C.cards[id] || {}).pictures || []).length, media: C.media[id], ck: 'draft' + id, cn: critOf('draft', id).length }) + ctSum('draft', id) + pickWhy(x) + pickerHtml(id);
+    ctReg('draft', id, { ai: 1, net: x.platform, acc: mine[0] || null, top: function () { return '<div class="cs-card">' + phoneCard(x.platform, mine[0] || null, v('e' + id, x.body || ''), 'sd' + id, { at: x.created_at, title: (x.title_options || [])[0], pic: picOf(id), npic: ((C.cards[id] || {}).pictures || []).length, media: C.media[id], cn: critOf('draft', id).length, ck: 'draft' + id }) + '</div>'; } });
     if ((x.title_options || []).length && editing) h += '<div class="bc-ncs" style="margin-top:8px">' + x.title_options.map(function (t) { return '<button type="button" class="bc-pl" style="--c:#16181D" data-bc="tcopy" data-t="' + esc(t) + '" title="চাপলে কপি হবে" data-noi18n="1">' + esc(t) + '</button>'; }).join('') + '</div>';
     h += '<div class="ph-meta"><span>' + (v('a' + id) ? 'যাবে ' + whenWords(v('a' + id)) : 'পরের ফাঁকা সময়ে যাবে') + '</span><span id="bc_cnt_' + id + '" class="' + (body.length > lim ? 'over' : '') + '"' + (body.length > lim * .8 ? '' : ' hidden') + '>' + bn(body.length) + ' / ' + bn(lim) + ' অক্ষর</span>' + (mine.length > 1 ? '<span class="bc-sp"></span>' + mine.map(function (n) { return '<button type="button" class="bc-nc bclg' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" data-noi18n="1">' + logo(n.platform, 15) + esc(n.name || '') + '</button>'; }).join('') : '') + '</div>';
     h += '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : btn(svg('copy') + 'কপি করুন', 'data-bc="copy" data-id="' + id + '"', 'dark', '')) + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
@@ -60881,7 +60890,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
   function sideCard(x) {
     var mine = accountsFor(x), id = x.id;
     return '<div class="ph-slot side" id="bc_tk_' + id + '"><div class="ph-top">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sp"></span><span class="bc-sub" data-noi18n="1" style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(x.title_working || '') + '</span></div>' +
-      phoneCard(x.platform, mine[0] || null, v('e' + id, x.body || ''), 's' + id, { title: (x.title_options || [])[0], media: C.media[id] }) +
+      phoneCard(x.platform, mine[0] || null, v('e' + id, x.body || ''), 's' + id, { at: x.created_at, title: (x.title_options || [])[0], media: C.media[id] }) +
       '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark sm', 'ap' + id) : '') + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', 'sm', 'rj' + id) + '<button type="button" class="bc-btn ghost sm" data-bc="edit" data-id="' + id + '">লেখা বদলান</button></div></div>';
   }
   function deps(kind) {

@@ -5013,3 +5013,9 @@ Owner 21 Nov: "my Brand desk shows what goes out when; build the same for Costar
   backup /data/backups/live-function/erp-20261121T000735Z-before-sched1.tgz; page = #52 source + the new block, sw
   cz-shell-v4-native-sched1-28452dd (prev private/live-web-index-before-sched1-20261121.html). Checked live on Costareen and
   Oliareen, dark + light, 1568 + 390: no errors, no sideways scroll. Nothing posted; erp_app_flags not touched.
+
+2026-11-21 — #55 draft-time-1 (owner)
+- Phone previews of a draft (Facebook, LinkedIn, YouTube, other networks; Brand desk and the business Content desk) show
+  when the draft was made, like the network does: "12:45 AM", "Yesterday 4:36 PM", "Nov 19, 6:18 AM". A new post in the
+  composer still says এখন. Web only: page = #54 live source + this patch, sw cz-shell-v4-native-drafttime1, both Pages
+  projects (prev private/live-web-index-before-drafttime1-20261121.html). Checked live on the Brand desk posts.
