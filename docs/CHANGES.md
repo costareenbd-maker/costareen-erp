@@ -5112,3 +5112,19 @@ when nothing fits, MAKE a fitting picture - Flow is not logged in, so use the ba
   draft now shows the plain waiting line and is in gen_pic_wait. A made picture has NOT been seen yet (plan resting).
 - Not carried to the business bridges (bizdesk): their pictures would run on the owner's personal ChatGPT plan, which
   his AI-split rule keeps for himself; needs his decision.
+
+2026-11-21 — #63 gen-pic-2 (owner: "a post needs its picture - no permission needed; make it with whatever works, Gemini
+and if not, whichever ChatGPT account is logged in")
+- Picture maker in BOTH engines (personal bridge + the Costareen/Oliareen bizdesk engines): Gemini first (the engine's own
+  key, three image models), then ChatGPT through the Mac gateway (the one logged-in ChatGPT plan). The prompt rules speak
+  of "the business", so the business engines use them too; when the AI that writes the prompt is resting, a plain prompt
+  is built from the post (no AI needed). A 429/503 from either side makes the draft wait; gen_pic_loop (now also started
+  in the business engines) tries one waiting draft every 30 minutes.
+- Business engines have no picture album: they go straight to making a picture, store it in their OWN Postiz workspace
+  (pacer proxy), and an approved business post takes the draft's made picture (the Content desk page sends none).
+- Content desk card shows the draft's picture and its line (cdPic). sw cz-shell-v4-native-genpic2, both Pages projects
+  (prev private/live-web-index-before-genpic2-20261121.html).
+- Tested live: Brand desk draft 158 and Costareen draft 1 ran the whole chain: Gemini 429 on all three models (free key, no
+  picture quota), ChatGPT usage limit (the Video desk's test runs used the same plan today) -> both drafts wait in
+  gen_pic_wait with a plain line. No made picture has been seen yet. Backups: bridge.py.bak-genpic2, bridge_biz.py.bak-genpic2
+  (PC + Mac). Not checked: whether a business Postiz upload path is public for the networks (same Postiz as the personal desk).
