@@ -555,6 +555,17 @@ export async function erpContentDraftDecide(ctx, payload) {
   return engine(ctx, '/drafts/decide', out);
 }
 
+// autofix-2 (owner 21 Nov 2026: the Brand desk's one-tap "AI দিয়ে ঠিক করুন", also on the business desks). {id} starts a
+// fix in this business's own engine (its own drafts, its own AI; nothing crosses brands); {job} reads how it is going.
+export async function erpContentDraftAutofix(ctx, payload) {
+  await gate(ctx, 'manager'); await notBrand(ctx);
+  const p = payload || {};
+  if (p.job) return engine(ctx, '/drafts/autofix/job', { job: str(p.job).slice(0, 40) });
+  const id = parseInt(p.id, 10);
+  if (!(id > 0)) throw new Error('একটা ড্রাফট বাছুন।');
+  return engine(ctx, '/drafts/autofix', { id });
+}
+
 // ------------------------------------------------------------------ sched-1 (owner 21 Nov 2026): "what goes out when", per business
 // "My Brand desk shows what goes out when (on Home and a few other places). Build the same for Costareen and Oliareen."
 // One read for this business only, from its own engine: the posting line (pacer: waiting / late / failed), its own Postiz
@@ -601,4 +612,4 @@ export async function erpContentSchedule(ctx) {
 
 export const HANDLERS = { erpContentDesk, erpContentVideoUrl, erpContentHandlersSave, erpContentVideoUploadUrl, erpContentVideoSave, erpContentVideoSend,
   erpContentStudioUploadUrl, erpContentStudioSave, erpContentChannels, erpContentRulesSave, erpContentStop, erpContentCancel, erpContentConnect,
-  erpContentDrafts, erpContentSeries, erpContentPosts, erpContentDraftDecide, erpContentSchedule };
+  erpContentDrafts, erpContentSeries, erpContentPosts, erpContentDraftDecide, erpContentSchedule, erpContentDraftAutofix };

@@ -5031,3 +5031,14 @@ Owner 21 Nov: "my Brand desk shows what goes out when; build the same for Costar
   handlers/security.js (backup /data/backups/live-function/erp-20261121T010148Z-before-autofix1.tgz); page = #55 source +
   this block, sw cz-shell-v4-native-autofix1 (prev private/live-web-index-before-autofix1-20261121.html). Tested on live
   drafts 198 (hashtags 5 -> 3, score 78 -> 82), 197 (video off-topic: said plainly), 237 (rewritten to the plan).
+
+2026-11-21 — #57 autofix-2 (owner: "Hea lagaw" = put the same one-tap AI fix on the Costareen and Oliareen Content desks)
+- Content desk draft card: "AI দিয়ে ঠিক করুন" under the notes when a draft has a block or warn note, for manager and up (the
+  people who approve). Same steps as #56, run by that business's OWN engine (bizdesk bridge, own DB, own AI): nothing crosses
+  brands. New erpContentDraftAutofix (manager) -> engine /drafts/autofix + /drafts/autofix/job. bridge_biz.py got ONLY the
+  autofix hunks from the personal bridge (not a full make_fork re-run: that would also carry the 21 Nov voice fallback
+  owner -> Sabbir -> Rakib into the business engines, which needs its own decision for Oliareen). Live: function file-by-file
+  allow.js + handlers/contentdesk.js + handlers/security.js (backup /data/backups/live-function/erp-20261121T023545Z-before-autofix2.tgz,
+  smoke OK); Mac /opt/brand/bizdesk/bridge_biz.py (backup .bak-autofix1), both bizdesk containers restarted; page = #56
+  source + this block, sw cz-shell-v4-native-autofix2 (prev private/live-web-index-before-autofix2-20261121.html). Tested
+  live: Costareen draft 2 (hashtags 4 -> 3, rewritten to the plan), Oliareen draft 4 (rewritten to the plan).
