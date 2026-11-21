@@ -5077,3 +5077,16 @@ platform filter on the Posts page like the other filters)
 - Web only; page = #59 source + this, sw cz-shell-v4-native-pnet1b, both Pages projects (prev
   private/live-web-index-before-pnet1-20261121.html). Checked live: filter counts, Facebook/Instagram filtering. The
   landing after a real approval was NOT clicked through (it would post).
+
+2026-11-21 — #61 keep-1 (owner: "apply this everywhere: approve or reject, on any page")
+- One page-wide helper instead of editing every screen: pressing a decision button (approve / reject / drop / ready /
+  "I did it" / "not now" ..., by its words or its data attribute) inside a list item dims that item while it works; when
+  the item leaves the list after the screen redraws, the page lands smoothly on the START of the next item (under the
+  sticky top bar) and gives it the 1.2 s jump-to highlight (#FFF4D6, DESIGN.md). The item is the nearest ancestor with a
+  sibling of the same kind (article / li / tr / an id first); the next item is found again after a redraw by its id, its
+  data-id or its text. Nothing happens when the item stays (a form, a question, a failure: the dim clears after 4 s).
+  Brand desk post cards keep their own fold + land (calm-1 / pnet-1). Covers Content desk, AI approvals, Engine proposals,
+  Watchdog fixes, chat orders, creators, social posts and any later list.
+- Web only; page = #60 source + this block, sw cz-shell-v4-native-keep1, both Pages projects (prev
+  private/live-web-index-before-keep1-20261121.html). Checked live with a throw-away test list on the real page (landed
+  on the next item's top at the top bar + 12 px, highlight on). Not clicked through on real records (they would act).

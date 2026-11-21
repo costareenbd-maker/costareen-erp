@@ -65210,5 +65210,91 @@ html[data-cdesk="1"] [data-cf="new"],html[data-cdesk="1"] [data-cf="clip"]{displ
   };
 })();
 </script>
+
+<!-- keep-1 (owner 21 Nov 2026): after approve / reject on ANY list, land on the start of the next item, never a random
+     place. Works on every screen without touching each one: the item is found from the pressed button, the next item is
+     remembered, and once the item is gone from the page (after the screen redraws) the next one is scrolled to. -->
+<style>
+.kp-busy{opacity:.55;transition:opacity .2s ease-out;cursor:progress}
+.kp-land{animation:kpLand 1.2s ease-out}
+@keyframes kpLand{0%,35%{background-color:#FFF4D6}100%{background-color:transparent}}
+@media (prefers-reduced-motion:reduce){.kp-land{animation:none}.kp-busy{transition:none}}
+</style>
+<script>
+(function () {
+  var WORD = /অনুমোদন|approve|বাদ দিন|reject|decline|strike out|এখন না|not now|তৈরি রাখুন|নিজে পোস্ট করেছি|i did it|আমি করেছি|mark done|শেষ করুন/i;
+  var VAL = /^(approve|reject|drop|ready|manual|decline|done|ok|no)$/i;
+  function isDecision(b) {
+    if (!b || b.disabled) return false;
+    for (var i = 0; i < b.attributes.length; i++) { var a = b.attributes[i]; if (/^data-/.test(a.name) && (VAL.test(a.value) || /(ok|no2?)$/.test(a.name.replace(/^data-/, '')))) return true; }
+    return WORD.test(String(b.textContent || '').trim().slice(0, 60));
+  }
+  function sig(e) { return e.tagName + '.' + String(e.className && e.className.baseVal === undefined ? e.className : '').trim().split(/\s+/)[0]; }
+  // the list item: the nearest ancestor that has a sibling of the same kind (same tag + first class)
+  // (a real record - article / li / tr / an element with an id - wins over a plain repeated row of buttons)
+  function itemOf(b) {
+    var first = null;
+    for (var e = b.parentElement, d = 0; e && e !== document.body && d < 14; e = e.parentElement, d++) {
+      var p = e.parentElement; if (!p) break;
+      var s = sig(e), same = 0;
+      for (var c = p.firstElementChild; c; c = c.nextElementSibling) if (c !== e && sig(c) === s) { same++; break; }
+      if (!same || e.getBoundingClientRect().height > window.innerHeight * 3) continue;
+      if (/^(ARTICLE|LI|TR)$/.test(e.tagName) || e.id) return e;
+      if (!first) first = e;
+    }
+    return first;
+  }
+  function keyOf(e) {
+    if (!e) return null;
+    if (e.id) return { id: e.id };
+    var d = e.querySelector('[data-id]'); if (d) return { s: sig(e), did: d.getAttribute('data-id') };
+    var t = String(e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80); return t ? { s: sig(e), t: t } : null;
+  }
+  function find(k) {
+    if (!k) return null;
+    if (k.id) return document.getElementById(k.id);
+    var tag = k.s.split('.')[0], cls = k.s.split('.')[1], q = tag.toLowerCase() + (cls ? '.' + cls.replace(/([^\w-])/g, '\\$1') : ''), all;
+    try { all = document.querySelectorAll(q); } catch (e) { return null; }
+    for (var i = 0; i < all.length; i++) {
+      var e = all[i];
+      if (k.did != null) { var d = e.querySelector('[data-id]'); if (d && d.getAttribute('data-id') === k.did) return e; }
+      else if (String(e.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80) === k.t) return e;
+    }
+    return null;
+  }
+  function gap() { var t = document.querySelector('.topbar'), g = 12; if (t) { var cs = getComputedStyle(t); if (cs.position === 'sticky' || cs.position === 'fixed') g += Math.max(0, t.getBoundingClientRect().bottom); } return g; }
+  function land(e) {
+    var top = e.getBoundingClientRect().top + window.scrollY - gap(), rm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    try { window.scrollTo({ top: Math.max(0, top), behavior: rm ? 'auto' : 'smooth' }); } catch (x) { window.scrollTo(0, Math.max(0, top)); }
+    e.classList.remove('kp-land'); void e.offsetWidth; e.classList.add('kp-land'); setTimeout(function () { e.classList.remove('kp-land'); }, 1300);
+  }
+  var W = null;
+  function stop() { if (W) { if (W.mo) W.mo.disconnect(); clearTimeout(W.to); clearTimeout(W.db); if (W.item && W.item.classList) W.item.classList.remove('kp-busy'); W = null; } }
+  function check() {
+    if (!W) return;
+    var it = find(W.ik);
+    if (it && it !== W.item && W.item) { W.item = it; }                 // redrawn but still here (failed, or not removed yet)
+    if (it) return;
+    var nx = find(W.nk); if (!nx) return;
+    var w = W; stop(); requestAnimationFrame(function () { land(nx); });
+  }
+  document.addEventListener('click', function (ev) {
+    var b = ev.target && ev.target.closest && ev.target.closest('button, [role="button"]');
+    if (!b || !isDecision(b)) return;
+    if (b.closest('[id^="bc_tk_"]')) return;                              // Brand desk post cards: calm-1 / pnet-1 do it
+    var item = itemOf(b); if (!item) return;
+    var nxt = item.nextElementSibling; while (nxt && sig(nxt) !== sig(item)) nxt = nxt.nextElementSibling;
+    if (!nxt) return;
+    var ik = keyOf(item), nk = keyOf(nxt); if (!ik || !nk) return;
+    stop();
+    W = { ik: ik, nk: nk, item: item };
+    item.classList.add('kp-busy');
+    W.mo = new MutationObserver(function () { clearTimeout(W && W.db); if (W) W.db = setTimeout(check, 120); });
+    W.mo.observe(document.body, { childList: true, subtree: true });
+    W.to = setTimeout(stop, 15000);
+    setTimeout(function () { if (W && W.item === item) item.classList.remove('kp-busy'); }, 4000);   // a decision that kept the item (a form, a question) does not stay dim
+  }, true);
+})();
+</script>
 </body>
 </html>
