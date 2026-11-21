@@ -5136,3 +5136,17 @@ and if not, whichever ChatGPT account is logged in")
   engines: every 2 minutes any waiting draft without a score (any path: news, reels, autopilot, a restart mid-job) is
   scored oldest first, 4 per round; 3 failures and it is left alone (logged). Backups bridge.py.bak-score-now1 /
   bridge_biz.py.bak-score-now1 (PC + Mac). Bridges only; no page change.
+
+2026-11-22 — fb-live-1 (owner: Facebook posts stuck, page posts get zero views; "make it Live")
+- Cause 1: Meta locked the owner's developer account ("unusual activity"); the "Rahman Najir" Page lost its permission on
+  the app "Rahman Najir Social Desk" -> Facebook posts failed from 21 Nov 00:31. He confirmed the account himself; the Page
+  was reconnected in Postiz (Rahman workspace) with ALL three Pages ticked. Bridge meta-guard-1 (pause Meta on blocks).
+- Cause 2 (zero views): the app was "In development" - posts made through it are seen only by app roles. Now LIVE: privacy
+  policy + data deletion pages added to the live ERP site (web/rahman-najir-privacy.html, web/rahman-najir-data-deletion.html,
+  served at erp.costareen.com - rmabidur.com has only a saved copy of its live page, no source, so it was not redeployed),
+  category Business and pages, then Publish. App icon not set (Meta did not require it; the upload needs a native picker).
+- Pacer: the 5 real failed posts re-queued 2 hours apart (non-urgent); 11 other waiting items parked as 'ask' for the
+  owner (9 short urgent versions of the same news queued at 14:43 by someone, and 2 posts held on 16 Nov for "sells"
+  that were waiting as urgent and would have gone out). Backup /data/brand/pacer/pacer.db.bak-fbfix-20261121.
+- Not checked yet: whether the first re-sent post is public with views (Meta may need time); posts made while the app was
+  in development may stay limited.
