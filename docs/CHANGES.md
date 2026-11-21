@@ -5160,3 +5160,18 @@ and if not, whichever ChatGPT account is logged in")
   'সব বাদ দিন (N)' on top of the stuck tab (drops line posts on the PC's line, takes refused ones off the list).
 - Checked live: 32 stuck (16 line + 16 refused), new buttons and the bulk button shown. sw cz-shell-v4-native-stuck1.
 - Facebook works again: the 15:23 UTC post on 21 Nov was PUBLISHED.
+
+2026-11-22 — card-2 (owner: "the photo cards are very basic and boring - nobody will open them"; then "I wanted graphical
+cards like the Oliareen page: one picture with the details")
+- Brand desk picture cards (bridge make_cards/card_html) moved from a plain rose/paper template to the owner's Nazir brand
+  (G:\nazir-brand: Deep Teal, Paper, Ink; the Nazir mark; Anek Bangla + Hind Siliguri, Jost for English): teal cover
+  with a swipe pill, Paper step slides with a numbered badge, progress line and an optional BIG word/number copied from
+  the slide (dropped when it repeats the heading), teal end slide with "save" / "send it" pills; English labels for
+  English posts.
+- card-2b: when the draft has a PICTURE, the cover and the quote card become photo cards (Oliareen style): the photo on
+  top, a Paper panel with a small topic label, the headline, a teal tag and two lines. The renderer cannot open
+  social.costareen.com (signed-in), so the bridge fetches the picture from Postiz inside the Mac (nz_photo_data, data URL).
+  A video draft keeps the teal cover.
+- Bridge only; backups bridge.py.bak-card2 (PC + Mac). Checked: real cards for drafts 249 (bn) and 248 (en) re-made;
+  photo cards rendered with a real album photo. Most waiting drafts have no picture right now (no album fit, ChatGPT
+  picture limit), so most cards will be the teal kind until pictures come back.
