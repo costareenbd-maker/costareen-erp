@@ -5042,3 +5042,11 @@ Owner 21 Nov: "my Brand desk shows what goes out when; build the same for Costar
   smoke OK); Mac /opt/brand/bizdesk/bridge_biz.py (backup .bak-autofix1), both bizdesk containers restarted; page = #56
   source + this block, sw cz-shell-v4-native-autofix2 (prev private/live-web-index-before-autofix2-20261121.html). Tested
   live: Costareen draft 2 (hashtags 4 -> 3, rewritten to the plan), Oliareen draft 4 (rewritten to the plan).
+
+2026-11-21 — #58 ib-scroll-1 (owner, phone screenshot: no reply button in an Inbox thread, and it will not scroll)
+- Brand desk Inbox on the phone: a later desktop rule (.bx-t{overflow:auto}) beat the phone rule, so the thread column was
+  its own scroll box: the sticky reply box sat at the very end (~4000px down under a long voice-note thread) and touch
+  scroll was trapped by overscroll-behavior:contain on the messages. The phone block now sets .bx-t/.bx-ms overflow:visible
+  and overscroll-behavior:auto: the page scrolls and the reply box sticks above the tab bar. Web only; page = #57 source +
+  this rule, sw cz-shell-v4-native-ibscroll1, both Pages projects (prev private/live-web-index-before-ibscroll1-20261121.html).
+  Checked live at a 412px column: the box is in view on open and while scrolling.
