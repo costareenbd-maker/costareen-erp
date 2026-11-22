@@ -59267,6 +59267,12 @@ html:root body.bc-live #o_cp#o_cp{display:none!important}
 .bc-rail button .bc-rdot{width:8px;height:8px;border-radius:50%;background:var(--bc-alert);flex:none;margin-left:6px;font-style:normal}
 .bc-rail button>span+.bc-rdot{margin-left:auto}
 .ph-lv{border-color:var(--bc-wait);margin-top:10px}
+/* force-1: claim-check decision in the card */
+.bc-gate{border-color:var(--bc-alert);background:#FFF6F4;flex-direction:column;align-items:stretch;gap:8px;padding:14px 16px;scroll-margin:96px}
+.bc-gate .g-h{color:var(--bc-alert-ink);font-size:15px}
+.bc-gate ul{margin:0;padding-left:20px;color:var(--bc-ink-2);font-size:14px;line-height:1.55}
+.bc-gate .bc-row{margin-top:4px;gap:8px;flex-wrap:wrap}
+.bc-gate .g-n{font-size:13px;line-height:1.5;color:var(--bc-alert-ink)}
 .ph-meta [hidden]{display:none!important}
 .ph-meta span+span:not(.bc-sp)::before{content:"· "}
 .bc-node .bc-off{margin-left:6px;vertical-align:1px}
@@ -60585,7 +60591,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     if (compact) {
       h += '<p class="bc-tk-p" data-noi18n="1">' + esc(body) + '</p>' + ((x.legal_flags || []).some(function (f) { return f.severity === 'block'; }) ? '<div class="bc-flag"><span class="bc-tag x">পোস্ট আটকাবে</span><span>বদলে নিতে হবে</span></div>' : '') +
         '<div class="bc-row">' + (mine.length ? btn('অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark sm', 'ap' + id) : '') + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', 'sm', 'rj' + id) +
-        '<button type="button" class="bc-btn ghost sm" data-bc="edit" data-id="' + id + '">লেখা বদলান</button></div></div>';
+        '<button type="button" class="bc-btn ghost sm" data-bc="edit" data-id="' + id + '">লেখা বদলান</button></div>' + gateHtml(id, x) + '</div>';
       return h;
     }
     h += ta('e' + id, '', x.body || '', ' rows="7"') + flagsHtml(x);
@@ -60593,7 +60599,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     if (mine.length > 1) h += '<div class="bc-lbl">কোন অ্যাকাউন্টে যাবে</div><div class="bc-ncs">' + mine.map(function (n) { return '<button type="button" class="bc-nc bclg' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" aria-pressed="' + (C.acc[id][n.id] ? 'true' : 'false') + '" data-noi18n="1">' + logo(n.platform, 15) + esc(n.name || netName(n.platform)) + '</button>'; }).join('') + '</div>';
     h += '<div class="bc-row">' + (mine.length ? btn('অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : '') + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
       '<span class="bc-sp"></span>' + whenHtml('a' + id) +
-      '<button type="button" class="bc-btn ghost" data-bc="more" data-id="' + id + '" aria-expanded="' + (C.open[id] ? 'true' : 'false') + '">' + (C.open[id] ? 'কম' : 'আরও') + '</button></div>';
+      '<button type="button" class="bc-btn ghost" data-bc="more" data-id="' + id + '" aria-expanded="' + (C.open[id] ? 'true' : 'false') + '">' + (C.open[id] ? 'কম' : 'আরও') + '</button></div>' + gateHtml(id, x);
     if (C.open[id]) {
       var c = C.cards[id];
       h += '<div class="bc-more"><div class="bc-row" style="margin-top:0"><button type="button" class="bc-btn sm" data-bc="copy" data-id="' + id + '">' + svg('copy') + 'কপি করুন</button>' +
@@ -60657,7 +60663,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     if (mine.length > 1) h += '<div class="bc-lbl">কোন অ্যাকাউন্টে যাবে</div><div class="bc-ncs">' + mine.map(function (n) { return '<button type="button" class="bc-nc bclg' + (C.acc[id][n.id] ? ' on' : '') + '" style="--c:' + netCol(n.platform) + '" data-bc="acc" data-id="' + id + '" data-n="' + esc(n.id) + '" aria-pressed="' + (C.acc[id][n.id] ? 'true' : 'false') + '" data-noi18n="1">' + logo(n.platform, 15) + esc(n.name || netName(n.platform)) + '</button>'; }).join('') + '</div>';
     h += '<div class="bc-lbl">যেমন দেখাবে</div><div id="bc_pv">' + previewHtml(x.platform, body, mine[0] && mine[0].name) + '</div>';
     h += '<div class="bc-dt-a">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark', 'ap' + id, !sel.length) : btn(svg('copy') + 'লেখা কপি', 'data-bc="copy" data-id="' + id + '"', 'dark', '')) + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', '', 'rj' + id) +
-      '</div><div class="bc-row">' + whenHtml('a' + id) + '</div>';
+      '</div><div class="bc-row">' + whenHtml('a' + id) + '</div>' + gateHtml(id, x);
     var c = C.cards[id];
     h += '<div class="bc-more"><div class="bc-row" style="margin-top:0">' + (mine.length ? '<button type="button" class="bc-btn sm" data-bc="copy" data-id="' + id + '">' + svg('copy') + 'লেখা কপি</button>' : '') +
       btn(c && c.state === 'making' ? 'ছবি বানাচ্ছি…' : 'carousel আর quote ছবি বানান', 'data-bc="cards" data-id="' + id + '"', 'sm', '', c && c.state === 'making') + '</div>' +
@@ -60878,6 +60884,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
       (window.scUi ? scUi.chip(x.uscore, 'data-bc="score" data-id="' + id + '"') : '') +   // score-ui-1
       '<button type="button" class="bc-btn ghost" data-bc="fit" data-id="' + id + '" aria-haspopup="dialog">' + svg('plan') + 'প্ল্যানের সাথে মিল' + (x.fit ? pnFitChip(x.fit) : '') + '</button>' +
       '<button type="button" class="bc-btn ghost" data-bc="more" data-id="' + id + '" aria-expanded="' + !!C.open[id] + '">আরও' + svg('right') + '</button></div>';
+    h += gateHtml(id, x);   // force-1
     // brand-19 decision inline (was a 9-second toast): no lived detail in this text
     if (C.fold['lv' + id] && !String(v('qa' + id)).trim()) h += '<div class="bc-call ph-lv"><span>নিজের কোনো ঘটনা নেই</span><span class="bc-sp"></span>' + ((x.questions || []).length ? '<button type="button" class="bc-btn sm" data-bc="lvans" data-id="' + id + '">প্রশ্নের উত্তর দিন</button>' : '') + btn('তবুও পাঠান', 'data-bc="approve" data-id="' + id + '"', 'dark sm', 'ap' + id, !sel.length) + '</div>';
     if ((C.af || {})[id] || flagsOf(x).some(function (f) { return f.severity === 'block' || f.severity === 'warn'; })) h += afHtml(id, (C.af || {})[id]);
@@ -61004,7 +61011,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     var mine = accountsFor(x), id = x.id;
     return '<div class="ph-slot side" id="bc_tk_' + id + '"><div class="ph-top">' + lb(x.platform, LANG[x.lang] || x.lang || '') + '<span class="bc-sp"></span><span class="bc-sub" data-noi18n="1" style="max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(x.title_working || '') + '</span></div>' +
       phoneCard(x.platform, mine[0] || null, v('e' + id, x.body || ''), 's' + id, { at: x.created_at, title: (x.title_options || [])[0], media: C.media[id] }) +
-      '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark sm', 'ap' + id) : '') + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', 'sm', 'rj' + id) + '<button type="button" class="bc-btn ghost sm" data-bc="edit" data-id="' + id + '">লেখা বদলান</button></div></div>';
+      '<div class="ph-act">' + (mine.length ? btn(svg('check') + 'অনুমোদন দিন', 'data-bc="approve" data-id="' + id + '"', 'dark sm', 'ap' + id) : '') + btn('বাদ দিন', 'data-bc="reject" data-id="' + id + '"', 'sm', 'rj' + id) + '<button type="button" class="bc-btn ghost sm" data-bc="edit" data-id="' + id + '">লেখা বদলান</button></div>' + gateHtml(id, x) + '</div>';
   }
   function deps(kind) {
     var list = stations().filter(function (s) { return s.st === kind && pnetOk(s.net); }).sort(function (a, b) { return kind === 'q' ? new Date(a.at) - new Date(b.at) : new Date(b.at) - new Date(a.at); });
@@ -63577,13 +63584,29 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     p3.classList.add('back'); p3.style.transform = ''; setTimeout(function () { p3.classList.remove('back'); }, 240);
   }, { passive: true });
   function findDraft(id) { return waitingList().filter(function (w) { return String(w.id) === String(id); })[0]; }
-  function approve(id, done, bad) {
+  // force-1: a draft the claim check stops asks in its own card: fix with AI, edit, send anyway (second tap), or not now
+  function gateBlk(x) { return ((x && x.legal_flags) || []).filter(function (f) { return f && f.severity === 'block' && f.rule_id !== 'virality'; }); }
+  function gateHtml(id, x) {
+    var g = (C.gate || {})[id]; if (!g) return '';
+    var rs = gateBlk(x).map(function (f) { return String(f.reason_bn || f.reason || '').replace(/^\s*যাচাই\s*:\s*/, '') + (f.match ? ' (“' + f.match + '”)' : ''); });
+    if (!rs.length && g.msg) rs = String(g.msg).replace(/^.*?আটকেছে:\s*/, '').replace(/।?\s*লেখাটা বদলে?[^।]*।?\s*$/, '').split(' · ');
+    if (!rs.length) return '';
+    return '<div class="bc-call bc-gate" role="alert" id="bc_gate_' + id + '"><b class="g-h">দাবি-যাচাই এই লেখা আটকেছে</b><ul data-noi18n="1">' + rs.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul>' +
+      '<div class="bc-row">' + btn(svg('spark') + 'AI দিয়ে ঠিক করুন', 'data-bc="autofix" data-id="' + id + '"', 'dark sm', 'af' + id) +
+      '<button type="button" class="bc-btn sm" data-bc="pedit" data-id="' + id + '">লেখা বদলান</button>' +
+      btn(g.arm ? 'হ্যাঁ, তবুও পাঠান' : 'তবুও পাঠান', 'data-bc="gforce" data-id="' + id + '"', g.arm ? 'sm red' : 'sm redline', 'ap' + id) +
+      '<button type="button" class="bc-btn ghost sm" data-bc="gclose" data-id="' + id + '">এখন না</button></div>' +
+      (g.arm ? '<span class="g-n">যাচাই ছাড়াই যাবে। আরেকবার চাপলে পোস্ট লাইনে উঠবে; লেখার দায় আপনার।</span>' : '') + '</div>';
+  }
+  function gateOpen(id, m) { (C.gate = C.gate || {})[id] = { msg: m || '' }; draw(); setTimeout(function () { var b = el('bc_gate_' + id); if (b) b.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 40); }
+  function approve(id, done, bad, force) {
     var x = findDraft(id); if (!x) { if (bad) bad(); return; }
     var sel = accSel(x, accountsFor(x));
     if (!sel.length) { if (bad) bad(); if (C.sec !== 'posts') { C.ptab = 'wait'; goSec('posts'); } return toast('অ্যাকাউন্ট বেছে নিন।', true); }
     var at = v('a' + id);
-    act('ap' + id, 'erpBrandDeskDraftDecide', { id: Number(id), action: 'approve', networks: sel.map(function (n) { return { id: n.id, platform: n.platform }; }), body: v('e' + id, x.body || ''), at: at ? new Date(at).toISOString() : null, media: C.media[id] ? [{ id: C.media[id].id, path: C.media[id].path }] : undefined },
-      function (r) { delete C.v['e' + id]; delete C.v['a' + id]; var onCard = !!el('bc_tk_' + id); if (!done && !onCard) toast('লাইনে দেওয়া হলো।'); get('cockpit', true); leaveCard(id, r, 'লাইনে দেওয়া হয়েছে', function () { if (String(C.dsel) === String(id)) deskNext(id); }); if (done) done(); }, bad);
+    act('ap' + id, 'erpBrandDeskDraftDecide', { id: Number(id), action: 'approve', networks: sel.map(function (n) { return { id: n.id, platform: n.platform }; }), body: v('e' + id, x.body || ''), at: at ? new Date(at).toISOString() : null, media: C.media[id] ? [{ id: C.media[id].id, path: C.media[id].path }] : undefined, force: force ? true : undefined },
+      function (r) { if (C.gate) delete C.gate[id]; delete C.v['e' + id]; delete C.v['a' + id]; var onCard = !!el('bc_tk_' + id); if (!done && !onCard) toast('লাইনে দেওয়া হলো।'); get('cockpit', true); leaveCard(id, r, force ? 'যাচাই ছাড়াই লাইনে দেওয়া হয়েছে' : 'লাইনে দেওয়া হয়েছে', function () { if (String(C.dsel) === String(id)) deskNext(id); }); if (done) done(); },
+      function (e) { if (!force && /দাবি-যাচাই/.test(msg(e))) gateOpen(id, msg(e)); if (bad) bad(e); });   // force-1
   }
   document.addEventListener('click', function (e) {
     if (!on()) return;
@@ -63662,9 +63685,12 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     else if (w === 'approve') {
       // brand-19: a draft with no lived detail asks once more before it goes (owner's rule: no generic AI post slips through)
       var ax = findDraft(id);
+      if (ax && gateBlk(ax).length) { gateOpen(id); return; }   // force-1
       if (ax && ax.lived === false && !C.fold['lv' + id] && !String(v('qa' + id)).trim()) { C.fold['lv' + id] = 1; draw(); var lvb = el('bc_tk_' + id); lvb = lvb && lvb.querySelector('.ph-lv'); if (lvb) lvb.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
       approve(id);
     }
+    else if (w === 'gforce') { var gg = (C.gate || {})[id]; if (!gg) return; if (!gg.arm) { gg.arm = 1; draw(); return; } approve(id, null, null, true); }   // force-1
+    else if (w === 'gclose') { if (C.gate) delete C.gate[id]; draw(); }
     else if (w === 'approveall') {
       var g = groups().filter(function (x) { return x.key === id; })[0]; if (!g) return;
       var ids = g.list.filter(function (x) { return !x._old && accSel(x, accountsFor(x)).length; }).map(function (x) { return x.id; }), n = 0;
@@ -63819,7 +63845,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     else if (w === 'pnjump') { var jt = el(id); if (jt) try { jt.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); } catch (e) {} }
     else if (w === 'fit' || w === 'slotfit') { C.fitPart = 0; C.csFromEl = t; C.csFrom = ''; C.sheet = 'fit:' + (w === 'slotfit' ? 'slot' + id : id); C.csIn = 1; if (w === 'fit' && !C.fits[id]) fitLoad(id); draw(); setTimeout(function () { var pf = el('bc_cs_p'); if (pf) try { pf.focus({ preventScroll: true }); } catch (e) {} }, 30); }
     else if (w === 'fitretry') { C.fits[id] = null; fitLoad(id); draw(); var pr = el('bc_cs_p'); if (pr) try { pr.focus({ preventScroll: true }); } catch (e) {} }
-    else if (w === 'autofix') act('af' + id, 'erpBrandDeskDraftAutofix', { id: Number(id) }, function (r) { C.af = C.af || {}; C.af[id] = { state: 'fixing', step: 'শুরু', job: r && r.job }; afPoll(id); });
+    else if (w === 'autofix' && (C.gate && C.gate[id] ? (delete C.gate[id], 1) : 1)) act('af' + id, 'erpBrandDeskDraftAutofix', { id: Number(id) }, function (r) { C.af = C.af || {}; C.af[id] = { state: 'fixing', step: 'শুরু', job: r && r.job }; afPoll(id); });
     else if (w === 'fitfix') { act('fx' + id, 'erpBrandDeskDraftFix', { id: Number(id) }, function (r) { C.fits[id] = null; closeSheet(); toast('AI নিয়ম মেনে আবার লিখছে, ১-২ মিনিট। নতুন লেখা পোস্টে আর এখানে আসবে।'); get('drafts', true); setTimeout(function () { get('plan', true); }, 90000); }); }
     else if (w === 'fitpart') { C.fitPart = Number(id); draw(); }
     else if (w === 'score') { var fromFit = String(C.sheet).indexOf('fit:') === 0; C.docBack = fromFit ? C.sheet : ''; if (!fromFit) { C.csFromEl = t; C.csFrom = ''; } C.sheet = 'score:' + id; C.csIn = 1; if (!C.fits[id]) fitLoad(id); draw(); setTimeout(function () { var ps = el('bc_cs_p'); if (ps) try { ps.focus({ preventScroll: true }); ps.querySelector('.cs-b').scrollTop = 0; } catch (e) {} }, 30); }   // score-ui-1
@@ -64368,6 +64394,14 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
 .cd-alert{border:1px solid color-mix(in srgb,var(--bad) 45%,var(--rule));background:var(--badbg);border-radius:14px;padding:12px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;color:var(--ink)}
 .cd-alert b{flex:1;min-width:200px;font-weight:600}
 .cd-note{padding:12px 14px;border:1px solid var(--rule);background:var(--pan);border-radius:14px;font-size:14px;line-height:1.6;color:var(--ink2)}
+/* force-1 */
+.cd-gate{margin-top:10px;padding:14px 16px;border:2px solid #E0301E;background:#FFF6F4;border-radius:14px;display:flex;flex-direction:column;gap:8px;scroll-margin:96px}
+.cd-gate b{color:#A8260F;font-size:15px}
+.cd-gate ul{margin:0;padding-left:20px;font-size:14px;line-height:1.55;color:var(--ink2)}
+.cd-gate .cd-row{margin:4px 0 0;flex-wrap:wrap}
+.cd-gate .g-arm{border-color:#E0301E;color:#A8260F;background:#fff}
+.cd-gate .g-go{background:#E0301E;border-color:#E0301E;color:#fff;font-weight:600}
+.cd-gate .g-n{font-size:13px;line-height:1.5;color:#A8260F}
 /* people */
 .cd-hrow{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;padding:8px 16px;align-items:center}
 .cd-in{border:1px solid var(--rule);border-radius:12px;padding:9px 11px;font:inherit;font-size:15px;min-height:44px;width:100%;background:var(--card);color:var(--ink)}
@@ -64527,7 +64561,8 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
     if (!canAct()) return '<div class="cd-pub"><span class="cd-when">অনুমোদন দেন ম্যানেজার বা তার উপরের কেউ।</span></div>';
     var busy = CD.busy['a' + d.id], s = slot(d), out = '';
     if (has) {
-      var pk = picked(d), any = Object.keys(pk).length > 0, dis = (!any || blocked || busy || ch.paused) ? ' disabled' : '';
+      var own = !!(typeof ME !== 'undefined' && ME && ME.role === 'owner'), hard = blocked && !own;   // force-1: the owner may decide on a stopped text
+      var pk = picked(d), any = Object.keys(pk).length > 0, dis = (!any || hard || busy || ch.paused) ? ' disabled' : '';
       var chips = NETS.map(function (n) {
         var cs = chans(n);
         if (!cs.length) return '<button type="button" class="cd-chip" disabled><i style="--c:' + NETC[n] + '"></i>' + NETN[n] + ' · যুক্ত নয়</button>';
@@ -64535,18 +64570,33 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
           return '<button type="button" class="cd-chip' + (onn ? ' on' : '') + '" style="--c:' + NETC[n] + '" data-cd="pick" data-d="' + d.id + '" data-id="' + esc(c.id) + '" aria-pressed="' + onn + '"' + (ok ? '' : ' disabled') + '><i></i>' + NETN[n] +
             (cs.length > 1 ? ' · <span data-noi18n="1">' + esc(c.name) + '</span>' : '') + (ok ? '' : c.held ? ' · বিরতি' : ' · সংযোগ দিন') + '</button>'; }).join('');
       }).join('');
-      var tip = ch.paused ? 'সব পোস্ট থামানো আছে (চ্যানেল ট্যাব)' : blocked ? 'আটকানো লেখা: ঠিক না হলে যাবে না' : !any ? 'কোথায় যাবে, অন্তত একটা বাছুন' : s ? 'রুটিনের সময়: ' + when(s) : 'রুটিনের সময় পেরিয়ে গেছে: অনুমোদন দিলে এখনই লাইনে যাবে';
+      var tip = ch.paused ? 'সব পোস্ট থামানো আছে (চ্যানেল ট্যাব)' : hard ? 'আটকানো লেখা: ঠিক না হলে যাবে না' : blocked ? 'আটকানো লেখা: অনুমোদন চাপলে কী করবেন বেছে নিন' : !any ? 'কোথায় যাবে, অন্তত একটা বাছুন' : s ? 'রুটিনের সময়: ' + when(s) : 'রুটিনের সময় পেরিয়ে গেছে: অনুমোদন দিলে এখনই লাইনে যাবে';
       out = '<div class="cd-nets" role="group" aria-label="কোথায় যাবে">' + chips + '</div>' +
         '<div class="cd-row"><button type="button" class="cd-btn pri" data-cd="ok" data-d="' + d.id + '"' + dis + '>অনুমোদন · রুটিনের সময়ে যাবে</button>' +
-        '<button type="button" class="cd-btn" data-cd="time" data-d="' + d.id + '"' + (blocked ? ' disabled' : '') + ' aria-expanded="' + !!CD.when[d.id] + '">সময় বদলান</button>' +
+        '<button type="button" class="cd-btn" data-cd="time" data-d="' + d.id + '"' + (hard ? ' disabled' : '') + ' aria-expanded="' + !!CD.when[d.id] + '">সময় বদলান</button>' +
         '<button type="button" class="cd-btn" data-cd="now" data-d="' + d.id + '"' + dis + '>এখনই</button></div>' +
         (CD.when[d.id] ? '<div class="cd-row"><input type="datetime-local" class="cd-dt" data-cdt-dt="' + d.id + '" value="' + esc(CD.dt[d.id] || '') + '" aria-label="কখন যাবে (ঢাকা সময়)"><button type="button" class="cd-btn pri" data-cd="at" data-d="' + d.id + '"' + dis + '>এই সময়ে পাঠান</button></div>' : '') +
-        '<span class="cd-when">' + tip + '</span>';
+        '<span class="cd-when">' + tip + '</span>' + cdGate(d);
     } else {
       out = '<span class="cd-when">' + (ch && ch.workspace === false ? 'এই ব্যবসার Postiz workspace-এ এখনো কোনো পেজ যুক্ত নেই: পেজ চালান যারা নিজে পোস্ট করবেন, বা “চ্যানেল” ট্যাবে পেজ যুক্ত করুন।' : 'চ্যানেল আনা হচ্ছে…') + '</span>';
     }
     return '<div class="cd-pub">' + out + '</div>';
   }
+  // force-1: the claim-check decision in the card (owner: send anyway after a second tap; everyone: fix or not now)
+  function cdBlk(d) { return (Array.isArray(d && d.legal_flags) ? d.legal_flags : []).filter(function (f) { return f && f.severity === 'block' && f.rule_id !== 'virality'; }); }
+  function cdGate(d) {
+    var g = (CD.gate || {})[d.id]; if (!g) return '';
+    var rs = cdBlk(d).map(function (f) { return String(f.reason_bn || f.reason || '') + (f.match ? ' (“' + f.match + '”)' : ''); });
+    if (!rs.length && g.msg) rs = String(g.msg).replace(/^.*?আটকেছে:\s*/, '').replace(/।?\s*লেখাটা বদলে?[^।]*।?\s*$/, '').split(' · ');
+    if (!rs.length) return '';
+    var own = !!(typeof ME !== 'undefined' && ME && ME.role === 'owner');
+    return '<div class="cd-gate" role="alert" id="cd_gate_' + d.id + '"><b>দাবি-যাচাই এই লেখা আটকেছে</b><ul data-noi18n="1">' + rs.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul><div class="cd-row">' +
+      '<button type="button" class="cd-btn pri" data-cd="autofix" data-id="' + d.id + '"' + (CD.busy['af' + d.id] ? ' disabled' : '') + '>AI দিয়ে ঠিক করুন</button>' +
+      (own ? '<button type="button" class="cd-btn ' + (g.arm ? 'g-go' : 'g-arm') + '" data-cd="gforce" data-d="' + d.id + '"' + (CD.busy['a' + d.id] ? ' disabled' : '') + '>' + (g.arm ? 'হ্যাঁ, তবুও পাঠান' : 'তবুও পাঠান') + '</button>' : '') +
+      '<button type="button" class="cd-btn ghost" data-cd="gclose" data-d="' + d.id + '">এখন না</button></div>' +
+      (g.arm ? '<span class="g-n">যাচাই ছাড়াই যাবে। আরেকবার চাপলে পোস্ট লাইনে উঠবে; লেখার দায় আপনার।</span>' : own ? '' : '<span class="g-n">আটকানো লেখা শুধু মালিক পাঠাতে পারেন।</span>') + '</div>';
+  }
+  function cdGateOpen(id, at, m) { (CD.gate = CD.gate || {})[id] = { at: at, msg: m || '' }; paint(); setTimeout(function () { var b = el('cd_gate_' + id); if (b) b.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 40); }
   // autofix-2 (owner 21 Nov 2026): the Brand desk's one-tap AI fix, here too (manager and up; this business's own engine)
   function afBox(d) {
     var a = CD.af[d.id], f = Array.isArray(d.legal_flags) ? d.legal_flags : [];
@@ -64803,15 +64853,16 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
     if (CD.url[id]) return cb(CD.url[id]);
     srv('erpContentVideoUrl', [{ id: Number(id) }], function (r) { CD.url[id] = r.url; setTimeout(function () { delete CD.url[id]; }, 50 * 60e3); cb(r.url); }, function (e) { toast(esc(errOf(e)), true); });
   }
-  function approve(id, at) {
+  function approve(id, at, force) {
+    var gd = draftOf(id); if (!force && gd && cdBlk(gd).length) { cdGateOpen(id, at); return; }   // force-1
     var nets = ((CD.ch && CD.ch.channels) || []).filter(function (c) { return CD.pick[id] && CD.pick[id][c.id] && live(c); }).map(function (c) { return { id: c.id, platform: c.platform }; });
     if (!nets.length) { toast('কোথায় যাবে, অন্তত একটা বাছুন।', true); return; }
     CD.busy['a' + id] = 1; paint();
-    srv('erpContentDraftDecide', [{ id: Number(id), action: 'approve', networks: nets, at: at.toISOString() }], function () {
-      CD.busy['a' + id] = 0; delete CD.pick[id]; delete CD.when[id];
+    srv('erpContentDraftDecide', [{ id: Number(id), action: 'approve', networks: nets, at: at.toISOString(), force: force ? true : undefined }], function () {
+      CD.busy['a' + id] = 0; delete CD.pick[id]; delete CD.when[id]; if (CD.gate) delete CD.gate[id];
       CD.sched = null; HC.at = 0;
       cdLeave(id, 'লাইনে উঠেছে: ' + when(at) + '-এ যাবে (' + nets.map(function (n) { return NETN[n.platform]; }).join(', ') + ')');
-    }, function (e) { CD.busy['a' + id] = 0; toast(esc(errOf(e)), true, 9000); paint(); });
+    }, function (e) { CD.busy['a' + id] = 0; if (!force && /দাবি-যাচাই/.test(errOf(e))) { cdGateOpen(id, at, errOf(e)); return; } toast(esc(errOf(e)), true, 9000); paint(); });
   }
   document.addEventListener('input', function (e) {
     var t = e.target; if (!t || !t.getAttribute) return;
@@ -64843,10 +64894,13 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
         function (x) { CD.busy['r' + id] = 0; toast(esc(errOf(x)), true, 9000); paint(); });
     }
     else if (w === 'autofix') {
+      if (CD.gate) delete CD.gate[id];   // force-1
       CD.busy['af' + id] = 1; CD.af[id] = { state: 'fixing', step: 'শুরু' }; paint();
       srv('erpContentDraftAutofix', [{ id: Number(id) }], function (r) { CD.busy['af' + id] = 0; CD.af[id] = { state: 'fixing', step: 'শুরু', job: r && r.job }; paint(); afPoll(id); },
         function (x) { CD.busy['af' + id] = 0; CD.af[id] = { state: 'failed', error: errOf(x) }; paint(); });
     }
+    else if (w === 'gforce') { var cg = (CD.gate || {})[did]; if (!cg) return; if (!cg.arm) { cg.arm = 1; paint(); return; } approve(did, cg.at || new Date(Date.now() + 60e3), true); }   // force-1
+    else if (w === 'gclose') { if (CD.gate) delete CD.gate[did]; paint(); }
     else if (w === 'wk') { CD.wk = Number(id) || 0; CD.sday = -1; CD.spick = null; paint(); }
     else if (w === 'sflt') { CD.sflt = id; CD.spick = null; paint(); }
     else if (w === 'sday') { CD.sday = Number(id); CD.spick = null; paint(); }

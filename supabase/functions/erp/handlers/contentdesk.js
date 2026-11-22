@@ -552,6 +552,10 @@ export async function erpContentDraftDecide(ctx, payload) {
   const out = { id, action, networks: nets, at };
   const text = str(p.body);
   if (text) { if (text.length > 63000) throw new Error('পোস্টটা অনেক লম্বা। ছোট করুন।'); out.body = text; }
+  if (p.force === true) {   // force-1: only the owner sends a text past the claim check
+    if (ctx.s.role !== 'owner') throw new Error('আটকানো লেখা শুধু মালিক পাঠাতে পারেন।');
+    out.force = true;
+  }
   return engine(ctx, '/drafts/decide', out);
 }
 

@@ -5187,3 +5187,16 @@ cards like the Oliareen page: one picture with the details")
 - The 14 old Facebook posts were cleared on the Mac. Two YouTube stuck posts (18/19 Nov) left in the list.
 - LIVE web: page = #67 bnsplash-3 source (bnrel3, rebuilt == deployed checked) + this patch, sw cz-shell-v4-native-stuck2,
   both Pages projects. Prev page private/live-web-index-before-stuck2-20261122.html. Bridge backup bridge.py.bak-stuck2 (PC).
+
+2026-11-22 — #69 force-1 (owner: "a post the claim check stops - I want to be able to approve it anyway: warn me and ask
+send anyway / fix it / something else", with impeccable)
+- Brand desk: অনুমোদন on a draft with a blocking flag opens an in-card panel (red outline, the reasons; AI দিয়ে ঠিক
+  করুন, লেখা বদলান, তবুও পাঠান, এখন না). 'তবুও পাঠান' arms on the first tap (turns solid red + "যাচাই ছাড়াই যাবে… দায়
+  আপনার"), the second tap sends with force. A server refusal opens the same panel instead of a toast. In every card layout.
+- Content desk (businesses): the same panel; approve buttons stay usable for the owner only; 'তবুও পাঠান' owner only
+  (server: contentdesk.js refuses force for any other role).
+- Server: bridge + bridge_biz /drafts/decide approve accept force=true; the draft's approver_note records
+  "owner sent past the claim check: <reasons>". Without force nothing changed (checked: draft 258 still refused).
+- LIVE: functions file-by-file (branddesk.js, contentdesk.js; backups /data/backups/live-function/*-20261122T034242Z),
+  bridges (bak-force1 on PC + Mac), web = #68 stuck-2 source + patch, sw cz-shell-v4-native-force1b, both Pages projects.
+  Prev page private/live-web-index-before-force1-20261122.html. The forced send itself was not tried (it would post).

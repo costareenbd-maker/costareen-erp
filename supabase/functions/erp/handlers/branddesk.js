@@ -561,6 +561,7 @@ export async function erpBrandDeskDraftDecide(ctx, payload) {
   if (p.at) { const d = new Date(p.at); if (isNaN(d)) throw new Error('সময়টা ঠিক নেই। আবার বাছুন।'); at = d.toISOString(); }
   const out = { id, action, networks: nets, at };
   if (text) out.body = text;
+  if (p.force === true) out.force = true;   // force-1: the owner sends it past the claim check (the desk is owner-only)
   const media = mediaRefs(p.media);
   if (media.length) { out.media = media; out.pictures = false; }
   return bridge(ctx, '/drafts/decide', out);
