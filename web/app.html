@@ -58438,6 +58438,8 @@ select.bc-in{padding-right:28px}
 .sv-md.one{grid-template-columns:1fr}
 .sv-md img,.sv-md video{display:block;width:100%;max-height:70vh;object-fit:contain;border-radius:12px;background:#0E1013}
 .sv-md.one img,.sv-md.one video{max-width:520px}
+.bc-dep .sv-wrap{grid-column:1/-1;cursor:auto;min-width:0}
+.bc-dep .sv-wrap .sv-box{margin-top:0}
 .bc-pick.sv-on{grid-template-columns:auto 1fr}
 .bc-pick.sv-on .a{grid-column:1/-1;justify-content:flex-start}
 .bc-res{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:24px}
@@ -61045,11 +61047,12 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     list.forEach(function (s) {
       var t = new Date(s.at), dk = t.toDateString();
       if (dk !== last) { last = dk; h += '<div class="bc-day' + (dk === today ? ' t' : '') + '">' + (dk === today ? 'আজ' : DAY[t.getDay()]) + ' · ' + dDate(t) + '</div>'; }
-      var open = C.dep === s.key;
+      var open = C.dep === s.key, pvRow = open && C.pv && C.pv.key === s.key;   // seen-1c
       h += '<div class="bc-dep' + (open ? ' open' : '') + '" data-bc="dep" data-id="' + esc(s.key) + '"><span class="tm">' + dTime(t) + '</span>' + lb(s.net) +
-        '<p data-noi18n="1">' + esc(s.text || '(লেখা নেই)') + (open ? '<span class="m">' + (s.acc ? '<span data-noi18n="1">' + esc(s.acc) + '</span> · ' : '') + stLabel(s) + (s.result && s.st === 'x' ? ' · <span data-noi18n="1">' + esc(String(s.result).slice(0, 200)) + '</span>' : '') + '</span>' : '') + '</p>' +
+        '<p data-noi18n="1">' + (pvRow ? '' : esc(s.text || '(লেখা নেই)')) + (open ? '<span class="m">' + (s.acc ? '<span data-noi18n="1">' + esc(s.acc) + '</span> · ' : '') + stLabel(s) + (s.result && s.st === 'x' ? ' · <span data-noi18n="1">' + esc(String(s.result).slice(0, 200)) + '</span>' : '') + '</span>' : '') + '</p>' +
         '<span class="a">' + (s.st === 'x' ? stActs(s) : open ? stActs(s) : '<span class="bc-stt ' + s.st + '">' + stLabel(s) + '</span>') +
-        '<button type="button" class="bc-ic bc-dt" data-bc="dep" data-id="' + esc(s.key) + '" aria-expanded="' + open + '" aria-label="' + (open ? 'ছোট করুন' : 'পুরো লেখা দেখুন') + '">' + svg('right') + '</button></span></div>';
+        '<button type="button" class="bc-ic bc-dt" data-bc="dep" data-id="' + esc(s.key) + '" aria-expanded="' + open + '" aria-label="' + (open ? 'ছোট করুন' : 'পুরো লেখা দেখুন') + '">' + svg('right') + '</button></span>' +
+        (pvRow ? '<div class="sv-wrap" data-bc="svnoop">' + pvBody(C.pv.st, C.pv.d, C.pv.msg) + '</div>' : '') + '</div>';
     });
     return h + unh;
   }
@@ -63702,7 +63705,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     else if (w === 'wk') { C.wk = Number(id); C.pick = ''; draw(); }
     else if (w === 'st') { tipHide(); C.pick = C.pick === id ? '' : id; var s = findSt(id); if (s) { C.wk = Math.floor((new Date(s.at) - weekStart(0)) / (7 * 864e5)); } draw(); var pk = el('bc_root').querySelector('.bc-pick'); if (pk && pk.scrollIntoView) pk.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
     else if (w === 'unpick') { C.pv = null; C.pick = ''; draw(); }
-    else if (w === 'dep') { if (e.target.closest('button,a') && e.target.closest('button,a') !== t) return; C.dep = C.dep === id ? '' : id; draw(); }
+    else if (w === 'dep') { if (e.target.closest('button,a') && e.target.closest('button,a') !== t) return; C.dep = C.dep === id ? '' : id; C.pv = null; draw(); }
     else if (w === 'hcap') { C.itab = ''; C.capFocus = 1; goSec('ideas', false, true); }   // the idea box gets focus on the first draw that has it (the page may still be loading)
     else if (w === 'ptab') { C.ptab = id; goSec('posts', false, C.sec === 'posts'); }
     else if (w === 'pnet') { C.pnet = id || ''; draw(); }

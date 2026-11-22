@@ -5224,3 +5224,7 @@ whole text and the video here too, at least for 7 days")
   (bak-seen1 PC + Mac), web = #69 force-1 source + patch, sw cz-shell-v4-native-seen1. Checked: /post/view returns the
   text and the picture of the newest sent post; smoke-public passes. Not clicked in the live page (the desk needs the
   owner's link); the panel was checked on a phone-width mock.
+
+- seen-1c (same day, owner: "pressing it did nothing"): on the phone the 'গেছে' tab is the line list (bc-dep rows), and
+  the full view only rendered in the picked-post panel. Now the row itself opens the view under the line (pictures/
+  video + whole text, the short line hidden); taps inside the view do not fold the row. Live sw cz-shell-v4-native-seen1c.
