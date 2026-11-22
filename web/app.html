@@ -58428,6 +58428,16 @@ select.bc-in{padding-right:28px}
 .bc-pick .m{font-size:12.5px;color:var(--bc-ink-3)}
 .bc-pick p{margin:4px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;max-height:140px;overflow:auto}
 .bc-pick .a{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+/* seen-1: a sent post shown in full */
+.sv-box{margin-top:10px;display:flex;flex-direction:column;gap:10px}
+.sv-t{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px;line-height:1.65;color:inherit}
+.sv-note{font-size:14px;line-height:1.55;opacity:.8}
+.sv-md{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.sv-md.one{grid-template-columns:1fr}
+.sv-md img,.sv-md video{display:block;width:100%;max-height:70vh;object-fit:contain;border-radius:12px;background:#0E1013}
+.sv-md.one img,.sv-md.one video{max-width:520px}
+.bc-pick.sv-on{grid-template-columns:auto 1fr}
+.bc-pick.sv-on .a{grid-column:1/-1;justify-content:flex-start}
 .bc-res{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:24px}
 .bc-res button{all:unset;box-sizing:border-box;cursor:pointer;background:var(--bc-shelf);border-radius:14px;padding:12px 14px;transition:background .15s ease-out}
 .bc-res button:hover{background:#E7E9EC}
@@ -60524,20 +60534,32 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
   }
   function stLabel(s) { return s.st === 'go' ? 'গেছে' : s.st === 'x' ? (s.ask ? 'সিদ্ধান্ত লাগবে' : 'আটকে গেছে') : 'যাবে'; }
   function findSt(key) { return stations().filter(function (s) { return s.key === key; })[0]; }
+
+  function pvBody(st, d, msg) {   // seen-1: the sent post itself, from the post line (7 days)
+    if (st === 'load') return '<div class="sv-box"><span class="sv-note">আনা হচ্ছে…</span></div>';
+    if (st === 'err') return '<div class="sv-box"><span class="sv-note">' + esc(msg || 'আনা গেল না') + '</span></div>';
+    if (!d || d.missing) return '<div class="sv-box"><span class="sv-note">এই পোস্টটা ERP-এর লাইন দিয়ে যায়নি, তাই পুরো লেখা এখানে নেই। প্ল্যাটফর্মে খুলে দেখুন।</span></div>';
+    if (d.old) return '<div class="sv-box"><span class="sv-note">৭ দিনের বেশি পুরোনো পোস্ট; পুরো লেখা আর রাখা নেই। প্ল্যাটফর্মে খুলে দেখুন।</span></div>';
+    var md = (d.media || []).map(function (m) { var u = String(m.path || ''); if (!/^https:\/\//.test(u)) return '';
+      return /\.(mp4|mov|webm|m4v)(\?|$)/i.test(u) ? '<video controls playsinline preload="metadata" src="' + esc(u) + '"></video>' : '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img loading="lazy" alt="" src="' + esc(u) + '"></a>'; }).join('');
+    return '<div class="sv-box">' + (md ? '<div class="sv-md' + ((d.media || []).length === 1 ? ' one' : '') + '">' + md + '</div>' : '') + '<p class="sv-t" data-noi18n="1">' + esc(d.content || '(লেখা নেই)') + '</p></div>';
+  }
   function stActs(s) {
     var a = '';
     // stuck-1: the same pair on every stuck post; the note says what the send button really does
     if (s.src === 'postiz' && s.st === 'x' && needMedia(s.net)) a += '<span class="bc-sub">ভিডিও ছাড়া ' + esc(netName(s.net)) + '-এ যায় না</span>' + btn('বাদ দিন', 'data-bc="hidest" data-id="' + esc(s.key) + '"', 'sm');
     else if (s.src === 'postiz' && s.st === 'x') a += '<span class="bc-sub">' + esc(netName(s.net)) + ' নেয়নি · আটকে যাওয়া পোস্ট আর যায় না</span>' + btn('বাদ দিন', 'data-bc="hidest" data-id="' + esc(s.key) + '"', 'sm', 'hs' + s.key);   // stuck-2: never re-sent
     if (s.src === 'pacer' && s.st === 'x') a += '<span class="bc-sub">সময় পেরিয়েছে, এখনো যায়নি</span>' + btn('এখন পাঠান', 'data-bc="decide" data-act="send" data-id="' + esc(s.id) + '"', 'dark sm', 'dc' + s.id) + btn('বাদ দিন', 'data-bc="decide" data-act="drop" data-id="' + esc(s.id) + '"', 'sm', 'dd' + s.id);
+    if (s.src === 'postiz' && s.st === 'go' && s.raw && s.raw.id) a += btn(C.pv && C.pv.key === s.key ? 'ছোট করুন' : 'পুরোটা দেখুন', 'data-bc="pview" data-id="' + esc(s.key) + '"', 'dark sm', '');   // seen-1
     if (s.url && /^https?:/.test(s.url)) a += '<a class="bc-btn ghost sm" href="' + esc(s.url) + '" target="_blank" rel="noopener">পোস্টটা খুলুন</a>';
     return a;
   }
   function pickHtml() {
     var s = C.pick && findSt(C.pick); if (!s) return '';
     var t = new Date(s.at);
-    return '<div class="bc-pick" style="--c:' + netCol(s.net) + '"><s></s><div><div class="m">' + esc(netName(s.net)) + (s.acc ? ' · <span data-noi18n="1">' + esc(s.acc) + '</span>' : '') + ' · ' + DAY[t.getDay()] + ' ' + dDate(t) + ', ' + dTime(t) + ' · <b>' + stLabel(s) + '</b></div>' +
-      '<p data-noi18n="1">' + esc(s.text || '(লেখা নেই)') + '</p>' + (s.result && s.st === 'x' ? '<div class="m" data-noi18n="1">' + esc(String(s.result).slice(0, 200)) + '</div>' : '') + '</div><div class="a">' + stActs(s) + closeBtn('data-bc="unpick"') + '</div></div>';
+    var pvOn = !!(C.pv && C.pv.key === s.key);
+    return '<div class="bc-pick' + (pvOn ? ' sv-on' : '') + '" style="--c:' + netCol(s.net) + '"><s></s><div><div class="m">' + esc(netName(s.net)) + (s.acc ? ' · <span data-noi18n="1">' + esc(s.acc) + '</span>' : '') + ' · ' + DAY[t.getDay()] + ' ' + dDate(t) + ', ' + dTime(t) + ' · <b>' + stLabel(s) + '</b></div>' +
+      (pvOn ? pvBody(C.pv.st, C.pv.d, C.pv.msg) : '<p data-noi18n="1">' + esc(s.text || '(লেখা নেই)') + '</p>') + (s.result && s.st === 'x' ? '<div class="m" data-noi18n="1">' + esc(String(s.result).slice(0, 200)) + '</div>' : '') + '</div><div class="a">' + stActs(s) + closeBtn('data-bc="unpick"') + '</div></div>';
   }
   // ---------- numbers
   function waitingList() { return (C.d.drafts && C.d.drafts.waiting) || []; }
@@ -63654,6 +63676,13 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
         var q3 = drops.shift(); srv('erpBrandDeskDecide', [{ id: q3.id, action: 'drop' }], function () { k3++; nx3(); }, function (e10) { C.busy.stclear = 0; toast(msg(e10), true, 9000); get('cockpit', true); draw(); }); })();
       return;
     }
+    if (w === 'pview') {   // seen-1
+      if (C.pv && C.pv.key === id) { C.pv = null; draw(); return; }
+      var ps = findSt(id); if (!ps || !ps.raw) return;
+      C.pv = { key: id, st: 'load' }; draw();
+      srv('erpBrandDeskPostView', [{ id: ps.raw.id }], function (r) { if (C.pv && C.pv.key === id) { C.pv.st = 'ok'; C.pv.d = r; draw(); } }, function (e) { if (C.pv && C.pv.key === id) { C.pv.st = 'err'; C.pv.msg = msg(e); draw(); } });
+      return;
+    }
     if (w === 'unhide') { HID = {}; try { localStorage.removeItem('bc_hidden'); } catch (e8) {} toast('ফিরিয়ে আনা হলো।'); draw(); return; }
     if (w === 'lvans') { C.fold['q' + id] = 1; draw(); setTimeout(function () { var b = el('bci_qa' + id); if (b) { b.scrollIntoView({ block: 'center', behavior: 'smooth' }); b.focus({ preventScroll: true }); } }, 40); return; }
     if (w === 'skip') { e.preventDefault(); var mn = el('bc_main'); if (mn) try { mn.focus(); } catch (er) {} return; }
@@ -63670,7 +63699,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     else if (w === 'go') { document.body.classList.remove('bc-live'); if (typeof go === 'function') go(id); }
     else if (w === 'wk') { C.wk = Number(id); C.pick = ''; draw(); }
     else if (w === 'st') { tipHide(); C.pick = C.pick === id ? '' : id; var s = findSt(id); if (s) { C.wk = Math.floor((new Date(s.at) - weekStart(0)) / (7 * 864e5)); } draw(); var pk = el('bc_root').querySelector('.bc-pick'); if (pk && pk.scrollIntoView) pk.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
-    else if (w === 'unpick') { C.pick = ''; draw(); }
+    else if (w === 'unpick') { C.pv = null; C.pick = ''; draw(); }
     else if (w === 'dep') { if (e.target.closest('button,a') && e.target.closest('button,a') !== t) return; C.dep = C.dep === id ? '' : id; draw(); }
     else if (w === 'hcap') { C.itab = ''; C.capFocus = 1; goSec('ideas', false, true); }   // the idea box gets focus on the first draw that has it (the page may still be loading)
     else if (w === 'ptab') { C.ptab = id; goSec('posts', false, C.sec === 'posts'); }
@@ -64705,15 +64734,27 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
   function itemBtn(x) {
     return '<button type="button" class="cd-it ' + x.state + (CD.spick === x.key ? ' on' : '') + '" data-cd="spick" data-id="' + esc(x.key) + '" style="--c:' + (NETC[x.platform] || '#999') + '" title="' + esc(SST[x.state][0]) + '"><time><i></i>' + hm(x.at) + '</time><span data-noi18n="1">' + esc(x.head || NETN[x.platform] || '') + '</span></button>';
   }
+
+  function cdPvBody(st, d, msg) {   // seen-1: the sent post itself, from the post line (7 days)
+    if (st === 'load') return '<div class="sv-box"><span class="sv-note">আনা হচ্ছে…</span></div>';
+    if (st === 'err') return '<div class="sv-box"><span class="sv-note">' + esc(msg || 'আনা গেল না') + '</span></div>';
+    if (!d || d.missing) return '<div class="sv-box"><span class="sv-note">এই পোস্টটা ERP-এর লাইন দিয়ে যায়নি, তাই পুরো লেখা এখানে নেই। প্ল্যাটফর্মে খুলে দেখুন।</span></div>';
+    if (d.old) return '<div class="sv-box"><span class="sv-note">৭ দিনের বেশি পুরোনো পোস্ট; পুরো লেখা আর রাখা নেই। প্ল্যাটফর্মে খুলে দেখুন।</span></div>';
+    var md = (d.media || []).map(function (m) { var u = String(m.path || ''); if (!/^https:\/\//.test(u)) return '';
+      return /\.(mp4|mov|webm|m4v)(\?|$)/i.test(u) ? '<video controls playsinline preload="metadata" src="' + esc(u) + '"></video>' : '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img loading="lazy" alt="" src="' + esc(u) + '"></a>'; }).join('');
+    return '<div class="sv-box">' + (md ? '<div class="sv-md' + ((d.media || []).length === 1 ? ' one' : '') + '">' + md + '</div>' : '') + '<p class="sv-t" data-noi18n="1">' + esc(d.content || '(লেখা নেই)') + '</p></div>';
+  }
   function pickedHtml() {
     var x = schedItems().filter(function (y) { return y.key === CD.spick; })[0]; if (!x) return '';
     var st = SST[x.state], acts = '';
     if (x.src === 'line' && canAct()) acts += '<button type="button" class="cd-btn" data-cd="cancel" data-id="' + esc(x.id) + '"' + (CD.busy['x' + x.id] ? ' disabled' : '') + '>বাতিল</button>';
     if (x.src === 'draft') acts += '<button type="button" class="cd-btn pri" data-cd="tab" data-id="today">' + (canAct() ? 'দেখে অনুমোদন দিন' : 'ড্রাফটটা দেখুন') + '</button>';
+    var pvOn = !!(CD.pv && CD.pv.id === x.id);   // seen-1
+    if (x.src === 'postiz' && x.state === 'gone') acts += '<button type="button" class="cd-btn pri" data-cd="pview" data-id="' + esc(x.id) + '" aria-expanded="' + pvOn + '">' + (pvOn ? 'ছোট করুন' : 'পুরোটা দেখুন') + '</button>';
     if (x.link) acts += '<a class="cd-btn" href="' + esc(x.link) + '" target="_blank" rel="noopener">পোস্টটা খুলুন</a>';
     if (x.state === 'stuck' && x.src === 'postiz') acts += '<button type="button" class="cd-btn" data-cd="tab" data-id="channels">চ্যানেল দেখুন</button>';
     return '<div class="cd-panel cd-pick"><div class="cd-row">' + netTag(x.platform) + '<span class="cd-meta">' + when(x.at) + '</span><span class="cd-pill ' + st[1] + '">' + st[0] + (x.late ? ' · সময় পেরিয়েছে' : '') + '</span><span class="cd-sp"></span><button type="button" class="cd-btn ghost" data-cd="spick" data-id="" aria-label="বন্ধ করুন">✕</button></div>' +
-      '<p style="margin:10px 0 0;font-size:15px;line-height:1.6" data-noi18n="1">' + esc(x.head || '') + '</p>' + (x.error ? '<p class="cd-meta" style="color:var(--bad);margin:6px 0 0">' + esc(x.error) + '</p>' : '') +
+      (pvOn ? cdPvBody(CD.pv.st, CD.pv.d, CD.pv.msg) : '<p style="margin:10px 0 0;font-size:15px;line-height:1.6" data-noi18n="1">' + esc(x.head || '') + '</p>') + (x.error ? '<p class="cd-meta" style="color:var(--bad);margin:6px 0 0">' + esc(x.error) + '</p>' : '') +
       (acts ? '<div class="cd-row" style="margin-top:12px">' + acts + '</div>' : '') + '</div>';
   }
   function postsHtml() {
@@ -64901,6 +64942,11 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
     }
     else if (w === 'gforce') { var cg = (CD.gate || {})[did]; if (!cg) return; if (!cg.arm) { cg.arm = 1; paint(); return; } approve(did, cg.at || new Date(Date.now() + 60e3), true); }   // force-1
     else if (w === 'gclose') { if (CD.gate) delete CD.gate[did]; paint(); }
+    else if (w === 'pview') {   // seen-1
+      if (CD.pv && CD.pv.id === id) { CD.pv = null; paint(); return; }
+      CD.pv = { id: id, st: 'load' }; paint();
+      srv('erpContentPostView', [{ id: id }], function (r) { if (CD.pv && CD.pv.id === id) { CD.pv.st = 'ok'; CD.pv.d = r; paint(); } }, function (x) { if (CD.pv && CD.pv.id === id) { CD.pv.st = 'err'; CD.pv.msg = errOf(x); paint(); } });
+    }
     else if (w === 'wk') { CD.wk = Number(id) || 0; CD.sday = -1; CD.spick = null; paint(); }
     else if (w === 'sflt') { CD.sflt = id; CD.spick = null; paint(); }
     else if (w === 'sday') { CD.sday = Number(id); CD.spick = null; paint(); }

@@ -577,6 +577,14 @@ export async function erpContentDraftAutofix(ctx, payload) {
 // may fail on its own; the others still show. Items: {key, src: line|postiz|draft, platform, at, state: wait|next|gone|
 // stuck, head, link, id, error}. Everyone in the business reads it (the Dashboard card and the Content desk).
 const SCHED_STATE = { waiting: 'next', ask: 'stuck', failed: 'stuck' };
+// seen-1: a sent post's whole text and its pictures/video, kept by this business's post line for 7 days
+export async function erpContentPostView(ctx, payload) {
+  await gate(ctx, 'sales'); await notBrand(ctx);
+  const id = str(payload && payload.id);
+  if (!/^[A-Za-z0-9_-]{8,64}$/.test(id)) throw new Error('পোস্টটা চেনা গেল না।');
+  return engine(ctx, '/post/view', { id });
+}
+
 export async function erpContentSchedule(ctx) {
   await gate(ctx, 'sales'); await notBrand(ctx);
   const st = await bridgeState(ctx);
@@ -616,4 +624,4 @@ export async function erpContentSchedule(ctx) {
 
 export const HANDLERS = { erpContentDesk, erpContentVideoUrl, erpContentHandlersSave, erpContentVideoUploadUrl, erpContentVideoSave, erpContentVideoSend,
   erpContentStudioUploadUrl, erpContentStudioSave, erpContentChannels, erpContentRulesSave, erpContentStop, erpContentCancel, erpContentConnect,
-  erpContentDrafts, erpContentSeries, erpContentPosts, erpContentDraftDecide, erpContentSchedule, erpContentDraftAutofix };
+  erpContentDrafts, erpContentSeries, erpContentPosts, erpContentDraftDecide, erpContentSchedule, erpContentDraftAutofix, erpContentPostView };

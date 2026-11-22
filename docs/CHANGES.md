@@ -5211,3 +5211,16 @@ automatically, without many tokens")
   bizdesk/pacer_biz.py. Research note: Meta/TikTok/YouTube deny word lists (BBC, 20 Nov 2025); a TikTok creator study
   (Steen et al. 2023, Social Media + Society) found spelling tricks help less than new words. Masking is low cost, so on.
 - Backups pacer.py.bak-mask1 / pacer_biz.py.bak-mask1 (PC + Mac). Checked inside the live container on sample captions.
+
+2026-11-22 — #70 seen-1 (owner: "a post that already went only opens the platform; I want another button that shows the
+whole text and the video here too, at least for 7 days")
+- Brand desk (the picked post on the line) and Content desk (the picked post in 'কী কখন যাবে'): a sent post gets
+  'পুরোটা দেখুন'. It opens in place: the pictures/video (playable, from social.costareen.com uploads) and the whole
+  text; 'ছোট করুন' closes it. 'পোস্টটা খুলুন' still opens the platform.
+- Server: bridge + bridge_biz POST /post/view {id}: the post line (pacer) keeps every sent post's text and media; the
+  bridge returns them for 7 days (older: a note to open the platform; a post not sent by the line: a note too).
+  Edge: erpBrandDeskPostView (owner), erpContentPostView (sales and up), both reads (allow.js + ERP_READS).
+- LIVE: functions file-by-file (allow.js, branddesk.js, contentdesk.js; backups *-20261122T035620Z), bridges
+  (bak-seen1 PC + Mac), web = #69 force-1 source + patch, sw cz-shell-v4-native-seen1. Checked: /post/view returns the
+  text and the picture of the newest sent post; smoke-public passes. Not clicked in the live page (the desk needs the
+  owner's link); the panel was checked on a phone-width mock.
