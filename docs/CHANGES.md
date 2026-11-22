@@ -5228,3 +5228,4 @@ whole text and the video here too, at least for 7 days")
 - seen-1c (same day, owner: "pressing it did nothing"): on the phone the 'গেছে' tab is the line list (bc-dep rows), and
   the full view only rendered in the picked-post panel. Now the row itself opens the view under the line (pictures/
   video + whole text, the short line hidden); taps inside the view do not fold the row. Live sw cz-shell-v4-native-seen1c.
+- seen-1d (same day, owner: the caption still does not come): the phone list cut every row paragraph to 2 lines (line-clamp), the full caption too. The full view now never clamps. Live sw cz-shell-v4-native-seen1d.
