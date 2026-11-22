@@ -60499,6 +60499,15 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     return out.filter(function (s) { return s.at && !isNaN(new Date(s.at)) && !HID[s.key]; });
   }
   var HID = {}; try { HID = JSON.parse(localStorage.getItem('bc_hidden') || '{}') || {}; } catch (e) { HID = {}; }
+  // stuck-2: stuck Postiz posts cleared in this browser only are handed to the Mac once, so every phone/computer agrees
+  function hidSave() { try { localStorage.setItem('bc_hidden', JSON.stringify(HID)); } catch (e) {} }
+  function hidMove(done) {
+    var ks = Object.keys(HID).filter(function (k) { return k.charAt(0) === 'p'; });
+    if (!ks.length) { if (done) done(); return; }
+    srv('erpBrandDeskDecide', [{ id: 'postiz:' + ks.map(function (k) { return k.slice(1); }).join(','), action: 'drop' }],
+      function () { ks.forEach(function (k) { delete HID[k]; }); hidSave(); get('cockpit', true); if (done) done(); },
+      function (e) { if (done) done(e); });
+  }
   function nets() { var k = (C.d.cockpit && C.d.cockpit.cockpit) || {}; return (k.networks || (C.d.drafts && C.d.drafts.networks) || []).filter(function (n) { return !n.disabled; }); }
   function lines() {
     var seen = {}, out = [];
@@ -60513,7 +60522,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
     var a = '';
     // stuck-1: the same pair on every stuck post; the note says what the send button really does
     if (s.src === 'postiz' && s.st === 'x' && needMedia(s.net)) a += '<span class="bc-sub">ভিডিও ছাড়া ' + esc(netName(s.net)) + '-এ যায় না</span>' + btn('বাদ দিন', 'data-bc="hidest" data-id="' + esc(s.key) + '"', 'sm');
-    else if (s.src === 'postiz' && s.st === 'x') a += '<span class="bc-sub">' + esc(netName(s.net)) + ' নেয়নি · আবার পাঠালে নতুন কপি যাবে</span>' + btn('আবার পাঠান', 'data-bc="resend" data-id="' + esc(s.key) + '"', 'dark sm', 'rs' + s.key) + btn('বাদ দিন', 'data-bc="hidest" data-id="' + esc(s.key) + '"', 'sm');
+    else if (s.src === 'postiz' && s.st === 'x') a += '<span class="bc-sub">' + esc(netName(s.net)) + ' নেয়নি · আটকে যাওয়া পোস্ট আর যায় না</span>' + btn('বাদ দিন', 'data-bc="hidest" data-id="' + esc(s.key) + '"', 'sm', 'hs' + s.key);   // stuck-2: never re-sent
     if (s.src === 'pacer' && s.st === 'x') a += '<span class="bc-sub">সময় পেরিয়েছে, এখনো যায়নি</span>' + btn('এখন পাঠান', 'data-bc="decide" data-act="send" data-id="' + esc(s.id) + '"', 'dark sm', 'dc' + s.id) + btn('বাদ দিন', 'data-bc="decide" data-act="drop" data-id="' + esc(s.id) + '"', 'sm', 'dd' + s.id);
     if (s.url && /^https?:/.test(s.url)) a += '<a class="bc-btn ghost sm" href="' + esc(s.url) + '" target="_blank" rel="noopener">পোস্টটা খুলুন</a>';
     return a;
@@ -63402,7 +63411,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
       var p0 = routeView() === 'branddesk' ? routeParam() : '';
       if (p0 && (NEED[p0] || p0 === 'home')) C.sec = p0;
       else try { routeSet('branddesk', C.sec, true); } catch (e) {}
-      C.wasOn = 1; fonts(); if (!C.d.cockpit) get('cockpit'); draw();
+      C.wasOn = 1; fonts(); if (!C.d.cockpit) get('cockpit'); draw(); hidMove();
     }
     else if (C.t && Date.now() - C.t > 120000 && !C.busy.g_cockpit) get('cockpit', true);
   }
@@ -63612,13 +63621,13 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
       })();
       return;
     }
-    if (w === 'hidest') { HID[id] = 1; try { localStorage.setItem('bc_hidden', JSON.stringify(HID)); } catch (e8) {} C.pick = ''; toast('বাদ দেওয়া হলো। আটকে ট্যাবে “ফিরিয়ে আনুন” আছে।'); draw(); return; }
+    if (w === 'hidest') { HID[id] = 1; hidSave(); C.pick = ''; draw(); hidMove(function (e8) { if (e8) toast(msg(e8), true, 9000); else toast('বাদ দেওয়া হলো। আর ফিরে আসবে না।'); draw(); }); return; }   // stuck-2: kept on the Mac
     // stuck-1: clear the whole stuck list in one go (line posts are dropped on the PC's line, refused ones leave the list)
     if (w === 'stclear') {
       var sx = stations().filter(function (q) { return q.st === 'x' && pnetOk(q.net); }), drops = sx.filter(function (q) { return q.src === 'pacer'; }), k3 = 0;
-      sx.forEach(function (q) { if (q.src !== 'pacer') HID[q.key] = 1; }); try { localStorage.setItem('bc_hidden', JSON.stringify(HID)); } catch (e9) {}
+      sx.forEach(function (q) { if (q.src !== 'pacer') HID[q.key] = 1; }); hidSave();
       C.busy.stclear = 1; draw();
-      (function nx3() { if (!drops.length) { C.busy.stclear = 0; toast(bn(sx.length) + 'টা আটকানো পোস্ট বাদ দেওয়া হলো।'); get('cockpit', true); draw(); return; }
+      (function nx3() { if (!drops.length) { hidMove(function (e9) { C.busy.stclear = 0; if (e9) toast(msg(e9), true, 9000); else toast(bn(sx.length) + 'টা আটকানো পোস্ট বাদ দেওয়া হলো। আর ফিরে আসবে না।'); get('cockpit', true); draw(); }); return; }
         var q3 = drops.shift(); srv('erpBrandDeskDecide', [{ id: q3.id, action: 'drop' }], function () { k3++; nx3(); }, function (e10) { C.busy.stclear = 0; toast(msg(e10), true, 9000); get('cockpit', true); draw(); }); })();
       return;
     }

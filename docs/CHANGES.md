@@ -5175,3 +5175,15 @@ cards like the Oliareen page: one picture with the details")
 - Bridge only; backups bridge.py.bak-card2 (PC + Mac). Checked: real cards for drafts 249 (bn) and 248 (en) re-made;
   photo cards rendered with a real album photo. Most waiting drafts have no picture right now (no album fit, ChatGPT
   picture limit), so most cards will be the teal kind until pictures come back.
+
+2026-11-22 — #68 stuck-2 (owner: "14 stuck again today - old or new? if they come back after I clear them, fix it so they can't")
+- Checked: all 14 stuck Facebook posts were 21 Nov 00:31-15:03 UTC Postiz ERROR posts ("Refresh channel needed" / page
+  permissions), i.e. before the page was reconnected. Nothing has failed since (pacer: 0 failed/ask; Postiz: no new ERROR).
+- Cause of the come-back: 'বাদ দিন' on a Postiz stuck post only hid it in that browser (localStorage bc_hidden), so the
+  phone/another browser showed them again.
+- Fix: bridge keeps cleared Postiz posts in settings 'stuck_hidden' (POST /decide {id:'postiz:<ids>', action:'drop'});
+  cockpit leaves those ERROR posts out. Web: 'বাদ দিন' and 'সব বাদ দিন' tell the Mac; posts hidden earlier in a browser
+  are handed to the Mac once when the desk opens; 'আবার পাঠান' removed from stuck posts (owner rule: never posted later).
+- The 14 old Facebook posts were cleared on the Mac. Two YouTube stuck posts (18/19 Nov) left in the list.
+- LIVE web: page = #67 bnsplash-3 source (bnrel3, rebuilt == deployed checked) + this patch, sw cz-shell-v4-native-stuck2,
+  both Pages projects. Prev page private/live-web-index-before-stuck2-20261122.html. Bridge backup bridge.py.bak-stuck2 (PC).
