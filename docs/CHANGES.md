@@ -5200,3 +5200,14 @@ send anyway / fix it / something else", with impeccable)
 - LIVE: functions file-by-file (branddesk.js, contentdesk.js; backups /data/backups/live-function/*-20261122T034242Z),
   bridges (bak-force1 on PC + Mac), web = #68 stuck-2 source + patch, sw cz-shell-v4-native-force1b, both Pages projects.
   Prev page private/live-web-index-before-force1-20261122.html. The forced send itself was not tried (it would post).
+
+2026-11-22 — mask-1 (owner: "words that may hurt reach: write them with a star or slash inside (ম/রা), platform-wise,
+automatically, without many tokens")
+- The pacers (brand-pacer + both business pacers) now mask a short list of reach-sensitive words when they hand a post
+  to Postiz: Bangla gets a slash after the first letter (মা/রা গেছেন, ম/রা চামড়া, মৃ/ত্যুর, আ/ত্মহত্যা, মা/দক), English
+  a star for the first vowel (k*ll, d*ad, dr*g). Whole words only (মারাত্মক, skills, deadline untouched); hashtags,
+  links, @names untouched; YouTube title too. Facebook, Instagram, TikTok, YouTube, Threads, X; LinkedIn stays plain.
+- Plain code, no AI, zero tokens; the writers do not need to know. Lists MASK_BN / MASK_EN / MASK_NETS in pacer.py and
+  bizdesk/pacer_biz.py. Research note: Meta/TikTok/YouTube deny word lists (BBC, 20 Nov 2025); a TikTok creator study
+  (Steen et al. 2023, Social Media + Society) found spelling tricks help less than new words. Masking is low cost, so on.
+- Backups pacer.py.bak-mask1 / pacer_biz.py.bak-mask1 (PC + Mac). Checked inside the live container on sample captions.
