@@ -5245,3 +5245,11 @@ whole text and the video here too, at least for 7 days")
 ## font-1 (24 Nov 2026, live #79)
 
 - The Brand desk reads in Noto Sans Bengali (owner picked it from 7 options): every desk font stack and the desk's own Google Fonts link; the ERP's Bangla mode keeps Hind Siliguri. Checked: 16 desk pages at 390 px, no overflow, no errors.
+
+## line-1 (24 Nov 2026, live #80)
+
+- **Post line.** The Posts page's যাবে / গেছে tabs are lanes: one row per network, the desk's own phone previews (picture, video, caption) in time order, now at the start (যাবে) or newest first (গেছে, 7 days, the post line keeps a sent post's media that long). 3 / 7 / 10 / 14 days, a from-date, and a date strip that scrolls every lane to that day.
+- **Post sheet.** A card, or 'পুরো পোস্ট দেখুন' in the Plan pop-up, opens one post as the network shows it: every picture (strip + arrow keys), playable video, see more; a waiting draft links to its approval card.
+- **The step explained.** 'পরের ধাপে খুলবে' says the network's step, the slot's step, the gate, today's median views and the next check.
+- Server: bridge /line + erpBrandDeskLine (read, owner). Why the picture was missing before: the cockpit only carried the first 280 characters, never the media.
+- Brief + review: .impeccable/shape/post-line.md.

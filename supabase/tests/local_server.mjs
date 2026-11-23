@@ -30,7 +30,7 @@ if (bridgePass) {
   const bases = bridgePass.split(/\s+/).filter(Boolean).map((x) => x.replace(/\/+$/, ''));
   H.web.on({ test: (u) => bases.some((b0) => String(u).indexOf(b0) === 0) }, async (url, opts) => {
     // these reads take their question in a POST body; every other POST is a write and stays refused
-    const post = opts && opts.method && opts.method !== 'GET', readPost = post && /\/(plan|biz\/state|biz\/posts|series|post\/view)$/.test(String(url).split('?')[0]);
+    const post = opts && opts.method && opts.method !== 'GET', readPost = post && /\/(plan|biz\/state|biz\/posts|series|post\/view|line)$/.test(String(url).split('?')[0]);
     if (post && !readPost) return { status: 400, body: { error: 'Local test copy: this is read only.' } };
     const r = await fetch(url, { method: readPost ? 'POST' : 'GET', headers: opts.headers, body: readPost ? opts.body : undefined, signal: AbortSignal.timeout(60000) });
     return { status: r.status, body: await r.text() };
