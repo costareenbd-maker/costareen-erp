@@ -192,7 +192,7 @@ export function eventText(ev) {
     : ev.kind === 'shipment_coming' ? 'শিপমেন্ট আসছে: ' + names.join(', ') + (pl.eta ? '। সম্ভাব্য পৌঁছানোর দিন ' + pl.eta : '')
     : 'শিপমেন্ট চলে এসেছে: ' + names.join(', ');
   const lines = items.map((p) => itemLine(p, ev.kind === 'shipment_coming' ? 'আসছে' : ev.kind === 'shipment_arrived' ? 'এসেছে' : ''));
-  if (more) lines.push('• আরও ' + more + 'টি পণ্য');
+  if (more) lines.push('• আরও ' + more + 'টি প্রোডাক্ট');
   return [head + '।', ...lines, '', 'শুধু উপরের তথ্য ব্যবহার করুন; দাম, স্টক বা তারিখ নিজে থেকে বানাবেন না।'].join('\n');
 }
 
