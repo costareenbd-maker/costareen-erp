@@ -28,8 +28,10 @@ if (!bridgePass && process.env.LINK_KEY_FILE) { try { bridgePass = (await import
 if (bridgePass) {
   const base = bridgePass.replace(/\/+$/, '');
   H.web.on({ test: (u) => String(u).indexOf(base) === 0 }, async (url, opts) => {
-    if (opts && opts.method && opts.method !== 'GET') return { status: 400, body: { error: 'Local test copy: this is read only.' } };
-    const r = await fetch(url, { method: 'GET', headers: opts.headers, signal: AbortSignal.timeout(30000) });
+    // /plan is a read that takes its days in a POST body; every other POST is a write and stays refused
+    const post = opts && opts.method && opts.method !== 'GET', readPost = post && /\/plan$/.test(String(url).split('?')[0]);
+    if (post && !readPost) return { status: 400, body: { error: 'Local test copy: this is read only.' } };
+    const r = await fetch(url, { method: readPost ? 'POST' : 'GET', headers: opts.headers, body: readPost ? opts.body : undefined, signal: AbortSignal.timeout(60000) });
     return { status: r.status, body: await r.text() };
   });
 }
