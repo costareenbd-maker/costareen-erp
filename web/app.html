@@ -14,6 +14,12 @@
 <meta name="apple-mobile-web-app-title" content="ERP">
 <link rel="preconnect" href="https://erp-api.costareen.com" crossorigin>
 <script>window.ERP_HASH0 = location.hash || "";</script>
+<script>/* unity-1: the owner of a brand business lands on the Brand desk; nothing of the business ERP is shown on the way */
+(function(){try{var h=String(window.ERP_HASH0||""),d=document.documentElement,L=localStorage.getItem("bd_land")==="1",tab=sessionStorage.getItem("bd_home");
+if(L&&(/^#\/branddesk\b/.test(h)||(!tab&&!/^#\/(?!dash\b|home\b|branddesk\b)[a-z]/.test(h)))){d.classList.add("bd-landing");if(!tab&&!/^#\/branddesk\b/.test(h))localStorage.setItem("bc_sec","home");setTimeout(function(){d.classList.remove("bd-landing")},15000)}}catch(e){}})();</script>
+<style>html.bd-landing #app,html.bd-landing #toast,html.bd-landing #tabbar{visibility:hidden!important}
+html.bd-landing:not(.bn-splash) body::after{content:"";position:fixed;left:50%;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;border:3px solid rgba(120,124,135,.28);border-top-color:#17181C;animation:bdLandSpin .8s linear infinite;z-index:2147483000}
+@keyframes bdLandSpin{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){html.bd-landing:not(.bn-splash) body::after{animation:none}}</style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -569,9 +575,9 @@ d.style.setProperty('--bn-sp','url("'+u+'")');d.style.setProperty('--bn-sp-bg',n
 function rdy(){d.classList.add('bn-sp-ready')}try{var im=new Image();im.onload=im.onerror=function(){if(im.decode)im.decode().then(rdy,rdy);else rdy()};im.src=u;if(im.complete&&im.naturalWidth)rdy()}catch(e){rdy()}setTimeout(rdy,2500);
 var t0=Date.now(),MIN=1800,done=false;
 function out(){if(done)return;done=true;d.classList.add('bn-splash-out');setTimeout(function(){d.classList.remove('bn-splash','bn-splash-out','bn-sp-ready')},500)}
-var iv=setInterval(function(){if(!d.classList.contains('erp-boot')&&Date.now()-t0>=MIN){clearInterval(iv);out()}},120);
+var iv=setInterval(function(){if(!d.classList.contains('erp-boot')&&!d.classList.contains('bd-landing')&&Date.now()-t0>=MIN){clearInterval(iv);out()}},120);
 setTimeout(function(){clearInterval(iv);out()},35000);
-d.addEventListener('pointerdown',function(){if(Date.now()-t0>600&&!d.classList.contains('erp-boot')){clearInterval(iv);out()}},{once:false});
+d.addEventListener('pointerdown',function(){if(Date.now()-t0>600&&!d.classList.contains('erp-boot')&&!d.classList.contains('bd-landing')){clearInterval(iv);out()}},{once:false});
 }catch(e){}})();</script>
 <script>document.documentElement.classList.add('erp-boot');window.__erpBoot={ready:false,parsed:false};window.erpBootShow=function(){if(__erpBoot.ready&&__erpBoot.parsed){document.documentElement.classList.remove('erp-boot');var x=document.getElementById('bootHide');if(x)x.remove();}};document.addEventListener('DOMContentLoaded',function(){__erpBoot.parsed=true;erpBootShow();});var __erpBootSafe=function(){document.documentElement.classList.remove('erp-boot');var x=document.getElementById('bootHide');if(x)x.remove();};document.addEventListener('DOMContentLoaded',function(){setTimeout(__erpBootSafe,30000);});setTimeout(__erpBootSafe,120000);</script>   <!-- boot-1 (9 Nov 2026): no classic-shell flash - shown only when every block has run AND the sign-in answered -->
 </head>
@@ -61487,7 +61493,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
       return '<nav class="bc-rail" aria-label="ব্র্যান্ড ডেস্ক">' + MAIN.map(function (id) { return b(secOf(id)); }).join('') +
         '<button type="button" data-bc="railmore" aria-controls="bc_more" aria-expanded="' + !!C.railMore + '"' + (inRest ? ' aria-current="page"' : '') + (inRest || C.railMore ? ' class="on"' : '') + ' aria-label="আরও পাতা' + (inRest && secOf(C.sec) ? ', এখন: ' + secOf(C.sec)[1] : '') + '"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>আরও</span>' + (n && n.down.length ? '<i class="bc-rdot" title="' + bn(n.down.length) + 'টা টুল বন্ধ"><span class="bc-vh">' + bn(n.down.length) + 'টা টুল বন্ধ</span></i>' : '') + '</button>' + sheet + '</nav>';
     }
-    return '<nav class="bc-rail" aria-label="ব্র্যান্ড ডেস্ক"><div class="bc-me"><b data-noi18n="1">' + esc(myName()) + '</b></div>' +
+    return '<nav class="bc-rail" aria-label="ব্র্যান্ড ডেস্ক"><div class="bc-me"><span class="u1-logo" aria-hidden="true">' + ((document.getElementById('bizMark') || {}).innerHTML || '') + '</span><span class="u1-nm"><b data-noi18n="1">' + esc(myName()) + '</b><span>ব্র্যান্ড ডেস্ক</span></span></div>' +
       GROUPS.map(function (g) { return '<div class="bc-rgw" role="group" aria-label="' + g[0] + '"><div class="bc-rg" aria-hidden="true">' + g[0] + '</div>' + g[1].map(function (id) { return b(secOf(id)); }).join('') + '</div>'; }).join('') +
       '' +
       '<div class="bc-health" data-bc="sec" data-id="map" role="button" tabindex="0">' + healthLine() + '</div></nav>';
@@ -61789,7 +61795,7 @@ button.bc-ck[disabled]{cursor:default;opacity:.5}
   function root() {
     var r = el('bc_root'); if (r) return r;
     var vw = el('view'); if (!vw || !vw.parentNode) return null;
-    r = document.createElement('div'); r.id = 'bc_root'; r.className = 'bc-root'; vw.parentNode.insertBefore(r, vw.nextSibling); return r;
+    r = document.createElement('div'); r.id = 'bc_root'; r.className = 'bc-root'; r.setAttribute('data-noi18n', '1'); vw.parentNode.insertBefore(r, vw.nextSibling); return r;
   }
   function narrowNow() { var vw = el('view'), p = vw && vw.parentNode; return !!(p && p.clientWidth && p.clientWidth < 760); }
   // ---------- brand-17: লেখার ধরন (Train) - a switchboard of the lines: which learned style each network writes in
@@ -64011,6 +64017,18 @@ left alone. Staff, managers and shareholders are never moved. -->
 <script>
 (function () {
   var prevApply = applyBusinesses, tried = false;
+  // unity-1: LAND tells the cover (html.bd-landing, set before the first paint) when the way to the desk is over
+  var LAND = window.__bdLand = { moving: false, settled: false }, root = document.documentElement;
+  function uncover() { root.classList.remove('bd-landing'); }
+  function settle() { LAND.moving = false; LAND.settled = true; }
+  function remember(yes) { try { if (yes) localStorage.setItem('bd_land', '1'); else localStorage.removeItem('bd_land'); } catch (e) {} }
+  function activeKind() { var z = (typeof BIZ !== 'undefined' && BIZ) || {}; var a = (z.businesses || []).filter(function (x) { return x.id === z.active; })[0]; return (a && a.kind) || ''; }
+  (function watch(n) {
+    if (!root.classList.contains('bd-landing')) return;
+    if (document.body && document.body.classList.contains('bc-live') && document.querySelector('#bc_root .bc-main')) { setTimeout(uncover, 140); return; }
+    if (LAND.settled && !LAND.moving && activeKind() !== 'brand') { uncover(); return; }
+    if (n < 110) setTimeout(function () { watch(n + 1); }, 130); else uncover();
+  })(0);
   applyBusinesses = function (b) {
     prevApply(b);
     if (tried) return;
@@ -64020,19 +64038,19 @@ left alone. Staff, managers and shareholders are never moved. -->
   // brand-polish-1: the business list can arrive before the signed-in person (ME) - wait up to 10 s for ME instead of
   // giving up (on live the first tab sometimes stayed on Costareen)
   function goHome(b, n) {
-    if (typeof ME === 'undefined' || !ME) { if (n < 40) setTimeout(function () { goHome(b, n + 1); }, 250); return; }
+    if (typeof ME === 'undefined' || !ME) { if (n < 40) setTimeout(function () { goHome(b, n + 1); }, 100); else settle(); return; }
+    var brand = b && b.businesses && ME.role === 'owner' ? b.businesses.filter(function (x) { return x.kind === 'brand'; })[0] : null;
+    remember(!!brand);
     try {
-      if (sessionStorage.getItem('bd_home')) return;
+      if (sessionStorage.getItem('bd_home')) { settle(); return; }
       sessionStorage.setItem('bd_home', '1');
-    } catch (e) { return; }
+    } catch (e) { settle(); return; }
     var h0 = String(window.ERP_HASH0 || '');
-    if (/^#\/(?!dash\b|home\b|branddesk\b)[a-z]/.test(h0)) return;
-    if (!b || !b.businesses || ME.role !== 'owner') return;
-    var brand = b.businesses.filter(function (x) { return x.kind === 'brand'; })[0];
-    if (!brand) return;
-    if (b.active === brand.id) { setTimeout(function () { try { if (VIEW !== 'branddesk') go('branddesk'); } catch (e) {} }, 300); return; }
+    if (/^#\/(?!dash\b|home\b|branddesk\b)[a-z]/.test(h0) || !brand) { settle(); return; }
+    if (b.active === brand.id) { settle(); setTimeout(function () { try { if (VIEW !== 'branddesk') go('branddesk'); } catch (e) {} }, 0); return; }
+    LAND.moving = true;
     setTimeout(function () {
-      try { switchBusiness(brand.id); } catch (e) { return; }
+      try { switchBusiness(brand.id); } catch (e) { settle(); return; }
       // wait until the switch has really landed (on live it can take longer than a second), then open the desk
       var k = 0;
       (function land() {
@@ -64040,12 +64058,12 @@ left alone. Staff, managers and shareholders are never moved. -->
         if (ok) {
           // the ERP may still repaint its dashboard after the switch: check again a few times
           var t = 0;
-          (function open() { try { if (VIEW === 'dash' || VIEW === 'home' || t === 0) { if (VIEW !== 'branddesk') go('branddesk'); } } catch (e) {} if (++t < 6) setTimeout(open, 500); })();
+          (function open() { try { if (VIEW === 'dash' || VIEW === 'home' || t === 0) { if (VIEW !== 'branddesk') go('branddesk'); } } catch (e) {} if (t === 0) settle(); if (++t < 6) setTimeout(open, 500); })();
           return;
         }
-        if (++k < 60) setTimeout(land, 200);
+        if (++k < 60) setTimeout(land, 100); else settle();
       })();
-    }, 50);
+    }, 0);
   }
 })();
 </script>
@@ -65436,5 +65454,133 @@ html[data-cdesk="1"] [data-cf="new"],html[data-cdesk="1"] [data-cf="clip"]{displ
   }, true);
 })();
 </script>
+
+<!-- unity-1 (owner 23 Nov 2026: "Costareen appears one way and the Brand desk a completely different way - with one blink the
+whole UI changes; it shows Costareen, loads, then takes me to my desk; fix every issue like this, easier to navigate").
+ONE shell for both: on a computer the Brand desk's menu stands where the ERP's side menu stands (same width, same ground,
+same white pills, the one lime row = where you are, the logo and name on top), and the desk's page is a white sheet on the
+ERP's ground like every ERP card. The move between a business and the desk fades instead of jumping. The landing itself
+(nothing of the business ERP shown on the way) is the head script + brand-home-1. The tab's name follows the business again
+after the desk. Phone layout of the desk is unchanged (its bottom bar), only the ground and the fade. -->
+<style>
+/* opacity only and no fill: a transform (or a kept animation) on the root re-anchors the phone's bottom bar */
+@keyframes u1In{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:no-preference){
+  body.bc-live .bc-root{animation:u1In .24s ease-out}
+  body.u1-out #view{animation:u1In .24s ease-out}
+}
+.bc-skip:not(:focus){top:-400px}
+/* phone: the desk's bottom bar is the ERP's bottom bar (same ground, same lift, ink counts) */
+@container bc (max-width:759px){
+  .bc-rail{background:var(--fd-bg,#EDEEF1);border-top:1px solid var(--fd-surface-3,#E6E7EB);box-shadow:0 -6px 20px rgba(0,0,0,.16)}
+  .bc-rail button{color:var(--fd-text-2,#5F6370)}
+  .bc-rail button.on{background:var(--fd-card,#fff);color:var(--fd-text,#17181C)}
+  .bc-rail button em{background:var(--fd-text,#17181C);color:var(--fd-bg,#fff)}
+  .bc-rail button em.x{background:var(--bc-alert);color:#fff}
+}
+/* wide = the desk's own container is 760px or more (the same line its phone layout is cut on) */
+body{--u1-w:228px}body.side-mini{--u1-w:76px}
+body.u1-wide.bc-live .main>header.topbar{margin-left:var(--u1-w)}
+@container bc (min-width:760px){
+  .bc{grid-template-columns:var(--u1-w) minmax(0,1fr) 360px;background:transparent;min-height:0}
+  .bc.noside{grid-template-columns:var(--u1-w) minmax(0,1fr)}
+  .bc-rail{margin-top:calc(-1 * var(--u1-top,76px));height:100vh;top:0;background:transparent;border-right:0;padding:18px 17px 14px;gap:6px}
+  .bc-rail .bc-rgw{display:flex;flex-direction:column;gap:6px}
+  .bc-rail .bc-me{display:flex;align-items:center;gap:10px;padding:0 0 12px 4px;min-height:46px}
+  .bc-rail .bc-me .u1-logo{width:42px;height:42px;flex:none;display:grid;place-items:center;font-size:0}
+  .bc-rail .bc-me .u1-logo svg,.bc-rail .bc-me .u1-logo img{width:40px!important;height:40px!important;max-width:none;object-fit:contain;display:block}
+  .bc-rail .bc-me .u1-nm{min-width:0;display:block}
+  .bc-rail .bc-me b{font:700 15px/1.25 Inter,"Noto Sans Bengali",system-ui,sans-serif;letter-spacing:-.01em;color:var(--fd-text,#17181C);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bc-rail .bc-me .u1-nm>span{display:block;font:500 11.5px/1.3 "Noto Sans Bengali",Inter,system-ui,sans-serif;color:var(--fd-text-2,#5F6370)}
+  .bc-rail .bc-rg{margin:10px 0 0;padding-left:14px;font:600 12.5px/1.4 "Noto Sans Bengali",Inter,system-ui,sans-serif;color:var(--fd-text-2,#5F6370);letter-spacing:0}
+  .bc-rail .bc-me+.bc-rgw .bc-rg,.bc-rail .bc-me+.bc-rg{margin-top:0}
+  .bc-rail button{height:42px;border-radius:14px;background:var(--fd-card,#fff);padding:0 12px 0 14px;gap:12px;font-size:14.5px;font-weight:600;color:var(--fd-text-2,#4A4D57)}
+  .bc-rail button:hover{background:var(--fd-card,#fff);color:var(--fd-text,#17181C);box-shadow:0 1px 0 rgba(23,24,28,.05),0 6px 16px rgba(23,24,28,.07)}
+  .bc-rail button.on,.bc-rail button.on:hover{background:var(--fd-lime,#E4FF5A);color:#17181C;font-weight:700;box-shadow:none}
+  .bc-rail button em{background:var(--fd-text,#17181C);color:var(--fd-bg,#fff)}
+  .bc-rail button.on em{background:#17181C;color:#fff}
+  .bc-rail button em.x{background:var(--bc-alert);color:#fff}
+  .bc-rail .bc-health{border-radius:14px;padding:10px 14px;color:var(--fd-text-2,#5F6370)}
+  .bc-rail .bc-health:hover{background:var(--fd-card,#fff)}
+  /* the ERP's "fold the menu to icons" button folds the desk's menu too */
+  body.side-mini .bc-rail{padding:18px 12px 14px;align-items:center}
+  body.side-mini .bc-rail .bc-rgw{align-items:center}
+  body.side-mini .bc-rail .bc-me{padding:0 0 12px}
+  body.side-mini .bc-rail .bc-me .u1-nm,body.side-mini .bc-rail button>span:not(.bc-vh),body.side-mini .bc-rail .bc-health>:not(.bc-dot){display:none}
+  body.side-mini .bc-rail button{width:52px;padding:0;justify-content:center;position:relative}
+  body.side-mini .bc-rail button em{position:absolute;top:-5px;right:-5px;margin:0;min-width:18px;height:18px;font-size:10.5px;padding:0 4px}
+  body.side-mini .bc-rail .bc-rg{width:32px;height:1px;margin:6px 0 2px;padding:0;overflow:hidden;background:var(--fd-surface-3,#D5D8DE);color:transparent}
+  body.side-mini .bc-rail .bc-health{justify-content:center}
+  .bc-main{background:#fff;border-radius:24px;margin:0 14px 16px 0;min-height:calc(100vh - var(--u1-top,76px) - 16px);box-sizing:border-box}
+  .bc-side{background:#fff;border-left:0;border-radius:24px;margin:0 14px 16px 0}
+}
+@container bc (min-width:1500px){.bc{grid-template-columns:var(--u1-w) minmax(0,1fr) 400px}.bc.noside{grid-template-columns:var(--u1-w) minmax(0,1fr)}}
+@container bc (min-width:760px) and (max-width:1139px){.bc{grid-template-columns:var(--u1-w) minmax(0,1fr)}.bc-side{border-top:0;margin-top:0}}
+</style>
+<script>
+(function () {
+  var root = document.documentElement, RO = null, wasLive = false, outT = 0;
+  // a toast about the switch on the way to the desk is noise (the cover is still up); errors still show
+  if (typeof toast === 'function') { var toast0 = toast; toast = function (h, bad, ms) { if (!bad && root.classList.contains('bd-landing')) return; return toast0.apply(this, arguments); }; }
+  function bizTitle() { try { var b = BIZ, n = b && b.businesses && b.businesses.filter(function (x) { return x.id === b.active; })[0]; if (n && n.name) document.title = n.name + ' ERP'; } catch (e) {} }
+  function measure() {
+    var r = document.getElementById('bc_root'), live = document.body.classList.contains('bc-live');
+    document.body.classList.toggle('u1-wide', !!(live && r && r.clientWidth >= 760));
+    var tb = document.querySelector('.main>header.topbar'); if (tb && tb.offsetHeight) root.style.setProperty('--u1-top', tb.offsetHeight + 'px');
+  }
+  // the date in the top bar reads in the desk's language (the desk is Bangla whatever the ERP's language is)
+  var G_EN = '', G_BN = '';
+  function bnDate() {
+    try {
+      var P = {}; new Intl.DateTimeFormat('bn-BD', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Dhaka' }).formatToParts(new Date()).forEach(function (x) { P[x.type] = x.value; });
+      return P.weekday && P.day && P.month ? P.weekday + ' ' + P.day + ' ' + P.month : '';
+    } catch (e) { return ''; }
+  }
+  function greet(live) {
+    var g = document.getElementById('clGreet'); if (!g || typeof LANG === 'undefined' || LANG === 'bn') return;
+    var t = g.textContent;
+    if (live) { if (t !== G_BN && /[A-Za-z]/.test(t)) { var d = bnDate(); if (!d) return; G_EN = g.innerHTML; G_BN = d; g.innerHTML = '<b></b>'; g.firstChild.textContent = d; } }
+    else if (G_EN && t === G_BN) { g.innerHTML = G_EN; G_EN = G_BN = ''; }
+  }
+  function sync() {
+    var live = document.body.classList.contains('bc-live');
+    if (live && !RO && window.ResizeObserver) { var r = document.getElementById('bc_root'); if (r) { RO = new ResizeObserver(measure); RO.observe(r); } }
+    measure(); greet(live);
+    if (wasLive && !live) {
+      bizTitle();
+      document.body.classList.add('u1-out'); clearTimeout(outT); outT = setTimeout(function () { document.body.classList.remove('u1-out'); }, 400);
+    }
+    wasLive = live;
+  }
+  function start() {
+    if (!document.body) return;
+    new MutationObserver(sync).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    var g = document.getElementById('clGreet'); if (g) new MutationObserver(function () { if (document.body.classList.contains('bc-live')) greet(true); }).observe(g, { childList: true, characterData: true, subtree: true });
+    window.addEventListener('resize', measure);
+    document.addEventListener('mouseover', function (e) { var b = e.target && e.target.closest && e.target.closest('.bc-rail button'); if (b && !b.title) { var sp = b.querySelector('span:not(.bc-vh)'); if (sp) b.title = sp.textContent; } });
+    sync();
+  }
+  start();
+  // Bangla for the top bar's spoken labels that were left in English
+  try {
+    if (typeof I18N_BN !== 'undefined') {
+      var W = { 'Fold the menu to icons': 'মেনু ছোট করে শুধু আইকন দেখান', 'Quick add': 'দ্রুত নতুন যোগ করুন', 'Ask your ERP (assistant)': 'আপনার ERP-কে জিজ্ঞেস করুন (সহকারী)', 'Show the screens in English': 'স্ক্রিন ইংরেজিতে দেখুন', 'Scan a serial number': 'সিরিয়াল নম্বর স্ক্যান করুন' };
+      for (var k in W) if (I18N_BN[k] === undefined) I18N_BN[k] = W[k];
+      // the words the 23 Nov crawl of all 46 screens still showed in English
+      var W2 = { 'Good morning': 'শুভ সকাল', 'Good afternoon': 'শুভ দুপুর', 'Good evening': 'শুভ সন্ধ্যা', 'Created': 'তৈরি', 'Updated': 'আপডেট',
+        'Reviews': 'রিভিউ', 'Customer groups': 'কাস্টমার গ্রুপ', 'Bin': 'মুছে রাখা', 'Sat': 'শনি', 'Sun': 'রবি', 'Mon': 'সোম', 'Tue': 'মঙ্গল', 'Wed': 'বুধ', 'Thu': 'বৃহঃ', 'Fri': 'শুক্র',
+        "On your phone's calendar": 'আপনার ফোনের ক্যালেন্ডারে', 'It arrived': 'এসে গেছে', 'Return in': 'রিটার্ন এসেছে',
+        'on it (Supplier orders tab) instead of typing it again.': 'বোতাম চাপলে (সাপ্লায়ার অর্ডার ট্যাবে) আবার টাইপ করতে হয় না।',
+        'on it (on the joint stock\u2019s Stock tab) instead of typing it again.': 'বোতাম চাপলে (জয়েন্ট স্টকের স্টক ট্যাবে) আবার টাইপ করতে হয় না।',
+        'Content desk': 'কনটেন্ট ডেস্ক', 'Realistic AI shots': 'বাস্তব AI শট' };
+      for (var k2 in W2) if (I18N_BN[k2] === undefined) I18N_BN[k2] = W2[k2];
+      I18N_PAT.push(['^Return in \u00b7 (.+) \u00b7 Return: (.+)$', 'রিটার্ন এসেছে \u00b7 $1 \u00b7 রিটার্ন: $2']);
+      I18N_PAT.push(['^Business: (.+)\\. Switch(?: business)?$', 'ব্যবসা: $1। ব্যবসা বদলান'], ['^Account menu: (.+)$', 'অ্যাকাউন্ট মেনু: $1']);
+    }
+  } catch (e) {}
+})();
+</script>
+<!-- /unity-1 -->
+
 </body>
 </html>

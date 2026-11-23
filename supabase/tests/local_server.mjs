@@ -21,6 +21,18 @@ const H = await import('./harness.mjs');
 const deps = { ...H.deps, sql, control: connect(postgres, process.env.DB_URL, { max: 2 }), sqlAux: connect(postgres, process.env.DB_URL, { max: 2 }), verifyUser: async () => null };   // owner email sign-in is not simulated
 const PORT = Number(process.env.PORT || 8794);
 deps.hookBase = 'http://localhost:' + PORT + '/';
+// local trial only (polish-1): BRIDGE_PASS=http://127.0.0.1:18791 (or that line in local/.bridge-pass) lets the Brand desk READ the real Mac bridge through an
+// ssh forward. GET only - a write is refused here, so no post can be approved or sent from a local test by mistake.
+let bridgePass = process.env.BRIDGE_PASS || '';
+if (!bridgePass && process.env.LINK_KEY_FILE) { try { bridgePass = (await import('node:fs')).readFileSync(path.join(path.dirname(process.env.LINK_KEY_FILE), '.bridge-pass'), 'utf8').trim(); } catch (_) { /* not set */ } }
+if (bridgePass) {
+  const base = bridgePass.replace(/\/+$/, '');
+  H.web.on({ test: (u) => String(u).indexOf(base) === 0 }, async (url, opts) => {
+    if (opts && opts.method && opts.method !== 'GET') return { status: 400, body: { error: 'Local test copy: this is read only.' } };
+    const r = await fetch(url, { method: 'GET', headers: opts.headers, signal: AbortSignal.timeout(30000) });
+    return { status: r.status, body: await r.text() };
+  });
+}
 // Stage N7: the Get-it-printed page PUTs the file straight to storage with a signed address; locally the fake storage
 // lives in this process, so the signed address and the file links point back here (PUT /upload/..., GET /file/...)
 deps.storage = { ...H.deps.storage,
