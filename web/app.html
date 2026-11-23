@@ -64327,7 +64327,7 @@ Nothing about what the screens show or do changes; only how a redraw lands. Moti
     if (d.plans && d.plans.length > 1) h += '<div style="margin-top:10px"><label class="f">Earlier plans</label><div class="cf-chips">' + d.plans.map(function (p) { return '<button class="btn small' + (cur && cur.id === p.id ? ' on' : '') + '" type="button" data-vs="open" data-id="' + esc(p.id) + '">' + esc((p.product || 'Plan').slice(0, 28) + ' · ' + String(p.at).slice(5, 10)) + '</button>'; }).join('') + '</div></div>';
     return h;
   }
-  var cfMakeHtmlVs = cfMakeHtml;
+  var cfMakeHtmlVs = typeof cfMakeHtml === 'function' ? cfMakeHtml : function () { return ''; };   // the stand-alone Brand desk page has no reel screen
   cfMakeHtml = function () {
     var m = CF.make;
     if (!m || m.kind !== 'video' || !vsOn()) return cfMakeHtmlVs();
