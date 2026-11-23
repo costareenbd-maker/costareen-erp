@@ -530,3 +530,39 @@ Cockpit panels and cards carry a 1px rule, not a shadow.
 - **Don't** bring the ERP's lime, pastel KPI tiles or grey canvas into the cockpit, and don't take the Line Map palette
   out of it.
 - **Don't** open the cockpit on KPI cards with a table below. The map leads.
+
+### Shared shell with the ERP (23 Nov 2026, owner's decision; supersedes the lines above where they differ)
+
+The owner found the cockpit a different system from the ERP ("with one blink the whole UI changes"). Since 23 Nov the
+cockpit keeps its own content language (network lines, phone-post mirrors, the wait bar) but sits in the ERP's shell.
+Blocks in `web/app.html`: `unity-1`, `flow-1`, `whole-1`, `whole-2`, `imp-1`, `imp-2-*`, `dark-1`.
+
+- **Shell.** On a computer the rail stands in the ERP's side column: width `var(--side-w)` (228px, 72px folded; it folds
+  when the ERP's menu folds, `body.u1-mini`), ERP ground, white 14px-radius pills, logo and name on top. The page is one
+  white sheet (24px radius) on the ERP ground; the side column is a second sheet. On a phone the bottom bar copies the
+  ERP's tab bar. Moves between a business and the desk fade (opacity only: a transform on `#bc_root` re-anchors the
+  fixed phone bar).
+- **Lime means "you are here".** The ERP's lime (`--fd-lime`, #E4FF5A, ink text) marks the menu row, the page's own tab
+  row, the chosen day and the "today" band. Only ONE lime row per page: inner choices (level switches, filters inside a
+  section) use the quiet selected style (white, 1.5px ink ring). This replaces "Don't bring the ERP's lime into the
+  cockpit".
+- **Black means an action.** Ink fill is for buttons that do something. A state is never an ink pill: states are shelf
+  fill with an ink ring (`.pf-st.q`, `.bc-tag.lead`), amber for "waits for you", red for "missed / stuck".
+- **Quiet actions carry an edge.** `.bc-btn.ghost` has a 1px rule ring; bare-text actions are not allowed (a phone has
+  no hover).
+- **One Bangla face.** Every desk font stack starts with "Hind Siliguri", the ERP's Bangla face (the earlier Noto Sans
+  Bengali + Anek Bangla pair is the fallback only). Loaded from Google Fonts by `fonts()`.
+- **Schedule (Plan).** The week is no longer dots on a line: each slot is a chip that says its time, in its network's
+  lane and its day's cell, in time order (`.pf-chip`, a real button; Tab walks the chosen day). Colour = network, shape
+  = state (ring = goes, tinted tick = went, amber = waits for him, dashed = AI makes, red = missed, small ring = ad
+  candidate). Today's column is a lime band with an ink rule on its left edge. Under it the chosen day reads as one
+  flow: time, a node on a rail, the slot, and a "now" rule between what went and what comes.
+- **Home.** The week board speaks the same language: today's column is the lime band, a slot's state is a pill; past
+  days are capped in height.
+- **Posts card.** Row one is the decision (approve, reject, change the text). Row two is quiet: score, plan fit,
+  picture, more. One score per card.
+- **Dark look.** The cockpit follows the ERP's dark theme with real colours (block `dark-1`, generated from the desk's
+  CSS by a script: re-run it after any desk CSS change). Pictures are never filtered. The phone-post mirrors keep each
+  network's own light look. This replaces "Light-only by decision".
+- **Touch.** 44px tap height for the desk's controls on a phone; schedule chips are 30px with 12.5px text in a 58px
+  column (the day head above them is the 44px target for the day).
