@@ -65467,134 +65467,6 @@ html[data-cdesk="1"] [data-cf="new"],html[data-cdesk="1"] [data-cf="clip"]{displ
   }, true);
 })();
 </script>
-
-<!-- unity-1 (owner 23 Nov 2026: "Costareen appears one way and the Brand desk a completely different way - with one blink the
-whole UI changes; it shows Costareen, loads, then takes me to my desk; fix every issue like this, easier to navigate").
-ONE shell for both: on a computer the Brand desk's menu stands where the ERP's side menu stands (same width, same ground,
-same white pills, the one lime row = where you are, the logo and name on top), and the desk's page is a white sheet on the
-ERP's ground like every ERP card. The move between a business and the desk fades instead of jumping. The landing itself
-(nothing of the business ERP shown on the way) is the head script + brand-home-1. The tab's name follows the business again
-after the desk. Phone layout of the desk is unchanged (its bottom bar), only the ground and the fade. -->
-<style>
-/* opacity only and no fill: a transform (or a kept animation) on the root re-anchors the phone's bottom bar */
-@keyframes u1In{from{opacity:0}to{opacity:1}}
-@media (prefers-reduced-motion:no-preference){
-  body.bc-live .bc-root{animation:u1In .24s ease-out}
-  body.u1-out #view{animation:u1In .24s ease-out}
-}
-.bc-skip:not(:focus){top:-400px}
-/* phone: the desk's bottom bar is the ERP's bottom bar (same ground, same lift, ink counts) */
-@container bc (max-width:759px){
-  .bc-rail{background:var(--fd-bg,#EDEEF1);border-top:1px solid var(--fd-surface-3,#E6E7EB);box-shadow:0 -6px 20px rgba(0,0,0,.16)}
-  .bc-rail button{color:var(--fd-text-2,#5F6370)}
-  .bc-rail button.on{background:var(--fd-card,#fff);color:var(--fd-text,#17181C)}
-  .bc-rail button em{background:var(--fd-text,#17181C);color:var(--fd-bg,#fff)}
-  .bc-rail button em.x{background:var(--bc-alert);color:#fff}
-}
-/* wide = the desk's own container is 760px or more (the same line its phone layout is cut on) */
-body{--u1-w:228px}body.side-mini{--u1-w:76px}
-body.u1-wide.bc-live .main>header.topbar{margin-left:var(--u1-w)}
-@container bc (min-width:760px){
-  .bc{grid-template-columns:var(--u1-w) minmax(0,1fr) 360px;background:transparent;min-height:0}
-  .bc.noside{grid-template-columns:var(--u1-w) minmax(0,1fr)}
-  .bc-rail{margin-top:calc(-1 * var(--u1-top,76px));height:100vh;top:0;background:transparent;border-right:0;padding:18px 17px 14px;gap:6px}
-  .bc-rail .bc-rgw{display:flex;flex-direction:column;gap:6px}
-  .bc-rail .bc-me{display:flex;align-items:center;gap:10px;padding:0 0 12px 4px;min-height:46px}
-  .bc-rail .bc-me .u1-logo{width:42px;height:42px;flex:none;display:grid;place-items:center;font-size:0}
-  .bc-rail .bc-me .u1-logo svg,.bc-rail .bc-me .u1-logo img{width:40px!important;height:40px!important;max-width:none;object-fit:contain;display:block}
-  .bc-rail .bc-me .u1-nm{min-width:0;display:block}
-  .bc-rail .bc-me b{font:700 15px/1.25 Inter,"Noto Sans Bengali",system-ui,sans-serif;letter-spacing:-.01em;color:var(--fd-text,#17181C);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .bc-rail .bc-me .u1-nm>span{display:block;font:500 11.5px/1.3 "Noto Sans Bengali",Inter,system-ui,sans-serif;color:var(--fd-text-2,#5F6370)}
-  .bc-rail .bc-rg{margin:10px 0 0;padding-left:14px;font:600 12.5px/1.4 "Noto Sans Bengali",Inter,system-ui,sans-serif;color:var(--fd-text-2,#5F6370);letter-spacing:0}
-  .bc-rail .bc-me+.bc-rgw .bc-rg,.bc-rail .bc-me+.bc-rg{margin-top:0}
-  .bc-rail button{height:42px;border-radius:14px;background:var(--fd-card,#fff);padding:0 12px 0 14px;gap:12px;font-size:14.5px;font-weight:600;color:var(--fd-text-2,#4A4D57)}
-  .bc-rail button:hover{background:var(--fd-card,#fff);color:var(--fd-text,#17181C);box-shadow:0 1px 0 rgba(23,24,28,.05),0 6px 16px rgba(23,24,28,.07)}
-  .bc-rail button.on,.bc-rail button.on:hover{background:var(--fd-lime,#E4FF5A);color:#17181C;font-weight:700;box-shadow:none}
-  .bc-rail button em{background:var(--fd-text,#17181C);color:var(--fd-bg,#fff)}
-  .bc-rail button.on em{background:#17181C;color:#fff}
-  .bc-rail button em.x{background:var(--bc-alert);color:#fff}
-  .bc-rail .bc-health{border-radius:14px;padding:10px 14px;color:var(--fd-text-2,#5F6370)}
-  .bc-rail .bc-health:hover{background:var(--fd-card,#fff)}
-  /* the ERP's "fold the menu to icons" button folds the desk's menu too */
-  body.side-mini .bc-rail{padding:18px 12px 14px;align-items:center}
-  body.side-mini .bc-rail .bc-rgw{align-items:center}
-  body.side-mini .bc-rail .bc-me{padding:0 0 12px}
-  body.side-mini .bc-rail .bc-me .u1-nm,body.side-mini .bc-rail button>span:not(.bc-vh),body.side-mini .bc-rail .bc-health>:not(.bc-dot){display:none}
-  body.side-mini .bc-rail button{width:52px;padding:0;justify-content:center;position:relative}
-  body.side-mini .bc-rail button em{position:absolute;top:-5px;right:-5px;margin:0;min-width:18px;height:18px;font-size:10.5px;padding:0 4px}
-  body.side-mini .bc-rail .bc-rg{width:32px;height:1px;margin:6px 0 2px;padding:0;overflow:hidden;background:var(--fd-surface-3,#D5D8DE);color:transparent}
-  body.side-mini .bc-rail .bc-health{justify-content:center}
-  .bc-main{background:#fff;border-radius:24px;margin:0 14px 16px 0;min-height:calc(100vh - var(--u1-top,76px) - 16px);box-sizing:border-box}
-  .bc-side{background:#fff;border-left:0;border-radius:24px;margin:0 14px 16px 0}
-}
-@container bc (min-width:1500px){.bc{grid-template-columns:var(--u1-w) minmax(0,1fr) 400px}.bc.noside{grid-template-columns:var(--u1-w) minmax(0,1fr)}}
-@container bc (min-width:760px) and (max-width:1139px){.bc{grid-template-columns:var(--u1-w) minmax(0,1fr)}.bc-side{border-top:0;margin-top:0}}
-</style>
-<script>
-(function () {
-  var root = document.documentElement, RO = null, wasLive = false, outT = 0;
-  // a toast about the switch on the way to the desk is noise (the cover is still up); errors still show
-  if (typeof toast === 'function') { var toast0 = toast; toast = function (h, bad, ms) { if (!bad && root.classList.contains('bd-landing')) return; return toast0.apply(this, arguments); }; }
-  function bizTitle() { try { var b = BIZ, n = b && b.businesses && b.businesses.filter(function (x) { return x.id === b.active; })[0]; if (n && n.name) document.title = n.name + ' ERP'; } catch (e) {} }
-  function measure() {
-    var r = document.getElementById('bc_root'), live = document.body.classList.contains('bc-live');
-    document.body.classList.toggle('u1-wide', !!(live && r && r.clientWidth >= 760));
-    var tb = document.querySelector('.main>header.topbar'); if (tb && tb.offsetHeight) root.style.setProperty('--u1-top', tb.offsetHeight + 'px');
-  }
-  // the date in the top bar reads in the desk's language (the desk is Bangla whatever the ERP's language is)
-  var G_EN = '', G_BN = '';
-  function bnDate() {
-    try {
-      var P = {}; new Intl.DateTimeFormat('bn-BD', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Dhaka' }).formatToParts(new Date()).forEach(function (x) { P[x.type] = x.value; });
-      return P.weekday && P.day && P.month ? P.weekday + ' ' + P.day + ' ' + P.month : '';
-    } catch (e) { return ''; }
-  }
-  function greet(live) {
-    var g = document.getElementById('clGreet'); if (!g || typeof LANG === 'undefined' || LANG === 'bn') return;
-    var t = g.textContent;
-    if (live) { if (t !== G_BN && /[A-Za-z]/.test(t)) { var d = bnDate(); if (!d) return; G_EN = g.innerHTML; G_BN = d; g.innerHTML = '<b></b>'; g.firstChild.textContent = d; } }
-    else if (G_EN && t === G_BN) { g.innerHTML = G_EN; G_EN = G_BN = ''; }
-  }
-  function sync() {
-    var live = document.body.classList.contains('bc-live');
-    if (live && !RO && window.ResizeObserver) { var r = document.getElementById('bc_root'); if (r) { RO = new ResizeObserver(measure); RO.observe(r); } }
-    measure(); greet(live);
-    if (wasLive && !live) {
-      bizTitle();
-      document.body.classList.add('u1-out'); clearTimeout(outT); outT = setTimeout(function () { document.body.classList.remove('u1-out'); }, 400);
-    }
-    wasLive = live;
-  }
-  function start() {
-    if (!document.body) return;
-    new MutationObserver(sync).observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    var g = document.getElementById('clGreet'); if (g) new MutationObserver(function () { if (document.body.classList.contains('bc-live')) greet(true); }).observe(g, { childList: true, characterData: true, subtree: true });
-    window.addEventListener('resize', measure);
-    document.addEventListener('mouseover', function (e) { var b = e.target && e.target.closest && e.target.closest('.bc-rail button'); if (b && !b.title) { var sp = b.querySelector('span:not(.bc-vh)'); if (sp) b.title = sp.textContent; } });
-    sync();
-  }
-  start();
-  // Bangla for the top bar's spoken labels that were left in English
-  try {
-    if (typeof I18N_BN !== 'undefined') {
-      var W = { 'Fold the menu to icons': 'মেনু ছোট করে শুধু আইকন দেখান', 'Quick add': 'দ্রুত নতুন যোগ করুন', 'Ask your ERP (assistant)': 'আপনার ERP-কে জিজ্ঞেস করুন (সহকারী)', 'Show the screens in English': 'স্ক্রিন ইংরেজিতে দেখুন', 'Scan a serial number': 'সিরিয়াল নম্বর স্ক্যান করুন' };
-      for (var k in W) if (I18N_BN[k] === undefined) I18N_BN[k] = W[k];
-      // the words the 23 Nov crawl of all 46 screens still showed in English
-      var W2 = { 'Good morning': 'শুভ সকাল', 'Good afternoon': 'শুভ দুপুর', 'Good evening': 'শুভ সন্ধ্যা', 'Created': 'তৈরি', 'Updated': 'আপডেট',
-        'Reviews': 'রিভিউ', 'Customer groups': 'কাস্টমার গ্রুপ', 'Bin': 'মুছে রাখা', 'Sat': 'শনি', 'Sun': 'রবি', 'Mon': 'সোম', 'Tue': 'মঙ্গল', 'Wed': 'বুধ', 'Thu': 'বৃহঃ', 'Fri': 'শুক্র',
-        "On your phone's calendar": 'আপনার ফোনের ক্যালেন্ডারে', 'It arrived': 'এসে গেছে', 'Return in': 'রিটার্ন এসেছে',
-        'on it (Supplier orders tab) instead of typing it again.': 'বোতাম চাপলে (সাপ্লায়ার অর্ডার ট্যাবে) আবার টাইপ করতে হয় না।',
-        'on it (on the joint stock\u2019s Stock tab) instead of typing it again.': 'বোতাম চাপলে (জয়েন্ট স্টকের স্টক ট্যাবে) আবার টাইপ করতে হয় না।',
-        'Content desk': 'কনটেন্ট ডেস্ক', 'Realistic AI shots': 'বাস্তব AI শট' };
-      for (var k2 in W2) if (I18N_BN[k2] === undefined) I18N_BN[k2] = W2[k2];
-      I18N_PAT.push(['^Return in \u00b7 (.+) \u00b7 Return: (.+)$', 'রিটার্ন এসেছে \u00b7 $1 \u00b7 রিটার্ন: $2']);
-      I18N_PAT.push(['^Business: (.+)\\. Switch(?: business)?$', 'ব্যবসা: $1। ব্যবসা বদলান'], ['^Account menu: (.+)$', 'অ্যাকাউন্ট মেনু: $1']);
-    }
-  } catch (e) {}
-})();
-</script>
-<!-- /unity-1 -->
-
 <!-- flow-1 (owner 23 Nov 2026: "the week's routine - what goes today, tomorrow, when - is a line with dots and rings per
 platform; make this design better, a complete, professional system"). Plan > সময়সূচি. The dots said nothing until
 hovered and sat on top of each other; now every slot is a small chip that says its time, in its day's cell and its network's
@@ -65681,6 +65553,166 @@ details.pf-adbox>:not(summary){margin:0 14px 8px}
 }
 </style>
 <!-- /flow-1 -->
+<!-- unity-1 (owner 23 Nov 2026: "Costareen appears one way and the Brand desk a completely different way - with one blink the
+whole UI changes; it shows Costareen, loads, then takes me to my desk; fix every issue like this, easier to navigate").
+ONE shell for both: on a computer the Brand desk's menu stands where the ERP's side menu stands (same width, same ground,
+same white pills, the one lime row = where you are, the logo and name on top), and the desk's page is a white sheet on the
+ERP's ground like every ERP card. The move between a business and the desk fades instead of jumping. The landing itself
+(nothing of the business ERP shown on the way) is the head script + brand-home-1. The tab's name follows the business again
+after the desk. Phone layout of the desk is unchanged (its bottom bar), only the ground and the fade. -->
+<style>
+/* opacity only and no fill: a transform (or a kept animation) on the root re-anchors the phone's bottom bar */
+@keyframes u1In{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:no-preference){
+  body.bc-live .bc-root{animation:u1In .24s ease-out}
+  body.u1-out #view{animation:u1In .24s ease-out}
+}
+.bc-skip:not(:focus){top:-400px}
+/* phone: the desk's bottom bar is the ERP's bottom bar (same ground, same lift, ink counts) */
+@container bc (max-width:759px){
+  .bc-rail{background:var(--fd-bg,#EDEEF1);border-top:1px solid var(--fd-surface-3,#E6E7EB);box-shadow:0 -6px 20px rgba(0,0,0,.16)}
+  .bc-rail button{color:var(--fd-text-2,#5F6370)}
+  .bc-rail button.on{background:var(--fd-card,#fff);color:var(--fd-text,#17181C)}
+  .bc-rail button em{background:var(--fd-text,#17181C);color:var(--fd-bg,#fff)}
+  .bc-rail button em.x{background:var(--bc-alert);color:#fff}
+}
+/* wide = the desk's own container is 760px or more (the same line its phone layout is cut on) */
+body{--u1-w:228px}body.side-mini{--u1-w:76px}
+body.u1-wide.bc-live .main>header.topbar{margin-left:var(--u1-w)}
+@container bc (min-width:760px){
+  .bc{grid-template-columns:var(--u1-w) minmax(0,1fr) 360px;background:transparent;min-height:0}
+  .bc.noside{grid-template-columns:var(--u1-w) minmax(0,1fr)}
+  .bc-rail{margin-top:calc(-1 * var(--u1-top,0px));height:100vh;top:0;background:transparent;border-right:0;padding:18px 17px 14px;gap:6px}
+  .bc-rail .bc-rgw{display:flex;flex-direction:column;gap:6px}
+  .bc-rail .bc-me{display:flex;align-items:center;gap:10px;padding:0 0 12px 4px;min-height:46px}
+  .bc-rail .bc-me .u1-logo{width:42px;height:42px;flex:none;display:grid;place-items:center;font-size:0}
+  .bc-rail .bc-me .u1-logo svg,.bc-rail .bc-me .u1-logo img{width:40px!important;height:40px!important;max-width:none;object-fit:contain;display:block}
+  .bc-rail .bc-me .u1-nm{min-width:0;display:block}
+  .bc-rail .bc-me .u1-logo:empty{display:none}
+  .bc-rail .bc-me b{font:700 15px/1.25 Inter,"Noto Sans Bengali",system-ui,sans-serif;letter-spacing:-.01em;color:var(--fd-text,#17181C);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bc-rail .bc-me .u1-nm>span{display:block;font:500 11.5px/1.3 "Noto Sans Bengali",Inter,system-ui,sans-serif;color:var(--fd-text-2,#5F6370)}
+  .bc-rail .bc-rg{margin:10px 0 0;padding-left:14px;font:600 12.5px/1.4 "Noto Sans Bengali",Inter,system-ui,sans-serif;color:var(--fd-text-2,#5F6370);letter-spacing:0}
+  .bc-rail .bc-me+.bc-rgw .bc-rg,.bc-rail .bc-me+.bc-rg{margin-top:0}
+  .bc-rail button{height:42px;border-radius:14px;background:var(--fd-card,#fff);padding:0 12px 0 14px;gap:12px;font-size:14.5px;font-weight:600;color:var(--fd-text-2,#4A4D57)}
+  .bc-rail button:hover{background:var(--fd-card,#fff);color:var(--fd-text,#17181C);box-shadow:0 1px 0 rgba(23,24,28,.05),0 6px 16px rgba(23,24,28,.07)}
+  .bc-rail button.on,.bc-rail button.on:hover{background:var(--fd-lime,#E4FF5A);color:#17181C;font-weight:700;box-shadow:none}
+  .bc-rail button em{background:var(--fd-text,#17181C);color:var(--fd-bg,#fff)}
+  .bc-rail button.on em{background:#17181C;color:#fff}
+  .bc-rail button em.x{background:var(--bc-alert);color:#fff}
+  .bc-rail .bc-health{border-radius:14px;padding:10px 14px;color:var(--fd-text-2,#5F6370)}
+  .bc-rail .bc-health:hover{background:var(--fd-card,#fff)}
+  /* the ERP's "fold the menu to icons" button folds the desk's menu too */
+  body.side-mini .bc-rail{padding:18px 12px 14px;align-items:center}
+  body.side-mini .bc-rail .bc-rgw{align-items:center}
+  body.side-mini .bc-rail .bc-me{padding:0 0 12px}
+  body.side-mini .bc-rail .bc-me .u1-nm,body.side-mini .bc-rail button>span:not(.bc-vh),body.side-mini .bc-rail .bc-health>:not(.bc-dot){display:none}
+  body.side-mini .bc-rail button{width:52px;padding:0;justify-content:center;position:relative}
+  body.side-mini .bc-rail button em{position:absolute;top:-5px;right:-5px;margin:0;min-width:18px;height:18px;font-size:10.5px;padding:0 4px}
+  body.side-mini .bc-rail .bc-rg{width:32px;height:1px;margin:6px 0 2px;padding:0;overflow:hidden;background:var(--fd-surface-3,#D5D8DE);color:transparent}
+  body.side-mini .bc-rail .bc-health{justify-content:center}
+  .bc-main{background:#fff;border-radius:24px;margin:0 14px 16px 0;min-height:calc(100vh - var(--u1-top,0px) - 16px);box-sizing:border-box}
+  .bc-side{background:#fff;border-left:0;border-radius:24px;margin:0 14px 16px 0}
+}
+@container bc (min-width:1500px){.bc{grid-template-columns:var(--u1-w) minmax(0,1fr) 400px}.bc.noside{grid-template-columns:var(--u1-w) minmax(0,1fr)}}
+@container bc (min-width:760px) and (max-width:1139px){.bc{grid-template-columns:var(--u1-w) minmax(0,1fr)}.bc-side{border-top:0;margin-top:0}}
+</style>
+<script>
+(function () {
+  var root = document.documentElement, RO = null, wasLive = false, outT = 0;
+  // a toast about the switch on the way to the desk is noise (the cover is still up); errors still show
+  if (typeof toast === 'function') { var toast0 = toast; toast = function (h, bad, ms) { if (!bad && root.classList.contains('bd-landing')) return; return toast0.apply(this, arguments); }; }
+  function bizTitle() { try { var b = BIZ, n = b && b.businesses && b.businesses.filter(function (x) { return x.id === b.active; })[0]; if (n && n.name) document.title = n.name + ' ERP'; } catch (e) {} }
+  function measure() {
+    var r = document.getElementById('bc_root'), live = document.body.classList.contains('bc-live');
+    document.body.classList.toggle('u1-wide', !!(live && r && r.clientWidth >= 760));
+    var tb = document.querySelector('.main>header.topbar'); if (tb && tb.offsetHeight) root.style.setProperty('--u1-top', tb.offsetHeight + 'px');
+  }
+  // the date in the top bar reads in the desk's language (the desk is Bangla whatever the ERP's language is)
+  var G_EN = '', G_BN = '';
+  function bnDate() {
+    try {
+      var P = {}; new Intl.DateTimeFormat('bn-BD', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Dhaka' }).formatToParts(new Date()).forEach(function (x) { P[x.type] = x.value; });
+      return P.weekday && P.day && P.month ? P.weekday + ' ' + P.day + ' ' + P.month : '';
+    } catch (e) { return ''; }
+  }
+  function greet(live) {
+    var g = document.getElementById('clGreet'); if (!g || typeof LANG === 'undefined' || LANG === 'bn') return;
+    var t = g.textContent;
+    if (live) { if (t !== G_BN && /[A-Za-z]/.test(t)) { var d = bnDate(); if (!d) return; G_EN = g.innerHTML; G_BN = d; g.innerHTML = '<b></b>'; g.firstChild.textContent = d; } }
+    else if (G_EN && t === G_BN) { g.innerHTML = G_EN; G_EN = G_BN = ''; }
+  }
+  function sync() {
+    var live = document.body.classList.contains('bc-live');
+    if (live && !RO && window.ResizeObserver) { var r = document.getElementById('bc_root'); if (r) { RO = new ResizeObserver(measure); RO.observe(r); } }
+    measure(); greet(live);
+    if (wasLive && !live) {
+      bizTitle();
+      document.body.classList.add('u1-out'); clearTimeout(outT); outT = setTimeout(function () { document.body.classList.remove('u1-out'); }, 400);
+    }
+    wasLive = live;
+  }
+  function start() {
+    if (!document.body) return;
+    new MutationObserver(sync).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    var g = document.getElementById('clGreet'); if (g) new MutationObserver(function () { if (document.body.classList.contains('bc-live')) greet(true); }).observe(g, { childList: true, characterData: true, subtree: true });
+    window.addEventListener('resize', measure);
+    document.addEventListener('mouseover', function (e) { var b = e.target && e.target.closest && e.target.closest('.bc-rail button'); if (b && !b.title) { var sp = b.querySelector('span:not(.bc-vh)'); if (sp) b.title = sp.textContent; } });
+    sync();
+  }
+  start();
+  // Bangla for the top bar's spoken labels that were left in English
+  try {
+    if (typeof I18N_BN !== 'undefined') {
+      var W = { 'Fold the menu to icons': 'মেনু ছোট করে শুধু আইকন দেখান', 'Quick add': 'দ্রুত নতুন যোগ করুন', 'Ask your ERP (assistant)': 'আপনার ERP-কে জিজ্ঞেস করুন (সহকারী)', 'Show the screens in English': 'স্ক্রিন ইংরেজিতে দেখুন', 'Scan a serial number': 'সিরিয়াল নম্বর স্ক্যান করুন' };
+      for (var k in W) if (I18N_BN[k] === undefined) I18N_BN[k] = W[k];
+      // the words the 23 Nov crawl of all 46 screens still showed in English
+      var W2 = { 'Good morning': 'শুভ সকাল', 'Good afternoon': 'শুভ দুপুর', 'Good evening': 'শুভ সন্ধ্যা', 'Created': 'তৈরি', 'Updated': 'আপডেট',
+        'Reviews': 'রিভিউ', 'Customer groups': 'কাস্টমার গ্রুপ', 'Bin': 'মুছে রাখা', 'Sat': 'শনি', 'Sun': 'রবি', 'Mon': 'সোম', 'Tue': 'মঙ্গল', 'Wed': 'বুধ', 'Thu': 'বৃহঃ', 'Fri': 'শুক্র',
+        "On your phone's calendar": 'আপনার ফোনের ক্যালেন্ডারে', 'It arrived': 'এসে গেছে', 'Return in': 'রিটার্ন এসেছে',
+        'on it (Supplier orders tab) instead of typing it again.': 'বোতাম চাপলে (সাপ্লায়ার অর্ডার ট্যাবে) আবার টাইপ করতে হয় না।',
+        'on it (on the joint stock\u2019s Stock tab) instead of typing it again.': 'বোতাম চাপলে (জয়েন্ট স্টকের স্টক ট্যাবে) আবার টাইপ করতে হয় না।',
+        'Content desk': 'কনটেন্ট ডেস্ক', 'Realistic AI shots': 'বাস্তব AI শট' };
+      for (var k2 in W2) if (I18N_BN[k2] === undefined) I18N_BN[k2] = W2[k2];
+      I18N_PAT.push(['^Return in \u00b7 (.+) \u00b7 Return: (.+)$', 'রিটার্ন এসেছে \u00b7 $1 \u00b7 রিটার্ন: $2']);
+      I18N_PAT.push(['^Business: (.+)\\. Switch(?: business)?$', 'ব্যবসা: $1। ব্যবসা বদলান'], ['^Account menu: (.+)$', 'অ্যাকাউন্ট মেনু: $1']);
+    }
+  } catch (e) {}
+})();
+</script>
+<!-- /unity-1 -->
+
+<!-- whole-1 (owner 23 Nov 2026: "do everything on the not-done list, verify the whole system, no input from me, make it live").
+(1) ONE Bangla face: the Brand desk named Noto Sans Bengali (text) and Anek Bangla (headings) while the ERP reads in Hind
+Siliguri; both desk names now resolve to Hind Siliguri's files (same face on both sides, no layout code touched).
+(2) The desk in the ERP's dark look: its page was a white sheet on the dark ground; the sheet is now shown inverted
+(light surfaces dark, ink light, hues kept), photos, videos, network logos and the phone-post previews turned back.
+(3) Phone: text links on Plan / Routine / Rules get a real tap height; Media's 10.8px labels are 11.5px.
+(4) Bangla for the ERP's sub-tabs (script at the end of this block). -->
+<style>
+@font-face{font-family:"Noto Sans Bengali";font-style:normal;font-weight:400;font-display:swap;src:url(https://fonts.gstatic.com/s/hindsiliguri/v14/ijwTs5juQtsyLLR5jN4cxBEoTI7ax9k0.woff2) format("woff2");unicode-range:U+0951-0952,U+0964-0965,U+0980-09FE,U+1CD0,U+1CD2,U+1CD5-1CD6,U+1CD8,U+1CE1,U+1CEA,U+1CED,U+1CF2,U+1CF5-1CF7,U+200C-200D,U+20B9,U+25CC,U+A8F1,U+11DF0-11DF1}
+@font-face{font-family:"Noto Sans Bengali";font-style:normal;font-weight:500;font-display:swap;src:url(https://fonts.gstatic.com/s/hindsiliguri/v14/ijwOs5juQtsyLLR5jN4cxBEoRG_50vQVKxGv.woff2) format("woff2");unicode-range:U+0951-0952,U+0964-0965,U+0980-09FE,U+1CD0,U+1CD2,U+1CD5-1CD6,U+1CD8,U+1CE1,U+1CEA,U+1CED,U+1CF2,U+1CF5-1CF7,U+200C-200D,U+20B9,U+25CC,U+A8F1,U+11DF0-11DF1}
+@font-face{font-family:"Noto Sans Bengali";font-style:normal;font-weight:600;font-display:swap;src:url(https://fonts.gstatic.com/s/hindsiliguri/v14/ijwOs5juQtsyLLR5jN4cxBEoREP-0vQVKxGv.woff2) format("woff2");unicode-range:U+0951-0952,U+0964-0965,U+0980-09FE,U+1CD0,U+1CD2,U+1CD5-1CD6,U+1CD8,U+1CE1,U+1CEA,U+1CED,U+1CF2,U+1CF5-1CF7,U+200C-200D,U+20B9,U+25CC,U+A8F1,U+11DF0-11DF1}
+@font-face{font-family:"Noto Sans Bengali";font-style:normal;font-weight:700 900;font-display:swap;src:url(https://fonts.gstatic.com/s/hindsiliguri/v14/ijwOs5juQtsyLLR5jN4cxBEoRCf_0vQVKxGv.woff2) format("woff2");unicode-range:U+0951-0952,U+0964-0965,U+0980-09FE,U+1CD0,U+1CD2,U+1CD5-1CD6,U+1CD8,U+1CE1,U+1CEA,U+1CED,U+1CF2,U+1CF5-1CF7,U+200C-200D,U+20B9,U+25CC,U+A8F1,U+11DF0-11DF1}
+@font-face{font-family:"Anek Bangla";font-style:normal;font-weight:400 600;font-display:swap;src:url(https://fonts.gstatic.com/s/hindsiliguri/v14/ijwOs5juQtsyLLR5jN4cxBEoREP-0vQVKxGv.woff2) format("woff2");unicode-range:U+0951-0952,U+0964-0965,U+0980-09FE,U+1CD0,U+1CD2,U+1CD5-1CD6,U+1CD8,U+1CE1,U+1CEA,U+1CED,U+1CF2,U+1CF5-1CF7,U+200C-200D,U+20B9,U+25CC,U+A8F1,U+11DF0-11DF1}
+@font-face{font-family:"Anek Bangla";font-style:normal;font-weight:700 900;font-display:swap;src:url(https://fonts.gstatic.com/s/hindsiliguri/v14/ijwOs5juQtsyLLR5jN4cxBEoRCf_0vQVKxGv.woff2) format("woff2");unicode-range:U+0951-0952,U+0964-0965,U+0980-09FE,U+1CD0,U+1CD2,U+1CD5-1CD6,U+1CD8,U+1CE1,U+1CEA,U+1CED,U+1CF2,U+1CF5-1CF7,U+200C-200D,U+20B9,U+25CC,U+A8F1,U+11DF0-11DF1}
+/* dark: the sheet inverted, pictures turned back */
+:root[data-theme="dark"] body.bc-live .bc-main,:root[data-theme="dark"] body.bc-live .bc-side{filter:invert(1) hue-rotate(180deg);background:#F3F3F1}
+:root[data-theme="dark"] body.bc-live :is(.bc-main,.bc-side) :is(img,video,canvas,picture,iframe,.bc-lb svg,svg[data-logo],.u1-keep){filter:invert(1) hue-rotate(180deg)}
+@container bc (max-width:759px){
+  :root[data-theme="dark"] body.bc-live .bc{background:#0F1012}
+  .pn-link{min-height:36px;display:inline-flex;align-items:center}
+  details.pn-adr>summary{min-height:36px;display:flex;align-items:center}
+}
+.um-t,.mw-i small,.um-i small{font-size:11.5px}
+</style>
+<script>
+/* whole-1 (4): Bangla for the sub-tabs - the 23 Nov crawl of every screen AND every sub-tab found these still in English */
+(function () { try { if (typeof I18N_BN === 'undefined') return; var W = {"No rows for this range and these filters yet.":"এই সময় ও ফিল্টারে এখনও কোনো সারি নেই।","Checks that protect this part":"এই অংশকে সুরক্ষিত রাখে যেসব যাচাই","Rules in plain words":"সহজ কথায় নিয়ম","All shares of one shipment together stay within 100%.":"এক শিপমেন্টের সব শেয়ার মিলে ১০০%-এর মধ্যে থাকে।","Each investor can see only their own statement, on a private link with a code.":"প্রতিটি ইনভেস্টর শুধু নিজের স্টেটমেন্ট দেখেন, কোডসহ ব্যক্তিগত লিংকে।","Screen":"স্ক্রিন","Money figures":"টাকার অঙ্ক","Change in Settings":"সেটিংসে বদলান","No changes logged for this part yet.":"এই অংশে এখনও কোনো বদল লেখা হয়নি।","You appear as":"আপনাকে দেখায়","Farm":"ফার্ম","· no rating yet ·":"· এখনও রেটিং নেই ·","the public page":"পাবলিক পেজ","No open jobs right now.":"এখন কোনো খোলা কাজ নেই।","Nobody has picked you yet.":"এখনও কেউ আপনাকে বেছে নেননি।","No printers yet. Add the ones you print with.":"এখনও কোনো প্রিন্টার নেই। যেগুলো দিয়ে প্রিন্ট করেন সেগুলো যোগ করুন।","+ Add a printer":"+ প্রিন্টার যোগ করুন","Opened spools":"খোলা স্পুল","No open spool. Open one below when you start printing from it.":"কোনো খোলা স্পুল নেই। প্রিন্ট শুরু করলে নিচে একটি খুলুন।","Filament on the shelf":"তাকে থাকা ফিলামেন্ট","Grams in a full spool":"পুরো স্পুলে কত গ্রাম","Note (which printer, who)":"নোট (কোন প্রিন্টার, কে)","Your quote link":"আপনার কোটেশন লিংক","Share on WhatsApp":"WhatsApp-এ শেয়ার করুন","Taking requests (off = the page says you are not taking requests)":"অনুরোধ নিচ্ছি (বন্ধ = পেজে লেখা থাকবে আপনি অনুরোধ নিচ্ছেন না)","What the page says at the top (materials, turnaround, minimum order)":"পেজের উপরে যা লেখা থাকবে (ম্যাটেরিয়াল, কত দিনে হবে, সর্বনিম্ন অর্ডার)","No requests yet. Share the link.":"এখনও কোনো অনুরোধ নেই। লিংক শেয়ার করুন।","Rates for the cost":"কস্ট হিসাবের রেট","Electricity, taka per kWh":"বিদ্যুৎ, প্রতি kWh টাকা","Labour, taka per hour":"মজুরি, প্রতি ঘণ্টা টাকা","Failure allowance, % of filament + machine":"নষ্ট হওয়ার ছাড়, ফিলামেন্ট + মেশিনের %","Margin, % on top of cost":"মার্জিন, কস্টের উপর %","Packaging per job, taka":"প্রতি কাজে প্যাকেজিং, টাকা","Save rates":"রেট সেভ করুন","✓ Nothing needs you.":"✓ আপনার করার কিছু নেই।","On hold":"হোল্ডে আছে","To follow up today":"আজ ফলো-আপ করতে হবে","No orders here.":"এখানে কোনো অর্ডার নেই।","Asked after delivery":"ডেলিভারির পর জিজ্ঞেস করা হয়েছে","Gave stars":"স্টার দিয়েছেন","· The shop":"· দোকান","Not on the website yet":"এখনও ওয়েবসাইটে নেই","Waiting for the website":"ওয়েবসাইটের অপেক্ষায়","Customer groups (WhatsApp)":"কাস্টমার গ্রুপ (WhatsApp)","Groups made":"গ্রুপ তৈরি হয়েছে","Left out":"বাদ পড়েছে","Fill the list":"তালিকা ভরুন","Start making groups":"গ্রুপ বানানো শুরু করুন","A day":"দিনে","Make the next one now":"পরেরটি এখনই বানান","Stopped. MD's WhatsApp not set (Agent Desk).":"বন্ধ আছে। MD-র WhatsApp দেওয়া নেই (Agent Desk)।","The list is empty - press Fill the list.":"তালিকা খালি - তালিকা ভরুন চাপুন।","Make an order page for an ad":"বিজ্ঞাপনের জন্য অর্ডার পেজ বানান","Offer price (optional)":"অফারের দাম (ঐচ্ছিক)","Make the page":"পেজ বানান","No landing pages yet.":"এখনও কোনো ল্যান্ডিং পেজ নেই।","Unfinished orders — call them back":"অসম্পূর্ণ অর্ডার — তাদের ফোন করুন","To call":"ফোন করতে হবে","Called":"ফোন করা হয়েছে","Dismissed":"বাদ দেওয়া","Nobody here.":"এখানে কেউ নেই।","🛡 Fake-order shield":"🛡 ভুয়া অর্ডার ঠেকানো","When an order looks RISKY":"অর্ডার ঝুঁকিপূর্ণ মনে হলে","Take it, just mark it RISKY":"নিন, শুধু ঝুঁকিপূর্ণ চিহ্ন দিন","Ask an advance first (the order waits on hold)":"আগে অগ্রিম চান (অর্ডার হোল্ডে থাকবে)","Hold it until we call and confirm":"আমরা ফোন করে কনফার্ম না করা পর্যন্ত হোল্ডে রাখুন","How to pay the advance":"অগ্রিম কীভাবে দেবেন","Amount (empty = the delivery charge)":"পরিমাণ (খালি = ডেলিভারি চার্জ)","Block a mobile number":"মোবাইল নম্বর ব্লক করুন","Block":"ব্লক করুন","No blocked numbers.":"কোনো ব্লক করা নম্বর নেই।","📈 Meta pixel — only real orders":"📈 Meta পিক্সেল — শুধু আসল অর্ডার","Pixel id":"পিক্সেল আইডি","Conversions API token":"Conversions API টোকেন","Send Purchase when":"Purchase কখন পাঠাবে","Test event code (optional)":"টেস্ট ইভেন্ট কোড (ঐচ্ছিক)","Send events (switch off to stop everything)":"ইভেন্ট পাঠান (সব থামাতে বন্ধ করুন)","Send a test event":"টেস্ট ইভেন্ট পাঠান","LEADS SENT":"লিড পাঠানো হয়েছে","PURCHASES SENT":"পারচেজ পাঠানো হয়েছে","RETURNS SENT":"রিটার্ন পাঠানো হয়েছে","KEPT OUT":"বাদ রাখা হয়েছে","Last 30 days.":"গত ৩০ দিন।","Time proposed":"সময় প্রস্তাব করা হয়েছে","Upcoming":"সামনে আছে","Confirmed":"কনফার্ম হয়েছে","Follow-ups on":"ফলো-আপ চালু","Remind hot customers":"হট কাস্টমারকে মনে করান","Remind warm customers":"ওয়ার্ম কাস্টমারকে মনে করান","WARM":"ওয়ার্ম","COLD":"কোল্ড","None planned.":"কিছু ঠিক করা নেই।","Learn from our team's chats":"আমাদের টিমের চ্যাট থেকে শিখুক","Learn now":"এখনই শিখুক","Teach the AI in your own words":"নিজের ভাষায় AI-কে শেখান","Draft it":"খসড়া করুন","Your rules":"আপনার নিয়ম","New rule — name":"নতুন নিয়ম — নাম","What it says":"নিয়মে যা বলা আছে","+ Add as draft":"+ খসড়া হিসেবে যোগ করুন","Your business":"আপনার ব্যবসা","Salesperson's name (said when a customer asks)":"সেলসপারসনের নাম (কাস্টমার জিজ্ঞেস করলে বলা হয়)","Manager's WhatsApp (the AI asks here for a bigger discount or a doubt)":"ম্যানেজারের WhatsApp (বেশি ছাড় বা সন্দেহ হলে AI এখানে জিজ্ঞেস করে)","MD's WhatsApp (added to every customer group)":"MD-র WhatsApp (প্রতিটি কাস্টমার গ্রুপে যোগ হয়)","What you sell (a few words)":"আপনি কী বিক্রি করেন (কয়েক শব্দে)","Opening hours":"খোলা থাকার সময়","Days inside Dhaka":"ঢাকার ভেতরে কত দিন","Days outside Dhaka":"ঢাকার বাইরে কত দিন","A filament spool counts as (grams, packed)":"একটি ফিলামেন্ট স্পুলের ওজন ধরা হয় (গ্রাম, প্যাকসহ)","Or send order alerts + invoice to this WhatsApp group (name; made if missing)":"অথবা অর্ডারের খবর + ইনভয়েস এই WhatsApp গ্রুপে পাঠান (নাম; না থাকলে তৈরি হবে)","Other delivery rules":"ডেলিভারির অন্য নিয়ম","How customers pay":"কাস্টমার কীভাবে পেমেন্ট করেন","Return and exchange rule":"রিটার্ন ও বদলের নিয়ম","Answer when asked for a discount":"ছাড় চাইলে যে উত্তর দেবে","Extra offer (mentioned once before the order)":"বাড়তি অফার (অর্ডারের আগে একবার বলা হয়)","Tone of voice":"কথার ধরন","First message (website chat)":"প্রথম মেসেজ (ওয়েবসাইট চ্যাট)","Facebook / Google review link (offered after a good review)":"Facebook / Google রিভিউ লিংক (ভালো রিভিউর পর দেওয়া হয়)","Reply language":"উত্তরের ভাষা","Calls the customer":"কাস্টমারকে ডাকে","With the first name":"নামের প্রথম অংশ ধরে","Ask for a 1-5 star rating after an order":"অর্ডারের পর ১-৫ স্টার রেটিং চান","AI helpers on saved replies":"সেভ করা উত্তরে AI সহায়তা","Products or services":"প্রোডাক্ট নাকি সার্ভিস","This business":"এই ব্যবসা","Services, fees and durations":"সার্ভিস, ফি ও সময়","Questions to ask before a booking":"বুকিংয়ের আগে যা জিজ্ঞেস করবে","Where (address or online)":"কোথায় (ঠিকানা বা অনলাইন)","Advance payment rule":"অগ্রিম পেমেন্টের নিয়ম","Cancellation rule":"বাতিলের নিয়ম","Reminder hours before":"কত ঘণ্টা আগে মনে করাবে","Remind the day before":"আগের দিন মনে করান","Confirm bookings automatically":"বুকিং নিজে থেকে কনফার্ম করুন","Limits":"সীমা","Discounts":"ছাড়","Most off the price (%)":"দাম থেকে সর্বোচ্চ ছাড় (%)","Never below cost + (%)":"কখনও কস্ট + (%)-এর নিচে নয়","Topics it must not answer (one per line)":"যেসব বিষয়ে উত্তর দেবে না (প্রতি লাইনে একটি)","Things it must never promise (one per line)":"যা কখনও কথা দেবে না (প্রতি লাইনে একটি)","Save details":"তথ্য সেভ করুন","Test — the customer's view":"টেস্ট — কাস্টমার যেমন দেখেন","Special offers":"বিশেষ অফার","The only offers the AI may mention. Prices still come from your products.":"AI শুধু এই অফারগুলোই বলতে পারে। দাম আসে আপনার প্রোডাক্ট থেকেই।","No offers.":"কোনো অফার নেই।","Product code (empty = all)":"প্রোডাক্ট কোড (খালি = সব)","Until":"পর্যন্ত","+ Add offer":"+ অফার যোগ করুন","Saved replies":"সেভ করা উত্তর","None yet.":"এখনও কিছু নেই।","Reply":"উত্তর","Read my website":"আমার ওয়েবসাইট পড়ুন","Add to the knowledge base":"নলেজ বেসে যোগ করুন","Title":"শিরোনাম","File":"ফাইল","Add the text":"লেখা যোগ করুন","Question":"প্রশ্ন","Answer":"উত্তর","Add the question":"প্রশ্ন যোগ করুন","Test a question":"একটি প্রশ্ন টেস্ট করুন","No AI key is set — the AI cannot answer until one is set (Platform → AI reader).":"কোনো AI কী দেওয়া নেই — কী না দেওয়া পর্যন্ত AI উত্তর দিতে পারবে না (প্ল্যাটফর্ম → AI রিডার)।","No WhatsApp number yet.":"এখনও কোনো WhatsApp নম্বর নেই।","Messages in":"আসা মেসেজ","AI replies":"AI-এর উত্তর","Team replies":"টিমের উত্তর","Finished by the AI alone":"AI একাই শেষ করেছে","First reply (median)":"প্রথম উত্তর (মধ্যমা)","Team picked up (median)":"টিম ধরেছে (মধ্যমা)","Waiting now":"এখন অপেক্ষায়","AI cost (est.)":"AI খরচ (আনুমানিক)","Why chats went to a person (30 days)":"চ্যাট কেন মানুষের কাছে গেল (৩০ দিন)","None.":"কিছু নেই।","Busy hours":"ব্যস্ত সময়","No messages yet.":"এখনও কোনো মেসেজ নেই।","By channel":"চ্যানেল অনুযায়ী","Who took the orders":"কে অর্ডার নিয়েছে","No chat orders yet.":"এখনও চ্যাট থেকে কোনো অর্ডার নেই।","Contacted":"যোগাযোগ হয়েছে","Interested":"আগ্রহী","Quoted":"কোটেশন দেওয়া হয়েছে","Won":"জেতা","Move to the bin":"বিনে ফেলুন","Lost":"হারানো","No companies yet.":"এখনও কোনো কোম্পানি নেই।","Add a company":"কোম্পানি যোগ করুন","Kind (shop, school, print farm…)":"ধরন (দোকান, স্কুল, প্রিন্ট ফার্ম…)","Same name":"একই নাম","Not the same":"একই নয়","On customers":"কাস্টমারে","On leads":"লিডে","Add a field":"ঘর যোগ করুন","Choices (for Choice, with commas)":"অপশন (চয়েসের জন্য, কমা দিয়ে)","Hide from salespeople":"সেলসপারসনদের কাছ থেকে লুকান","No rules yet.":"এখনও কোনো নিয়ম নেই।","Only if (field, can be empty)":"শুধু যদি (ঘর, খালি রাখা যায়)","In how many days":"কত দিনের মধ্যে","Stage (for a lead)":"ধাপ (লিডের জন্য)","What the follow-up or note says":"ফলো-আপ বা নোটে যা লেখা থাকবে","Add the rule":"নিয়ম যোগ করুন","Send events to an address":"একটি ঠিকানায় ইভেন্ট পাঠান","Address (n8n: the Webhook node's production URL)":"ঠিকানা (n8n: Webhook নোডের প্রোডাকশন URL)","Tick none to send every kind.":"সব ধরন পাঠাতে কোনোটিতে টিক দেবেন না।","Latest events":"সাম্প্রতিক ইভেন্ট","For n8n to ask instead: call":"n8n নিজে জানতে চাইলে: কল করুন","with":"সাথে দিন","using an owner access key.":"মালিকের অ্যাকসেস কী দিয়ে।","Hide phone numbers from salespeople":"সেলসপারসনদের কাছ থেকে ফোন নম্বর লুকান","Hide addresses from salespeople":"সেলসপারসনদের কাছ থেকে ঠিকানা লুকান","Hide e-mail addresses from salespeople":"সেলসপারসনদের কাছ থেকে ই-মেইল ঠিকানা লুকান","Stock count":"স্টক গণনা","Only what I have typed":"শুধু যা আমি লিখেছি","Books say":"খাতায় আছে","Save the count":"গণনা সেভ করুন","Received by mistake? Undo a receipt":"ভুলে রিসিভ করেছেন? রিসিভ বাতিল করুন","Orders to suppliers":"সাপ্লায়ারকে দেওয়া অর্ডার","+ New order":"+ নতুন অর্ডার","Not paid yet":"এখনও পেমেন্ট হয়নি","Record a payment":"পেমেন্ট লিখুন","Still to come":"এখনও আসা বাকি","Tick all as matching":"সব মিলেছে বলে টিক দিন","Shipment / tracking no.":"শিপমেন্ট / ট্র্যাকিং নম্বর","Weight (kg)":"ওজন (কেজি)","TK per kg":"প্রতি কেজি টাকা","Shipping paid":"শিপিং খরচ দেওয়া হয়েছে","Arrived on":"পৌঁছেছে","Nothing more is coming":"আর কিছু আসবে না","Add to stock":"স্টকে যোগ করুন","Products to order":"যেসব প্রোডাক্ট অর্ডার করতে হবে","What it will cost":"কত খরচ হবে","at landed cost":"আনার খরচসহ দামে","Sells / month":"বিক্রি / মাস","Days left":"কত দিন চলবে","Tick all":"সব টিক দিন","Add ticked to a new order":"টিক দেওয়াগুলো নতুন অর্ডারে যোগ করুন","+ Post what I need":"+ আমার যা দরকার পোস্ট করুন","Wanted by others":"অন্যরা যা খুঁজছেন","Nobody is looking for anything right now.":"এখন কেউ কিছু খুঁজছেন না।","My posts":"আমার পোস্ট","You have not posted anything.":"আপনি কিছু পোস্ট করেননি।","Asked of me":"আমার কাছে চাওয়া","I sell":"আমি বিক্রি করি","No requests for your stock yet. Share your stock to get some.":"আপনার স্টকের জন্য এখনও কোনো অনুরোধ নেই। পেতে চাইলে স্টক শেয়ার করুন।","I asked":"আমি চেয়েছি","I buy":"আমি কিনি","You have not asked anyone yet. Use Request on Find stock.":"আপনি এখনও কারও কাছে চাননি। স্টক খুঁজুন থেকে অনুরোধ ব্যবহার করুন।","Your city (buyers see “Supplier · city”)":"আপনার শহর (ক্রেতা দেখেন “সাপ্লায়ার · শহর”)","Show my shop to everyone (Find stock)":"আমার দোকান সবাইকে দেখান (স্টক খুঁজুন)","The same ticked products on a public page -":"টিক দেওয়া একই প্রোডাক্ট একটি পাবলিক পেজে -","Show my shop and the ticked products to everyone":"আমার দোকান ও টিক দেওয়া প্রোডাক্ট সবাইকে দেখান","Take orders from the public page (they land under Web orders)":"পাবলিক পেজ থেকে অর্ডার নিন (ওয়েব অর্ডারে জমা হয়)","A line for buyers: delivery areas, charges, hours":"ক্রেতাদের জন্য এক লাইন: ডেলিভারি এলাকা, চার্জ, সময়","Save public settings":"পাবলিক সেটিংস সেভ করুন","Waiting buyers":"অপেক্ষায় থাকা ক্রেতা","Nobody waiting.":"কেউ অপেক্ষায় নেই।","Colour swatches (Colour Finder)":"রঙের নমুনা (Colour Finder)","On the public page":"পাবলিক পেজে","Tick products with a colour first.":"আগে রঙ আছে এমন প্রোডাক্টে টিক দিন।","Resellers — let others sell your stock":"রিসেলার — অন্যদের আপনার স্টক বিক্রি করতে দিন","Sell through resellers":"রিসেলারের মাধ্যমে বিক্রি করুন","Reseller discount %":"রিসেলারের ছাড় %","Phone for resellers":"রিসেলারদের জন্য ফোন","Terms (a line resellers see)":"শর্ত (রিসেলাররা যে লাইন দেখেন)","Off. Switch on and save: resellers then see the ticked products.":"বন্ধ আছে। চালু করে সেভ করুন: তখন রিসেলাররা টিক দেওয়া প্রোডাক্ট দেখবেন।","Resellers":"রিসেলার","Reseller orders":"রিসেলারের অর্ডার","No reseller orders yet.":"এখনও রিসেলারের কোনো অর্ডার নেই।","Commission statements":"কমিশনের স্টেটমেন্ট","Nothing to settle yet - delivered and paid orders appear here by month.":"এখনও মেটানোর কিছু নেই - ডেলিভারি ও পেমেন্ট হওয়া অর্ডার মাস অনুযায়ী এখানে আসে।","+ New joint sale":"+ নতুন যৌথ বিক্রি","Nothing sold from the joint stock yet. Joint products are on New invoice, with a":"যৌথ স্টক থেকে এখনও কিছু বিক্রি হয়নি। যৌথ প্রোডাক্ট নতুন ইনভয়েসে থাকে,","Joint":"যৌথ","tag.":"ট্যাগসহ।","Write in the joint book":"যৌথ খাতায় লিখুন","The joint book":"যৌথ খাতা","Nothing written yet. Start with the money each of you put in.":"এখনও কিছু লেখা হয়নি। আপনারা যে যত টাকা দিয়েছেন তা দিয়ে শুরু করুন।","Shared expenses":"যৌথ খরচ","Profit of the month":"মাসের লাভ","The partners":"পার্টনাররা","Nobody owes anything — the cash is where it should be.":"কারও কাছে কিছু পাওনা নেই — টাকা যেখানে থাকার সেখানেই আছে।","Statement as a PDF":"স্টেটমেন্ট PDF হিসেবে","New invite code":"নতুন ইনভাইট কোড","Slow payers":"দেরিতে পেমেন্ট করেন যাঁরা","Another joint stock":"আরেকটি যৌথ স্টক","Your partner’s own ERP":"আপনার পার্টনারের নিজের ERP","Make an install link for them":"তাঁদের জন্য ইনস্টল লিংক বানান","Start a joint stock":"যৌথ স্টক শুরু করুন","You get a code to send to your partner.":"পার্টনারকে পাঠানোর জন্য একটি কোড পাবেন।","Your name in it":"এতে আপনার নাম","Or join your partner’s":"অথবা পার্টনারেরটিতে যোগ দিন","With the code they sent you.":"তাঁরা যে কোড পাঠিয়েছেন তা দিয়ে।","Invite code":"ইনভাইট কোড","Join":"যোগ দিন","Received by account this month":"এ মাসে অ্যাকাউন্ট অনুযায়ী পাওয়া টাকা","Monthly profit":"মাসিক লাভ","Profit by month":"মাস অনুযায়ী লাভ","Cost of goods":"মালের কেনা দাম","Delivery & other":"ডেলিভারি ও অন্যান্য","Net":"নিট","Best ROI after holding":"রাখার খরচ বাদে সেরা ROI","Capital in shipments":"শিপমেন্টে আটকে থাকা মূলধন","Dead stock":"অচল স্টক","ROI per shipment":"প্রতি শিপমেন্টের ROI","No shipments with a landed cost yet.":"আনার খরচসহ দাম আছে এমন কোনো শিপমেন্ট এখনও নেই।","Best-selling colours":"সবচেয়ে বেশি বিক্রি হওয়া রঙ","Units sold in the last 90 days":"গত ৯০ দিনে বিক্রি হওয়া ইউনিট","No colour":"রঙ নেই","Colours by revenue":"আয় অনুযায়ী রঙ","The last 90 days":"গত ৯০ দিন","✓ Nothing is sitting still.":"✓ কিছুই পড়ে নেই।","At or below reorder level":"রিঅর্ডার লেভেলে বা তার নিচে","Reorder suggestions":"রিঅর্ডারের পরামর্শ","Sale lines with no cost":"কেনা দাম ছাড়া বিক্রির লাইন","Their sales value":"এগুলোর বিক্রির মূল্য","Sales whose cost is unknown":"যেসব বিক্রির কেনা দাম জানা নেই","✓ Every sale carries a cost.":"✓ প্রতিটি বিক্রিতে কেনা দাম আছে।","No rules yet":"এখনও কোনো নিয়ম নেই","Nobody earns commission until a rule says how much.":"নিয়মে পরিমাণ না বলা পর্যন্ত কেউ কমিশন পাবেন না।","The joint stock itself — its products, sales, money and month end — is under":"যৌথ স্টক নিজে — এর প্রোডাক্ট, বিক্রি, টাকা ও মাস শেষ — আছে এখানে:",". This screen is only for the rare sale from the other company’s":"। এই স্ক্রিন শুধু অন্য কোম্পানির","own":"নিজের","shelf.":"তাক থেকে মাঝেমধ্যে হওয়া বিক্রির জন্য।","Partners’ stock":"পার্টনারদের স্টক","Partners can see my stock counts":"পার্টনাররা আমার স্টকের সংখ্যা দেখতে পারেন","Sales from each other’s own stock":"একে অপরের নিজস্ব স্টক থেকে বিক্রি","Who sold whose":"কে কার মাল বিক্রি করেছেন","Agreed price, total":"চুক্তির দাম, মোট","No deal written yet.":"এখনও কোনো ডিল লেখা হয়নি।","Piece":"পিস","Roll":"রোল","Set":"সেট","AI models":"AI মডেল","A ChatGPT or Claude":"ChatGPT বা Claude-এর","chat subscription is not an API key":"চ্যাট সাবস্ক্রিপশন API কী নয়",". The ERP needs API keys (pay as you use):":"। ERP-তে API কী লাগে (যত ব্যবহার তত খরচ):","Own server":"নিজের সার্ভার","no key":"কী নেই","web search · photos · PDFs":"ওয়েব সার্চ · ছবি · PDF","web search · photos · PDFs · voice notes":"ওয়েব সার্চ · ছবি · PDF · ভয়েস নোট","Own server (OpenAI-compatible)":"নিজের সার্ভার (OpenAI-এর মতো)","Who does what":"কে কোন কাজ করে","Work":"কাজ","Model (\"auto\" = its strongest)":"মডেল (\"auto\" = সবচেয়ে শক্তিশালীটি)","Free first":"আগে ফ্রি","Let the AI search the web where it helps (leads, prices, product facts)":"কাজে লাগলে AI-কে ওয়েবে খুঁজতে দিন (লিড, দাম, প্রোডাক্টের তথ্য)","Save the choices":"পছন্দ সেভ করুন","Next: press Connect":"এরপর: কানেক্ট চাপুন","Next: paste 2 keys":"এরপর: ২টি কী পেস্ট করুন","Not set up yet":"এখনও বসানো হয়নি","Set up by the provider":"প্রোভাইডার বসিয়েছেন","Next: Connect with Facebook":"এরপর: Facebook দিয়ে কানেক্ট করুন","Any other website":"অন্য যেকোনো ওয়েবসাইট","Social accounts and chat channels":"সোশ্যাল অ্যাকাউন্ট ও চ্যাট চ্যানেল","Facebook — one login for everything":"Facebook — সবকিছুর জন্য এক লগইন","PROVIDER HAS NOT ADDED THE META APP YET":"প্রোভাইডার এখনও META অ্যাপ যোগ করেননি","Connect a channel by hand":"হাতে চ্যানেল কানেক্ট করুন","Page id / account id / phone number id / instance / number":"পেজ আইডি / অ্যাকাউন্ট আইডি / ফোন নম্বর আইডি / ইনস্ট্যান্স / নম্বর","Connect an e-mail":"ই-মেইল কানেক্ট করুন","Mail provider":"মেইল প্রোভাইডার","E-mail address":"ই-মেইল ঠিকানা","App password":"অ্যাপ পাসওয়ার্ড","Name the customer sees":"কাস্টমার যে নাম দেখেন","Connect the mailbox":"মেইলবক্স কানেক্ট করুন","Plan and features":"প্ল্যান ও ফিচার","Your plan":"আপনার প্ল্যান","IN YOUR PLAN":"আপনার প্ল্যানে আছে","ALL":"সব","AI this month":"এ মাসে AI","No monthly limit in your plan.":"আপনার প্ল্যানে মাসিক সীমা নেই।","Chats from your Facebook page":"আপনার Facebook পেজের চ্যাট","Instagram direct messages":"Instagram ডাইরেক্ট মেসেজ","WhatsApp (official)":"WhatsApp (অফিসিয়াল)","Meta's WhatsApp Cloud API":"Meta-র WhatsApp Cloud API","WhatsApp (linked device)":"WhatsApp (লিংক করা ডিভাইস)","Evolution or WaSenderAPI - like WhatsApp Web; the number can be banned":"Evolution বা WaSenderAPI - WhatsApp Web-এর মতো; নম্বর ব্যান হতে পারে","A chat bubble on your own website":"আপনার নিজের ওয়েবসাইটে চ্যাট বাবল","Post comments":"পোস্টের কমেন্ট","Replies under your Facebook and Instagram posts, hide and delete":"আপনার Facebook ও Instagram পোস্টের নিচে উত্তর, লুকানো ও মোছা","Voice call on the website":"ওয়েবসাইটে ভয়েস কল","Visitors talk to the AI on your website chat":"ভিজিটররা আপনার ওয়েবসাইট চ্যাটে AI-এর সাথে কথা বলেন","The AI":"AI","Reads photos":"ছবি পড়ে","Understands a photo a customer sends":"কাস্টমারের পাঠানো ছবি বোঝে","Finds the product in a photo":"ছবি থেকে প্রোডাক্ট খুঁজে বের করে","Compares the customer's photo with your product pictures":"কাস্টমারের ছবি আপনার প্রোডাক্টের ছবির সাথে মেলায়","Reads voice notes":"ভয়েস নোট শোনে","Writes out a customer's voice note":"কাস্টমারের ভয়েস নোট লিখে দেয়","Knowledge base":"নলেজ বেস","Answers from your own documents":"আপনার নিজের ডকুমেন্ট থেকে উত্তর দেয়","Mentions the offers you set":"আপনার দেওয়া অফারের কথা বলে","Orders in the chat":"চ্যাটে অর্ডার","The AI takes cash-on-delivery orders; the team approves them":"AI ক্যাশ অন ডেলিভারি অর্ডার নেয়; টিম অনুমোদন দেয়","Order page and Track button":"অর্ডার পেজ ও ট্র্যাক বাটন","Each order gets its own page with its status and the courier's tracking":"প্রতিটি অর্ডারের নিজের পেজ থাকে, সাথে স্ট্যাটাস ও কুরিয়ারের ট্র্যাকিং","Bill as a picture":"ছবি হিসেবে বিল","After an order the customer gets the bill as an image":"অর্ডারের পর কাস্টমার বিলটি ছবি হিসেবে পান","Product pages with Buy":"কিনুন বাটনসহ প্রোডাক্ট পেজ","Each product has a page with a Buy button, opened from the chat":"প্রতিটি প্রোডাক্টের একটি পেজ আছে কিনুন বাটনসহ, চ্যাট থেকে খোলে","Landing pages and unfinished orders":"ল্যান্ডিং পেজ ও অসম্পূর্ণ অর্ডার","For service businesses: booking requests, advance, reminders":"সার্ভিস ব্যবসার জন্য: বুকিংয়ের অনুরোধ, অগ্রিম, রিমাইন্ডার","A reminder to a customer who went quiet (inside 24 hours)":"চুপ হয়ে যাওয়া কাস্টমারকে রিমাইন্ডার (২৪ ঘণ্টার মধ্যে)","Messages after 24 hours":"২৪ ঘণ্টার পরের মেসেজ","Meta-approved templates for courier updates and booking reminders":"কুরিয়ার আপডেট ও বুকিং রিমাইন্ডারের জন্য Meta-অনুমোদিত টেমপ্লেট","Later (own menu)":"পরে (আলাদা মেনু)","Broadcasts":"ব্রডকাস্ট","AI assistant beside a chat":"চ্যাটের পাশে AI সহকারী","Summary, a question about the customer, a drafted reply":"সারসংক্ষেপ, কাস্টমার নিয়ে প্রশ্ন, খসড়া উত্তর","Saved replies with AI":"AI-সহ সেভ করা উত্তর","Suggest the fitting saved reply; adapt it to the chat":"মানানসই সেভ করা উত্তর দেখায়; চ্যাট অনুযায়ী বদলে দেয়","Team groups":"টিম গ্রুপ","Which group hears which hand-over; teammates limited to some channels":"কোন গ্রুপ কোন হস্তান্তরের খবর পায়; টিমের সদস্য নির্দিষ্ট চ্যানেলে সীমিত","Messages, replies, hand-overs, first-reply time":"মেসেজ, উত্তর, হস্তান্তর, প্রথম উত্তরের সময়","Downloads":"ডাউনলোড","Orders, leads, AI work and conversations as files":"অর্ডার, লিড, AI-এর কাজ ও কথোপকথন ফাইল হিসেবে","Plans for every company":"প্রতিটি কোম্পানির প্ল্যান","PROVIDER":"প্রোভাইডার","AI budget / month":"AI বাজেট / মাস","Used this month":"এ মাসে ব্যবহার","It may do what a … can":"এটি তা-ই করতে পারে যা একজন … পারেন","WhatsApp (Evolution API server)":"WhatsApp (Evolution API সার্ভার)","and sign in. 2. In the menu open":"-এ গিয়ে সাইন ইন করুন। ২. মেনু থেকে খুলুন",". 3. Copy the":"। ৩. কপি করুন","and the":"ও","into the two boxes below and press":"নিচের দুই ঘরে বসিয়ে চাপুন","— the ERP checks them with Steadfast by itself.":"— ERP নিজেই Steadfast-এর সাথে মিলিয়ে দেখে।"};
+  for (var k in W) if (I18N_BN[k] === undefined) I18N_BN[k] = W[k];
+  var P = [["^Shop rating \\(([\\d,.]+)\\)$","দোকানের রেটিং ($1)"],["^Given to you \\(([\\d,.]+)\\)$","আপনাকে দেওয়া ($1)"],["^Documents · ([\\d,.]+)$","ডকুমেন্ট · $1"],["^([\\d,.]+) on the way$","$1টি পথে আছে"],["^([\\d,.]+) run dry before a shipment could land$","শিপমেন্ট পৌঁছানোর আগেই $1টি শেষ হয়ে যাবে"],["^Follow up: ([\\d\\-\\/.]+)$","ফলো-আপ: $1"],["^To bring the shares level: (.+) puts in ([\\d,.]+) more\\.$","শেয়ার সমান করতে: $1 আরও $2 দেবেন।"],["^The ([\\d,.]+) lowest; the full plan with lead times and suppliers is under Stock$","সবচেয়ে কম $1টি; আনার সময় ও সাপ্লায়ারসহ পুরো প্ল্যান স্টকে আছে"],["^(.+) — what is on the shelf$","$1 — তাকে যা আছে"],["^(.+) — every joint sale$","$1 — প্রতিটি যৌথ বিক্রি"],["^(.+) · does not show its stock$","$1 · নিজের স্টক দেখায় না"]]; for (var i = 0; i < P.length; i++) I18N_PAT.push(P[i]);
+} catch (e) {} })();
+</script>
+<!-- /whole-1 -->
 
 </body>
 </html>

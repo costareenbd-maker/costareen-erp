@@ -26,10 +26,11 @@ deps.hookBase = 'http://localhost:' + PORT + '/';
 let bridgePass = process.env.BRIDGE_PASS || '';
 if (!bridgePass && process.env.LINK_KEY_FILE) { try { bridgePass = (await import('node:fs')).readFileSync(path.join(path.dirname(process.env.LINK_KEY_FILE), '.bridge-pass'), 'utf8').trim(); } catch (_) { /* not set */ } }
 if (bridgePass) {
-  const base = bridgePass.replace(/\/+$/, '');
-  H.web.on({ test: (u) => String(u).indexOf(base) === 0 }, async (url, opts) => {
-    // /plan is a read that takes its days in a POST body; every other POST is a write and stays refused
-    const post = opts && opts.method && opts.method !== 'GET', readPost = post && /\/plan$/.test(String(url).split('?')[0]);
+  // one or more addresses (space separated): the personal bridge and a business's content engine
+  const bases = bridgePass.split(/\s+/).filter(Boolean).map((x) => x.replace(/\/+$/, ''));
+  H.web.on({ test: (u) => bases.some((b0) => String(u).indexOf(b0) === 0) }, async (url, opts) => {
+    // these reads take their question in a POST body; every other POST is a write and stays refused
+    const post = opts && opts.method && opts.method !== 'GET', readPost = post && /\/(plan|biz\/state|biz\/posts|series|post\/view)$/.test(String(url).split('?')[0]);
     if (post && !readPost) return { status: 400, body: { error: 'Local test copy: this is read only.' } };
     const r = await fetch(url, { method: readPost ? 'POST' : 'GET', headers: opts.headers, body: readPost ? opts.body : undefined, signal: AbortSignal.timeout(60000) });
     return { status: r.status, body: await r.text() };
