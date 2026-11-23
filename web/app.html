@@ -36686,8 +36686,8 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
       var act = n.via === 'oauth' ? (n.connected ? '<button class="btn small" type="button" data-net="start" data-k="' + n.key + '">Log in again</button><button class="btn small" type="button" data-net="off" data-k="' + n.key + '">Disconnect</button>' : n.configured ? '<button class="btn small primary" type="button" data-net="start" data-k="' + n.key + '">Connect</button>' : '')
         : n.via === 'token' ? (n.connected ? '<button class="btn small" type="button" data-net="off" data-k="' + n.key + '">Disconnect</button>' : '<button class="btn small primary" type="button" data-net="token" data-k="' + n.key + '">Connect with a bot token</button>') : '';
       return '<div class="line" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--fd-border)"><span style="flex:1;min-width:160px"><b>' + esc(n.name) + '</b>' + (n.profile && n.profile.note ? '<br><span class="sku">' + esc(n.profile.note) + '</span>' : '') + (n.profile && n.profile.expires ? '<br><span class="sku">key until ' + esc(n.profile.expires) + '</span>' : '') + '</span>' + st + '<span class="row" style="gap:6px">' + (n.bridged ? '' : act) + '</span></div>';
-    }).join('') + brg;
-    var brg = '';
+    }).join('');
+    var brg = '';   // whole-2: was added to rows above, before it existed (printed "undefined")
     if (IB.bridges && !IB.bridges.error) {
       var bl = IB.bridges.bridges || [];
       brg = '<div style="margin-top:14px"><h3 style="margin:0">Posting bridges</h3><div class="sub" style="margin:2px 0 8px">A network that needs its own app review can post through a bridge: a posting service whose app is already approved, with a free tier. Staff only ever see the ERP. Never add two accounts of one service.</div>' +
@@ -36696,7 +36696,7 @@ body[data-fdview="settings"] #o_cp .crumbs, body[data-fdview="tools"] #o_cp .cru
         '<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px"><select class="i" id="brg_service" style="width:auto">' + (IB.bridges.services || []).map(function (sv) { return '<option value="' + esc(sv.key) + '">' + esc(sv.name) + ' — ' + esc(sv.free) + '</option>'; }).join('') + '</select><input class="i" id="brg_key" type="password" style="flex:1 1 220px" placeholder="the service\'s API key"><button class="btn small primary" type="button" data-brg="add">Add bridge</button></div>' +
         '<div class="sub" style="margin-top:4px">Make a free account on the service, copy its API key from its dashboard, paste it here; then connect each network with the + buttons.</div></div>';
     } else if (!IB.bridges) load('erpSocialBridges', {}, 'bridges');
-    return '<div class="ib-c" style="margin-bottom:14px"><h3 style="margin:0">Other networks — posts go out from Campaigns → Advertisement</h3><div class="sub" style="margin:2px 0 8px">Each one is ready: connect it and the Posts form lights it up. A network "not set up by the provider yet" needs its app registered once by the system provider.</div>' + rows + '</div>';
+    return '<div class="ib-c" style="margin-bottom:14px"><h3 style="margin:0">Other networks — posts go out from Campaigns → Advertisement</h3><div class="sub" style="margin:2px 0 8px">Each one is ready: connect it and the Posts form lights it up. A network "not set up by the provider yet" needs its app registered once by the system provider.</div>' + rows + brg + '</div>';
   }
   window.ibConnHtml = function () {
     if (!ibOn() || !(pageTop())) return '';
@@ -64029,6 +64029,7 @@ after he goes into Costareen a reload stays there. A link that opens a particula
 left alone. Staff, managers and shareholders are never moved. -->
 <script>
 (function () {
+  if (typeof applyBusinesses !== 'function') return;   // whole-2: the stand-alone desk has no business list (it threw here on every open)
   var prevApply = applyBusinesses, tried = false;
   // unity-1: LAND tells the cover (html.bd-landing, set before the first paint) when the way to the desk is over
   var LAND = window.__bdLand = { moving: false, settled: false }, root = document.documentElement;
@@ -65713,6 +65714,51 @@ Siliguri; both desk names now resolve to Hind Siliguri's files (same face on bot
 } catch (e) {} })();
 </script>
 <!-- /whole-1 -->
+
+<!-- whole-2 (owner 23 Nov 2026: "I told you to finish everything in one go and make it perfect - why is this still left?").
+The rest of the list. (1) ONE "you are here" colour on the Brand desk: every chosen pill (page tabs, filters, days, legend)
+is the ERP's lime with ink text, as the menu row already is - black stays for actions only. (2) Home's week board speaks the
+schedule's language (flow-1): today's column is the lime band with the ink rule, a slot's state is a pill (waits = amber,
+missed = red, went = quiet tick). (3) Fixes from the measured pass of all 45 ERP screens + sub-tabs and the popup crawl
+(listed in docs/CHANGES.md). -->
+<style>
+.bc-pills button.on,.bc-leg button.on,.rt-days button.on,.bc-pills.sr-tabs button.on,.bc-pills.it-tabs button.on,.ic-f button.on,button.bc-rk.ls-r.on{background:var(--fd-lime,#E4FF5A);color:#17181C;border-color:transparent}
+.bc-pills button.on em,.bc-leg button.on em,.bc-pills button.on i:not([class]){background:#17181C;color:#fff}
+.hm-days button.on{background:var(--fd-lime,#E4FF5A)}
+.hm-days button.on span,.hm-days button.on b,.hm-days button.on i{color:#17181C}
+.hm-col{border-radius:18px}
+.hm-col.today{background:rgba(228,255,90,.2);box-shadow:inset 2px 0 0 #17181C}
+.hm-col.today>header b{background:#17181C;color:#fff}
+.hm-m b{padding:2px 7px;border-radius:999px;background:rgba(23,24,28,.06)}
+.hm-c.w .hm-m b{background:#FFE7A3;color:#17181C}
+.hm-c.x .hm-m b{background:#FDE7E3}
+.hm-c.go .hm-m b{background:transparent;padding:0}
+.hm-c.e .hm-m b,.hm-c.v .hm-m b{background:transparent;padding:0}
+/* whole-2 phone: measured tap heights under 30px (389 screen states measured on the test copy) */
+@media (max-width:759px){
+  #view .cd-score,#view .cd-more{min-height:36px;display:inline-flex;align-items:center}
+  #view details>summary{min-height:36px;display:flex;align-items:center}
+  #view a.nt-qinv,#view .ib-c a,#view td a{display:inline-block;padding-block:8px}
+  #view .linkbtn{white-space:nowrap;min-width:max-content}
+  #view .fig-i,#view .nvg-i,#view .dcon-q{min-width:26px;min-height:26px}
+}
+</style>
+<script>
+/* whole-2: Bangla for the popups and side panels (23 Nov crawl: every button of every screen pressed once on the test copy) */
+(function () { try { if (typeof I18N_BN === 'undefined') return;
+  var W = { 'The whole business': 'পুরো ব্যবসা', 'Groups are views, not copies': 'গ্রুপ হলো দেখার উপায়, কপি নয়',
+    'Σ groups = All products. Expenses, net profit, dues and cash stay whole-business.': 'Σ সব গ্রুপ = সব প্রোডাক্ট। খরচ, নিট লাভ, বাকি আর ক্যাশ পুরো ব্যবসার হিসাবেই থাকে।',
+    'How to read it': 'কীভাবে পড়বেন', 'On duty — a sound plays when a customer waits for a person.': 'ডিউটিতে আছেন — কাস্টমার কোনো মানুষের অপেক্ষায় থাকলে শব্দ বাজবে।',
+    '✓ Nothing to follow up. Add one here or from a customer’s page.': '✓ ফলো-আপের কিছু নেই। এখান থেকে বা কাস্টমারের পেজ থেকে যোগ করুন।',
+    'Done - see what the AI did.': 'হয়ে গেছে - AI কী করল দেখুন।', 'or one product (SKU)': 'অথবা একটা প্রোডাক্ট (SKU)', 'Weight (g)': 'ওজন (গ্রাম)',
+    'Box L (mm)': 'বাক্সের দৈর্ঘ্য (মিমি)', 'Box W (mm)': 'বাক্সের প্রস্থ (মিমি)', 'Box H (mm)': 'বাক্সের উচ্চতা (মিমি)',
+    'Share holding cost over stock': 'রেখে দেওয়ার খরচ স্টকে ভাগ করুন', 'kg × days': 'কেজি × দিন', 'No guide for this screen yet.': 'এই স্ক্রিনের গাইড এখনো নেই।',
+    '· a copy is also kept in the ERP': '· একটা কপি ERP-তেও থাকে', 'Commission rule': 'কমিশনের নিয়ম', 'Which': 'কোনটা', 'category / brand / SKU': 'ক্যাটাগরি / ব্র্যান্ড / SKU' };
+  for (var k in W) if (I18N_BN[k] === undefined) I18N_BN[k] = W[k];
+  I18N_PAT.push(['^Save (.+\\.xlsx)$', '$1 সেভ করুন']);
+} catch (e) {} })();
+</script>
+<!-- /whole-2 -->
 
 </body>
 </html>
