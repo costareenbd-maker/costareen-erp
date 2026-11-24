@@ -164,4 +164,37 @@ check('mgr-quiet-1: a person pressing Send on the manager\'s chat still sends fr
 sent.length = 0;
 const hq = await asB(async (ctx) => sp.superiorInbound(ctx, BOSS, { from: '8801900000070', text: 'aj sale koto?' }));
 check('mgr-quiet-1: the MD writing to the manager\'s number gets no automatic answer from it', hq === true && !sent.length, sent);
+
+// ---- grev-1: a review card in the customer's group after an invoice is delivered
+let pr = await asB(async (ctx) => ib.profile(ctx, false));
+let rv = await asB(async (ctx) => cg.reviewGroupTick(ctx, pr, true));
+check('grev-1: off until the owner switches it on', rv.off, rv);
+await owner('erpInboxProfile', [{ save: { cg_review_on: true } }]);
+pr = await asB(async (ctx) => ib.profile(ctx, false));
+await sql`insert into invoice_lines (business_id, invoice_id, sku, name, qty, unit_price, line_total) select business_id, id, 'PLA-RED-1', 'PLA Red 1kg', 1, 500, 500 from invoices where invoice_no = 'INV-CG-9'`;
+await sql`insert into courier_log (business_id, invoice_no, consignment_id, customer, phone) values (${FIX.B}, 'INV-CG-10', '990001', 'Karim Hasan', '01713000009')`;
+rv = await asB(async (ctx) => cg.reviewGroupTick(later(ctx, 30), pr, true));
+check('grev-1: nothing on the day of the invoice (not delivered yet)', rv.waiting && !(await sql`select 1 from review_asks where invoice_no is not null`).length, rv);
+sent.length = 0;
+const day1 = (ctx) => later(ctx, 21 * 60);
+rv = await asB(async (ctx) => cg.reviewGroupTick(day1(ctx), pr, true));
+const ask9 = (await sql`select * from review_asks where invoice_no = 'INV-CG-9'`)[0];
+check('grev-1: a pickup / same-day invoice gets its card the next day, from Alvi\'s number, in the customer\'s group',
+  rv.review === 'INV-CG-9' && ask9 && ask9.conversation_id === g9.conversation_id && sent.length === 1 && sent[0].inst === 'ai9' && sent[0].number === g9.group_jid, [rv, sent]);
+check('grev-1: the card says thanks, one tap on the stars (the review page link), or reply 1-5',
+  /ধন্যবাদ/.test(sent[0].text) && /INV-CG-9/.test(sent[0].text) && new RegExp('review\\.html\\?r=' + ask9.token).test(sent[0].text) && /১ থেকে ৫/.test(sent[0].text), sent[0]);
+check('grev-1: what was bought is on the review page', (ask9.items || []).some((x) => x.sku === 'PLA-RED-1'), ask9.items);
+check('grev-1: the card is in the group\'s Inbox chat', (await sql`select 1 from inbox_messages where conversation_id = ${g9.conversation_id} and author = 'ai' and text like '%review.html%'`).length === 1);
+sent.length = 0;
+rv = await asB(async (ctx) => cg.reviewGroupTick(day1(ctx), pr, true));
+check('grev-1: a booked courier parcel waits for the courier\'s "delivered" (no card while unknown); the next invoice goes on',
+  /^INV-CG-(11|77)$/.test(rv.review || '') && !(await sql`select 1 from review_asks where invoice_no = 'INV-CG-10'`).length, rv);
+res = await asB((ctx) => ib.ingest(day1(ctx), AI, { type: 'message', from: g9.group_jid, group: true, participant: '8801713000009@s.whatsapp.net', name: 'Karim', text: '5', id: 'GRV1' }));
+// (the fake server reuses group ids, so the newest ask in that chat is the one rated)
+const shop5 = (await sql`select r.rating from chat_reviews r join review_asks a on a.id = r.ask_id where a.conversation_id = ${g9.conversation_id} and r.kind = 'shop'`)[0];
+check('grev-1: the customer writing "5" in the group rates the shop and gets a thanks', res && shop5 && shop5.rating === 5 && sent.some((s) => s.number === g9.group_jid && /অনেক ধন্যবাদ|dhonnobad/.test(s.text)), [res, shop5, sent.slice(-1)]);
+for (let k = 0; k < 3; k++) await asB(async (ctx) => cg.reviewGroupTick(day1(ctx), pr, true));
+check('grev-1: one card per invoice, never twice', (await sql`select invoice_no, count(*)::int n from review_asks where invoice_no is not null group by 1 having count(*) > 1`).length === 0);
+check('grev-1: an invoice of our own team never gets a card', !(await sql`select 1 from review_asks where invoice_no like 'INV-TEAM-%'`).length);
+check('grev-1: the other business is untouched', !(await sql`select 1 from review_asks where business_id = ${FIX.B2}`).length);
 done();

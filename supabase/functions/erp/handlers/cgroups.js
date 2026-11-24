@@ -175,7 +175,13 @@ export async function cgTick(ctx) {
   const { profile } = await import('./inbox.js');
   const p = await profile(ctx, false);
   if (!p.cg_on) return { off: true };
-  if (str(p.cg_mode) === 'purchase') return purchaseTick(ctx, p);
+  if (str(p.cg_mode) === 'purchase') {
+    const r = await purchaseTick(ctx, p);
+    if (r && (r.posted || r.made || r.error)) return r;   // one WhatsApp send per tick
+    let rv;
+    try { rv = await ctx.tx.savepoint(() => reviewGroupTick(ctx, p)); } catch (e) { rv = { error: str(e && e.message).slice(0, 160) }; }
+    return { ...r, review: rv };
+  }
   const h = Number(formatDate(ctx.now, 'H'));
   if (h < 10 || h >= 21) return { waiting: 'night' };
   const today = (await ctx.tx`select count(*)::int n, max(made_at) last from customer_groups where business_id = ${ctx.biz} and made_at > ${new Date(ctx.now.getTime() - 24 * 3600e3)}`)[0];
@@ -293,6 +299,90 @@ export async function purchaseTick(ctx, p, anyHour) {
     return groupForBuyer(ctx, p, ph, i.customer_name, no);
   }
   return { waiting: 'no new invoice' };
+}
+
+// grev-1 (owner 24 Nov 2026): after an invoice that went into the customer's group is delivered, Alvi's number posts a
+// review card there (product photo + "one tap on the stars" link to review.html, or reply 1-5 in the group -
+// reviews.chatStars). Delivered = Steadfast says delivered / partial_delivered (checked at most every 3 hours per
+// parcel, 5 parcels a tick); a booked parcel that is cancelled gets no card; an invoice sold by a courier with no booking
+// waits 4 days; pickup / same-day delivery / anything else: the next day. Invoices from up to 4 days before grev-1 went
+// live are included, older ones never (a card weeks later would surprise people). 10:00-21:00 Dhaka, one card a tick.
+// Profile switch cg_review_on.
+const REV_KEY = 'cg_rev_state';
+const DAY = 24 * 3600e3;
+async function reviewToGroup(ctx, p, g, i, how) {
+  const N = await numbers(ctx, p);
+  if (!N.ai) return { error: "the salesperson's WhatsApp number is not linked" };
+  const v = (await ctx.tx`select * from inbox_conversations where id = ${g.conversation_id}`)[0] || null;
+  const lines = await ctx.tx`select l.sku, l.name from invoice_lines l join invoices x on x.id = l.invoice_id
+                             where x.business_id = ${ctx.biz} and x.invoice_no = ${String(i.invoice_no)} order by l.line_no nulls last, l.id`;
+  const items = [];
+  for (const l of lines) if ((str(l.sku) || str(l.name)) && !items.some((x) => (x.sku && x.sku === str(l.sku)) || (!x.sku && x.name === str(l.name)))) items.push({ sku: str(l.sku), name: str(l.name) });
+  const R = await import('./reviews.js');
+  const a = await R.invoiceAsk(ctx, v, i, items, N.ai.kind, g.gender, how);
+  if (!a) return { skipped: 'asked already' };
+  let s = a.image ? await sendOut(ctx, N.ai, { external_id: g.group_jid }, { kind: 'image', url: a.image, caption: a.text }) : null;
+  if (!s || s.ok === false) s = await sendOut(ctx, N.ai, { external_id: g.group_jid }, { kind: 'text', text: a.text });
+  if (s && s.ok === false) { await ctx.tx`delete from review_asks where id = ${a.ask.id}`; return { error: 'WhatsApp did not take the review card (' + str(s.error).slice(0, 120) + ')' }; }
+  if (v) { const { writeMsg } = await import('./inbox.js'); await writeMsg(ctx, v, { direction: 'out', author: 'ai', kind: 'text', text: a.text, externalId: (s && s.externalId) || null }); }
+  return { sent: true };
+}
+export async function reviewGroupTick(ctx, p, anyHour) {
+  if (!p.cg_review_on) return { off: true };
+  const h = Number(formatDate(ctx.now, 'H'));
+  if (!anyHour && (h < 10 || h >= 21)) return { waiting: 'night' };
+  let st = null;
+  try { st = JSON.parse(str(await getConfig(ctx, REV_KEY, '')) || 'null'); } catch (_) { st = null; }
+  if (!st || typeof st !== 'object' || !str(st.since)) st = { since: new Date(ctx.now.getTime() - 4 * DAY).toISOString() };
+  st.checked = st.checked && typeof st.checked === 'object' ? st.checked : {};
+  st.fail = st.fail && typeof st.fail === 'object' ? st.fail : {};
+  st.skip = Array.isArray(st.skip) ? st.skip.slice(-500) : [];
+  const save = () => setConfig(ctx, REV_KEY, JSON.stringify(st));
+  const posted = new Set((await sentState(ctx)).done);
+  const skip = st.skip.length ? st.skip : ['-'];
+  const rows = await ctx.tx`select i.invoice_no, i.customer_name, i.customer_phone, i.source, i.created_at,
+      (select l.consignment_id from courier_log l where l.business_id = i.business_id and l.invoice_no = i.invoice_no order by l.booked_at desc limit 1) as cid
+    from invoices i where i.business_id = ${ctx.biz} and i.voided_at is null and i.cancelled_at is null
+      and i.created_at > ${new Date(Math.max(new Date(st.since).getTime(), ctx.now.getTime() - 21 * DAY))} and i.created_at < ${new Date(ctx.now.getTime() - 20 * 3600e3)}
+      and not (i.invoice_no::text = any(${skip}::text[]))
+      and not exists (select 1 from review_asks a where a.business_id = i.business_id and a.invoice_no = i.invoice_no::text)
+    order by i.created_at limit 80`;
+  const live = new Set(rows.map((r) => String(r.invoice_no)));
+  for (const k of Object.keys(st.checked)) if (!live.has(k)) delete st.checked[k];
+  let looked = 0, out = { waiting: 'no delivered invoice' };
+  for (const i of rows) {
+    const no = String(i.invoice_no);
+    if (!posted.has(no)) continue;                       // the invoice never went into a group
+    const g = await groupOf(ctx, phone88(i.customer_phone));
+    if (!g || !g.conversation_id) continue;
+    let ready, how = 'hand';
+    if (str(i.cid)) {
+      how = 'courier';
+      const last = st.checked[no] ? new Date(st.checked[no]).getTime() : 0;
+      if (looked >= 5 || ctx.now.getTime() - last < 3 * 3600e3) continue;
+      looked++; st.checked[no] = ctx.now.toISOString();
+      let s = '';
+      try { const C = await import('./courier.js'); const r = await C.sfStatus(ctx, str(i.cid)); s = r ? str(r.status) : ''; } catch (_) { s = ''; }
+      if (/cancel/.test(s)) { st.skip.push(no); delete st.checked[no]; continue; }
+      ready = /^(delivered|partial_delivered)/.test(s);
+    } else if (/steadfast|courier|redx|paperfly|sundarban/i.test(str(i.source))) { how = 'courier'; ready = ctx.now - new Date(i.created_at) > 4 * DAY; }
+    else ready = true;
+    if (!ready) continue;
+    const r = await reviewToGroup(ctx, p, g, i, how);
+    delete st.checked[no];
+    if (r.error) {
+      st.fail[no] = (st.fail[no] || 0) + 1;
+      if (st.fail[no] >= 3) {
+        st.skip.push(no); delete st.fail[no];
+        const v = (await ctx.tx`select * from inbox_conversations where id = ${g.conversation_id}`)[0];
+        if (v) { const { writeMsg } = await import('./inbox.js'); await writeMsg(ctx, v, { direction: 'note', author: 'system', kind: 'event', text: 'The review card for invoice ' + no + ' could not be sent: ' + r.error }); }
+      }
+      out = { error: r.error, invoice: no };
+    } else { delete st.fail[no]; out = r.sent ? { review: no } : { skipped: no }; }
+    break;
+  }
+  await save();
+  return out;
 }
 
 /** ingest: a WhatsApp group message. Our customer group on Faujia's number -> handled like a chat (team members pause

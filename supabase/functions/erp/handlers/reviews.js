@@ -101,6 +101,29 @@ export async function askReview(ctx, o) {
 }
 const CAN_WINDOW = { messenger: true, instagram: true, wa_cloud: true };
 
+// grev-1 (owner 24 Nov 2026): "Alvi sends the invoices on WhatsApp, but no review card" - real sales are invoices, posted
+// into the customer's WhatsApp group (cgroups.js). After the invoice is delivered, cgroups.reviewGroupTick asks here for
+// the ask row (once per invoice) and the words; Alvi's number posts them in the group (the product photo + this caption).
+const GW = {
+  courier: (n) => 'আপনার পার্সেলটি পৌঁছে গেছে' + (n ? ' ' + n : '') + ' 🙌',
+  hand: (n, no) => 'আমাদের থেকে কেনার জন্য ধন্যবাদ' + (n ? ' ' + n : '') + ' 🙌 (invoice ' + no + ')',
+  ask: 'প্রোডাক্ট কেমন লাগলো? নিচের লিংকে এক ট্যাপে স্টার দিন ⭐ চাইলে দুই লাইন লিখবেন, না চাইলে শুধু স্টার।',
+  or: 'অথবা এখানেই ১ থেকে ৫ লিখে দিন (৫ = দারুণ)।',
+};
+/** grev-1: one invoice's review ask for its customer's WhatsApp group -> {ask, text, image} or null when asked already. */
+export async function invoiceAsk(ctx, conv, inv, items, chKind, gender, how) {
+  const ask = (await ctx.tx`insert into review_asks (business_id, invoice_no, conversation_id, token, name, phone, items, channel_kind)
+    values (${ctx.biz}, ${String(inv.invoice_no)}, ${conv ? conv.id : null}, ${token()}, ${str(inv.customer_name)}, ${str(inv.customer_phone)}, ${ctx.tx.json(items)}, ${str(chKind) || 'wa_evo'})
+    on conflict (business_id, invoice_no) where invoice_no is not null do nothing returning *`)[0];
+  if (!ask) return null;
+  const p = await profile(ctx, false);
+  const n = p.style === 'vai' || p.style === 'bhai' ? (gender === 'f' ? 'আপু' : gender === 'm' ? (p.style === 'vai' ? 'ভাই' : 'ভাইয়া') : '') : '';
+  const text = (how === 'courier' ? GW.courier(n) : GW.hand(n, String(inv.invoice_no))) + '\n' + GW.ask + '\n' + reviewLink(ctx, ask) + '\n' + GW.or;
+  let image = '';
+  try { const cat = await catalogue(ctx); for (const it of items) { const x = it.sku && cat.find((y) => y.sku.toLowerCase() === it.sku.toLowerCase()); if (x) { image = await imageUrl(ctx, x); if (image) break; } } } catch (_) { image = ''; }
+  return { ask, text, image: /^https:\/\//.test(str(image)) ? image : '' };
+}
+
 /** "5", "৫", "⭐⭐⭐⭐", "5 star" - a star reply, or 0. */
 export function starsIn(text, payload) {
   const pl = str(payload).match(/^REVIEW:([1-5])$/);
