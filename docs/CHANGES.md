@@ -5253,3 +5253,24 @@ whole text and the video here too, at least for 7 days")
 - **The step explained.** 'পরের ধাপে খুলবে' says the network's step, the slot's step, the gate, today's median views and the next check.
 - Server: bridge /line + erpBrandDeskLine (read, owner). Why the picture was missing before: the cockpit only carried the first 280 characters, never the media.
 - Brief + review: .impeccable/shape/post-line.md.
+
+## kst-1 + quiet-1 (25 Nov 2026, live #81, sw quiet1)
+
+Owner: "news went out at 7 in the morning in Bangladesh - why?" and "make these rules live". Cause: news drafts had no
+plan slot (two news a week on Facebook, already full), so they had no time; approving a draft without a time sent it
+at once - approved at 10:15 in Seoul = 07:15 in Dhaka.
+
+- Brand bridge + both business bridges (quiet-1): a draft approved without a time takes its planned time, else the
+  plan's next free slot, else (news, or no slot within a day) the next good hour in Bangladesh (09:30 / 13:30 / 18:30 /
+  21:30, 25 min clear of other posts). Nothing goes to Bangladesh between 00:30 and 07:30 (moves to 09:30) unless the
+  owner picks the time himself (an explicit time, or "urgent" on a hand post). Story copies and autopilot follow it.
+  Every waiting draft carries go_at.
+- Brand bridge (quiet-2): the plan lists posts outside its slots as state 'extra' (news approved by hand, hand posts);
+  the post line marks Story copies (story: true).
+- Page: the waiting card says when it goes - "অনুমোদন দিলে যাবে বাংলাদেশে … · কোরিয়ায় …" (quiet-1 block, window.bcGoLine);
+  the plan's pop-up explains an extra chip; post lanes count posts and Stories apart and tag Stories.
+- kst-1 (same release): post lanes speak Korea time (heads, day chips, now rule, date picker); the phone card keeps
+  Bangladesh time; a failed lane read waits 30 s instead of asking again without pause.
+- NOT in this release: undo-1 (1-minute undo after a reject) - built and committed, bridges/function accept 'undo', but
+  the page bar is out until the owner says yes. Function files were not redeployed (no change needed for quiet-1).
+- Not verified: the waiting-card line on screen (local copy could not reach the Mac); checked on live after deploy.
