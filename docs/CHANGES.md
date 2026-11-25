@@ -5274,3 +5274,11 @@ at once - approved at 10:15 in Seoul = 07:15 in Dhaka.
 - NOT in this release: undo-1 (1-minute undo after a reject) - built and committed, bridges/function accept 'undo', but
   the page bar is out until the owner says yes. Function files were not redeployed (no change needed for quiet-1).
 - Not verified: the waiting-card line on screen (local copy could not reach the Mac); checked on live after deploy.
+
+## undo-1 live (25 Nov 2026, live #82, sw undo1)
+
+Owner: "if these help me, do them all". The 1-minute undo after a reject is now on: every hand reject of a draft (Brand
+desk, business Content desk) shows a bar with a 60 s count and Undo (Ctrl+Z too); the bridges take undo for 70 s and keep
+a rejected video on the Mac for 10 min. Function files branddesk.js + contentdesk.js deployed live (backups in
+/data/backups/live-function/), checked: an old draft answers "এক মিনিট পেরিয়ে গেছে". Automatic older-version rejects get
+no bar. Not checked by hand on screen: a real reject + undo (it would change a real draft).
