@@ -13,7 +13,7 @@
 
 import { getConfig, setConfig } from '../lib/ext.js';
 import { platformAdmin, isPlatformAdmin } from './platform.js';
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, actsAsOwner } from '../allow.js';
 import { qrDataUrl } from '../lib/qr.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
@@ -82,7 +82,8 @@ async function offMap(deps, sql) {
  *  his shareholders see what he sees), not to other companies until the flag row says so. */
 export const LABS_KEYS = APPS.filter((a) => a.labs).map((a) => a.key);
 export async function labsOpen(deps, sql, biz, s) {
-  if (!s || !roleAtLeast(s.role, 'shareholder') || (deps && deps.install && deps.install.bridged)) return false;
+  // olia-1 (25 Nov 2026): a manager with the owner's 'act' switch sees them too (Oliareen's marketer: Content desk)
+  if (!s || !(roleAtLeast(s.role, 'shareholder') || actsAsOwner(s)) || (deps && deps.install && deps.install.bridged)) return false;
   try {
     const owners = await sql`select user_id from memberships where business_id = ${biz} and role = 'owner'`;
     for (const o of owners) if (await isPlatformAdmin(sql, o.user_id)) return true;

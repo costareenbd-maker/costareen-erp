@@ -36,4 +36,14 @@ check('(all-1) ...nor touch an owner', !r.ok && /Only an owner/.test(r.error || 
 r = await mgr('erpBrief', [{}]);
 check('(fix-7) a manager is told plainly whom to ask', !r.ok && /ask the owner/.test(r.error), r.error);
 
+// olia-1 (25 Nov 2026): a manager with the 'act' switch (set above) sees the "Only me" apps (Content desk) but no owner things
+r = await mgr('erpHello', []);
+check('(olia-1) act-manager: Content desk open', r.ok && !(r.result.apps.off || []).includes('contentdesk') && r.result.role === 'manager', r.result && r.result.apps);
+r = await mgr('erpContentDesk', [{}]);
+check('(olia-1) act-manager opens erpContentDesk', r.ok || !/does not have permission/.test(r.error || ''), r.error);
+for (const name of ['erpUsers', 'erpSecurity', 'erpAccessKeys', 'erpAiKeys', 'erpConnections', 'erpMoney', 'erpCapital', 'erpPnl', 'erpBrandDesk']) {
+  r = await mgr(name, [{}]);
+  check('(olia-1) act-manager still kept out of ' + name, !r.ok && /does not have permission|Only the owner|শুধু মালিক/.test(r.error || ''), r.ok ? 'opened!' : r.error);
+}
+
 done();
