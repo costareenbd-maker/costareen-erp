@@ -64585,6 +64585,7 @@ button.cd-score{cursor:pointer}button.cd-score:hover{border-color:var(--rule2);c
 <script>
 (function () {
   var CD = { tab: 'today', drafts: null, desk: null, series: null, posts: null, ch: null, busy: {}, open: {}, url: {}, send: null, h: null, err: {}, pick: {}, when: {}, dt: {}, af: {} };
+  window.cdUndoBack = function (id) { if (CD.gone) delete CD.gone[id]; if (CD.leave) delete CD.leave[id]; if (CD.rw) delete CD.rw[id]; load(true); };   // undo-1: a taken-back reject comes back
   var ICON = '<path d="M4 5h16v11H4z"/><path d="M10 9l4 2.5-4 2.5z"/><path d="M8 20h8"/>';
   var NETS = ['facebook', 'instagram', 'tiktok', 'youtube'];
   var NETC = { facebook: '#1877F2', instagram: '#C13584', tiktok: '#8A8F9B', youtube: '#E62117' };
@@ -67896,6 +67897,95 @@ html:root[data-theme="dark"] body #bc_root .pl-sh .pl-card .ph:not(.ph-reel){bac
 </script>
 <!-- /line-1 -->
 
+<!-- undo-1 (owner 25 Nov 2026: "from now on, when I reject something keep an undo that works for 1 minute" - he pressed
+     বাদ by mistake while approving). Every hand reject of a draft (Brand desk and the business Content desk) shows a bar
+     "বাদ দেওয়া হয়েছে · ফেরান" with a 60 s count; ফেরান sends action 'undo' and the draft is back in the waiting list.
+     The bridges accept undo for 70 s after the reject and keep the video on the Mac for 10 min after a reject.
+     The automatic "older version" rejects are not offered. Works by wrapping srv(), so every reject button is covered. -->
+<style>
+#undoBar{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,14px);opacity:0;pointer-events:none;z-index:10050;
+  display:flex;align-items:center;gap:14px;min-width:min(420px,calc(100vw - 32px));max-width:calc(100vw - 32px);box-sizing:border-box;padding:8px 8px 8px 18px;
+  background:#17181C;color:#F4F4F1;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.28);font:500 15px/1.35 'Noto Sans Bengali','Hind Siliguri',system-ui,sans-serif;
+  overflow:hidden;transition:transform .18s cubic-bezier(.2,.8,.2,1),opacity .18s}
+#undoBar.on{transform:translate(-50%,0);opacity:1;pointer-events:auto}
+#undoBar .ub-t{flex:1;min-width:0}
+#undoBar .ub-n{font-variant-numeric:tabular-nums;color:#B9BBC3;margin-left:4px}
+#undoBar button{min-height:44px;padding:0 18px;border:0;border-radius:10px;background:#F4F4F1;color:#17181C;font-family:inherit;font-weight:600;font-size:15px;line-height:1;cursor:pointer;flex:none}
+@media (max-width:759px){#undoBar{bottom:calc(80px + env(safe-area-inset-bottom,0px))}}
+#undoBar button:hover{background:#fff}
+#undoBar button:focus-visible{outline:2px solid #E8B53A;outline-offset:2px}
+#undoBar button[disabled]{opacity:.6;cursor:default}
+#undoBar .ub-x{background:transparent;color:#B9BBC3;padding:0 10px;min-width:44px;font-size:18px}
+#undoBar .ub-x:hover{background:rgba(255,255,255,.08);color:#fff}
+#undoBar .ub-p{position:absolute;left:0;bottom:0;height:3px;background:#E8B53A;width:100%;transform-origin:left;transform:scaleX(1)}
+@media (prefers-reduced-motion:reduce){#undoBar{transition:none}#undoBar .ub-p{display:none}}
+</style>
+<script>
+(function () {
+  if (typeof srv !== 'function') return;
+  var NAMES = { erpBrandDeskDraftDecide: 1, erpContentDraftDecide: 1 };
+  var U = null, bar = null;
+  function en() { try { return typeof VIEW !== 'undefined' && VIEW === 'branddesk' && localStorage.getItem('bd_lang') === 'en'; } catch (e) { return false; } }
+  function num(n) { return en() ? String(n) : String(n).replace(/[0-9]/g, function (d) { return '০১২৩৪৫৬৭৮৯'[d]; }); }
+  function words() { return en() ? { t: 'Rejected', b: 'Undo', w: 'Bringing back…', ok: 'Back in the waiting list.', x: 'Close' }
+                                 : { t: 'বাদ দেওয়া হয়েছে', b: 'ফেরান', w: 'ফেরানো হচ্ছে…', ok: 'ফেরানো হলো, আবার অপেক্ষার তালিকায়।', x: 'বন্ধ করুন' }; }
+  function make() {
+    if (bar) return bar;
+    bar = document.createElement('div'); bar.id = 'undoBar'; bar.setAttribute('role', 'status'); bar.setAttribute('aria-live', 'polite'); bar.setAttribute('data-noi18n', '1');
+    bar.innerHTML = '<span class="ub-t"></span><button type="button" data-ub="undo"></button><button type="button" class="ub-x" data-ub="x">×</button><i class="ub-p"></i>';
+    document.body.appendChild(bar);
+    bar.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-ub]'); if (!b || !U) return;
+      if (b.getAttribute('data-ub') === 'x') return hide();
+      undo();
+    });
+    return bar;
+  }
+  function hide() { clearInterval(U && U.tick); U = null; if (bar) bar.classList.remove('on'); }
+  function paint() {
+    if (!U) return; var w = words(), left = Math.max(0, Math.ceil((U.end - Date.now()) / 1000));
+    if (!left && !U.busy) return hide();
+    bar.querySelector('.ub-t').innerHTML = w.t + (U.busy ? '' : '<span class="ub-n">· ' + num(left) + '</span>');
+    var b = bar.querySelector('[data-ub="undo"]'); b.textContent = U.busy ? w.w : w.b; b.disabled = !!U.busy;
+    bar.querySelector('.ub-x').setAttribute('aria-label', w.x);
+  }
+  function show(name, id) {
+    hide(); make();
+    U = { name: name, id: id, end: Date.now() + 60000, busy: false };
+    var p = bar.querySelector('.ub-p'); p.style.transition = 'none'; p.style.transform = 'scaleX(1)'; void p.offsetWidth;
+    p.style.transition = 'transform 60s linear'; p.style.transform = 'scaleX(0)';
+    try { var t = document.getElementById('toast'); if (t && /বাদ|Rejected/.test(t.textContent || '')) t.className = ''; } catch (e) {}
+    paint(); bar.classList.add('on');
+    U.tick = setInterval(paint, 250);
+  }
+  function back(name, id, r) {
+    try {
+      if (name === 'erpContentDraftDecide') { if (typeof window.cdUndoBack === 'function') window.cdUndoBack(id); return; }
+      var D = window.bcDesk;
+      if (D && D.C) { if (D.C.leave) delete D.C.leave[id]; if (r && r.waiting) D.C.d.drafts = r; D.get('cockpit', true); D.draw(); return; }
+      if (typeof repaint === 'function') repaint();
+    } catch (e) {}
+  }
+  function undo() {
+    if (!U || U.busy) return; var u = U; u.busy = true; paint();
+    OLD(u.name, [{ id: u.id, action: 'undo' }], function (r) { hide(); toast(words().ok); back(u.name, u.id, r); },
+      function (e) { hide(); toast(esc((e && e.message) || String(e)), true, 9000); });
+  }
+  var OLD = srv;
+  srv = function (name, args, ok, bad) {
+    var a = args && args[0];
+    if (NAMES[name] && a && a.action === 'reject' && a.note !== 'older version' && Number(a.id) > 0) {
+      var id = Number(a.id), ok0 = ok;
+      ok = function (r) { var x; try { x = ok0 && ok0.apply(this, arguments); } finally { show(name, id); } return x; };
+    }
+    return OLD(name, args, ok, bad);
+  };
+  window.srv = srv;
+  document.addEventListener('keydown', function (e) { if (U && !U.busy && (e.ctrlKey || e.metaKey) && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) { var tg = e.target && e.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA') return; e.preventDefault(); undo(); } });
+})();
+</script>
+<!-- /undo-1 -->
+
 <!-- en-desk-1 (owner 24 Nov 2026: "the Brand desk has no English - make it"). The desk is written in Bangla; this is its
      English mode: a dictionary of the desk's own words (menus, buttons, labels, states, messages), applied to the desk
      root, its toasts and its dialogs. What people wrote (posts, comments, messages, ideas, news) is never translated.
@@ -68459,6 +68549,12 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
 :root[data-theme="dark"] #bc_root .pl-b.pri{background:var(--bc-ink,#D5D7DE);color:#17181C}
 :root[data-theme="dark"] #bc_root .pl-b:focus-visible{outline:2px solid var(--bc-ink,#D5D7DE)}
 :root[data-theme="dark"] #bc_root .pl-wait{background:var(--bc-shelf,#2B2F36)}
+:root[data-theme="dark"] #bc_root #undoBar{background:#D6D7DD;color:#2A2A21}
+:root[data-theme="dark"] #bc_root #undoBar .ub-n{color:#4B4D57}
+:root[data-theme="dark"] #bc_root #undoBar button{background:#39392C;color:#D6D7DD}
+:root[data-theme="dark"] #bc_root #undoBar button:hover{background:#191A1D}
+:root[data-theme="dark"] #bc_root #undoBar .ub-x{color:#4B4D57}
+:root[data-theme="dark"] #bc_root #undoBar .ub-x:hover{color:#191A1D}
 /* ink on lime: the words inside a chosen lime pill or day head */
 :root[data-theme="dark"] #bc_root :is(.pn-dh.on,.hm-days button.on,.rt-days button.on,.bc-pills:not(.ps-net) button.on) :is(b,span,em,small,i:not([class])){color:#17181C}
 :root[data-theme="dark"] #bc_root .bc-pills:not(.ps-net) button.on :is(em,i:not([class])){background:#17181C;color:#fff}

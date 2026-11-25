@@ -534,8 +534,9 @@ export async function erpContentDraftDecide(ctx, payload) {
   await gate(ctx, 'manager'); await notBrand(ctx);
   const p = payload || {}, id = parseInt(p.id, 10), action = str(p.action);
   if (!(id > 0)) throw new Error('একটা ড্রাফট বাছুন।');
-  if (!['approve', 'reject'].includes(action)) throw new Error('অনুমোদন দিন বা বাদ দিন।');
+  if (!['approve', 'reject', 'undo'].includes(action)) throw new Error('অনুমোদন দিন বা বাদ দিন।');
   if (action === 'reject') return engine(ctx, '/drafts/decide', { id, action, note: (str(p.note) || 'content desk').slice(0, 500) });
+  if (action === 'undo') return engine(ctx, '/drafts/decide', { id, action });   // undo-1: a reject taken back within a minute
   const nets = Array.isArray(p.networks) ? p.networks.filter((n) => n && str(n.id) && str(n.platform)).map((n) => ({ id: str(n.id).slice(0, 64), platform: str(n.platform).toLowerCase().slice(0, 30) })) : [];
   if (!nets.length) throw new Error('কোথায় যাবে, বাছুন।');
   if (nets.length > 8) throw new Error('একবারে ৮টার বেশি চ্যানেলে দেওয়া যায় না।');

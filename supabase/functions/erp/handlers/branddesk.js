@@ -558,8 +558,9 @@ export async function erpBrandDeskDraftDecide(ctx, payload) {
   await gate(ctx);
   const p = payload || {}, id = parseInt(p.id, 10), action = str(p.action);
   if (!(id > 0)) throw new Error('একটা ড্রাফট বাছুন।');
-  if (!['approve', 'reject', 'manual'].includes(action)) throw new Error('অনুমোদন দিন বা বাদ দিন।');
+  if (!['approve', 'reject', 'manual', 'undo'].includes(action)) throw new Error('অনুমোদন দিন বা বাদ দিন।');
   if (action === 'reject') return bridge(ctx, '/drafts/decide', { id, action, note: str(p.note).slice(0, 500) });
+  if (action === 'undo') return bridge(ctx, '/drafts/decide', { id, action });   // undo-1: a reject taken back within a minute
   // brand-9: posted by hand (Facebook profile, or an account not connected): no account, the record is kept
   if (action === 'manual') {
     const link = str(p.url);
