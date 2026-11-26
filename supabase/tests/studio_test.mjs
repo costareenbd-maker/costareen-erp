@@ -56,6 +56,7 @@ r = await asBusiness(deps, row, 'studio:notify', (ctx) => studioNotifyTick(ctx))
 const nj = (await sql`select notified_at from content_studio_jobs where id = ${J1}`)[0];
 check('the notify timer marks the finished job (no number = no message, still once)', nj.notified_at !== null, r);
 
+await sql`update content_studio_jobs set created_at = created_at - interval '1 minute'`;   // the 5-second gap between asks
 // feedback -> the next version, nothing lost
 r = await mgr('erpStudioAsk', [{ projectId: P, prompt: 'caption বড় করো' }]);
 check('feedback queues the next version', r && r.jobId > J1, r);
@@ -78,11 +79,21 @@ r = await mgr('erpStudioFinish', [{ projectId: P, action: 'draft' }]);
 check('draft', r && r.state === 'draft' && r.videoId === Number(v2), r);
 r = await mgr('erpContentDesk', []);
 check('after "draft" the version is in the desk video list (v1 still hidden)', r.videos.some((v) => v.id === Number(v2)) && !r.videos.some((v) => v.id === Number(v1)), r.videos);
+await sql`update content_studio_jobs set created_at = created_at - interval '1 minute'`;
 r = await mgr('erpStudioFinish', [{ projectId: P, action: 'improve' }]);
 check('improve queues another version', r && r.jobId > J2, r);
 r = await mgr('erpStudioFinish', [{ projectId: P, action: 'nonsense' }]);
 check('an unknown finish action is refused', r && r.error, r);
 
+// flooding: 5 open jobs per person at most, 5 s between asks
+await sql`update content_studio_jobs set created_at = created_at - interval '1 minute'`;
+r = await mgr('erpStudioAsk', [{ prompt: 'দ্রুত দুটো পাঠানো এক' }]);
+const r2 = await mgr('erpStudioAsk', [{ prompt: 'দ্রুত দুটো পাঠানো দুই' }]);
+check('a second ask within 5 seconds is refused', r && r.jobId && r2 && r2.error && /থামুন/.test(r2.error), [r, r2]);
+for (let k = 0; k < 4; k++) { await sql`update content_studio_jobs set created_at = created_at - interval '1 minute'`; await mgr('erpStudioAsk', [{ prompt: 'লাইনে ভিডিও ' + k }]); }
+await sql`update content_studio_jobs set created_at = created_at - interval '1 minute'`;
+r = await mgr('erpStudioAsk', [{ prompt: 'ষষ্ঠটা' }]);
+check('no more than 5 open jobs per person', r && r.error && /লাইনে আছে/.test(r.error), r);
 // rules
 r = await mgr('erpStudioRuleSave', [{ kind: 'term', body: '"গ্লো" না বলে "উজ্জ্বল"' }]);
 check('own rule written', r && r.id > 0, r);

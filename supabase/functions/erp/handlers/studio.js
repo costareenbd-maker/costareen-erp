@@ -24,6 +24,7 @@ const str = (v) => String(v == null ? '' : v).trim();
 const int = (v) => { const n = parseInt(v, 10); return n > 0 ? n : 0; };
 const iso = (d) => (d ? new Date(d).toISOString() : null);
 const MAX_PROMPT = 4000;
+const MAX_OPEN = 5, ASK_GAP_S = 5;
 const STALE_MS = 10 * 60e3;   // the engine writes studio_engine every minute while it works
 const KINDS = ['rule', 'term', 'style'];
 // The owner's rules the studio always keeps (shown locked). The engine has them in code; this is what the person reads.
@@ -119,6 +120,12 @@ export async function erpStudioAsk(ctx, payload) {
   const p = payload || {};
   const prompt = str(p.prompt).slice(0, MAX_PROMPT);
   if (prompt.length < 3) throw new Error('কী ভিডিও চান, একটু লিখুন।');
+  // owner 26 Nov 2026 (nobody may probe the platform): no daily limit on videos, but no flooding either - at most
+  // MAX_OPEN jobs of one person waiting at once and one ask per ASK_GAP_S seconds
+  const mine = (await ctx.tx`select count(*) filter (where state in ('queued', 'running'))::int open,
+                                    max(created_at) last from content_studio_jobs where business_id = ${ctx.biz} and user_id = ${ctx.s.userId}`)[0];
+  if (mine.open >= MAX_OPEN) throw new Error('আপনার ' + MAX_OPEN + 'টা ভিডিও এখন লাইনে আছে। এগুলো শেষ হলে আরো পাঠান।');
+  if (mine.last && Date.now() - new Date(mine.last).getTime() < ASK_GAP_S * 1000) throw new Error('একটু থামুন, কয়েক সেকেন্ড পরে আবার পাঠান।');
   let pr;
   if (p.projectId) {
     pr = await project(ctx, p.projectId);
@@ -168,6 +175,8 @@ export async function erpStudioFinish(ctx, payload) {
     if (pr.user_id !== ctx.s.userId) throw new Error('অন্য কারো ভিডিও আরো ভালো করতে নিজের নামে নতুন ভিডিও বানান।');
     const open = await ctx.tx`select 1 from content_studio_jobs where project_id = ${pr.id} and state in ('queued', 'running')`;
     if (open.length) throw new Error('এই ভিডিওর আগের কাজটা এখনো চলছে।');
+    const last = (await ctx.tx`select max(created_at) last from content_studio_jobs where business_id = ${ctx.biz} and user_id = ${ctx.s.userId}`)[0].last;
+    if (last && Date.now() - new Date(last).getTime() < ASK_GAP_S * 1000) throw new Error('একটু থামুন, কয়েক সেকেন্ড পরে আবার পাঠান।');
     const text = str(p.prompt) || 'আরো ভালো করুন';
     await ctx.tx`insert into content_studio_msgs (business_id, project_id, user_id, body, version) values (${ctx.biz}, ${pr.id}, ${ctx.s.userId}, ${text}, ${ver})`;
     const j = (await ctx.tx`insert into content_studio_jobs (business_id, project_id, user_id, kind, prompt) values (${ctx.biz}, ${pr.id}, ${ctx.s.userId}, 'improve', ${text}) returning id`)[0];
