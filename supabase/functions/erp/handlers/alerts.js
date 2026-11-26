@@ -27,6 +27,8 @@ export async function alertList(ctx) {
   const part = async (fn) => { try { await ctx.tx.savepoint(fn); } catch (_) { /* one part failing must not hide the others */ } };
   // money first (plan: no money lost), each rule decides who sees it
   await part(async () => { for (const a of await moneyAlerts(ctx, ctx.s.role)) out.push(a); });
+  // studio-1: "your video is ready" for the person who asked for it
+  await part(async () => { const { studioBell } = await import('./studio.js'); for (const a of await studioBell(ctx)) out.push(a); });
   // the system's own health stays with shareholders and the owner
   if (!roleAtLeast(ctx.s.role, 'shareholder')) return out;
   // watch-1: the Watchdog's urgent and high issues, and an Engine that stopped with work waiting

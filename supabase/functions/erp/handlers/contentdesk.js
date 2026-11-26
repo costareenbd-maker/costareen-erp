@@ -51,7 +51,7 @@ async function bizOn(ctx) {
   if (ctx.memo) ctx.memo.cdOn = on;
   return on;
 }
-async function gate(ctx, role) {
+export async function gate(ctx, role) {
   if (!roleAtLeast(ctx.s.role, role)) {
     throw new Error(role === 'owner' ? 'কনটেন্ট ডেস্কের এই কাজটা শুধু মালিক করতে পারেন।'
       : role === 'sales' ? 'কনটেন্ট ডেস্ক এই ব্যবসার লোকজনই খুলতে পারেন।' : 'এই কাজটা ম্যানেজার বা তার উপরের কেউ করতে পারেন (অনুমোদন, সময়, বাতিল, নিয়ম)।');
@@ -286,7 +286,7 @@ export async function erpContentDesk(ctx) {
   await gate(ctx, 'sales');
   const st = await bridgeState(ctx);
   const events = (await ctx.tx`select * from content_events where business_id = ${ctx.biz} order by created_at desc, id desc limit 60`).map(evOut);
-  const videos = (await ctx.tx`select * from content_videos where business_id = ${ctx.biz} order by created_at desc, id desc limit 60`).map(vidOut);
+  const videos = (await ctx.tx`select * from content_videos where business_id = ${ctx.biz} and not hidden order by created_at desc, id desc limit 60`).map(vidOut);
   const wa = await waChannels(ctx);
   return { online: st.online, seen: st.seen ? st.seen.toISOString() : null, bridge: !!st.url, events, videos,
            handlers: await handlersOf(ctx), whatsapp: wa.length > 0, owner: roleAtLeast(ctx.s.role, 'owner'), maxBytes: MAX_VIDEO,
