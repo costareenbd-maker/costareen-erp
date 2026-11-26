@@ -5311,6 +5311,6 @@ is ready. Mock (impeccable, owner-approved after two rounds): .impeccable/mocks/
   index/security + new studio.js (live = 52f80c0 before except CRLF; backup live-function/erp-20261126T145035Z-before-studio1.tgz);
   page = #82 undo-1 source + studio-1, sw cz-shell-v4-native-studio1, both Pages projects (prev page
   private/live-web-index-before-studio1-20261126.html). Windows task "Business studio queue" every minute
-  (G:endar-brandizdesk\studio\studio_queue.cmd via run-hidden.vbs). Marketer WhatsApp number set in studio_phones.
+  (G:/bendar-brand/bizdesk/studio/studio_queue.cmd via run-hidden.vbs). Marketer WhatsApp number set in studio_phones.
   Checked live as owner on Oliareen: Studio tab desktop + phone, 0 page errors, engine heartbeat. Not checked: a real
   live job end to end (first one will be hers), the WhatsApp note on live.
