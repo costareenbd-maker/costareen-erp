@@ -5289,7 +5289,7 @@ A manager with the owner's 'act' switch now sees the "Only me" apps (Content des
 Oliareen's marketer login oliareen@gmail.com = Oliareen only, manager + act + dash (no users, security, keys,
 connections, cash, capital, P&L, Brand desk). Tests shareholder_test olia-1.
 
-## studio-1 (26 Nov 2026, on dev; live waits for the owner)
+## studio-1 (26 Nov 2026, LIVE #83 the same night, sw studio1)
 
 Owner: the Oliareen marketer makes videos with our engine from one prompt; her rules are remembered but never change
 ours; nothing is lost between versions; no daily limit; her job waits only while our own video runs; tell her when it
@@ -5304,4 +5304,13 @@ is ready. Mock (impeccable, owner-approved after two rounds): .impeccable/mocks/
 - Engine (PC, not in this repo): G:\bendar-brand\bizdesk\studio\studio_run.py - heartbeat, queue, her lane replaces
   LESSONS for her job only (bizvideo.STUDIO), revisions copy the last version and change only what the feedback needs,
   library clips instead of unattended Flow, upload hidden into the ERP. bizvideo.py waits while a studio job runs.
-- NOT done yet: live (DB, function, page), the Windows task "Business studio queue" (every minute), her WhatsApp number.
+- fb2142a: no flooding (5 open jobs per person, 5 s between asks); engine notes never name tools/AI/library/Flow;
+  every studio mp4 carries a metadata comment "oliareen-studio job N user U8 time" (trace, not a visible watermark).
+- LIVE #83 (owner: "হ্যাঁ, live করো"): migration 177 on postgres + both *_native tenant DBs (pg_dump each first,
+  /data/backups/live-deploy/20261126T145035Z-*-before-studio1.dump); function file-by-file allow/jobs/alerts/contentdesk/
+  index/security + new studio.js (live = 52f80c0 before except CRLF; backup live-function/erp-20261126T145035Z-before-studio1.tgz);
+  page = #82 undo-1 source + studio-1, sw cz-shell-v4-native-studio1, both Pages projects (prev page
+  private/live-web-index-before-studio1-20261126.html). Windows task "Business studio queue" every minute
+  (G:endar-brandizdesk\studio\studio_queue.cmd via run-hidden.vbs). Marketer WhatsApp number set in studio_phones.
+  Checked live as owner on Oliareen: Studio tab desktop + phone, 0 page errors, engine heartbeat. Not checked: a real
+  live job end to end (first one will be hers), the WhatsApp note on live.
