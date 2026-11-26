@@ -5282,3 +5282,26 @@ desk, business Content desk) shows a bar with a 60 s count and Undo (Ctrl+Z too)
 a rejected video on the Mac for 10 min. Function files branddesk.js + contentdesk.js deployed live (backups in
 /data/backups/live-function/), checked: an old draft answers "এক মিনিট পেরিয়ে গেছে". Automatic older-version rejects get
 no bar. Not checked by hand on screen: a real reject + undo (it would change a real draft).
+
+## olia-1 live (25 Nov 2026, function file apps.js)
+
+A manager with the owner's 'act' switch now sees the "Only me" apps (Content desk) - labsOpen in handlers/apps.js.
+Oliareen's marketer login oliareen@gmail.com = Oliareen only, manager + act + dash (no users, security, keys,
+connections, cash, capital, P&L, Brand desk). Tests shareholder_test olia-1.
+
+## studio-1 (26 Nov 2026, on dev; live waits for the owner)
+
+Owner: the Oliareen marketer makes videos with our engine from one prompt; her rules are remembered but never change
+ours; nothing is lost between versions; no daily limit; her job waits only while our own video runs; tell her when it
+is ready. Mock (impeccable, owner-approved after two rounds): .impeccable/mocks/studio-2026-11-26.
+- Migration 177: content_studio_projects / jobs / msgs / rules; content_videos.hidden + studio_project (a studio version
+  stays out of the desk's video list until "ড্রাফটে দিন").
+- handlers/studio.js: erpStudio, erpStudioProject, erpStudioAsk, erpStudioFinish (save / draft / improve),
+  erpStudioVideoUrl, erpStudioRules (+ the owner reads anyone's), erpStudioRuleSave / Remove (struck out, never deleted),
+  erpStudioForget ("না, শুধু এটায়"), erpStudioPhone; bell line (alerts.js) and a WhatsApp note once per finished version
+  (jobs.js studioJob, the business's own WhatsApp). Manager and up. Tests studio_test (32).
+- Page: Content desk tab "স্টুডিও" (studio-1 block; hooks: window.cdCore in content-desk-ui-2, the bell's studio: link).
+- Engine (PC, not in this repo): G:\bendar-brand\bizdesk\studio\studio_run.py - heartbeat, queue, her lane replaces
+  LESSONS for her job only (bizvideo.STUDIO), revisions copy the last version and change only what the feedback needs,
+  library clips instead of unattended Flow, upload hidden into the ERP. bizvideo.py waits while a studio job runs.
+- NOT done yet: live (DB, function, page), the Windows task "Business studio queue" (every minute), her WhatsApp number.
