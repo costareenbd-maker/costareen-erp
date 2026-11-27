@@ -5333,3 +5333,19 @@ Owner: a separate business, not inside Costareen: our own goods moved Korea <-> 
   "Vendor Shipment" business made for the dev owner with demo shipments (made-up carriers).
 - NOT done: live (owner's yes), staff logins for Mehedi/Dipu/Rakib, carrier self-fill link page (L2), WhatsApp and
   bell reminders through Alvi's number (L3), stock hand-off to Costareen/Oliareen (L4), tag print layout.
+
+## ship-2 (27 Nov 2026) - one shipment per traveller + flight, permanent keywords, bag QR for life (dev only)
+Owner agreed after research (package forwarders: permanent suite/customer ID + a tracking number per parcel;
+airlines: per-journey bag tag; on-board couriers: one job per trip with hand-over proof):
+- TR-0001 = one traveller on one flight (automatic number); holds any number of our bags + loose things (in hand,
+  in the traveller's own bag). Air cargo unchanged (AC + AWB).
+- Traveller keyword C-0001 (permanent) + QR card: print, or save as a picture to send on WhatsApp. Scan -> his open
+  shipment; two open -> his page lists them. Phone number also finds him.
+- Bag BG-0001: code + QR never change; "replace bag" raises the bag number (bag 2) with a reason (manager+); tag print
+  shows the same QR + code + bag number + nickname; a bag cannot be in two open shipments; scanning a bag opens the
+  shipment it is in. Way back = new shipment with the same bags.
+- Migration 179 carries 178 rows over. Print uses a hidden frame (phones block pop-ups).
+- Tests: shipments_test 43/43, padmin 18/18, shareholder 43/43. Local copy: computer + phone flows clicked.
+  Dev: erp-devsync-native applied 179 + function + web; demo data migrated (TR codes, C-0001/C-0002).
+- NOT done: live, staff logins, L2 traveller self-fill link page, L3 WhatsApp/bell (the keyword goes in those
+  messages), a real camera scan on a phone (the reader is the ERP's existing scanOpen).
