@@ -12117,6 +12117,7 @@ function paintAlerts() {
     var g = this.getAttribute('data-algo'); ALERT_OPEN = false; paintAlerts();
     if (/^sales:/.test(g)) { openInvoicePage(g.slice(6)); return; }
     if (/^studio:/.test(g)) { if (window.cdStudio) window.cdStudio.open(g.slice(7)); return; }   // studio-1
+    if (/^ship:/.test(g)) { go('ship', g.slice(5)); return; }   // ship-4
     if (/^(cash|stock|weborders|sales|customers)$/.test(g)) { go(g); return; }
     SET_TAB = g;
     if (SET_TAB === 'security') { SEC = null; }
@@ -15666,6 +15667,7 @@ function wirePlatform() {
 function alertGoWord(g) {
   if (/^sales:/.test(g)) return 'Open ' + g.slice(6);
   if (/^studio:/.test(g)) return 'দেখুন';   // studio-1
+  if (/^ship:/.test(g)) return 'চালান খুলুন';   // ship-4
   return { people: 'Open staff and devices', security: 'Open backups', cash: 'Open Money', stock: 'Open Stock', weborders: 'Open Web orders', alerts: 'Choose which alerts\u2026' }[g] || 'Open';
 }
 var RISK = null, RISK_TAB = 'overdue', RISK_OPEN = true;
@@ -69035,6 +69037,21 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
 .shp .sp-kwcard{margin-left:auto;flex:none;border:2px solid var(--sp-ink);border-radius:14px;background:var(--sp-lime);color:#17181C;padding:8px 12px;text-align:center;display:grid;gap:2px}
 .shp .sp-kwcard .code{font-size:20px}.shp .sp-kwcard small{font-size:11.5px;font-weight:600}
 .shp .sp-kwcard .sp-qr{width:92px;height:92px;margin:0 auto 2px;padding:5px}
+.shp .sp-att{display:grid;gap:8px;margin:10px 0 4px}
+.shp .sp-att button{display:flex;gap:10px;align-items:flex-start;text-align:left;border:1px solid var(--sp-line);background:var(--sp-card);border-radius:12px;padding:10px 12px;color:var(--sp-ink);font:inherit;width:100%;cursor:pointer}
+.shp .sp-att button:hover{border-color:var(--sp-ink3)}
+.shp .sp-att i{width:10px;height:10px;border-radius:50%;flex:none;margin-top:6px;background:#6D5BFF}
+.shp .sp-att .bad i{background:#DC2626}.shp .sp-att .warn i{background:#E89B12}
+.shp .sp-att b{display:block;font-size:14.5px;line-height:1.35}.shp .sp-att small{color:var(--sp-ink3);font-size:12.5px}
+.shp .sp-tabs .sp-badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#DC2626;color:#fff;font-size:11px;font-weight:700;margin-left:2px}
+.shp .sp-nt{padding:10px 16px;border-top:1px solid var(--sp-line);display:grid;gap:6px}
+.shp .sp-nt .hd{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.shp .sp-nt .hd b{flex:1 1 160px;font-size:14px}
+.shp .sp-nt .sub{color:var(--sp-ink3);font-size:12.5px}
+.shp .sp-nt details summary{cursor:pointer;color:var(--fd-accent,#5748E6);font-size:13px;font-weight:600}
+.shp .sp-nt pre{white-space:pre-wrap;font:inherit;font-size:13.5px;line-height:1.5;background:var(--sp-s2);border-radius:10px;padding:10px 12px;margin:6px 0 0}
+.shp .sp-nt .why{color:#9A5B00;font-size:12.5px}
+.shp .sp-nt .sp-pill{margin:0}
+.shp .b-warn{background:rgba(245,158,11,.14);color:#7A4A00}html[data-theme="dark"] .shp .b-warn{color:#FBBF24}
 .shp .sp-grp .sp-qr{width:46px;height:46px;padding:3px;border-radius:8px}
 .shp .sp-grp{display:flex;align-items:center;gap:8px;padding:10px 16px 6px;border-top:1px solid var(--sp-line);font-weight:700;font-size:14px;background:var(--sp-s2)}
 .shp .sp-grp svg{width:16px;height:16px}.shp .sp-grp>span{flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -69072,10 +69089,12 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
     plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
     swap: '<svg viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>',
     down: '<svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
-    ext: '<svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg>'
+    ext: '<svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg>',
+    bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l2 2H4z"/><path d="M10 21h4"/></svg>',
+    send: '<svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg>'
   };
   var ICON = '<rect x="5" y="7" width="14" height="13" rx="2.5"/><path d="M9 7V4.5h6V7M9 11v5M15 11v5"/>';
-  var SH = { list: null, people: null, bags: null, cur: null, person: null, bag: null, filter: '', busy: '', err: '', counts: {}, money: null, newType: 'trip', loadedFor: '', lastFor: '', addPlace: '' };
+  var SH = { list: null, people: null, bags: null, cur: null, person: null, bag: null, filter: '', busy: '', err: '', counts: {}, money: null, newType: 'trip', loadedFor: '', lastFor: '', addPlace: '', notify: null, notes: {} };
   var STEPS = { trip: ['প্যাক', 'সিল', 'হাতে দেওয়া', 'উড়ছে', 'নেমেছে', 'হাতে পেয়েছি', 'মিলানো'], air: ['প্যাক', 'বুক', 'পিকআপ', 'উড়ছে', 'কাস্টমস', 'হাতে পেয়েছি', 'মিলানো'] };
   var CITY = { ICN: 'সিউল', DAC: 'ঢাকা' };
   var PLACE = { hand: ['হাতে', 'hand'], own: ['উনার নিজের ব্যাগে', 'bag'], cargo: ['কার্গোতে', 'box'] };
@@ -69098,7 +69117,7 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
 
   if (typeof fdxNav === 'function') fdxNav('ship', 'Shipments', ICON, 'dash');
   try { VIEW_NAMES.ship = 'Shipments'; FDH_SUB.ship = 'Our goods Korea - Bangladesh: travellers with our bags, and air cargo'; } catch (e) {}
-  try { if (!SRV_READS.test('erpShipBags')) SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpShipBags|erpShipBag|erpShips|erpShip|erpShipFind|erpShipPeople|erpShipPerson|')); } catch (e) {}
+  try { if (!SRV_READS.test('erpShipBags')) SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpShipNotify|erpShipNotes|erpShipBags|erpShipBag|erpShips|erpShip|erpShipFind|erpShipPeople|erpShipPerson|')); } catch (e) {}
   try { if (typeof BN_DICT !== 'undefined') BN_DICT.Shipments = 'চালান'; } catch (e) {}
 
   // a QR link (#/ship/BG-0007, #/ship/C-0007) opened before the business list is known: the start-up clears the address, so keep it
@@ -69125,7 +69144,9 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
     SH.busy = key; srv(name, [args || {}], function (r) { SH.busy = ''; SH[key] = r[{ list: 'ships', bags: 'bags', people: 'people' }[key]] || []; SH.err = ''; paint(); }, function (e) { SH.busy = ''; SH.err = errOf(e); paint(); });
   }
   function loadList(f) { get('list', 'erpShips', {}, f); }
-  function setCur(r) { SH.cur = r; SH.loadedFor = r.code; SH.list = null; }
+  function setCur(r) { SH.cur = r; SH.loadedFor = r.code; SH.list = null; SH.notes = {}; SH.notify = null; }
+  function loadNotify(force) { if (SH.busy === 'notify' || (SH.notify && !force)) return; SH.busy = 'notify'; srv('erpShipNotify', [{}], function (r) { SH.busy = ''; SH.notify = r; paint(); }, function () { SH.busy = ''; SH.notify = { bell: [], log: [], wa: {}, failed: true }; paint(); }); }
+  function loadNotes(s) { var k = 'notes:' + s.code; if (SH.busy === k || SH.notes[s.code]) return; SH.busy = k; srv('erpShipNotes', [{ id: s.id }], function (r) { SH.busy = ''; SH.notes[s.code] = r; paint(); }, function (e) { SH.busy = ''; SH.notes[s.code] = { notes: [], err: errOf(e) }; paint(); }); }
   function loadCur(code) { if (SH.busy === 'cur:' + code) return; SH.busy = 'cur:' + code; srv('erpShip', [{ code: code }], function (r) { SH.busy = ''; SH.cur = r; SH.loadedFor = code; paint(); }, function (e) { SH.busy = ''; SH.cur = null; SH.loadedFor = code; SH.err = errOf(e); paint(); }); }
   function loadPerson(id) { if (SH.busy === 'p:' + id) return; SH.busy = 'p:' + id; srv('erpShipPerson', [{ id: id }], function (r) { SH.busy = ''; SH.person = r; paint(); }, function (e) { SH.busy = ''; SH.err = errOf(e); paint(); }); }
   function loadBag(code) { if (SH.busy === 'b:' + code) return; SH.busy = 'b:' + code; srv('erpShipBag', [{ code: code }], function (r) { SH.busy = ''; SH.bag = r; paint(); }, function (e) { SH.busy = ''; SH.err = errOf(e); paint(); }); }
@@ -69187,10 +69208,11 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
   // ---------- lists
   var LANES = [['kr', 'কোরিয়ায়', 'kr'], ['air', 'পথে', 'plane'], ['bd', 'বাংলাদেশে', 'bd'], ['done', 'মিলানো শেষ', 'done']];
   function top(tab) {
-    var T = [['', 'চালান', I.box], ['bags', 'লাগেজ', I.bag], ['people', 'বহনকারী', I.users]];
+    var T = [['', 'চালান', I.box], ['bags', 'লাগেজ', I.bag], ['people', 'বহনকারী', I.users], ['notify', 'বার্তা', I.bell]];
+    loadNotify(); var bc = SH.notify && SH.notify.bell ? SH.notify.bell.filter(function (a) { return a.level !== 'info'; }).length : 0;
     var btn = tab === 'people' ? '<button type="button" class="sp-pri" data-shp="newperson">' + I.plus + 'নতুন</button>' : tab === 'bags' ? '<button type="button" class="sp-pri" data-shp="newbag">' + I.plus + 'নতুন</button>' : '<button type="button" class="sp-pri" data-shp="go" data-v="new">' + I.plus + 'নতুন</button>';
     return '<div class="sp-top"><h2>' + (tab === 'people' ? 'বহনকারী' : tab === 'bags' ? 'লাগেজ' : 'চালান') + '</h2><div class="sp-tabs" role="tablist">'
-      + T.map(function (x) { return '<button type="button" data-shp="go" data-v="' + x[0] + '" class="' + (tab === x[0] ? 'on' : '') + '">' + x[2] + x[1] + '</button>'; }).join('') + '</div>' + btn + '</div>';
+      + T.map(function (x) { return '<button type="button" data-shp="go" data-v="' + x[0] + '" class="' + (tab === x[0] ? 'on' : '') + '">' + x[2] + x[1] + (x[0] === 'notify' && bc ? '<span class="sp-badge">' + bn(bc) + '</span>' : '') + '</button>'; }).join('') + '</div>' + btn + '</div>';
   }
   function findBar() { return '<form class="sp-find" id="sp_findf"><label>' + I.search + '<input id="sp_q" placeholder="কোড, কিওয়ার্ড, ফোন বা AWB লিখে Enter" autocomplete="off" enterkeyhint="go" aria-label="খুঁজুন"></label><button type="button" class="sp-pri" data-shp="scan" aria-label="স্ক্যান">' + I.qr + '<span>স্ক্যান</span></button></form>'; }
   function listView(sel) {
@@ -69199,7 +69221,7 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
     if (!SH.list) return '<div class="sp-wait">লোড হচ্ছে…</div>';
     var L = SH.list.filter(function (s) { return !SH.filter || s.type === SH.filter; });
     var h = '<div class="sp-filter"><button type="button" data-shp="filter" data-v="" class="' + (!SH.filter ? 'on' : '') + '">সব</button><button type="button" data-shp="filter" data-v="trip" class="' + (SH.filter === 'trip' ? 'on' : '') + '">' + I.user + 'বহনকারী দিয়ে</button><button type="button" data-shp="filter" data-v="air" class="' + (SH.filter === 'air' ? 'on' : '') + '">' + I.plane + 'এয়ার কার্গো</button></div>';
-    SH.list.filter(function (s) { return s.late; }).slice(0, 2).forEach(function (s) { h += '<div class="sp-banner b-bad">' + I.warn + '<div><b>' + esc(s.code + ' · ' + nick(s)) + ': নামার ৪ ঘণ্টা পরেও কেউ হাতে পায়নি</b>উনাকে ফোন করুন। হাতে পেলে উনার কিওয়ার্ড বা লাগেজের QR স্ক্যান করুন।</div></div>'; });
+    h += attList(6);   // ship-4: late / landed / flight tomorrow (the late banner lives here now)
     if (!SH.list.length) return h + '<div class="sp-empty" style="margin-top:12px">এখনো কোনো চালান নেই। "নতুন" চাপুন।</div>';
     h += '<div class="sp-board">';
     LANES.forEach(function (ln) {
@@ -69211,6 +69233,59 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
       h += '</section></div>';
     });
     return h + '</div>';
+  }
+  var LV = { bad: 0, warn: 1, info: 2 };
+  function attList(max) {
+    loadNotify();
+    var B = (SH.notify && SH.notify.bell || []).slice().sort(function (a, b) { return (LV[a.level] || 0) - (LV[b.level] || 0); });
+    if (!B.length) return '';
+    return '<div class="sp-att" role="list">' + B.slice(0, max).map(function (a) { return '<button type="button" role="listitem" class="' + esc(a.level) + '" data-shp="go" data-v="' + esc(String(a.go || '').replace(/^ship:/, '')) + '"><i></i><span><b>' + esc(a.title) + '</b><small>' + esc(a.detail || '') + '</small></span></button>'; }).join('')
+      + (B.length > max ? '<button type="button" data-shp="go" data-v="notify"><i></i><span><b>আরও ' + bn(B.length - max) + 'টা</b><small>সব দেখুন</small></span></button>' : '') + '</div>';
+  }
+  var NST = { sent: ['পাঠানো হয়েছে', 'pk-ok'], failed: ['যায়নি', 'pk-bad'], due: ['এখন যাবে', 'pk-air'], waiting: ['যাবে', 'pk-wait'], missed: ['সময় পেরিয়ে গেছে', 'pk-n'], skipped: ['যায়নি', 'pk-n'] };
+  function toWho(n) { return (n.target === 'carrier' ? 'বহনকারী' : 'টিম') + (n.phone ? ' · +' + n.phone : ''); }
+  function notesCard(s) {
+    var N = SH.notes[s.code];
+    if (!N) { loadNotes(s); return '<section class="sp-card"><h4>' + I.bell + 'বার্তা ও রিমাইন্ডার</h4><div class="sp-wait" style="padding:12px 16px">লোড হচ্ছে…</div></section>'; }
+    var h = '<section class="sp-card"><h4>' + I.bell + 'বার্তা ও রিমাইন্ডার<button type="button" class="r" data-shp="go" data-v="notify">সেটিংস</button></h4>';
+    if (N.err) return h + '<div class="sp-empty" style="margin:4px 16px 16px">' + esc(N.err) + '</div></section>';
+    if (!N.wa) h += '<div class="sp-banner b-warn" style="margin:0 16px 10px">' + I.warn + '<div><b>হোয়াটসঅ্যাপ যুক্ত নেই, তাই বার্তা যাচ্ছে না</b>নিচে দেখুন কী যাবে। যুক্ত করতে "বার্তা" ট্যাব খুলুন।</div></div>';
+    if (!N.notes.length) return h + '<div class="sp-empty" style="margin:4px 16px 16px">' + (s.type === 'trip' && !s.departAt ? 'ফ্লাইটের সময় দিলে মনে করানোর বার্তা ঠিক হবে।' : 'এই চালানের জন্য কোনো বার্তা নেই।') + '</div></section>';
+    N.notes.forEach(function (n, i) {
+      var st = NST[n.state] || ['', 'pk-n'], tm = n.state === 'waiting' || n.state === 'due' || n.state === 'missed' ? when(n.at, 'DAC') + ' থেকে' : when(n.at, 'DAC') + (n.by ? ' · ' + esc(n.by) : '');
+      h += '<div class="sp-nt"><div class="hd"><b>' + esc(n.name) + '</b><span class="sp-pill ' + st[1] + '">' + st[0] + '</span></div><div class="sub">' + esc(toWho(n)) + ' · ' + tm + ' (ঢাকা সময়)</div>'
+        + (n.why ? '<div class="why">' + esc(n.why) + '</div>' : '') + (n.error ? '<div class="why">' + esc(n.error) + '</div>' : '')
+        + '<details><summary>বার্তাটা দেখুন</summary><pre data-noi18n>' + esc(n.body) + '</pre></details>'
+        + (N.canSend && N.wa && !n.why ? '<div><button type="button" class="sp-mini" data-shp="nsend" data-v="' + esc(n.kind) + '">' + I.send + (n.state === 'sent' ? 'আবার পাঠান' : 'এখনই পাঠান') + '</button></div>' : '') + '</div>';
+    });
+    return h + '</section>';
+  }
+  function notifyView() {
+    loadNotify();
+    var N = SH.notify;
+    if (!N) return '<div class="sp-wait">লোড হচ্ছে…</div>';
+    var h = backBtn('', 'সব চালান');
+    var att = attList(20);
+    h += '<section class="sp-card"><h4>' + I.bell + 'মনোযোগ দিন</h4>' + (att ? '<div style="padding:0 16px 12px">' + att + '</div>' : '<div class="sp-empty" style="margin:4px 16px 16px">এখন কিছু নেই।</div>') + '</section>';
+    var w = N.wa || {};
+    h += '<section class="sp-card"><h4>' + I.wa + 'হোয়াটসঅ্যাপ</h4><div style="padding:0 16px 14px;display:grid;gap:8px">'
+      + (w.connected ? '<div><span class="sp-pill pk-ok">যুক্ত আছে</span></div><p class="sp-muted">বার্তা এই নম্বর থেকে যায়, প্রতিটা একবার, ১০ মিনিটের মধ্যে।</p>'
+        : '<div><span class="sp-pill pk-wait">' + (w.configured ? 'নম্বর লিংক হয়নি' : 'যুক্ত নেই') + '</span></div><p class="sp-muted">যে ফোন থেকে বার্তা যাবে (যেমন অলভির নম্বর), সেটা সেটিংস → Connections → WhatsApp-এ QR স্ক্যান করে যুক্ত করুন। ততক্ষণ শুধু এখানে দেখাবে।</p>'
+          + '<div><button type="button" class="sp-sec" data-shp="conn">' + I.ext + 'সেটিংস খুলুন</button></div>')
+      + '</div></section>';
+    var ed = N.canEdit;
+    h += '<section class="sp-card"><h4>' + I.users + 'কাকে পাঠাবে</h4><div class="sp-form">'
+      + '<div class="sp-fld"><label for="sp_team">টিমের হোয়াটসঅ্যাপ নম্বর (ঢাকায় যাঁরা রিসিভ করেন), কমা দিয়ে</label><input id="sp_team" inputmode="tel" placeholder="01XXXXXXXXX, 01XXXXXXXXX" value="' + esc(N.team || '') + '"' + (ed ? '' : ' disabled') + '></div>'
+      + '<p class="sp-muted">টিম পাবে: কাল কে কী নিয়ে আসছেন, নামলেন, ৪ ঘণ্টায় রিসিভ না হলে, গোনায় গরমিল, এয়ার কার্গো পৌঁছানোর আগের দিন।</p>'
+      + '<label class="sp-check"><input type="checkbox" id="sp_tc"' + (N.carrier ? ' checked' : '') + (ed ? '' : ' disabled') + '> বহনকারীদেরও পাঠাও</label>'
+      + '<p class="sp-muted">বহনকারী পাবেন: আগের দিন (ফ্লাইট কখন, ২ ঘণ্টা আগে এয়ারপোর্টে, কোন লাগেজ, কিওয়ার্ড), ফ্লাইটের দিন, আর নামার পর। শুধু যাঁর প্রোফাইলে "হোয়াটসঅ্যাপে মনে করিয়ে দিতে রাজি" টিক আছে।</p>'
+      + '</div>' + (ed ? '<div class="sp-act" style="position:static;padding:0 16px 16px"><button type="button" class="sp-pri" data-shp="nsave">' + I.ok + 'সেভ করুন</button></div>' : '<p class="sp-muted" style="padding:0 16px 16px">বদলাতে পারবেন ম্যানেজার বা মালিক।</p>') + '</section>';
+    h += '<section class="sp-card"><h4>' + I.send + 'পাঠানো বার্তা</h4>';
+    if (!N.log || !N.log.length) h += '<div class="sp-empty" style="margin:4px 16px 16px">এখনো কিছু যায়নি।</div>';
+    else (N.log || []).forEach(function (n) { var st = NST[n.state] || ['', 'pk-n'];
+      h += '<div class="sp-nt"><div class="hd"><b>' + esc(n.code + ' · ' + n.name) + '</b><span class="sp-pill ' + st[1] + '">' + st[0] + '</span></div><div class="sub">' + esc(toWho(n)) + ' · ' + when(n.at, 'DAC') + (n.by ? ' · ' + esc(n.by) : ' · অটোমেটিক') + '</div>'
+        + (n.error ? '<div class="why">' + esc(n.error) + '</div>' : '') + '<details><summary>বার্তাটা দেখুন</summary><pre data-noi18n>' + esc(n.body) + '</pre></details></div>'; });
+    return h + '</section>';
   }
   function bagsView(sel) {
     get('bags', 'erpShipBags', {});
@@ -69280,7 +69355,7 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
       else h += '<div class="sp-empty" style="margin:4px 16px 16px">এখনো কাউকে দেওয়া হয়নি</div>';
       h += '</section>';
     }
-    h += itemsCard(s, false) + moneyCard(s);
+    h += itemsCard(s, false) + moneyCard(s) + notesCard(s);
     h += '<section class="sp-card"><h4>কী কী হলো</h4><div class="sp-log">' + s.events.map(function (e) { return '<div><time>' + when(e.at, 'DAC') + '</time><span>' + esc(EVT(e.what)) + (e.by ? ' · ' + esc(e.by) : '') + '</span></div>'; }).join('') + '</div></section>';
     var a = '';
     if (s.type === 'air') a = ['<button type="button" class="sp-pri" data-shp="go" data-v="' + esc(s.code) + '.pack">' + I.box + 'প্রোডাক্ট লিখুন</button>', '<button type="button" class="sp-pri" data-shp="step" data-v="pickup">' + I.box + 'পিকআপ হয়েছে</button>', '<button type="button" class="sp-pri" data-shp="step" data-v="fly">' + I.plane + 'ফ্লাইট ছেড়েছে</button>',
@@ -69429,13 +69504,15 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
     if (/^(BG|C)-\d+$/.test(page)) { if (SH.busy !== 'find:' + page) { SH.busy = 'find:' + page; openFound(page, true); } return '<div class="shp"><div class="sp-wait">খুঁজছি…</div></div>'; }
     if (page === 'people' || /^p\./.test(page) || page === 'pnew' || /^pe\./.test(page)) tab = 'people';
     else if (page === 'bags' || /^b\./.test(page)) tab = 'bags';
+    else if (page === 'notify') tab = 'notify';
     if (tab === 'people') list = top('people') + peopleView(/^p\./.test(page) ? Number(page.slice(2)) : 0);
     else if (tab === 'bags') list = top('bags') + bagsView(/^b\./.test(page) ? page.slice(2).split('.')[0] : '');
-    else list = top('') + findBar() + listView(r.code);
+    else list = top(tab) + findBar() + listView(r.code);
     if (r.code) {
       if (!SH.cur || SH.cur.code !== r.code) { if (SH.loadedFor !== r.code || SH.cur) loadCur(r.code); detail = SH.err && SH.loadedFor === r.code && !SH.cur ? '<div class="sp-banner b-bad">' + I.warn + '<div>' + esc(SH.err) + '</div></div>' : '<div class="sp-wait">লোড হচ্ছে…</div>'; }
       else { var s = SH.cur; detail = r.sub === 'pack' ? packView(s) : r.sub === 'carrier' ? carrierView(s) : r.sub === 'check' ? checkView(s) : r.sub === 'money' ? (canMoney() ? moneyView(s) : shipView(s)) : r.sub === 'air' ? airView(s) : shipView(s); }
     } else if (page === 'new') detail = newView();
+    else if (page === 'notify') detail = notifyView();
     else if (page === 'pnew') detail = personEdit(null);
     else if (/^pe\./.test(page)) detail = SH.person && SH.person.id === Number(page.slice(3)) ? personEdit(SH.person) : (loadPerson(Number(page.slice(3))), '<div class="sp-wait">লোড হচ্ছে…</div>');
     else if (/^p\./.test(page)) { var id = Number(page.slice(2)); detail = SH.person && SH.person.id === id ? personView(SH.person) : (loadPerson(id), '<div class="sp-wait">লোড হচ্ছে…</div>'); }
@@ -69494,6 +69571,9 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
     if (k === 'bagrename') { var nn = prompt('নতুন ডাকনাম', SH.bag.nickname); if (!nn) return; return call('erpShipBagSave', { id: SH.bag.id, nickname: nn }, function (r) { SH.bag = r; SH.bags = null; }); }
     if (k === 'rsn') { var rr = el('sp_rr'); if (rr) rr.value = v; return; }
     if (k === 'replace') return call('erpShipBagReplace', { id: SH.bag.id, reason: el('sp_rr').value, nickname: el('sp_rn').value }, function (r) { SH.bag = r; SH.bags = null; nav('b.' + r.code); toast('এখন ব্যাগ ' + bn(r.bodyNo) + '। একই QR প্রিন্ট করে নতুন ব্যাগে লাগান।'); });
+    if (k === 'nsend') return call('erpShipNotifySend', { id: s.id, kind: v }, function (r) { SH.notes[s.code] = r; SH.notify = null; toast('হোয়াটসঅ্যাপে পাঠানো হলো।'); });
+    if (k === 'nsave') return call('erpShipNotifySave', { team: (el('sp_team') || {}).value || '', carrier: !!(el('sp_tc') || {}).checked }, function (r) { SH.notify = r; SH.notes = {}; toast(r.wa && r.wa.connected ? 'সেভ হলো।' : 'সেভ হলো। হোয়াটসঅ্যাপ যুক্ত করলে বার্তা যাওয়া শুরু হবে।'); });
+    if (k === 'conn') { try { SET_TAB = 'connections'; } catch (x) {} return go('settings'); }
     if (k === 'tripfor') { SH.newType = 'trip'; SH.newPerson = SH.person.id; return nav('new'); }
     if (k === 'create') {
       var air = SH.newType === 'air', a = { type: air ? 'air' : 'trip', from: el('sp_nf').value, to: el('sp_nt').value };

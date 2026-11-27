@@ -469,7 +469,7 @@ async function peopleStats(ctx, id) {
   return ctx.tx`select s.id, s.code, s.type, s.from_port, s.to_port, s.step, s.depart_at, s.land_at, s.created_at, s.checked_at,
       s.fee_amt, s.fee_cur, s.customs_amt, s.customs_by, s.carrier_id,
       (select count(*) from ship_trip_bags tb where tb.ship_id = s.id and tb.removed_at is null)::int as bag_n,
-      (select coalesce(sum(i.qty), 0) from ship_items i where i.ship_id = s.id)::int as pcs_n
+      (select coalesce(sum(i.qty), 0) from ship_items i where i.ship_id = s.id and i.struck_at is null)::int as pcs_n
     from ships s where s.business_id = ${ctx.biz} and s.carrier_id ${id ? ctx.tx`= ${id}` : ctx.tx`is not null`} order by coalesce(s.depart_at, s.created_at) desc`;
 }
 function moneyOf(trips) {

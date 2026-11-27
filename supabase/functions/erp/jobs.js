@@ -168,6 +168,14 @@ async function runJobNow(deps, job) {
         }
       }
     }
+    // ship-4: vendor shipment reminders (flight tomorrow, landed, late) on WhatsApp, once each
+    const shipT = await maybe('./handlers/shipnotify.js', 'shipNotifyTick');
+    let shipIds = [];
+    try { shipIds = (await sql`select business_id from business_config where key = 'business_kind' and value = 'cargo'`).map((r) => r.business_id); } catch (_) { shipIds = []; }
+    if (shipT && shipIds.length) for (const row of await owners(sql, shipIds)) {
+      if (out['ship:' + row.name]) continue;
+      try { out['ship:' + row.name] = await asBusiness(deps, row, 'ship:notify', (ctx) => shipT(ctx)); } catch (e) { out['ship:' + row.name] = String((e && e.message) || e); }
+    }
   } else if (job === 'sheet') {
     // the live backup sheet: tabs whose rows changed are written again
     const tick = await maybe('./handlers/sheet.js', 'sheetTick');

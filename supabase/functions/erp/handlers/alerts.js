@@ -29,6 +29,8 @@ export async function alertList(ctx) {
   await part(async () => { for (const a of await moneyAlerts(ctx, ctx.s.role)) out.push(a); });
   // studio-1: "your video is ready" for the person who asked for it
   await part(async () => { const { studioBell } = await import('./studio.js'); for (const a of await studioBell(ctx)) out.push(a); });
+  // ship-4: vendor shipment business - flights, landings, late, count differences (everyone who sees the bell)
+  await part(async () => { const { shipBell } = await import('./shipnotify.js'); for (const a of await shipBell(ctx)) out.push(a); });
   // the system's own health stays with shareholders and the owner
   if (!roleAtLeast(ctx.s.role, 'shareholder')) return out;
   // watch-1: the Watchdog's urgent and high issues, and an Engine that stopped with work waiting
