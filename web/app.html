@@ -69032,6 +69032,15 @@ html[data-theme="dark"] .shp .b-bad{color:#F87171}
 @media (max-width:640px){ .shp .sp-two{grid-template-columns:1fr} .shp .sp-top h2{font-size:21px;flex-basis:100%} .shp .sp-top .sp-tabs{flex:1} .shp .sp-top .sp-tabs button{flex:1;justify-content:center;padding:0 8px}
   .shp .sp-top>.sp-pri{padding:0 14px} .shp .sp-find .sp-pri{padding:0 14px} .shp .sp-find .sp-pri span{display:none} .shp{overflow-x:hidden} }
 html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!important}
+.shp .sp-kwcard{margin-left:auto;flex:none;border:2px solid var(--sp-ink);border-radius:14px;background:var(--sp-lime);color:#17181C;padding:8px 12px;text-align:center;display:grid;gap:2px}
+.shp .sp-kwcard .code{font-size:20px}.shp .sp-kwcard small{font-size:11.5px;font-weight:600}
+.shp .sp-grp{display:flex;align-items:center;gap:8px;padding:10px 16px 6px;border-top:1px solid var(--sp-line);font-weight:700;font-size:14px;background:var(--sp-s2)}
+.shp .sp-grp svg{width:16px;height:16px}.shp .sp-grp>span{flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.shp .sp-x{border:0;background:none;color:var(--fd-accent,#5748E6);font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:4px;padding:4px 2px}
+.shp .sp-x svg{width:16px;height:16px}
+.shp .sp-add select{flex:1 1 200px;height:46px;border-radius:12px;border:1px solid var(--fd-border-strong,#D7D9DF);background:var(--sp-card);color:var(--sp-ink);padding:0 10px;font-size:15px;min-width:0}
+.shp .sp-kwrow{display:flex;gap:16px;align-items:center;padding:16px}.shp .sp-kwrow small{color:var(--sp-ink3);font-weight:600}
+.shp .sp-kwbox{border:2px solid var(--sp-ink)}
 </style>
 <script>
 (function () {
@@ -69054,24 +69063,28 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
     cam: '<svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
     box: '<svg viewBox="0 0 24 24"><path d="M3 7.5L12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5L12 12l9-4.5M12 12v9"/></svg>',
     bag: '<svg viewBox="0 0 24 24"><rect x="5" y="7" width="14" height="13" rx="2.5"/><path d="M9 7V4.5h6V7M9 20v1.5M15 20v1.5M9 11v5M15 11v5"/></svg>',
+    hand: '<svg viewBox="0 0 24 24"><path d="M7 11V5.5a1.5 1.5 0 013 0V11M10 10V4a1.5 1.5 0 013 0v6M13 10V5a1.5 1.5 0 013 0v7M16 9.5a1.5 1.5 0 013 0V14a7 7 0 01-7 7h-1a7 7 0 01-5.6-2.8L3 15.5a1.5 1.5 0 012.3-1.9L7 15"/></svg>',
     print: '<svg viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3"/><rect x="7" y="14" width="10" height="7"/></svg>',
     money: '<svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>',
     shield: '<svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>',
     plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+    swap: '<svg viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>',
+    down: '<svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
     ext: '<svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg>'
   };
   var ICON = '<rect x="5" y="7" width="14" height="13" rx="2.5"/><path d="M9 7V4.5h6V7M9 11v5M15 11v5"/>';
-  var SH = { list: null, people: null, cur: null, person: null, filter: '', busy: '', err: '', counts: {}, money: null, newType: 'bag', carrierTab: 'new', loadedFor: '' };
-  var STEPS = { bag: ['প্যাক', 'সিল', 'হাতে দেওয়া', 'উড়ছে', 'নেমেছে', 'হাতে পেয়েছি', 'মিলানো'], air: ['প্যাক', 'বুক', 'পিকআপ', 'উড়ছে', 'কাস্টমস', 'হাতে পেয়েছি', 'মিলানো'] };
+  var SH = { list: null, people: null, bags: null, cur: null, person: null, bag: null, filter: '', busy: '', err: '', counts: {}, money: null, newType: 'trip', loadedFor: '', lastFor: '', addPlace: '' };
+  var STEPS = { trip: ['প্যাক', 'সিল', 'হাতে দেওয়া', 'উড়ছে', 'নেমেছে', 'হাতে পেয়েছি', 'মিলানো'], air: ['প্যাক', 'বুক', 'পিকআপ', 'উড়ছে', 'কাস্টমস', 'হাতে পেয়েছি', 'মিলানো'] };
   var CITY = { ICN: 'সিউল', DAC: 'ঢাকা' };
+  var PLACE = { hand: ['হাতে', 'hand'], own: ['উনার নিজের ব্যাগে', 'bag'], cargo: ['কার্গোতে', 'box'] };
   var bn = function (n) { return String(n).replace(/[0-9]/g, function (d) { return '০১২৩৪৫৬৭৮৯'[d]; }); };
   var errOf = function (e) { return (e && e.message) || String(e); };
   var MON = ['জানু', 'ফেব্রু', 'মার্চ', 'এপ্রি', 'মে', 'জুন', 'জুলা', 'আগ', 'সেপ্টে', 'অক্টো', 'নভে', 'ডিসে'];
-  // times: a place's own clock (Korea +9, Bangladesh +6)
   function clock(t, off) { var d = new Date(t); if (!t || isNaN(d)) return null; var u = new Date(d.getTime() + off * 3600e3); return { y: u.getUTCFullYear(), mo: u.getUTCMonth(), d: u.getUTCDate(), h: u.getUTCHours(), mi: u.getUTCMinutes() }; }
   function when(t, port) { var off = port === 'ICN' ? 9 : 6, x = clock(t, off); if (!x) return ''; var h = x.h % 12 || 12;
     var part = x.h < 4 ? 'রাত' : x.h < 6 ? 'ভোর' : x.h < 12 ? 'সকাল' : x.h < 16 ? 'দুপুর' : x.h < 19 ? 'বিকেল' : x.h < 20 ? 'সন্ধ্যা' : 'রাত';
     return bn(x.d) + ' ' + MON[x.mo] + ' ' + part + ' ' + bn(h) + ':' + bn(('0' + x.mi).slice(-2)); }
+  function day(t, port) { return t ? when(t, port || 'DAC').split(' ').slice(0, 2).join(' ') : ''; }
   function fm(a, cur) { return (cur === 'KRW' ? '₩ ' : cur === 'USD' ? '$ ' : '৳ ') + Number(a).toLocaleString('en-US'); }
   function totTxt(t) { t = t || {}; var o = []; ['KRW', 'BDT', 'USD'].forEach(function (c) { if (t[c]) o.push(fm(t[c], c)); }); return o.join(' + ') || '—'; }
   function wide() { return window.innerWidth >= 1100; }
@@ -69079,13 +69092,14 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
   function on() { return !!(ME && ME.role) && bizRow().kind === 'cargo'; }
   var RANK = { sales: 1, manager: 2, shareholder: 3, owner: 4 };
   function canMoney() { return !!(ME && (RANK[ME.role] || 0) >= 2); }
+  function ini(n) { var a = Array.from(String(n || '').trim()); return a.slice(0, a.length > 1 && /[ঁ-ঃা-্ৗ]/.test(a[1]) ? 3 : 2).join('') || '?'; }
 
   if (typeof fdxNav === 'function') fdxNav('ship', 'Shipments', ICON, 'dash');
-  try { VIEW_NAMES.ship = 'Shipments'; FDH_SUB.ship = 'Bags carried by travellers and air cargo, Korea - Bangladesh'; } catch (e) {}
-  try { if (!SRV_READS.test('erpShipPeople')) SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpShips|erpShip|erpShipFind|erpShipPeople|erpShipPerson|')); } catch (e) {}
+  try { VIEW_NAMES.ship = 'Shipments'; FDH_SUB.ship = 'Our goods Korea - Bangladesh: travellers with our bags, and air cargo'; } catch (e) {}
+  try { if (!SRV_READS.test('erpShipBags')) SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpShipBags|erpShipBag|erpShips|erpShip|erpShipFind|erpShipPeople|erpShipPerson|')); } catch (e) {}
   try { if (typeof BN_DICT !== 'undefined') BN_DICT.Shipments = 'চালান'; } catch (e) {}
 
-  // a QR link (#/ship/BG-0007) opened before the business list is known: the start-up clears the address, so keep it
+  // a QR link (#/ship/BG-0007, #/ship/C-0007) opened before the business list is known: the start-up clears the address, so keep it
   var BOOTP = ''; try { var bm = /^#\/ship\/(.+)$/.exec(location.hash || ''); if (bm) BOOTP = decodeURIComponent(bm[1]); } catch (e) {}
   function navSync() {
     var o = on(), b = document.querySelector('#nav button[data-view="ship"]');
@@ -69096,82 +69110,130 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
     if (o && VIEW !== 'ship' && VIEW !== 'settings') setTimeout(function () { if (on() && VIEW !== 'ship' && VIEW !== 'settings') { var bp = BOOTP; BOOTP = ''; go('ship', bp || ((typeof routeView === 'function' && routeView() === 'ship' && typeof routeParam === 'function') ? routeParam() : '')); } }, 0);
     if (!o && VIEW === 'ship') setTimeout(function () { if (VIEW === 'ship') go('dash'); }, 0);
   }
-  // the route: #/ship (board) · #/ship/BG-0007 · #/ship/BG-0007.pack|carrier|check|money · #/ship/people · #/ship/p.12 · #/ship/new
-  function rt() { var p = (typeof routeParam === 'function' ? routeParam() : '') || ''; var m = p.split('.'); return { code: /^(BG|AC)-\d+$/.test(m[0]) ? m[0] : '', sub: m[1] || '', page: p }; }
-  function nav(p) { go('ship', p || ''); }
+  // routes: '' board · new · TR-0001(.pack|.carrier|.check|.money|.air) · bags · b.BG-0001(.replace) · people · p.12 · pe.12 · pnew
+  //         BG-0001 / C-0001 (a scanned QR) -> looked up, then replaced by the shipment or the page it belongs to
+  function rt() { var p = (typeof routeParam === 'function' ? routeParam() : '') || ''; var m = p.split('.'); return { code: /^(TR|AC)-\d+$/.test(m[0]) ? m[0] : '', sub: m[1] || '', page: p }; }
+  function nav(p, replace) { if (replace) { try { history.replaceState(null, '', '#/ship/' + encodeURIComponent(p)); } catch (e) {} paint(); } else go('ship', p || ''); }
   function call(name, args, ok) {
     SH.busy = name; paint();
     srv(name, [args || {}], function (r) { SH.busy = ''; SH.err = ''; ok(r); paint(); }, function (e) { SH.busy = ''; toast(esc(errOf(e)), true); paint(); });
   }
-  function loadList(force) { if (SH.busy === 'list' || (SH.list && !force)) return; SH.busy = 'list'; srv('erpShips', [{}], function (r) { SH.busy = ''; SH.list = r.ships; SH.err = ''; paint(); }, function (e) { SH.busy = ''; SH.err = errOf(e); paint(); }); }
-  function loadPeople(force) { if (SH.busy === 'people' || (SH.people && !force)) return; SH.busy = 'people'; srv('erpShipPeople', [], function (r) { SH.busy = ''; SH.people = r.people; paint(); }, function (e) { SH.busy = ''; SH.err = errOf(e); paint(); }); }
-  function setCur(r) { SH.cur = r; SH.loadedFor = r.code; var L = SH.list || []; var i = L.findIndex(function (x) { return x.code === r.code; });
-    var row = { id: r.id, code: r.code, tripNo: r.tripNo, type: r.type, nickname: r.nickname, from: r.from, to: r.to, step: r.step, place: r.place, late: r.late,
-      kinds: r.items.length, pieces: r.items.reduce(function (a, x) { return a + x.qty; }, 0), carrierName: r.carrier ? r.carrier.name : '', forwarder: r.forwarder };
-    if (i >= 0) L[i] = row; else if (SH.list) L.unshift(row); }
-  function loadCur(code) { if (SH.busy === 'cur:' + code) return; SH.busy = 'cur:' + code; srv('erpShip', [{ code: code }], function (r) { SH.busy = ''; setCur(r); paint(); }, function (e) { SH.busy = ''; SH.cur = null; SH.loadedFor = code; SH.err = errOf(e); paint(); }); }
+  function get(key, name, args, force) {
+    if (SH.busy === key || (SH[key] && !force)) return;
+    SH.busy = key; srv(name, [args || {}], function (r) { SH.busy = ''; SH[key] = r[{ list: 'ships', bags: 'bags', people: 'people' }[key]] || []; SH.err = ''; paint(); }, function (e) { SH.busy = ''; SH.err = errOf(e); paint(); });
+  }
+  function loadList(f) { get('list', 'erpShips', {}, f); }
+  function setCur(r) { SH.cur = r; SH.loadedFor = r.code; SH.list = null; }
+  function loadCur(code) { if (SH.busy === 'cur:' + code) return; SH.busy = 'cur:' + code; srv('erpShip', [{ code: code }], function (r) { SH.busy = ''; SH.cur = r; SH.loadedFor = code; paint(); }, function (e) { SH.busy = ''; SH.cur = null; SH.loadedFor = code; SH.err = errOf(e); paint(); }); }
   function loadPerson(id) { if (SH.busy === 'p:' + id) return; SH.busy = 'p:' + id; srv('erpShipPerson', [{ id: id }], function (r) { SH.busy = ''; SH.person = r; paint(); }, function (e) { SH.busy = ''; SH.err = errOf(e); paint(); }); }
+  function loadBag(code) { if (SH.busy === 'b:' + code) return; SH.busy = 'b:' + code; srv('erpShipBag', [{ code: code }], function (r) { SH.busy = ''; SH.bag = r; paint(); }, function (e) { SH.busy = ''; SH.err = errOf(e); paint(); }); }
+  function openFound(q, replace) {
+    srv('erpShipFind', [{ q: q }], function (r) {
+      if (r.kind === 'trip') { if (r.bag || r.person) toast('খোলা হলো: ' + esc(r.bag || r.person) + ' → ' + esc(r.code)); nav(r.code, replace); }
+      else if (r.kind === 'bag') nav('b.' + r.code, replace);
+      else { SH.person = null; nav('p.' + r.id, replace); if (r.choices && r.choices.length > 1) toast('এই কিওয়ার্ডে ' + bn(r.choices.length) + 'টা চালান খোলা আছে। নিচ থেকে বেছে নিন।'); }
+    }, function (e) { toast(esc(errOf(e)), true); if (replace) nav('', true); });
+  }
 
   function pill(s) {
     if (s.late) return '<span class="sp-pill pk-bad">দেরি: নামার ৪ ঘণ্টা পার</span>';
     var A = s.type === 'air' ? [['pk-wait', 'প্যাক হচ্ছে'], ['pk-n', 'বুক হয়েছে'], ['pk-n', 'পিকআপ হয়েছে'], ['pk-air', 'উড়ছে'], ['pk-wait', 'কাস্টমসে'], ['pk-wait', 'মিলানো বাকি'], ['pk-ok', 'মিলেছে']]
-      : [['pk-wait', 'প্যাক হচ্ছে'], ['pk-wait', 'বহনকারী দরকার'], ['pk-n', 'বহনকারীর কাছে'], ['pk-air', 'উড়ছে'], ['pk-wait', 'নেমেছে'], ['pk-wait', 'মিলানো বাকি'], ['pk-ok', 'মিলেছে']];
+      : [['pk-wait', 'প্যাক হচ্ছে'], ['pk-wait', s.carrierId ? 'হাতে দেওয়া বাকি' : 'বহনকারী দরকার'], ['pk-n', 'বহনকারীর কাছে'], ['pk-air', 'উড়ছে'], ['pk-wait', 'নেমেছে'], ['pk-wait', 'মিলানো বাকি'], ['pk-ok', 'মিলেছে']];
     var a = A[s.step] || A[0]; return '<span class="sp-pill ' + a[0] + '">' + a[1] + '</span>';
   }
-  function chip(s) { return '<span class="sp-chip code' + (s.type === 'air' ? ' air' : '') + '">' + (s.type === 'air' ? I.plane : I.bag) + esc(s.code) + '</span>'; }
-  function nick(s) { return s.nickname || (s.type === 'air' ? (s.cartons ? bn(s.cartons) + 'টা কার্টন' : 'এয়ার কার্গো') : s.code); }
-  function who(s) { return s.type === 'air' ? (s.forwarder || 'ফরওয়ার্ডার') : (s.carrierName || 'বহনকারী দেওয়া হয়নি'); }
-  function qr(code) {
-    var url = location.origin + location.pathname + '#/ship/' + code;
-    if (!window.qrcode) { if (typeof qrLib === 'function') qrLib(function () { paint(); }); return '<div class="sp-qr"></div>'; }
-    try { var q = window.qrcode(0, 'M'); q.addData(url); q.make(); var n = q.getModuleCount(), d = '';
-      for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) if (q.isDark(y, x)) d += 'M' + x + ' ' + y + 'h1v1h-1z';
-      return '<div class="sp-qr"><svg viewBox="0 0 ' + n + ' ' + n + '" shape-rendering="crispEdges" role="img" aria-label="QR ' + esc(code) + '"><path d="' + d + '" fill="#111"/></svg></div>'; } catch (e) { return '<div class="sp-qr"></div>'; }
+  function chip(code, icon, cls) { return '<span class="sp-chip code' + (cls ? ' ' + cls : '') + '">' + (icon || '') + esc(code) + '</span>'; }
+  function tripChip(s) { return chip(s.code, s.type === 'air' ? I.plane : I.box, s.type === 'air' ? 'air' : ''); }
+  function nick(s) { return s.type === 'air' ? (s.forwarder || (s.cartons ? bn(s.cartons) + 'টা কার্টন' : 'এয়ার কার্গো')) : (s.carrierName || (s.carrier && s.carrier.name) || 'বহনকারী দেওয়া হয়নি'); }
+  function qrPath(text) {
+    if (!window.qrcode) { if (typeof qrLib === 'function') qrLib(function () { paint(); }); return null; }
+    try { var q = window.qrcode(0, 'M'); q.addData(text); q.make(); var n = q.getModuleCount(), d = '';
+      for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) if (q.isDark(y, x)) d += 'M' + x + ' ' + y + 'h1v1h-1z'; return { n: n, d: d, q: q }; } catch (e) { return null; }
+  }
+  function qrUrl(code) { return location.origin + location.pathname + '#/ship/' + code; }
+  function qr(code) { var p = qrPath(qrUrl(code)); return '<div class="sp-qr">' + (p ? '<svg viewBox="0 0 ' + p.n + ' ' + p.n + '" shape-rendering="crispEdges" role="img" aria-label="QR ' + esc(code) + '"><path d="' + p.d + '" fill="#111"/></svg>' : '') + '</div>'; }
+
+  // ---------- print a tag / a card (a page of its own, then the browser's print)
+  function printSheet(title, body) {
+    // a hidden frame, not a pop-up: phones block pop-ups
+    var old = document.getElementById('sp_printf'); if (old) old.remove();
+    var f = document.createElement('iframe'); f.id = 'sp_printf'; f.setAttribute('aria-hidden', 'true'); f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+    document.body.appendChild(f);
+    var d = f.contentWindow.document;
+    d.open(); d.write('<!doctype html><html><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>@page{size:auto;margin:10mm}body{font-family:"Noto Sans Bengali","Nirmala UI",system-ui,sans-serif;margin:0}'
+      + '.t{width:90mm;border:1.5px dashed #999;border-radius:6mm;padding:6mm;display:flex;gap:5mm;align-items:center;margin:0 0 6mm;break-inside:avoid}.t svg{width:34mm;height:34mm;flex:none}'
+      + '.c{font:700 8.5mm ui-monospace,Consolas,monospace;letter-spacing:.3mm}.n{font-size:4.6mm;font-weight:700;margin-top:1.5mm}.b{display:inline-block;margin-top:2mm;border:1px solid #111;border-radius:2mm;padding:.5mm 2mm;font-weight:700;font-size:4mm}.s{font-size:3.2mm;color:#555;margin-top:2mm}</style></head><body>'
+      + body + '</body></html>'); d.close();
+    setTimeout(function () { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { toast('প্রিন্ট খোলা গেল না', true); } }, 350);
+  }
+  function tagHtml(code, line1, badge, small) { var p = qrPath(qrUrl(code)); return '<div class="t">' + (p ? '<svg viewBox="-2 -2 ' + (p.n + 4) + ' ' + (p.n + 4) + '" shape-rendering="crispEdges"><rect x="-2" y="-2" width="' + (p.n + 4) + '" height="' + (p.n + 4) + '" fill="#fff"/><path d="' + p.d + '" fill="#000"/></svg>' : '') + '<div><div class="c">' + esc(code) + '</div><div class="n">' + esc(line1) + '</div>' + (badge ? '<span class="b">' + esc(badge) + '</span>' : '') + (small ? '<div class="s">' + esc(small) + '</div>' : '') + '</div></div>'; }
+  function printBag(b) { if (!window.qrcode) { qrLib(function () { printBag(b); }); return; } printSheet(b.code, tagHtml(b.code, b.nickname, 'ব্যাগ ' + bn(b.bodyNo), 'স্ক্যান করুন বা কোড লিখুন')); }
+  function printPerson(p) { if (!window.qrcode) { qrLib(function () { printPerson(p); }); return; } printSheet(p.code, tagHtml(p.code, p.name, 'বহনকারীর কিওয়ার্ড', 'এই কার্ড স্ক্যান করলে আপনার চালান খুলবে')); }
+  function savePersonPng(p) {
+    if (!window.qrcode) { qrLib(function () { savePersonPng(p); }); return; }
+    var q = qrPath(qrUrl(p.code)); if (!q) return;
+    var W = 720, H = 420, c = document.createElement('canvas'); c.width = W; c.height = H; var g = c.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.fillStyle = '#E4FF5A'; g.fillRect(0, 0, W, 14);
+    var cell = Math.floor(300 / (q.n + 4)), ox = 40, oy = 70; g.fillStyle = '#000';
+    for (var y = 0; y < q.n; y++) for (var x = 0; x < q.n; x++) if (q.q.isDark(y, x)) g.fillRect(ox + (x + 2) * cell, oy + (y + 2) * cell, cell, cell);
+    g.fillStyle = '#17181C'; g.font = '700 54px ui-monospace, Consolas, monospace'; g.fillText(p.code, 380, 160);
+    g.font = '700 34px "Noto Sans Bengali", "Nirmala UI", sans-serif'; g.fillText(p.name.slice(0, 18), 380, 220);
+    g.font = '24px "Noto Sans Bengali", "Nirmala UI", sans-serif'; g.fillStyle = '#4A4D57'; g.fillText('বহনকারীর কিওয়ার্ড', 380, 270); g.fillText('স্ক্যান করলে আপনার চালান খুলবে', 380, 305);
+    var a = document.createElement('a'); a.download = p.code + '.png'; a.href = c.toDataURL('image/png'); document.body.appendChild(a); a.click(); a.remove();
+    toast('কার্ড ছবি হিসেবে সেভ হলো। হোয়াটসঅ্যাপে উনাকে পাঠিয়ে দিন।');
   }
 
-  // ---------- the list (board on a computer, lanes on a phone)
+  // ---------- lists
   var LANES = [['kr', 'কোরিয়ায়', 'kr'], ['air', 'পথে', 'plane'], ['bd', 'বাংলাদেশে', 'bd'], ['done', 'মিলানো শেষ', 'done']];
   function top(tab) {
-    return '<div class="sp-top"><h2>' + (tab === 'people' ? 'বহনকারী' : 'চালান') + '</h2>'
-      + '<div class="sp-tabs" role="tablist"><button type="button" data-shp="tab" data-v="" class="' + (tab !== 'people' ? 'on' : '') + '">' + I.box + 'চালান</button><button type="button" data-shp="tab" data-v="people" class="' + (tab === 'people' ? 'on' : '') + '">' + I.users + 'বহনকারী</button></div>'
-      + (tab === 'people' ? '<button type="button" class="sp-pri" data-shp="newperson">' + I.plus + 'নতুন বহনকারী</button>' : '<button type="button" class="sp-pri" data-shp="go" data-v="new">' + I.plus + 'নতুন</button>') + '</div>';
+    var T = [['', 'চালান', I.box], ['bags', 'লাগেজ', I.bag], ['people', 'বহনকারী', I.users]];
+    var btn = tab === 'people' ? '<button type="button" class="sp-pri" data-shp="newperson">' + I.plus + 'নতুন</button>' : tab === 'bags' ? '<button type="button" class="sp-pri" data-shp="newbag">' + I.plus + 'নতুন</button>' : '<button type="button" class="sp-pri" data-shp="go" data-v="new">' + I.plus + 'নতুন</button>';
+    return '<div class="sp-top"><h2>' + (tab === 'people' ? 'বহনকারী' : tab === 'bags' ? 'লাগেজ' : 'চালান') + '</h2><div class="sp-tabs" role="tablist">'
+      + T.map(function (x) { return '<button type="button" data-shp="go" data-v="' + x[0] + '" class="' + (tab === x[0] ? 'on' : '') + '">' + x[2] + x[1] + '</button>'; }).join('') + '</div>' + btn + '</div>';
   }
-  function findBar() { return '<form class="sp-find" id="sp_findf"><label>' + I.search + '<input id="sp_q" placeholder="কোড, ডাকনাম বা AWB লিখে Enter" autocomplete="off" enterkeyhint="go" aria-label="চালানের কোড"></label><button type="button" class="sp-pri" data-shp="scan" aria-label="স্ক্যান">' + I.qr + '<span>স্ক্যান</span></button></form>'; }
+  function findBar() { return '<form class="sp-find" id="sp_findf"><label>' + I.search + '<input id="sp_q" placeholder="কোড, কিওয়ার্ড, ফোন বা AWB লিখে Enter" autocomplete="off" enterkeyhint="go" aria-label="খুঁজুন"></label><button type="button" class="sp-pri" data-shp="scan" aria-label="স্ক্যান">' + I.qr + '<span>স্ক্যান</span></button></form>'; }
   function listView(sel) {
+    loadList();
     if (SH.err && !SH.list) return '<div class="sp-banner b-bad">' + I.warn + '<div>' + esc(SH.err) + '</div></div>';
     if (!SH.list) return '<div class="sp-wait">লোড হচ্ছে…</div>';
     var L = SH.list.filter(function (s) { return !SH.filter || s.type === SH.filter; });
-    var h = '<div class="sp-filter"><button type="button" data-shp="filter" data-v="" class="' + (!SH.filter ? 'on' : '') + '">সব</button><button type="button" data-shp="filter" data-v="bag" class="' + (SH.filter === 'bag' ? 'on' : '') + '">' + I.bag + 'লাগেজ</button><button type="button" data-shp="filter" data-v="air" class="' + (SH.filter === 'air' ? 'on' : '') + '">' + I.plane + 'এয়ার কার্গো</button></div>';
-    var late = SH.list.filter(function (s) { return s.late; })[0];
-    if (late) h += '<div class="sp-banner b-bad">' + I.warn + '<div><b>' + esc(late.code + ' ' + nick(late)) + ': নামার ৪ ঘণ্টা পরেও কেউ হাতে পায়নি</b>' + esc(late.carrierName || '') + (late.carrierName ? '-কে ফোন করুন, অথবা' : '') + ' হাতে পেলে স্ক্যান করুন।</div></div>';
-    if (!SH.list.length) return h + '<div class="sp-empty" style="margin-top:12px">এখনো কোনো চালান নেই। "নতুন চালান" চাপুন।</div>';
+    var h = '<div class="sp-filter"><button type="button" data-shp="filter" data-v="" class="' + (!SH.filter ? 'on' : '') + '">সব</button><button type="button" data-shp="filter" data-v="trip" class="' + (SH.filter === 'trip' ? 'on' : '') + '">' + I.user + 'বহনকারী দিয়ে</button><button type="button" data-shp="filter" data-v="air" class="' + (SH.filter === 'air' ? 'on' : '') + '">' + I.plane + 'এয়ার কার্গো</button></div>';
+    SH.list.filter(function (s) { return s.late; }).slice(0, 2).forEach(function (s) { h += '<div class="sp-banner b-bad">' + I.warn + '<div><b>' + esc(s.code + ' · ' + nick(s)) + ': নামার ৪ ঘণ্টা পরেও কেউ হাতে পায়নি</b>উনাকে ফোন করুন। হাতে পেলে উনার কিওয়ার্ড বা লাগেজের QR স্ক্যান করুন।</div></div>'; });
+    if (!SH.list.length) return h + '<div class="sp-empty" style="margin-top:12px">এখনো কোনো চালান নেই। "নতুন" চাপুন।</div>';
     h += '<div class="sp-board">';
     LANES.forEach(function (ln) {
       var rows = L.filter(function (s) { return s.place === ln[0]; });
       if (ln[0] === 'done' && !rows.length && !wide()) return;
       h += '<div class="sp-col"><section class="sp-lane"><h3>' + I[ln[2]] + ln[1] + ' <span class="sp-n">' + bn(rows.length) + '</span></h3>';
       if (!rows.length) h += '<div class="sp-empty">এখন কিছু নেই</div>';
-      rows.forEach(function (s) { h += '<button type="button" class="sp-row' + (sel === s.code ? ' sel' : '') + '" data-shp="open" data-v="' + esc(s.code) + '">' + chip(s) + '<span class="sp-mid"><span class="sp-kw">' + esc(nick(s)) + '</span><span class="sp-sub">' + bn(s.kinds) + ' রকম · ' + bn(s.pieces) + ' পিস · ' + esc(who(s)) + '</span>' + pill(s) + '</span></button>'; });
+      rows.forEach(function (s) { h += '<button type="button" class="sp-row' + (sel === s.code ? ' sel' : '') + '" data-shp="go" data-v="' + esc(s.code) + '">' + tripChip(s) + '<span class="sp-mid"><span class="sp-kw">' + esc(nick(s)) + (s.carrierCode ? ' <small class="code" style="font-weight:600;color:var(--sp-ink3)">' + esc(s.carrierCode) + '</small>' : '') + '</span><span class="sp-sub">' + (s.bags ? bn(s.bags) + 'টা লাগেজ · ' : '') + bn(s.kinds) + ' রকম · ' + bn(s.pieces) + ' পিস</span>' + pill(s) + '</span></button>'; });
       h += '</section></div>';
     });
     return h + '</div>';
   }
+  function bagsView(sel) {
+    get('bags', 'erpShipBags', {});
+    if (!SH.bags) return '<div class="sp-wait">লোড হচ্ছে…</div>';
+    if (!SH.bags.length) return '<div class="sp-empty">এখনো কোনো লাগেজ নেই। "নতুন" চাপলে কোড আর QR তৈরি হবে।</div>';
+    return SH.bags.map(function (b) { return '<button type="button" class="sp-row' + (sel === b.code ? ' sel' : '') + '" data-shp="go" data-v="b.' + esc(b.code) + '">' + chip(b.code, I.bag) + '<span class="sp-mid"><span class="sp-kw">' + esc(b.nickname) + ' <small style="color:var(--sp-ink3)">· ব্যাগ ' + bn(b.bodyNo) + '</small></span><span class="sp-sub">' + bn(b.trips) + 'টা ট্রিপ' + (b.openTrip ? ' · এখন ' + esc(b.openTrip) + '-এ' : ' · খালি, তৈরি') + '</span>' + (b.retired ? '<span class="sp-pill pk-n">বাতিল</span>' : '') + '</span></button>'; }).join('');
+  }
   function peopleView(selId) {
+    get('people', 'erpShipPeople', {});
     if (!SH.people) return '<div class="sp-wait">লোড হচ্ছে…</div>';
-    if (!SH.people.length) return '<div class="sp-empty">এখনো কোনো বহনকারী নেই। প্রথম লাগেজে বহনকারী দিলে এখানে জমা থাকবে।</div>';
-    if (wide()) return '<table class="sp-tbl"><thead><tr><th>নাম</th><th>ফোন</th><th>শহর</th><th class="r">ট্রিপ</th><th class="r">আমাদের থেকে পেয়েছেন</th><th>শেষ ট্রিপ</th></tr></thead><tbody>'
-      + SH.people.map(function (p) { return '<tr class="' + (selId === p.id ? 'sel' : '') + '" data-shp="person" data-v="' + p.id + '"><td><b>' + esc(p.name) + '</b></td><td class="code" style="font-weight:500">' + esc(p.phone) + '</td><td>' + esc(p.city) + '</td><td class="r">' + bn(p.trips) + '</td><td class="r money">' + totTxt(p.total) + '</td><td>' + (p.lastAt ? when(p.lastAt, 'DAC').split(' ').slice(0, 2).join(' ') : '—') + '</td></tr>'; }).join('') + '</tbody></table>';
-    return SH.people.map(function (p) { return '<button type="button" class="sp-row" data-shp="person" data-v="' + p.id + '"><span class="sp-av">' + esc(p.name.slice(0, 2)) + '</span><span class="sp-mid"><span class="sp-kw">' + esc(p.name) + '</span><span class="sp-sub">' + bn(p.trips) + 'টা ট্রিপ · ' + totTxt(p.total) + '</span><span class="sp-sub">' + esc(p.city || p.phone) + '</span></span></button>'; }).join('');
+    if (!SH.people.length) return '<div class="sp-empty">এখনো কোনো বহনকারী নেই। "নতুন" চাপুন; প্রত্যেকে একটা স্থায়ী কিওয়ার্ড পাবেন।</div>';
+    if (wide()) return '<table class="sp-tbl"><thead><tr><th>কিওয়ার্ড</th><th>নাম</th><th>ফোন</th><th class="r">ট্রিপ</th><th class="r">আমাদের থেকে পেয়েছেন</th><th>শেষ ট্রিপ</th></tr></thead><tbody>'
+      + SH.people.map(function (p) { return '<tr class="' + (selId === p.id ? 'sel' : '') + '" data-shp="person" data-v="' + p.id + '"><td class="code">' + esc(p.code || '') + '</td><td><b>' + esc(p.name) + '</b>' + (p.active ? ' <span class="sp-pill pk-air" style="margin:0 0 0 4px">চালান খোলা</span>' : '') + '</td><td class="code" style="font-weight:500">' + esc(p.phone) + '</td><td class="r">' + bn(p.trips) + '</td><td class="r money">' + totTxt(p.total) + '</td><td>' + (day(p.lastAt) || '—') + '</td></tr>'; }).join('') + '</tbody></table>';
+    return SH.people.map(function (p) { return '<button type="button" class="sp-row" data-shp="person" data-v="' + p.id + '"><span class="sp-av">' + esc(ini(p.name)) + '</span><span class="sp-mid"><span class="sp-kw">' + esc(p.name) + ' <small class="code" style="color:var(--sp-ink3)">' + esc(p.code || '') + '</small></span><span class="sp-sub">' + bn(p.trips) + 'টা ট্রিপ · ' + totTxt(p.total) + '</span>' + (p.active ? '<span class="sp-pill pk-air">চালান খোলা</span>' : '') + '</span></button>'; }).join('');
   }
 
   // ---------- one shipment
   function tag(s) {
-    var st = STEPS[s.type];
-    return '<div class="sp-tag"><div class="hole"></div><div class="head"><div style="flex:1;min-width:0"><div class="big code">' + esc(s.code) + '</div><span class="sp-kwb">' + esc(nick(s)) + '</span><span class="sp-type">' + (s.type === 'air' ? I.plane + 'এয়ার কার্গো' : I.bag + 'লাগেজ' + (s.tripNo > 1 ? ' · ' + bn(s.tripNo) + ' নম্বর ট্রিপ' : '')) + '</span>'
-      + '<div class="sp-route code"><span>' + s.from + '<small>' + CITY[s.from] + '</small></span><span class="ln">' + I.plane + '</span><span style="text-align:right">' + s.to + '<small>' + CITY[s.to] + '</small></span></div></div>' + qr(s.code) + '</div><div class="sp-perf"></div><div class="sp-rail">'
-      + st.map(function (x, i) { var c = i < s.step ? 'done' : i === s.step ? (s.late ? 'bad now' : 'now') : ''; return '<div class="sp-st ' + c + '"><i></i>' + x + '</div>'; }).join('') + '</div></div>';
+    var st = STEPS[s.type] || STEPS.trip, c = s.carrier;
+    var right = s.type === 'trip' ? (c ? '<button type="button" class="sp-kwcard" data-shp="person" data-v="' + c.id + '"><span class="code">' + esc(c.code) + '</span><small>বহনকারীর কিওয়ার্ড</small></button>' : '') : '';
+    return '<div class="sp-tag"><div class="hole"></div><div class="head"><div style="flex:1;min-width:0"><div class="big code">' + esc(s.code) + '</div><span class="sp-kwb">' + esc(nick(s)) + '</span><span class="sp-type">' + (s.type === 'air' ? I.plane + 'এয়ার কার্গো' : I.user + 'বহনকারী দিয়ে') + '</span>'
+      + '<div class="sp-route code"><span>' + s.from + '<small>' + CITY[s.from] + '</small></span><span class="ln">' + I.plane + '</span><span style="text-align:right">' + s.to + '<small>' + CITY[s.to] + '</small></span></div></div>' + right + '</div><div class="sp-perf"></div><div class="sp-rail">'
+      + st.map(function (x, i) { var k = i < s.step ? 'done' : i === s.step ? (s.late ? 'bad now' : 'now') : ''; return '<div class="sp-st ' + k + '"><i></i>' + x + '</div>'; }).join('') + '</div></div>';
   }
-  function backBtn(to, label) { return '<button type="button" class="sp-back' + (to === '' ? ' ph' : '') + '" data-shp="go" data-v="' + esc(to) + '">' + I.back + esc(label || 'ফিরে যান') + '</button>'; }
+  function backBtn(to, label) { return '<button type="button" class="sp-back' + (to === '' || to === 'bags' || to === 'people' ? ' ph' : '') + '" data-shp="go" data-v="' + esc(to) + '">' + I.back + esc(label || 'ফিরে যান') + '</button>'; }
   function moneyCard(s) {
     var c = s.customs, f = s.fee;
     return '<section class="sp-card"><h4>' + I.money + 'খরচ ও কাস্টমস' + (canMoney() ? '<button type="button" class="r" data-shp="go" data-v="' + esc(s.code) + '.money">লিখুন / বদলান</button>' : '') + '</h4>'
@@ -69179,67 +69241,98 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
       + '<div class="sp-mrow"><span class="nm">কাস্টমস ডিউটি' + (c && c.amt > 0 ? '<small>' + (c.by === 'carrier' ? (s.type === 'air' ? 'ফরওয়ার্ডার দিয়েছে' : 'বহনকারী দিয়েছেন · আমরা ফেরত দেব') : 'আমরা নিজে দিয়েছি') + '</small>' : '') + '</span>'
       + (c == null ? '<span class="sp-pill pk-wait" style="margin:0">লেখা হয়নি</span>' : c.amt === 0 ? '<span class="sp-pill pk-ok" style="margin:0">৳ 0 · দিতে হয়নি</span>' : '<span class="money">' + fm(c.amt, 'BDT') + '</span>') + '</div></section>';
   }
+  function groups(s) {
+    var G = [];
+    (s.bags || []).forEach(function (b) { G.push({ key: 'b' + b.id, bag: b, title: chip(b.code, I.bag) + ' ' + esc(b.nickname) + ' <small style="color:var(--sp-ink3)">· ব্যাগ ' + bn(b.bodyNo) + '</small>', items: s.items.filter(function (i) { return i.bagId === b.id; }) }); });
+    ['hand', 'own', 'cargo'].forEach(function (p) { var it = s.items.filter(function (i) { return i.place === p; }); if (it.length) G.push({ key: p, title: I[PLACE[p][1]] + ' ' + PLACE[p][0], items: it }); });
+    return G;
+  }
+  function itemsCard(s, editable) {
+    var pcs = s.items.reduce(function (a, x) { return a + x.qty; }, 0);
+    var h = '<section class="sp-card"><h4>' + I.box + 'ভেতরে ' + bn(s.items.length) + ' রকম · ' + bn(pcs) + ' পিস' + (s.step === 0 && !editable ? '<button type="button" class="r" data-shp="go" data-v="' + esc(s.code) + '.pack">যোগ / বদলান</button>' : '') + '</h4>';
+    var G = groups(s);
+    if (!G.length) return h + '<div class="sp-empty" style="margin:4px 16px 16px">এখনো কিছু নেই</div></section>';
+    G.forEach(function (g) {
+      h += '<div class="sp-grp"><span>' + g.title + '</span>' + (editable && g.bag && !g.items.length ? '<button type="button" class="sp-x" data-shp="bagout" data-v="' + g.bag.id + '">বাদ দিন</button>' : '') + '</div>';
+      if (!g.items.length) h += '<div class="sp-li"><span class="nm sp-muted">খালি</span></div>';
+      g.items.forEach(function (i) { var mm = i.got != null && i.got !== i.qty;
+        h += '<div class="sp-li' + (mm ? ' mm' : '') + '"><span class="nm" data-noi18n>' + esc(i.name) + (i.for || mm ? '<small>' + esc(i.for || '') + (mm ? (i.for ? ' · ' : '') + 'পাওয়া গেছে ' + bn(i.got) : '') + '</small>' : '') + '</span>'
+          + (editable ? '<div class="sp-stp"><button type="button" data-shp="iq" data-v="' + i.id + '" data-d="-1" aria-label="কমান">−</button><b>' + bn(i.qty) + '</b><button type="button" data-shp="iq" data-v="' + i.id + '" data-d="1" aria-label="বাড়ান">+</button></div>' : '<span class="q">' + bn(i.qty) + '</span>') + '</div>'; });
+    });
+    return h + '</section>';
+  }
   function shipView(s) {
     var h = backBtn('', 'সব চালান') + tag(s);
-    if (s.late) h += '<div class="sp-banner b-bad">' + I.warn + '<div><b>নামার ৪ ঘণ্টা পার, কেউ এখনো হাতে পায়নি</b>বহনকারীকে ফোন করুন। হাতে পেলে স্ক্যান করুন বা "হাতে পেয়েছি" চাপুন।</div></div>';
+    if (s.late) h += '<div class="sp-banner b-bad">' + I.warn + '<div><b>নামার ৪ ঘণ্টা পার, কেউ এখনো হাতে পায়নি</b>বহনকারীকে ফোন করুন। হাতে পেলে উনার কিওয়ার্ড বা যেকোনো লাগেজের QR স্ক্যান করুন।</div></div>';
     if (s.type === 'air') {
       h += '<section class="sp-card"><h4>' + I.plane + 'এয়ার কার্গো<button type="button" class="r" data-shp="go" data-v="' + esc(s.code) + '.air">বদলান</button></h4><dl class="sp-kv"><dt>ফরওয়ার্ডার</dt><dd>' + esc(s.forwarder || '—') + '</dd><dt>AWB নম্বর</dt><dd class="code">' + esc(s.awb || '—') + '</dd>'
         + '<dt>কার্টন · ওজন</dt><dd>' + (s.cartons ? bn(s.cartons) + 'টা' : '—') + ' · ' + (s.weightKg ? bn(s.weightKg) + ' কেজি' : '—') + '</dd><dt>নামবে</dt><dd>' + (s.landAt ? when(s.landAt, s.to) : '—') + '</dd></dl>'
         + (s.trackUrl ? '<div style="padding:0 16px 16px"><a class="sp-mini" href="' + esc(s.trackUrl) + '" target="_blank" rel="noopener">' + I.ext + 'ফরওয়ার্ডারের সাইটে ট্র্যাক করুন</a></div>' : '') + '</section>';
     } else {
       var c = s.carrier;
-      h += '<section class="sp-card"><h4>' + I.user + 'বহনকারী' + (s.step < 5 && s.step >= 1 ? '<button type="button" class="r" data-shp="go" data-v="' + esc(s.code) + '.carrier">' + (c ? 'বদলান' : 'দিন') + '</button>' : '') + '</h4>';
-      if (c) h += '<button type="button" class="sp-person" data-shp="person" data-v="' + c.id + '"><span class="sp-av">' + esc(c.name.slice(0, 2)) + '</span><span class="who"><b>' + esc(c.name) + '</b><span class="code" style="font-weight:500">' + esc(c.phone) + '</span><span>প্রোফাইল দেখুন</span></span></button>'
+      h += '<section class="sp-card"><h4>' + I.user + 'বহনকারী ও ফ্লাইট' + (s.step < 5 ? '<button type="button" class="r" data-shp="go" data-v="' + esc(s.code) + '.carrier">' + (c ? 'বদলান' : 'দিন') + '</button>' : '') + '</h4>';
+      if (c) h += '<button type="button" class="sp-person" data-shp="person" data-v="' + c.id + '"><span class="sp-av">' + esc(ini(c.name)) + '</span><span class="who"><b>' + esc(c.name) + ' <span class="code" style="display:inline;font-size:13px;color:var(--sp-ink3)">' + esc(c.code) + '</span></b><span class="code" style="font-weight:500">' + esc(c.phone) + '</span><span>প্রোফাইল ও কিওয়ার্ড কার্ড</span></span></button>'
         + '<div style="display:flex;gap:8px;padding:0 16px 12px">' + (c.phone ? '<a class="sp-mini" href="tel:' + esc(c.phone.replace(/[^\d+]/g, '')) + '">' + I.phone + 'ফোন</a>' : '') + (c.phone && c.waOk ? '<a class="sp-mini" target="_blank" rel="noopener" href="https://wa.me/' + esc(c.phone.replace(/\D/g, '')) + '">' + I.wa + 'হোয়াটসঅ্যাপ</a>' : '') + '</div>'
-        + '<dl class="sp-kv"><dt>ফ্লাইট</dt><dd class="code">' + esc(s.flightNo || '—') + '</dd><dt>ছাড়বে</dt><dd>' + (s.departAt ? when(s.departAt, s.from) + ' (' + CITY[s.from] + ')' : '—') + '</dd><dt>নামবে</dt><dd>' + (s.landAt ? when(s.landAt, s.to) + ' (' + CITY[s.to] + ')' : '—') + '</dd><dt>ফেরার ফ্লাইট</dt><dd>' + (s.returnOn ? when(s.returnOn + 'T12:00:00Z', 'DAC').split(' ').slice(0, 2).join(' ') : 'জানা নেই') + '</dd></dl>';
-      else h += '<div class="sp-empty" style="margin:4px 16px 16px">' + (s.step === 0 ? 'সিল করার পর বহনকারী দিন' : 'এখনো কাউকে দেওয়া হয়নি') + '</div>';
+        + '<dl class="sp-kv"><dt>ফ্লাইট</dt><dd class="code">' + esc(s.flightNo || '—') + '</dd><dt>ছাড়বে</dt><dd>' + (s.departAt ? when(s.departAt, s.from) + ' (' + CITY[s.from] + ')' : '—') + '</dd><dt>নামবে</dt><dd>' + (s.landAt ? when(s.landAt, s.to) + ' (' + CITY[s.to] + ')' : '—') + '</dd><dt>ফেরার ফ্লাইট</dt><dd>' + (s.returnOn ? day(s.returnOn + 'T12:00:00Z') : 'জানা নেই') + '</dd></dl>';
+      else h += '<div class="sp-empty" style="margin:4px 16px 16px">এখনো কাউকে দেওয়া হয়নি</div>';
       h += '</section>';
     }
-    h += moneyCard(s);
-    var pcs = s.items.reduce(function (a, x) { return a + x.qty; }, 0);
-    h += '<section class="sp-card"><h4>' + I.box + 'ভেতরে ' + bn(s.items.length) + ' রকম · ' + bn(pcs) + ' পিস' + (s.step === 0 ? '<button type="button" class="r" data-shp="go" data-v="' + esc(s.code) + '.pack">যোগ / বদলান</button>' : '') + '</h4>'
-      + (s.items.length ? s.items.map(function (i) { var mm = i.got != null && i.got !== i.qty; return '<div class="sp-li' + (mm ? ' mm' : '') + '"><span class="nm" data-noi18n>' + esc(i.name) + (i.for || mm ? '<small>' + esc(i.for || '') + (mm ? (i.for ? ' · ' : '') + 'পাওয়া গেছে ' + bn(i.got) : '') + '</small>' : '') + '</span><span class="q">' + bn(i.qty) + '</span></div>'; }).join('') : '<div class="sp-empty" style="margin:4px 16px 16px">এখনো কিছু লেখা হয়নি</div>') + '</section>';
-    if (s.trips && s.trips.length > 1) h += '<section class="sp-card"><h4>এই লাগেজের ট্রিপ</h4>' + s.trips.map(function (t) { return '<div class="sp-li"><span class="nm">' + bn(t.tripNo) + ' নম্বর ট্রিপ · ' + t.from + ' → ' + t.to + '</span><span class="sp-pill ' + (t.done ? 'pk-ok' : 'pk-n') + '" style="margin:0">' + (t.done ? 'মিলেছে' : 'চলছে') + '</span></div>'; }).join('') + '</section>';
+    h += itemsCard(s, false) + moneyCard(s);
     h += '<section class="sp-card"><h4>কী কী হলো</h4><div class="sp-log">' + s.events.map(function (e) { return '<div><time>' + when(e.at, 'DAC') + '</time><span>' + esc(EVT(e.what)) + (e.by ? ' · ' + esc(e.by) : '') + '</span></div>'; }).join('') + '</div></section>';
     var a = '';
-    if (s.type === 'air') a = ['<button type="button" class="sp-pri" data-shp="step" data-v="book">' + I.plane + 'ফরওয়ার্ডারে বুক হয়েছে</button>', '<button type="button" class="sp-pri" data-shp="step" data-v="pickup">' + I.box + 'পিকআপ হয়েছে</button>', '<button type="button" class="sp-pri" data-shp="step" data-v="fly">' + I.plane + 'ফ্লাইট ছেড়েছে</button>',
+    if (s.type === 'air') a = ['<button type="button" class="sp-pri" data-shp="go" data-v="' + esc(s.code) + '.pack">' + I.box + 'প্রোডাক্ট লিখুন</button>', '<button type="button" class="sp-pri" data-shp="step" data-v="pickup">' + I.box + 'পিকআপ হয়েছে</button>', '<button type="button" class="sp-pri" data-shp="step" data-v="fly">' + I.plane + 'ফ্লাইট ছেড়েছে</button>',
       '<button type="button" class="sp-pri" data-shp="step" data-v="customs">' + I.shield + 'নেমেছে, কাস্টমসে</button>', '<button type="button" class="sp-pri" data-shp="step" data-v="receive">' + I.ok + 'হাতে পেয়েছি</button>', '<button type="button" class="sp-pri" data-shp="go" data-v="' + esc(s.code) + '.check">' + I.ok + 'প্রোডাক্ট মিলিয়ে নিন</button>', ''][s.step];
-    else a = ['<button type="button" class="sp-pri" data-shp="step" data-v="seal"' + (s.items.length ? '' : ' disabled') + '>' + I.lock + 'সিল করুন</button>', '<button type="button" class="sp-pri" data-shp="go" data-v="' + esc(s.code) + '.carrier">' + I.user + 'বহনকারী দিন</button>',
-      '<button type="button" class="sp-sec" data-shp="step" data-v="fly">উড়ে গেছে</button><button type="button" class="sp-pri" data-shp="scanstep" data-v="receive">' + I.qr + 'হাতে পেলে স্ক্যান</button>',
-      '<button type="button" class="sp-pri" data-shp="scanstep" data-v="receive">' + I.qr + 'হাতে পেলে স্ক্যান</button>', '<button type="button" class="sp-sec" data-shp="step" data-v="receive">স্ক্যান ছাড়া</button><button type="button" class="sp-pri" data-shp="scanstep" data-v="receive">' + I.qr + 'হাতে পেয়েছি (স্ক্যান)</button>',
-      '<button type="button" class="sp-pri" data-shp="go" data-v="' + esc(s.code) + '.check">' + I.ok + 'প্রোডাক্ট মিলিয়ে নিন</button>', '<button type="button" class="sp-pri" data-shp="return">' + I.box + 'ফেরার জন্য প্যাক শুরু</button>'][s.step];
-    if (s.type === 'bag' && s.step === 1 && s.carrier) a = '<button type="button" class="sp-sec" data-shp="go" data-v="' + esc(s.code) + '.carrier">বদলান</button><button type="button" class="sp-pri" data-shp="step" data-v="hand">' + I.qr + 'বহনকারীর হাতে দেওয়া হলো</button>';
+    else a = ['<button type="button" class="sp-pri" data-shp="go" data-v="' + esc(s.code) + '.pack">' + I.box + 'লাগেজ ও প্রোডাক্ট দিন</button>',
+      s.carrier ? '<button type="button" class="sp-sec" data-shp="go" data-v="' + esc(s.code) + '.carrier">বদলান</button><button type="button" class="sp-pri" data-shp="step" data-v="hand">' + I.hand + 'বহনকারীর হাতে দেওয়া হলো</button>' : '<button type="button" class="sp-pri" data-shp="go" data-v="' + esc(s.code) + '.carrier">' + I.user + 'বহনকারী দিন</button>',
+      '<button type="button" class="sp-sec" data-shp="step" data-v="fly">উড়ে গেছে</button><button type="button" class="sp-pri" data-shp="scanstep">' + I.qr + 'হাতে পেলে স্ক্যান</button>',
+      '<button type="button" class="sp-pri" data-shp="scanstep">' + I.qr + 'হাতে পেলে স্ক্যান</button>', '<button type="button" class="sp-sec" data-shp="step" data-v="receive">স্ক্যান ছাড়া</button><button type="button" class="sp-pri" data-shp="scanstep">' + I.qr + 'হাতে পেয়েছি (স্ক্যান)</button>',
+      '<button type="button" class="sp-pri" data-shp="go" data-v="' + esc(s.code) + '.check">' + I.ok + 'প্রোডাক্ট মিলিয়ে নিন</button>', '<button type="button" class="sp-pri" data-shp="return">' + I.swap + 'ফেরার চালান শুরু (একই লাগেজ)</button>'][s.step];
     return h + (a ? '<div class="sp-act">' + a + '</div>' : '');
   }
-  var EV = { 'Bag made, packing started': 'লাগেজ তৈরি, প্যাক শুরু', 'Air cargo made': 'এয়ার কার্গো তৈরি', 'Sealed': 'সিল করা হলো', 'Handed to the carrier (scan)': 'বহনকারীর হাতে দেওয়া হলো', 'Flight left': 'ফ্লাইট ছেড়েছে',
-    'In hand (scan) - shipment complete': 'হাতে পেয়েছি · শিপমেন্ট শেষ', 'In hand - shipment complete': 'হাতে পেয়েছি · শিপমেন্ট শেষ', 'Booked with the forwarder': 'ফরওয়ার্ডারে বুক হয়েছে', 'Picked up': 'পিকআপ হয়েছে',
-    'Landed, at customs': 'নেমেছে, কাস্টমসে', 'Counted: everything matches': 'গোনা শেষ: সব মিলেছে', 'Return trip: packing started': 'ফেরার ট্রিপ: প্যাক শুরু', 'Cargo details saved': 'কার্গোর তথ্য সেভ হলো' };
-  function EVT(w) { if (EV[w]) return EV[w]; if (/^Counted: /.test(w)) return 'গোনা শেষ: গরমিল আছে · ' + w.replace(/^Counted: \d+ line\(s\) do not match - /, ''); if (/^Carrier: /.test(w)) return 'বহনকারী: ' + w.slice(9); return w.replace(/^Fee /, 'ফি ').replace(/Freight /, 'ভাড়া ').replace(/Customs BDT 0 \(nothing to pay\)/, 'কাস্টমস ৳ 0').replace(/Customs BDT /, 'কাস্টমস ৳ '); }
+  var EV = { 'Shipment made, packing started': 'চালান তৈরি, প্যাক শুরু', 'Air cargo made': 'এয়ার কার্গো তৈরি', 'Sealed, ready to hand over': 'সিল করা হলো', 'Handed to the traveller': 'বহনকারীর হাতে দেওয়া হলো', 'Flight left': 'ফ্লাইট ছেড়েছে',
+    'In hand - shipment complete': 'হাতে পেয়েছি · শিপমেন্ট শেষ', 'Booked with the forwarder': 'ফরওয়ার্ডারে বুক হয়েছে', 'Picked up': 'পিকআপ হয়েছে', 'Landed, at customs': 'নেমেছে, কাস্টমসে',
+    'Counted: everything matches': 'গোনা শেষ: সব মিলেছে', 'Cargo details saved': 'কার্গোর তথ্য সেভ হলো', 'Bag made, packing started': 'লাগেজ তৈরি, প্যাক শুরু', 'Sealed': 'সিল করা হলো', 'Handed to the carrier (scan)': 'বহনকারীর হাতে দেওয়া হলো', 'In hand (scan) - shipment complete': 'হাতে পেয়েছি · শিপমেন্ট শেষ' };
+  function EVT(w) { if (EV[w]) return EV[w]; var m;
+    if ((m = /^In hand - shipment complete \(scan (.+)\)$/.exec(w))) return 'হাতে পেয়েছি · শিপমেন্ট শেষ (স্ক্যান ' + m[1] + ')';
+    if (/^Counted: /.test(w)) return 'গোনা শেষ: গরমিল আছে · ' + w.replace(/^Counted: \d+ line\(s\) do not match - /, '');
+    if (/^(Traveller|Carrier): /.test(w)) return 'বহনকারী: ' + w.replace(/^(Traveller|Carrier): /, '');
+    if (/^Bag added: /.test(w)) return 'লাগেজ যোগ: ' + w.slice(11); if (/^Bag taken out: /.test(w)) return 'লাগেজ বাদ: ' + w.slice(15);
+    if (/^Way back of /.test(w)) return w.replace(/^Way back of (\S+): packing started/, '$1-এর ফেরার চালান: প্যাক শুরু');
+    return w.replace(/^Fee /, 'ফি ').replace(/Freight /, 'ভাড়া ').replace(/Customs BDT 0 \(nothing to pay\)/, 'কাস্টমস ৳ 0').replace(/Customs BDT /, 'কাস্টমস ৳ '); }
 
   function packView(s) {
-    var pcs = s.items.reduce(function (a, x) { return a + x.qty; }, 0);
-    return backBtn(s.code, s.code) + '<div class="sp-banner b-info">' + I.box + '<div>যা যা ঢোকাচ্ছেন লিখুন: নাম, কয়টা, আর কার মাল (যেমন Oliareen)। সিল করার পর আর বদলানো যাবে না।</div></div>'
-      + '<section class="sp-card"><h4>' + I.box + 'ভেতরে ' + bn(s.items.length) + ' রকম · ' + bn(pcs) + ' পিস</h4>'
-      + s.items.map(function (i) { return '<div class="sp-li"><span class="nm" data-noi18n>' + esc(i.name) + (i.for ? '<small>' + esc(i.for) + '</small>' : '') + '</span><div class="sp-stp"><button type="button" data-shp="iq" data-v="' + i.id + '" data-d="-1" aria-label="কমান">−</button><b>' + bn(i.qty) + '</b><button type="button" data-shp="iq" data-v="' + i.id + '" data-d="1" aria-label="বাড়ান">+</button></div></div>'; }).join('')
-      + '<form class="sp-add" id="sp_addf"><input id="sp_an" placeholder="প্রোডাক্টের নাম" aria-label="প্রোডাক্টের নাম" maxlength="160"><input id="sp_aq" class="qty" inputmode="numeric" value="1" aria-label="কয়টা"><input id="sp_af" class="for" placeholder="কার মাল" aria-label="কার মাল" maxlength="40" value="' + esc(SH.lastFor || '') + '"><button type="submit" class="sp-pri" style="height:46px">যোগ</button></form></section>'
-      + '<div class="sp-act"><button type="button" class="sp-pri" data-shp="step" data-v="' + (s.type === 'air' ? 'book' : 'seal') + '"' + (s.items.length ? '' : ' disabled') + '>' + I.lock + (s.type === 'air' ? 'প্যাক শেষ · বুক হয়েছে' : 'সিল করুন · ' + bn(s.items.length) + ' রকম') + '</button></div>';
+    if (s.type === 'trip') get('bags', 'erpShipBags', {});
+    var inTrip = {}; (s.bags || []).forEach(function (b) { inTrip[b.id] = 1; });
+    var free = (SH.bags || []).filter(function (b) { return !b.retired && !inTrip[b.id] && !b.openTrip; });
+    var places = (s.type === 'air' ? [['cargo', 'কার্গোতে']] : (s.bags || []).map(function (b) { return ['b' + b.id, b.code + ' · ' + b.nickname]; }).concat([['hand', 'হাতে'], ['own', 'উনার নিজের ব্যাগে']]));
+    if (!SH.addPlace || !places.some(function (p) { return p[0] === SH.addPlace; })) SH.addPlace = places[0] ? places[0][0] : '';
+    var h = backBtn(s.code, s.code) + '<div class="sp-banner b-info">' + I.box + '<div>' + (s.type === 'air' ? 'কার্গোতে কী কী যাচ্ছে লিখুন।' : 'আগে লাগেজ যোগ করুন, তারপর প্রোডাক্ট লিখুন: কোন লাগেজে, নাকি হাতে, নাকি উনার নিজের ব্যাগে।') + ' সিল করার পর আর বদলানো যাবে না।</div></div>';
+    if (s.type === 'trip') h += '<section class="sp-card"><h4>' + I.bag + 'লাগেজ যোগ করুন</h4><div class="sp-add" style="border-top:0">'
+      + (free.length ? '<select id="sp_bagpick" aria-label="আগের লাগেজ"><option value="">— আগের লাগেজ বেছে নিন —</option>' + free.map(function (b) { return '<option value="' + b.id + '">' + esc(b.code + ' · ' + b.nickname + ' · ব্যাগ ' + bn(b.bodyNo)) + '</option>'; }).join('') + '</select><button type="button" class="sp-sec" data-shp="bagin" style="height:46px">যোগ</button>' : '')
+      + '<input id="sp_newbag" placeholder="নতুন লাগেজের ডাকনাম" maxlength="60" aria-label="নতুন লাগেজের ডাকনাম"><button type="button" class="sp-sec" data-shp="bagnew" style="height:46px">' + I.qr + 'নতুন লাগেজ (নতুন QR)</button></div>'
+      + '<p class="sp-muted" style="padding:0 16px 12px">লাগেজের QR স্ক্যান করেও যোগ করা যায়: <button type="button" class="sp-x" data-shp="bagscan">' + I.qr + ' স্ক্যান</button></p></section>';
+    h += itemsCard(s, true);
+    if (places.length) h += '<section class="sp-card"><h4>' + I.plus + 'প্রোডাক্ট লিখুন</h4><div class="sp-quick" style="padding:0 16px">' + places.map(function (p) { return '<button type="button" data-shp="aplace" data-v="' + esc(p[0]) + '" class="' + (SH.addPlace === p[0] ? 'on' : '') + '">' + esc(p[1]) + '</button>'; }).join('') + '</div>'
+      + '<form class="sp-add" id="sp_addf" style="border-top:0"><input id="sp_an" placeholder="প্রোডাক্টের নাম" aria-label="প্রোডাক্টের নাম" maxlength="160"><input id="sp_aq" class="qty" inputmode="numeric" value="1" aria-label="কয়টা"><input id="sp_af" class="for" placeholder="কার মাল" aria-label="কার মাল" maxlength="40" value="' + esc(SH.lastFor || '') + '"><button type="submit" class="sp-pri" style="height:46px">যোগ</button></form></section>';
+    return h + '<div class="sp-act"><button type="button" class="sp-pri" data-shp="step" data-v="' + (s.type === 'air' ? 'book' : 'seal') + '"' + (s.items.length ? '' : ' disabled') + '>' + I.lock + (s.type === 'air' ? 'প্যাক শেষ · বুক হয়েছে' : 'সিল করুন · ' + bn(s.items.length) + ' রকম') + '</button></div>';
   }
   function dtl(t, off) { var x = clock(t, off); if (!x) return ''; var p = function (n) { return ('0' + n).slice(-2); }; return x.y + '-' + p(x.mo + 1) + '-' + p(x.d) + 'T' + p(x.h) + ':' + p(x.mi); }
   function fromDtl(v, off) { if (!v) return null; var m = /^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d)/.exec(v); if (!m) return null; return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4] - off, +m[5])).toISOString(); }
   function carrierView(s) {
+    get('people', 'erpShipPeople', {});
     var c = s.carrier, ppl = SH.people || [];
-    var opts = ppl.map(function (p) { return '<option value="' + p.id + '"' + (c && c.id === p.id ? ' selected' : '') + '>' + esc(p.name) + (p.phone ? ' · ' + esc(p.phone) : '') + '</option>'; }).join('');
+    var opts = ppl.map(function (p) { return '<option value="' + p.id + '"' + (c && c.id === p.id ? ' selected' : '') + '>' + esc((p.code ? p.code + ' · ' : '') + p.name) + (p.phone ? ' · ' + esc(p.phone) : '') + '</option>'; }).join('');
     var offF = s.from === 'ICN' ? 9 : 6, offT = s.to === 'ICN' ? 9 : 6;
     return backBtn(s.code, s.code) + '<section class="sp-card"><h4>' + I.user + 'কে নিয়ে যাচ্ছেন</h4><div class="sp-form">'
-      + (ppl.length ? '<div class="sp-fld"><label for="sp_cp">আগের বহনকারী</label><select id="sp_cp"><option value="">— নতুন মানুষ —</option>' + opts + '</select></div>' : '')
+      + (ppl.length ? '<div class="sp-fld"><label for="sp_cp">আগের বহনকারী (কিওয়ার্ড বা নাম)</label><select id="sp_cp"><option value="">— নতুন মানুষ —</option>' + opts + '</select></div>' : '')
       + '<div id="sp_newp"' + (c ? ' hidden' : '') + '><div class="sp-fld"><label for="sp_cn">নাম</label><input id="sp_cn" maxlength="80"></div><div class="sp-two" style="margin-top:12px"><div class="sp-fld"><label for="sp_cph">ফোন / হোয়াটসঅ্যাপ</label><input id="sp_cph" inputmode="tel" placeholder="+880 / +82"></div><div class="sp-fld"><label for="sp_ce">ইমেইল</label><input id="sp_ce" inputmode="email"></div></div>'
-      + '<div class="sp-fld" style="margin-top:12px"><label for="sp_cc">শহর</label><input id="sp_cc" maxlength="60"></div><label class="sp-check" style="margin-top:12px"><input type="checkbox" id="sp_cw"> হোয়াটসঅ্যাপে মনে করিয়ে দিতে রাজি</label><p class="sp-muted" style="margin-top:8px">পাসপোর্ট নম্বর রাখা হয় না।</p></div>'
+      + '<div class="sp-fld" style="margin-top:12px"><label for="sp_cc">শহর</label><input id="sp_cc" maxlength="60"></div><label class="sp-check" style="margin-top:12px"><input type="checkbox" id="sp_cw"> হোয়াটসঅ্যাপে মনে করিয়ে দিতে রাজি</label><p class="sp-muted" style="margin-top:8px">নতুন মানুষ সেভ হলে একটা স্থায়ী কিওয়ার্ড (যেমন C-0007) আর QR কার্ড পাবেন। পাসপোর্ট নম্বর রাখা হয় না।</p></div>'
       + '</div></section><section class="sp-card"><h4>' + I.plane + 'ফ্লাইট</h4><div class="sp-form">'
       + '<div class="sp-fld"><label for="sp_fn">ফ্লাইট নম্বর</label><input id="sp_fn" class="code" style="font-weight:600" value="' + esc(s.flightNo || '') + '" placeholder="KE 0657"></div>'
       + '<div class="sp-fld"><label for="sp_fd">ছাড়বে (' + CITY[s.from] + 'র সময়)</label><input id="sp_fd" type="datetime-local" value="' + (s.departAt ? dtl(s.departAt, offF) : '') + '"></div>'
       + '<div class="sp-fld"><label for="sp_fa">নামবে (' + CITY[s.to] + 'র সময়)</label><input id="sp_fa" type="datetime-local" value="' + (s.landAt ? dtl(s.landAt, offT) : '') + '"></div>'
       + '<div class="sp-fld"><label for="sp_fr">ফেরার ফ্লাইট (জানা থাকলে)</label><input id="sp_fr" type="date" value="' + esc(s.returnOn || '') + '"></div></div></section>'
-      + '<div class="sp-act"><button type="button" class="sp-pri" data-shp="savecarrier">' + I.ok + 'বহনকারী সেভ করুন</button></div>';
+      + '<div class="sp-act"><button type="button" class="sp-pri" data-shp="savecarrier">' + I.ok + 'সেভ করুন</button></div>';
   }
   function airView(s) {
     return backBtn(s.code, s.code) + '<section class="sp-card"><h4>' + I.plane + 'এয়ার কার্গোর তথ্য</h4><div class="sp-form">'
@@ -69263,62 +69356,88 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
   function checkView(s) {
     var c = SH.counts[s.id] || (SH.counts[s.id] = {}); s.items.forEach(function (i) { if (!(i.id in c)) c[i.id] = i.got; });
     var done = s.items.filter(function (i) { return c[i.id] != null; }).length, bad = s.items.filter(function (i) { return c[i.id] != null && c[i.id] !== i.qty; }).length;
-    var h = backBtn(s.code, s.code) + '<div class="sp-banner ' + (bad ? 'b-bad' : 'b-info') + '">' + (bad ? I.warn : I.box) + '<div><b>' + bn(done) + '/' + bn(s.items.length) + ' রকম গোনা হয়েছে' + (bad ? ' · ' + bn(bad) + 'টায় গরমিল' : '') + '</b>প্রতিটা প্রোডাক্ট বের করে গুনে টিক দিন। কম বা বেশি হলে − / + চাপুন।</div></div><section class="sp-card">'
-      + s.items.map(function (i) { var v = c[i.id], st = v == null ? '' : v === i.qty ? 'ok' : 'mm';
-        return '<div class="sp-li ' + st + '"><button type="button" class="sp-tick" data-shp="cok" data-v="' + i.id + '" aria-label="মিলেছে">' + (st === 'mm' ? '!' : I.ok) + '</button><span class="nm" data-noi18n>' + esc(i.name) + '<small>পাঠানো ' + bn(i.qty) + (st === 'mm' ? ' · <b style="color:#DC2626">' + bn(Math.abs(v - i.qty)) + 'টা ' + (v < i.qty ? 'কম' : 'বেশি') + '</b>' : '') + '</small></span>'
-          + '<div class="sp-stp"><button type="button" data-shp="cq" data-v="' + i.id + '" data-d="-1" aria-label="কম">−</button><b>' + (v == null ? '–' : bn(v)) + '</b><button type="button" data-shp="cq" data-v="' + i.id + '" data-d="1" aria-label="বেশি">+</button></div></div>'; }).join('') + '</section>'
-      + '<div class="sp-act">' + (done < s.items.length ? '<button type="button" class="sp-sec" data-shp="call">সব মিলেছে</button><button type="button" class="sp-pri" disabled>' + I.ok + 'শেষ করুন</button>' : '<button type="button" class="sp-pri" data-shp="cfinish">' + I.ok + (bad ? 'গরমিলসহ শেষ করুন' : 'শেষ করুন · সব মিলেছে') + '</button>') + '</div>';
-    return h;
+    var h = backBtn(s.code, s.code) + '<div class="sp-banner ' + (bad ? 'b-bad' : 'b-info') + '">' + (bad ? I.warn : I.box) + '<div><b>' + bn(done) + '/' + bn(s.items.length) + ' রকম গোনা হয়েছে' + (bad ? ' · ' + bn(bad) + 'টায় গরমিল' : '') + '</b>প্রতিটা প্রোডাক্ট বের করে গুনে টিক দিন। কম বা বেশি হলে − / + চাপুন।</div></div><section class="sp-card">';
+    groups(s).forEach(function (g) {
+      h += '<div class="sp-grp"><span>' + g.title + '</span></div>';
+      g.items.forEach(function (i) { var v = c[i.id], st = v == null ? '' : v === i.qty ? 'ok' : 'mm';
+        h += '<div class="sp-li ' + st + '"><button type="button" class="sp-tick" data-shp="cok" data-v="' + i.id + '" aria-label="মিলেছে">' + (st === 'mm' ? '!' : I.ok) + '</button><span class="nm" data-noi18n>' + esc(i.name) + '<small>পাঠানো ' + bn(i.qty) + (st === 'mm' ? ' · <b style="color:#DC2626">' + bn(Math.abs(v - i.qty)) + 'টা ' + (v < i.qty ? 'কম' : 'বেশি') + '</b>' : '') + '</small></span>'
+          + '<div class="sp-stp"><button type="button" data-shp="cq" data-v="' + i.id + '" data-d="-1" aria-label="কম">−</button><b>' + (v == null ? '–' : bn(v)) + '</b><button type="button" data-shp="cq" data-v="' + i.id + '" data-d="1" aria-label="বেশি">+</button></div></div>'; });
+    });
+    return h + '</section><div class="sp-act">' + (done < s.items.length ? '<button type="button" class="sp-sec" data-shp="call">সব মিলেছে</button><button type="button" class="sp-pri" disabled>' + I.ok + 'শেষ করুন</button>' : '<button type="button" class="sp-pri" data-shp="cfinish">' + I.ok + (bad ? 'গরমিলসহ শেষ করুন' : 'শেষ করুন · সব মিলেছে') + '</button>') + '</div>';
   }
   function newView() {
     var air = SH.newType === 'air';
-    return backBtn('', 'সব চালান') + '<div class="sp-quick" style="margin-top:6px"><button type="button" data-shp="ntype" data-v="bag" class="' + (!air ? 'on' : '') + '">লাগেজ (নিজেদের লোক)</button><button type="button" data-shp="ntype" data-v="air" class="' + (air ? 'on' : '') + '">এয়ার কার্গো</button></div>'
-      + '<section class="sp-card"><h4>' + (air ? 'কার্গোর তথ্য' : 'লাগেজ চিনবেন কীভাবে') + '</h4><div class="sp-form">'
+    get('people', 'erpShipPeople', {});
+    var ppl = SH.people || [];
+    return backBtn('', 'সব চালান') + '<div class="sp-quick" style="margin-top:6px"><button type="button" data-shp="ntype" data-v="trip" class="' + (!air ? 'on' : '') + '">বহনকারী দিয়ে (লাগেজ / হাতে)</button><button type="button" data-shp="ntype" data-v="air" class="' + (air ? 'on' : '') + '">এয়ার কার্গো</button></div>'
+      + '<section class="sp-card"><h4>' + (air ? 'কার্গোর তথ্য' : 'কে নিয়ে যাচ্ছেন') + '</h4><div class="sp-form">'
       + (air ? '<div class="sp-fld"><label for="sp_nfw">ফরওয়ার্ডার / কুরিয়ার</label><input id="sp_nfw" placeholder="যেমন: Hanjin, DHL, EMS"></div><div class="sp-two"><div class="sp-fld"><label for="sp_nawb">AWB নম্বর (পরে দিলেও হবে)</label><input id="sp_nawb"></div><div class="sp-fld"><label for="sp_nct">কার্টন</label><input id="sp_nct" inputmode="numeric"></div></div>'
-        : '<div class="sp-fld"><label for="sp_nk">ডাকনাম (লাগেজে যা দেখে চিনবেন)</label><input id="sp_nk" maxlength="60" placeholder="যেমন: নীল বড়, কালো ট্রলি"></div>')
+        : '<div class="sp-fld"><label for="sp_np">বহনকারী (পরেও দেওয়া যাবে)</label><select id="sp_np"><option value="">— পরে দেব —</option>' + ppl.map(function (p) { return '<option value="' + p.id + '"' + (SH.newPerson === p.id ? ' selected' : '') + '>' + esc((p.code ? p.code + ' · ' : '') + p.name) + '</option>'; }).join('') + '</select></div><p class="sp-muted">নতুন মানুষ হলে "বহনকারী" ট্যাবে আগে নাম লিখুন, অথবা চালান খোলার পর "বহনকারী দিন" চাপুন।</p>')
       + '<div class="sp-two"><div class="sp-fld"><label for="sp_nf">কোথা থেকে</label><select id="sp_nf"><option value="ICN">সিউল (ICN)</option><option value="DAC">ঢাকা (DAC)</option></select></div><div class="sp-fld"><label for="sp_nt">কোথায়</label><select id="sp_nt"><option value="DAC">ঢাকা (DAC)</option><option value="ICN">সিউল (ICN)</option></select></div></div>'
-      + '<p class="sp-muted">কোড নিজে থেকে হবে। তৈরি হলে ট্যাগের QR প্রিন্ট করে লাগেজে লাগান।</p></div></section>'
+      + '<p class="sp-muted">চালান নম্বর নিজে থেকে হবে (' + (air ? 'AC-…' : 'TR-…') + ')। কাউকে মনে রাখতে হবে না।</p></div></section>'
       + '<div class="sp-act"><button type="button" class="sp-pri" data-shp="create">' + I.box + 'তৈরি করুন, প্যাক শুরু</button></div>';
   }
-  function personView(p) {
-    var h = backBtn('people', 'সব বহনকারী') + '<section class="sp-card"><div class="sp-person" style="padding-top:16px"><span class="sp-av lg">' + (p.photo ? '<img alt="" src="' + esc(p.photo) + '">' : esc(p.name.slice(0, 2))) + '</span><span class="who"><b style="font-size:19px">' + esc(p.name) + '</b><span class="code" style="font-weight:500">' + esc(p.phone || '') + '</span><span>' + esc(p.city || '') + '</span></span></div>'
-      + '<div style="display:flex;gap:8px;padding:0 16px 14px;flex-wrap:wrap">' + (p.phone ? '<a class="sp-mini" href="tel:' + esc(p.phone.replace(/[^\d+]/g, '')) + '">' + I.phone + 'ফোন</a>' : '') + (p.phone && p.waOk ? '<a class="sp-mini" target="_blank" rel="noopener" href="https://wa.me/' + esc(p.phone.replace(/\D/g, '')) + '">' + I.wa + 'হোয়াটসঅ্যাপ</a>' : '<span class="sp-pill pk-n" style="align-self:center;margin:0">হোয়াটসঅ্যাপে সম্মতি নেই</span>') + (p.email ? '<a class="sp-mini" href="mailto:' + esc(p.email) + '">' + I.mail + '</a>' : '') + '<button type="button" class="sp-mini" data-shp="editperson">বদলান</button></div>'
-      + '<div class="sp-stats"><div><b>' + bn(p.trips.length) + '</b><span>ট্রিপ</span></div><div><b>' + bn(p.trips.filter(function (t) { return t.from === 'ICN'; }).length) + ' / ' + bn(p.trips.filter(function (t) { return t.from === 'DAC'; }).length) + '</b><span>কোরিয়া→ঢাকা / ঢাকা→কোরিয়া</span></div><div><b>' + (p.trips.some(function (t) { return !t.done; }) ? 'চলছে' : 'নেই') + '</b><span>এখন</span></div></div></section>';
-    h += '<section class="sp-card"><h4>' + I.money + 'আমাদের থেকে পেয়েছেন</h4>' + (p.pays.length ? p.pays.map(function (x) { return '<div class="sp-mrow"><span class="nm">' + esc(x.code) + ' ' + (x.kind === 'fee' ? 'ফি' : 'কাস্টমস ফেরত') + '<small>' + (x.at ? when(x.at, 'DAC').split(' ').slice(0, 2).join(' ') : '') + '</small></span><span class="money">' + fm(x.amt, x.cur) + '</span></div>'; }).join('') + '<div class="sp-tot"><span>মোট</span><span class="money">' + totTxt(p.total) + '</span></div>' : '<div class="sp-empty" style="margin:4px 16px 16px">এখনো কিছু লেখা হয়নি</div>') + '</section>';
-    h += '<section class="sp-card"><h4>' + I.bag + 'ট্রিপ</h4>' + (p.trips.length ? p.trips.map(function (t) { return '<button type="button" class="sp-li" data-shp="open" data-v="' + esc(t.code) + '"><span class="sp-chip code">' + esc(t.code) + '</span><span class="nm">' + t.from + ' → ' + t.to + '<small>' + (t.at ? when(t.at, t.from).split(' ').slice(0, 2).join(' ') : '') + '</small></span><span class="sp-pill ' + (t.done ? 'pk-ok' : 'pk-n') + '" style="margin:0">' + (t.done ? 'মিলেছে' : 'চলছে') + '</span></button>'; }).join('') : '<div class="sp-empty" style="margin:4px 16px 16px">কোনো ট্রিপ নেই</div>') + '</section>';
-    if (p.note) h += '<section class="sp-card"><h4>নোট</h4><p style="padding:0 16px 16px;margin:0" data-noi18n>' + esc(p.note) + '</p></section>';
+  // ---------- a bag
+  function bagView(b) {
+    var h = backBtn('bags', 'সব লাগেজ') + '<div class="sp-tag"><div class="hole"></div><div class="head"><div style="flex:1;min-width:0"><div class="big code">' + esc(b.code) + '</div><span class="sp-kwb">' + esc(b.nickname) + '</span><span class="sp-type">' + I.bag + 'ব্যাগ ' + bn(b.bodyNo) + (b.retired ? ' · বাতিল' : '') + '</span>'
+      + '<p class="sp-muted" style="margin-top:12px">এই কোড আর QR কখনো বদলাবে না। ব্যাগ বদলালে শুধু ব্যাগ নম্বর বাড়বে।</p></div>' + qr(b.code) + '</div></div>';
+    h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="sp-sec" data-shp="printbag">' + I.print + 'ট্যাগ প্রিন্ট</button>' + (canMoney() && !b.retired ? '<button type="button" class="sp-sec" data-shp="go" data-v="b.' + esc(b.code) + '.replace">' + I.swap + 'ব্যাগ বদলান</button>' : '') + '<button type="button" class="sp-sec" data-shp="bagrename">নাম বদলান</button></div>';
+    if (b.openTrip) h += '<div class="sp-banner b-info">' + I.box + '<div><b>এখন চালান ' + esc(b.openTrip) + '-এ আছে</b><button type="button" class="sp-x" data-shp="go" data-v="' + esc(b.openTrip) + '">চালানটা খুলুন</button></div></div>';
+    h += '<section class="sp-card"><h4>' + I.box + 'ট্রিপ</h4>' + (b.trips.length ? b.trips.map(function (t) { return '<button type="button" class="sp-li" data-shp="go" data-v="' + esc(t.code) + '">' + chip(t.code, I.box) + '<span class="nm">' + t.from + ' → ' + t.to + '<small>' + day(t.at) + ' · ব্যাগ ' + bn(t.bodyNo) + '</small></span><span class="sp-pill ' + (t.done ? 'pk-ok' : 'pk-n') + '" style="margin:0">' + (t.done ? 'মিলেছে' : 'চলছে') + '</span></button>'; }).join('') : '<div class="sp-empty" style="margin:4px 16px 16px">এখনো কোনো ট্রিপ হয়নি</div>') + '</section>';
+    if (b.changes.length) h += '<section class="sp-card"><h4>' + I.swap + 'ব্যাগ বদলের ইতিহাস</h4>' + b.changes.map(function (c) { return '<div class="sp-li"><span class="nm">ব্যাগ ' + bn(c.oldBody) + ' → ব্যাগ ' + bn(c.newBody) + '<small data-noi18n>' + esc(c.reason) + ' · ' + esc(c.by) + ' · ' + day(c.at) + '</small></span></div>'; }).join('') + '</section>';
     return h;
+  }
+  function bagReplaceView(b) {
+    return backBtn('b.' + b.code, b.code) + '<div class="sp-banner b-bad">' + I.warn + '<div><b>কোড ' + esc(b.code) + ' আর QR একই থাকবে</b>নতুন ব্যাগ হবে "ব্যাগ ' + bn(b.bodyNo + 1) + '"। পুরনো ব্যাগ থেকে ট্যাগটা কেটে ফেলুন, যাতে একই QR দুই ব্যাগে না থাকে। তারপর নতুন ব্যাগে ট্যাগ প্রিন্ট করে লাগান।</div></div>'
+      + '<section class="sp-card"><h4>' + I.swap + 'কেন বদলাচ্ছেন</h4><div class="sp-form"><div class="sp-quick">' + ['ছিঁড়ে গেছে', 'চাকা / হাতল ভাঙা', 'হারিয়ে গেছে', 'চেইন নষ্ট'].map(function (r) { return '<button type="button" data-shp="rsn" data-v="' + esc(r) + '">' + r + '</button>'; }).join('') + '</div>'
+      + '<div class="sp-fld"><label for="sp_rr">কারণ</label><input id="sp_rr" maxlength="200"></div><div class="sp-fld"><label for="sp_rn">নতুন ব্যাগের ডাকনাম (না বদলালে খালি রাখুন)</label><input id="sp_rn" maxlength="60" placeholder="' + esc(b.nickname) + '"></div></div></section>'
+      + '<div class="sp-act"><button type="button" class="sp-pri" data-shp="replace">' + I.swap + 'ব্যাগ বদলান · ব্যাগ ' + bn(b.bodyNo + 1) + '</button></div>';
+  }
+  // ---------- a traveller
+  function personView(p) {
+    var open = p.trips.filter(function (t) { return !t.done; });
+    var h = backBtn('people', 'সব বহনকারী') + '<section class="sp-card"><div class="sp-person" style="padding-top:16px"><span class="sp-av lg">' + (p.photo ? '<img alt="" src="' + esc(p.photo) + '">' : esc(ini(p.name))) + '</span><span class="who"><b style="font-size:19px">' + esc(p.name) + '</b><span class="code" style="font-weight:500">' + esc(p.phone || '') + '</span><span>' + esc(p.city || '') + '</span></span></div>'
+      + '<div style="display:flex;gap:8px;padding:0 16px 14px;flex-wrap:wrap">' + (p.phone ? '<a class="sp-mini" href="tel:' + esc(p.phone.replace(/[^\d+]/g, '')) + '">' + I.phone + 'ফোন</a>' : '') + (p.phone && p.waOk ? '<a class="sp-mini" target="_blank" rel="noopener" href="https://wa.me/' + esc(p.phone.replace(/\D/g, '')) + '">' + I.wa + 'হোয়াটসঅ্যাপ</a>' : '<span class="sp-pill pk-n" style="align-self:center;margin:0">হোয়াটসঅ্যাপে সম্মতি নেই</span>') + (p.email ? '<a class="sp-mini" href="mailto:' + esc(p.email) + '">' + I.mail + '</a>' : '') + '<button type="button" class="sp-mini" data-shp="editperson">বদলান</button></div>'
+      + '<div class="sp-stats"><div><b>' + bn(p.trips.length) + '</b><span>ট্রিপ</span></div><div><b>' + bn(p.trips.filter(function (t) { return t.from === 'ICN'; }).length) + ' / ' + bn(p.trips.filter(function (t) { return t.from === 'DAC'; }).length) + '</b><span>কোরিয়া→ঢাকা / ঢাকা→কোরিয়া</span></div><div><b>' + (open.length ? bn(open.length) + 'টা খোলা' : 'নেই') + '</b><span>এখন</span></div></div></section>';
+    h += '<section class="sp-card sp-kwbox"><div class="sp-kwrow">' + qr(p.code) + '<div><small>স্থায়ী কিওয়ার্ড</small><div class="code" style="font-size:30px">' + esc(p.code) + '</div><p class="sp-muted">এটা কখনো বদলাবে না। এই কার্ড স্ক্যান করলে উনার এখনকার চালান খুলবে।</p></div></div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 16px"><button type="button" class="sp-sec" data-shp="printperson">' + I.print + 'কার্ড প্রিন্ট</button><button type="button" class="sp-sec" data-shp="pngperson">' + I.down + 'ছবি সেভ (হোয়াটসঅ্যাপে পাঠাতে)</button></div></section>';
+    if (open.length) h += '<section class="sp-card"><h4>' + I.box + 'এখন খোলা চালান</h4>' + open.map(function (t) { return '<button type="button" class="sp-li" data-shp="go" data-v="' + esc(t.code) + '">' + chip(t.code, I.box) + '<span class="nm">' + t.from + ' → ' + t.to + '<small>' + day(t.at, t.from) + '</small></span><span class="sp-pill pk-air" style="margin:0">খুলুন</span></button>'; }).join('') + '</section>';
+    h += '<section class="sp-card"><h4>' + I.money + 'আমাদের থেকে পেয়েছেন</h4>' + (p.pays.length ? p.pays.map(function (x) { return '<div class="sp-mrow"><span class="nm">' + esc(x.code) + ' ' + (x.kind === 'fee' ? 'ফি' : 'কাস্টমস ফেরত') + '<small>' + day(x.at) + '</small></span><span class="money">' + fm(x.amt, x.cur) + '</span></div>'; }).join('') + '<div class="sp-tot"><span>মোট</span><span class="money">' + totTxt(p.total) + '</span></div>' : '<div class="sp-empty" style="margin:4px 16px 16px">এখনো কিছু লেখা হয়নি</div>') + '</section>';
+    var past = p.trips.filter(function (t) { return t.done; });
+    if (past.length) h += '<section class="sp-card"><h4>' + I.done + 'আগের ট্রিপ</h4>' + past.map(function (t) { return '<button type="button" class="sp-li" data-shp="go" data-v="' + esc(t.code) + '">' + chip(t.code, I.box) + '<span class="nm">' + t.from + ' → ' + t.to + '<small>' + day(t.at, t.from) + '</small></span><span class="sp-pill pk-ok" style="margin:0">মিলেছে</span></button>'; }).join('') + '</section>';
+    if (p.note) h += '<section class="sp-card"><h4>নোট</h4><p style="padding:0 16px 16px;margin:0" data-noi18n>' + esc(p.note) + '</p></section>';
+    return h + '<div class="sp-act"><button type="button" class="sp-pri" data-shp="tripfor">' + I.box + 'উনাকে নতুন চালান দিন</button></div>';
   }
   function personEdit(p) {
     p = p || {};
-    return backBtn(p.id ? 'p.' + p.id : 'people', 'ফিরে যান') + '<section class="sp-card"><h4>' + I.user + (p.id ? 'বহনকারীর তথ্য' : 'নতুন বহনকারী') + '</h4><div class="sp-form">'
+    return backBtn(p.id ? 'p.' + p.id : 'people', 'ফিরে যান') + '<section class="sp-card"><h4>' + I.user + (p.id ? 'বহনকারীর তথ্য · ' + esc(p.code || '') : 'নতুন বহনকারী') + '</h4><div class="sp-form">'
       + '<div class="sp-photo"><label>' + (p.photo ? '<img alt="" src="' + esc(p.photo) + '">' : I.cam) + '<input type="file" accept="image/*" id="sp_pph"></label><span class="sp-muted">ছবি (ঐচ্ছিক), যাতে এয়ারপোর্টে চেনা যায়</span></div>'
       + '<div class="sp-fld"><label for="sp_pn">নাম</label><input id="sp_pn" maxlength="80" value="' + esc(p.name || '') + '"></div>'
       + '<div class="sp-two"><div class="sp-fld"><label for="sp_pp">ফোন / হোয়াটসঅ্যাপ</label><input id="sp_pp" inputmode="tel" value="' + esc(p.phone || '') + '"></div><div class="sp-fld"><label for="sp_pe">ইমেইল</label><input id="sp_pe" inputmode="email" value="' + esc(p.email || '') + '"></div></div>'
       + '<div class="sp-fld"><label for="sp_pc">শহর</label><input id="sp_pc" maxlength="60" value="' + esc(p.city || '') + '"></div>'
       + '<label class="sp-check"><input type="checkbox" id="sp_pw"' + (p.waOk ? ' checked' : '') + '> হোয়াটসঅ্যাপে মনে করিয়ে দিতে রাজি</label>'
-      + '<div class="sp-fld"><label for="sp_pnote">নোট</label><textarea id="sp_pnote" maxlength="1000">' + esc(p.note || '') + '</textarea></div></div></section>'
+      + '<div class="sp-fld"><label for="sp_pnote">নোট</label><textarea id="sp_pnote" maxlength="1000">' + esc(p.note || '') + '</textarea></div>' + (p.id ? '' : '<p class="sp-muted">সেভ করলে স্থায়ী কিওয়ার্ড তৈরি হবে।</p>') + '</div></section>'
       + '<div class="sp-act"><button type="button" class="sp-pri" data-shp="saveperson" data-v="' + (p.id || '') + '">' + I.ok + 'সেভ করুন</button></div>';
   }
 
   // ---------- paint
   function view() {
-    var r = rt(), page = r.page, detail = '', list = '';
-    var peopleTab = page === 'people' || /^p\./.test(page) || page === 'pnew' || /^pe\./.test(page);
-    if (peopleTab) { loadPeople(); list = top('people') + peopleView(/^p\./.test(page) ? Number(page.slice(2)) : 0); }
-    else { loadList(); list = top('') + findBar() + listView(r.code); }
+    var r = rt(), page = r.page, detail = '', list = '', tab = '';
+    if (/^(BG|C)-\d+$/.test(page)) { if (SH.busy !== 'find:' + page) { SH.busy = 'find:' + page; openFound(page, true); } return '<div class="shp"><div class="sp-wait">খুঁজছি…</div></div>'; }
+    if (page === 'people' || /^p\./.test(page) || page === 'pnew' || /^pe\./.test(page)) tab = 'people';
+    else if (page === 'bags' || /^b\./.test(page)) tab = 'bags';
+    if (tab === 'people') list = top('people') + peopleView(/^p\./.test(page) ? Number(page.slice(2)) : 0);
+    else if (tab === 'bags') list = top('bags') + bagsView(/^b\./.test(page) ? page.slice(2).split('.')[0] : '');
+    else list = top('') + findBar() + listView(r.code);
     if (r.code) {
       if (!SH.cur || SH.cur.code !== r.code) { if (SH.loadedFor !== r.code || SH.cur) loadCur(r.code); detail = SH.err && SH.loadedFor === r.code && !SH.cur ? '<div class="sp-banner b-bad">' + I.warn + '<div>' + esc(SH.err) + '</div></div>' : '<div class="sp-wait">লোড হচ্ছে…</div>'; }
-      else {
-        var s = SH.cur;
-        if (r.sub === 'carrier') loadPeople();
-        detail = r.sub === 'pack' ? packView(s) : r.sub === 'carrier' ? carrierView(s) : r.sub === 'check' ? checkView(s) : r.sub === 'money' ? (canMoney() ? moneyView(s) : shipView(s)) : r.sub === 'air' ? airView(s) : shipView(s);
-      }
+      else { var s = SH.cur; detail = r.sub === 'pack' ? packView(s) : r.sub === 'carrier' ? carrierView(s) : r.sub === 'check' ? checkView(s) : r.sub === 'money' ? (canMoney() ? moneyView(s) : shipView(s)) : r.sub === 'air' ? airView(s) : shipView(s); }
     } else if (page === 'new') detail = newView();
     else if (page === 'pnew') detail = personEdit(null);
     else if (/^pe\./.test(page)) detail = SH.person && SH.person.id === Number(page.slice(3)) ? personEdit(SH.person) : (loadPerson(Number(page.slice(3))), '<div class="sp-wait">লোড হচ্ছে…</div>');
     else if (/^p\./.test(page)) { var id = Number(page.slice(2)); detail = SH.person && SH.person.id === id ? personView(SH.person) : (loadPerson(id), '<div class="sp-wait">লোড হচ্ছে…</div>'); }
-    if (wide()) return '<div class="shp"><div class="sp-split"><div>' + list + '</div><aside class="sp-pane">' + (detail || '<div class="sp-pane-empty">' + I.qr + '<br>বাঁ দিক থেকে একটা ' + (peopleTab ? 'নাম' : 'চালান') + ' বেছে নিন।' + (peopleTab ? '' : '<br>অথবা কোড লিখে Enter চাপুন; USB স্ক্যানারও কাজ করে।') + '</div>') + '</aside></div></div>';
+    else if (/^b\./.test(page)) { var bc = page.slice(2).split('.'); detail = SH.bag && SH.bag.code === bc[0] ? (bc[1] === 'replace' && canMoney() ? bagReplaceView(SH.bag) : bagView(SH.bag)) : (loadBag(bc[0]), '<div class="sp-wait">লোড হচ্ছে…</div>'); }
+    if (wide()) return '<div class="shp"><div class="sp-split"><div>' + list + '</div><aside class="sp-pane">' + (detail || '<div class="sp-pane-empty">' + I.qr + '<br>বাঁ দিক থেকে একটা বেছে নিন।<br>অথবা কোড, কিওয়ার্ড বা ফোন নম্বর লিখে Enter চাপুন; USB স্ক্যানারও কাজ করে।</div>') + '</aside></div></div>';
     return '<div class="shp">' + (detail || list) + '</div>';
   }
   function paint() {
@@ -69328,82 +69447,93 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
     var sc = v.querySelector('.sp-pane'), st = sc ? sc.scrollTop : 0;
     v.innerHTML = view();
     var sc2 = v.querySelector('.sp-pane'); if (sc2) sc2.scrollTop = st;
-    if (keep) { var n = el(keep.id); if (n) { try { n.value = keep.val; n.focus(); if (keep.s != null) n.setSelectionRange(keep.s, keep.s); } catch (e) {} } }
+    if (keep) { var n = el(keep.id); if (n) { try { n.value = keep.val; n.focus(); if (keep.s != null && n.setSelectionRange) n.setSelectionRange(keep.s, keep.s); } catch (e) {} } }
   }
   var rp = repaint; repaint = function () { navSync(); if (VIEW !== 'ship') return rp.apply(this, arguments); paint(); };
   var lastW = wide(); window.addEventListener('resize', function () { if (wide() !== lastW) { lastW = wide(); paint(); } });
 
   // ---------- actions
-  function cur() { return SH.cur; }
-  function afterShip(r, toPage) { setCur(r); if (toPage !== undefined) nav(toPage); }
-  function scanThen(fn) {
+  function scanThen(fn, hint) {
     if (typeof scanOpen !== 'function') { toast('এই ব্রাউজারে ক্যামেরা নেই। কোড লিখে Enter চাপুন।', true); return; }
-    scanOpen({ hint: 'লাগেজের ট্যাগের QR ফ্রেমের ভেতরে আনুন' }).then(function (text) { if (text) fn(text); });
+    scanOpen({ hint: hint || 'লাগেজের QR বা বহনকারীর কিওয়ার্ড কার্ড ফ্রেমের ভেতরে আনুন' }).then(function (text) { if (text) fn(text); });
   }
-  function openFound(q) { srv('erpShipFind', [{ q: q }], function (r) { nav(r.code); }, function (e) { toast(esc(errOf(e)), true); }); }
   function readImg(file, max, then) {
     var fr = new FileReader(); fr.onload = function () { var im = new Image(); im.onload = function () { var k = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); then(c.toDataURL('image/jpeg', 0.8)); }; im.src = fr.result; }; fr.readAsDataURL(file);
   }
   document.addEventListener('change', function (e) {
     if (typeof VIEW === 'undefined' || VIEW !== 'ship') return;
     if (e.target.id === 'sp_cp') { var nw = el('sp_newp'); if (nw) nw.hidden = !!e.target.value; }
-    if (e.target.id === 'sp_pph' && e.target.files && e.target.files[0]) readImg(e.target.files[0], 360, function (d) { SH.photo = d; var l = e.target.parentNode; if (l) { var im = l.querySelector('img') || document.createElement('img'); im.alt = ''; im.src = d; if (!im.parentNode) { l.querySelector('svg') && l.querySelector('svg').remove(); l.insertBefore(im, e.target); } } });
+    if (e.target.id === 'sp_pph' && e.target.files && e.target.files[0]) readImg(e.target.files[0], 360, function (d) { SH.photo = d; var l = e.target.parentNode; if (l) { var im = l.querySelector('img') || document.createElement('img'); im.alt = ''; im.src = d; if (!im.parentNode) { var sv = l.querySelector('svg'); if (sv) sv.remove(); l.insertBefore(im, e.target); } } });
   });
   document.addEventListener('submit', function (e) {
     if (typeof VIEW === 'undefined' || VIEW !== 'ship') return;
     if (e.target.id === 'sp_findf') { e.preventDefault(); var q = (el('sp_q') || {}).value || ''; if (q.trim()) openFound(q.trim()); }
-    if (e.target.id === 'sp_addf') { e.preventDefault(); var s = cur(), n = el('sp_an').value.trim(), qn = parseInt(el('sp_aq').value, 10) || 1, f = el('sp_af').value.trim();
+    if (e.target.id === 'sp_addf') { e.preventDefault(); var s = SH.cur, n = el('sp_an').value.trim(), qn = parseInt(el('sp_aq').value, 10) || 1, f = el('sp_af').value.trim(), pl = SH.addPlace;
       if (!n) { toast('প্রোডাক্টের নাম লিখুন', true); return; } SH.lastFor = f;
-      call('erpShipItems', { id: s.id, add: { name: n, qty: qn, for: f } }, function (r) { setCur(r); setTimeout(function () { var x = el('sp_an'); if (x) { x.value = ''; x.focus(); } var y = el('sp_aq'); if (y) y.value = '1'; }, 0); }); }
+      var add = { name: n, qty: qn, for: f }; if (/^b\d+$/.test(pl)) { add.place = 'bag'; add.bagId = Number(pl.slice(1)); } else add.place = pl;
+      call('erpShipItems', { id: s.id, add: add }, function (r) { setCur(r); setTimeout(function () { var x = el('sp_an'); if (x) { x.value = ''; x.focus(); } var y = el('sp_aq'); if (y) y.value = '1'; }, 0); }); }
   });
   document.addEventListener('click', function (e) {
     if (typeof VIEW === 'undefined' || VIEW !== 'ship') return;
     var t = e.target.closest('[data-shp]'); if (!t) return;
-    var k = t.getAttribute('data-shp'), v = t.getAttribute('data-v') || '', s = cur();
-    if (k === 'tab') return nav(v);
-    if (k === 'go') { if (v === '' || v === 'people') { SH.list && loadList(true); } return nav(v); }
-    if (k === 'open') return nav(v);
+    var k = t.getAttribute('data-shp'), v = t.getAttribute('data-v') || '', s = SH.cur;
+    if (k === 'go') { if (v === '' ) SH.list = null; if (v === 'bags') SH.bags = null; if (v === 'people') SH.people = null; if (/^b\./.test(v)) SH.bag = null; return nav(v); }
     if (k === 'person') { SH.person = null; return nav('p.' + v); }
     if (k === 'newperson') { SH.photo = null; return nav('pnew'); }
     if (k === 'editperson') { SH.photo = null; return nav('pe.' + SH.person.id); }
+    if (k === 'newbag') { var nk = prompt('নতুন লাগেজের ডাকনাম (যেমন: নীল বড়)'); if (!nk) return; return call('erpShipBagNew', { nickname: nk }, function (r) { SH.bag = r; SH.bags = null; nav('b.' + r.code); toast('নতুন কোড ' + esc(r.code) + ' আর QR তৈরি হলো। ট্যাগ প্রিন্ট করুন।'); }); }
     if (k === 'filter') { SH.filter = v; return paint(); }
-    if (k === 'scan') return scanThen(openFound);
+    if (k === 'scan') return scanThen(function (x) { openFound(x); });
     if (k === 'ntype') { SH.newType = v; return paint(); }
+    if (k === 'printbag') return printBag(SH.bag);
+    if (k === 'printperson') return printPerson(SH.person);
+    if (k === 'pngperson') return savePersonPng(SH.person);
+    if (k === 'bagrename') { var nn = prompt('নতুন ডাকনাম', SH.bag.nickname); if (!nn) return; return call('erpShipBagSave', { id: SH.bag.id, nickname: nn }, function (r) { SH.bag = r; SH.bags = null; }); }
+    if (k === 'rsn') { var rr = el('sp_rr'); if (rr) rr.value = v; return; }
+    if (k === 'replace') return call('erpShipBagReplace', { id: SH.bag.id, reason: el('sp_rr').value, nickname: el('sp_rn').value }, function (r) { SH.bag = r; SH.bags = null; nav('b.' + r.code); toast('এখন ব্যাগ ' + bn(r.bodyNo) + '। একই QR প্রিন্ট করে নতুন ব্যাগে লাগান।'); });
+    if (k === 'tripfor') { SH.newType = 'trip'; SH.newPerson = SH.person.id; return nav('new'); }
     if (k === 'create') {
-      var air = SH.newType === 'air', a = { type: air ? 'air' : 'bag', from: el('sp_nf').value, to: el('sp_nt').value };
-      if (air) { a.forwarder = el('sp_nfw').value; a.awb = el('sp_nawb').value; a.cartons = el('sp_nct').value; } else a.nickname = el('sp_nk').value;
-      return call('erpShipNew', a, function (r) { SH.list && loadList(true); afterShip(r, r.code + '.pack'); });
+      var air = SH.newType === 'air', a = { type: air ? 'air' : 'trip', from: el('sp_nf').value, to: el('sp_nt').value };
+      if (air) { a.forwarder = el('sp_nfw').value; a.awb = el('sp_nawb').value; a.cartons = el('sp_nct').value; } else if (el('sp_np') && el('sp_np').value) a.personId = Number(el('sp_np').value);
+      return call('erpShipNew', a, function (r) { setCur(r); nav(r.code + '.pack'); });
     }
-    if (!s && ['step', 'scanstep', 'iq', 'savecarrier', 'saveair', 'savemoney', 'cok', 'cq', 'call', 'cfinish', 'return', 'mcur', 'mcs', 'mby'].indexOf(k) >= 0) return;
-    if (k === 'step') return call('erpShipStep', { id: s.id, action: v }, function (r) { afterShip(r, r.code); toast(v === 'receive' ? 'শিপমেন্ট শেষ। এবার প্রোডাক্ট মিলিয়ে নিন' : 'হলো'); });
+    if (k === 'saveperson') {
+      var pa = { name: el('sp_pn').value, phone: el('sp_pp').value, email: el('sp_pe').value, city: el('sp_pc').value, waOk: el('sp_pw').checked, note: el('sp_pnote').value };
+      if (v) pa.id = Number(v); if (SH.photo) pa.photo = SH.photo;
+      return call('erpShipPersonSave', pa, function (r) { SH.person = r; SH.people = null; SH.photo = null; nav('p.' + r.id); toast(v ? 'সেভ হলো' : 'সেভ হলো। কিওয়ার্ড: ' + esc(r.code)); });
+    }
+    if (!s) return;
+    if (k === 'aplace') { SH.addPlace = v; return paint(); }
+    if (k === 'bagin') { var bp = el('sp_bagpick'); if (!bp || !bp.value) { toast('একটা লাগেজ বেছে নিন', true); return; } return call('erpShipBagAdd', { id: s.id, bagId: Number(bp.value) }, function (r) { setCur(r); SH.bags = null; }); }
+    if (k === 'bagnew') { var nb = el('sp_newbag').value.trim(); if (!nb) { toast('নতুন লাগেজের ডাকনাম লিখুন', true); return; } return call('erpShipBagAdd', { id: s.id, nickname: nb }, function (r) { setCur(r); SH.bags = null; toast('নতুন লাগেজ যোগ হলো। "লাগেজ" ট্যাব থেকে ট্যাগ প্রিন্ট করুন।'); }); }
+    if (k === 'bagscan') return scanThen(function (x) { srv('erpShipFind', [{ q: x }], function (r) { var code = r.bag || (r.kind === 'bag' ? r.code : ''); if (!code) { toast('এটা লাগেজের QR না', true); return; }
+      srv('erpShipBag', [{ code: code }], function (b) { call('erpShipBagAdd', { id: s.id, bagId: b.id }, function (x2) { setCur(x2); SH.bags = null; toast(esc(code) + ' যোগ হলো'); }); }, function (e2) { toast(esc(errOf(e2)), true); }); }, function (e1) { toast(esc(errOf(e1)), true); }); }, 'লাগেজের QR ফ্রেমের ভেতরে আনুন');
+    if (k === 'bagout') return call('erpShipBagRemove', { id: s.id, bagId: Number(v) }, function (r) { setCur(r); SH.bags = null; });
+    if (k === 'step') return call('erpShipStep', { id: s.id, action: v }, function (r) { setCur(r); nav(r.code); toast(v === 'receive' ? 'শিপমেন্ট শেষ। এবার প্রোডাক্ট মিলিয়ে নিন' : 'হলো'); });
     if (k === 'scanstep') return scanThen(function (text) { srv('erpShipFind', [{ q: text }], function (r) {
-      if (r.code !== s.code) { toast('এটা অন্য চালানের QR: ' + esc(r.code), true); return; }
-      call('erpShipStep', { id: s.id, action: v }, function (x) { afterShip(x, x.code); toast('স্ক্যান হলো: শিপমেন্ট শেষ। এবার প্রোডাক্ট মিলিয়ে নিন'); }); }, function (e) { toast(esc(errOf(e)), true); }); });
+      var hit = r.code === s.code || (r.choices || []).some(function (c) { return c.code === s.code; });
+      if (!hit) { toast('এই QR এই চালানের না (' + esc(r.code) + ')', true); return; }
+      call('erpShipStep', { id: s.id, action: 'receive', via: r.bag || r.person || r.code }, function (x) { setCur(x); nav(x.code); toast('স্ক্যান হলো: শিপমেন্ট শেষ। এবার প্রোডাক্ট মিলিয়ে নিন'); }); }, function (e) { toast(esc(errOf(e)), true); }); });
     if (k === 'iq') { var it = s.items.filter(function (x) { return x.id === Number(v); })[0]; if (!it) return; var nq = Math.max(0, it.qty + Number(t.getAttribute('data-d')));
       return call('erpShipItems', nq === 0 ? { id: s.id, strike: it.id } : { id: s.id, qty: { itemId: it.id, qty: nq } }, function (r) { setCur(r); }); }
     if (k === 'savecarrier') {
       var pick = el('sp_cp') ? el('sp_cp').value : '', offF = s.from === 'ICN' ? 9 : 6, offT = s.to === 'ICN' ? 9 : 6;
       var a2 = { id: s.id, flightNo: el('sp_fn').value, departAt: fromDtl(el('sp_fd').value, offF), landAt: fromDtl(el('sp_fa').value, offT), returnOn: el('sp_fr').value || null };
       if (pick) a2.personId = Number(pick); else a2.person = { name: el('sp_cn').value, phone: el('sp_cph').value, email: el('sp_ce').value, city: el('sp_cc').value, waOk: el('sp_cw').checked };
-      return call('erpShipCarrier', a2, function (r) { SH.people = null; afterShip(r, r.code); toast('বহনকারী সেভ হলো'); });
+      return call('erpShipCarrier', a2, function (r) { SH.people = null; setCur(r); nav(r.code); toast('সেভ হলো' + (r.carrier ? '। কিওয়ার্ড: ' + esc(r.carrier.code) : '')); });
     }
-    if (k === 'saveair') return call('erpShipAir', { id: s.id, forwarder: el('sp_fw').value, awb: el('sp_awb').value, cartons: el('sp_ct').value, weightKg: el('sp_wt').value, landAt: fromDtl(el('sp_la').value, s.to === 'ICN' ? 9 : 6), trackUrl: el('sp_tu').value.trim() }, function (r) { afterShip(r, r.code); toast('সেভ হলো'); });
+    if (k === 'saveair') return call('erpShipAir', { id: s.id, forwarder: el('sp_fw').value, awb: el('sp_awb').value, cartons: el('sp_ct').value, weightKg: el('sp_wt').value, landAt: fromDtl(el('sp_la').value, s.to === 'ICN' ? 9 : 6), trackUrl: el('sp_tu').value.trim() }, function (r) { setCur(r); nav(r.code); toast('সেভ হলো'); });
     if (k === 'mcur' || k === 'mcs' || k === 'mby') { var d = SH.money; var mf = el('sp_mf'), ma = el('sp_ma'); if (mf) d.fee = mf.value; if (ma) d.amt = ma.value; if (k === 'mcur') d.cur = v; if (k === 'mcs') d.cs = v; if (k === 'mby') d.by = v; return paint(); }
     if (k === 'savemoney') {
       var d2 = SH.money, fv = (el('sp_mf').value || '').replace(/[^\d.]/g, ''), cs = null;
       if (d2.cs === 'zero') cs = 0; else if (d2.cs === 'paid') { var av = ((el('sp_ma') || {}).value || '').replace(/[^\d.]/g, ''); if (!av) { toast('কাস্টমসে কত টাকা দিয়েছেন লিখুন, অথবা "৳ 0" চাপুন', true); return; } cs = Number(av); }
-      return call('erpShipMoney', { id: s.id, feeAmt: fv === '' ? null : Number(fv), feeCur: d2.cur, customs: cs, customsBy: d2.by }, function (r) { SH.money = null; SH.people = null; afterShip(r, r.code); toast('সেভ হলো'); });
+      return call('erpShipMoney', { id: s.id, feeAmt: fv === '' ? null : Number(fv), feeCur: d2.cur, customs: cs, customsBy: d2.by }, function (r) { SH.money = null; SH.people = null; setCur(r); nav(r.code); toast('সেভ হলো'); });
     }
     if (k === 'cok' || k === 'cq') { var c = SH.counts[s.id], id = Number(v), item = s.items.filter(function (x) { return x.id === id; })[0]; if (!item) return;
       if (k === 'cok') c[id] = item.qty; else c[id] = Math.max(0, (c[id] == null ? item.qty : c[id]) + Number(t.getAttribute('data-d'))); return paint(); }
     if (k === 'call') { s.items.forEach(function (i) { SH.counts[s.id][i.id] = i.qty; }); return paint(); }
-    if (k === 'cfinish') return call('erpShipCheck', { id: s.id, counts: SH.counts[s.id], finish: true }, function (r) { delete SH.counts[s.id]; afterShip(r, r.code); toast('গোনা শেষ'); });
-    if (k === 'return') return call('erpShipReturn', { id: s.id }, function (r) { afterShip(r, r.code + '.pack'); });
-    if (k === 'saveperson') {
-      var pa = { name: el('sp_pn').value, phone: el('sp_pp').value, email: el('sp_pe').value, city: el('sp_pc').value, waOk: el('sp_pw').checked, note: el('sp_pnote').value };
-      if (v) pa.id = Number(v); if (SH.photo) pa.photo = SH.photo;
-      return call('erpShipPersonSave', pa, function (r) { SH.person = r; SH.people = null; SH.photo = null; nav('p.' + r.id); toast('সেভ হলো'); });
-    }
+    if (k === 'cfinish') return call('erpShipCheck', { id: s.id, counts: SH.counts[s.id], finish: true }, function (r) { delete SH.counts[s.id]; setCur(r); nav(r.code); toast('গোনা শেষ'); });
+    if (k === 'return') return call('erpShipReturn', { id: s.id }, function (r) { setCur(r); nav(r.code + '.pack'); toast('ফেরার চালান ' + esc(r.code) + ': একই লাগেজ যোগ হয়েছে'); });
   });
   setTimeout(navSync, 0);
 })();
