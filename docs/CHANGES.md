@@ -5357,3 +5357,13 @@ Shipments screen centred, up to 2200px, side pane clamp(430px,30vw,640px). Trave
 and pieces carried. NOT done: L2 carrier self-fill link, L3 bell + WhatsApp reminders (Alvi's number), L4 receive
 into Costareen/Oliareen, live + logins for Mehedi/Dipu/Rakib, a real phone-camera scan of a printed tag.
 
+
+## ship-4 (27 Nov 2026, dev) - reminders: bell + WhatsApp
+handlers/shipnotify.js + migration 180 (ship_notes, one row per shipment+kind+phone = sent once). Traveller: day before
+(flight, 2 h early, bags, keyword), day of, after landing - only when 'WhatsApp OK' on the profile. Team numbers
+(business_config ship_team_wa): coming tomorrow, landed, not received after 4 h, count differences, air cargo arriving.
+Sent from the business's Evolution link (Settings > Connections) by jobs 'alerts' every 10 minutes; without the link the
+bell and the shipment page still show everything. Page: attention list on the board, 'বার্তা' tab, messages card per
+shipment with send now. NOT done: Alvi's phone is not linked (owner/Alvi scan the QR under Settings > Connections on the
+shipment business); sales-role staff see the list on the shipment screen but not the top-bar bell (manager+ only).
+
