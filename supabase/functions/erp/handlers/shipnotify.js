@@ -304,6 +304,7 @@ export async function erpShipNotifySend(ctx, payload) {
   if (!KINDS[p.kind]) throw new Error('Which message?');
   const s = (await load(ctx, ctx.tx`s.id = ${int(p.id)}`))[0];
   if (!s) throw new Error('That shipment is not here any more.');
+  if (!plan(s, ctx.now).some((x) => x.kind === p.kind)) throw new Error('This message does not fit this shipment now (it needs a traveller and flight times, or it is already past that step).');
   if (!(await waReady(ctx))) throw new Error('WhatsApp is not linked for this business yet. Link the number under Settings → Connections.');
   const list = targets(s, p.kind, await settings(ctx));
   const go = list.filter((x) => x.phone);

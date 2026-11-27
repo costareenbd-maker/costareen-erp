@@ -55,6 +55,10 @@ check('attention list (sales): flight within a day', r.ok && r.result.bell.some(
 r = await sales('erpShipNotes', [{ id: tr }]);
 check('shipment shows its messages to come', r.ok && r.result.wa === false && r.result.notes.some((n) => n.kind === 'c_eve' && n.state === 'due' && /২ ঘণ্টা আগে/.test(n.body) && /C-0001/.test(n.body) && /BG-\d{4}/.test(n.body))
   && r.result.notes.some((n) => n.kind === 'c_day' && n.state === 'waiting') && r.result.notes.some((n) => n.kind === 't_eve'), r.ok && r.result.notes.map((n) => [n.kind, n.state]));
+r = await owner('erpShipNew', [{ type: 'trip', from: 'ICN', to: 'DAC' }]);
+const bare = r.result.id;
+r = await mgr('erpShipNotifySend', [{ id: bare, kind: 't_eve' }]);
+check('no traveller / flight: that message cannot be sent by hand', !r.ok && /does not fit/.test(r.error), r);
 r = await mgr('erpShipNotifySend', [{ id: tr, kind: 'c_eve' }]);
 check('send by hand without WhatsApp: told to link it', !r.ok && /Connections/.test(r.error), r);
 r = await tick(T0);
