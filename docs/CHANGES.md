@@ -5314,3 +5314,22 @@ is ready. Mock (impeccable, owner-approved after two rounds): .impeccable/mocks/
   (G:/bendar-brand/bizdesk/studio/studio_queue.cmd via run-hidden.vbs). Marketer WhatsApp number set in studio_phones.
   Checked live as owner on Oliareen: Studio tab desktop + phone, 0 page errors, engine heartbeat. Not checked: a real
   live job end to end (first one will be hers), the WhatsApp note on live.
+
+## ship-1 (27 Nov 2026) - vendor shipment business (dev only)
+Owner: a separate business, not inside Costareen: our own goods moved Korea <-> Bangladesh in travellers' luggage
+(bags) or by air cargo; receivers in Dhaka Mehedi, Dipu, Rakib. Shaped with impeccable first (mocks in
+.impeccable/mocks/luggage-2026-11-27, PROPOSAL.md); owner agreed: air cargo in the same app as a second type.
+- Migration 178: ship_people, ships (one row per trip; a bag keeps its BG code over round trips; air = AC code),
+  ship_items (sent qty, counted qty), ship_events. Nothing deleted (struck_at / removed_at).
+- handlers/shipments.js (14 calls, gate = business_config business_kind 'cargo'); platform create takes kind 'cargo'.
+  Money (fee, customs) needs manager; everything else any member (receivers may be sales).
+- Page block ship-1: a cargo business shows only Shipments + Settings (nav, phone tabs hidden). Board of 4 lanes
+  (Korea / on the way / Bangladesh / counted) + open shipment beside it on a computer; one column on a phone.
+  Tag with a real QR (#/ship/BG-0007 opens it, kept through start-up), camera scan via scanOpen, USB scanner or typed
+  code / nickname / AWB. Carrier profiles with trips and what they got (fee + customs paid back, per currency).
+  Customs: not written / 0 / amount + who paid. Counting line by line; return trip from a counted bag.
+- Tests: shipments_test 39/39; padmin 18/18; shareholder 43/43. Checked on the local copy: desktop + phone, full
+  flow (new, pack, seal, money, receive, count, people). Dev: deployed by erp-devsync-native (db 178 + function + web);
+  "Vendor Shipment" business made for the dev owner with demo shipments (made-up carriers).
+- NOT done: live (owner's yes), staff logins for Mehedi/Dipu/Rakib, carrier self-fill link page (L2), WhatsApp and
+  bell reminders through Alvi's number (L3), stock hand-off to Costareen/Oliareen (L4), tag print layout.
