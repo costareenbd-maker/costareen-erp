@@ -68886,7 +68886,7 @@ html[data-bizkind="cargo"] #nav .navgrp{display:none!important}
 html[data-bizkind="cargo"]:root #nav button[data-view][data-view]:not([data-view="ship"]):not([data-view="settings"]):not(.sp-a):not(.sp-b):not(.sp-c){display:none!important}
 html[data-bizkind="cargo"] #tabbar button[data-tab="invoice"],html[data-bizkind="cargo"] #tabbar button[data-tab="sales"],html[data-bizkind="cargo"] #tabbar button[data-tab="customers"],html[data-bizkind="cargo"] #tabbar button[data-tab="apps"],html[data-bizkind="cargo"] #fdplus{display:none!important}
 .shp{--sp-card:var(--fd-card,#fff);--sp-s2:var(--fd-surface-2,#F3F4F6);--sp-s3:var(--fd-surface-3,#E7E8EC);--sp-line:var(--fd-border,#E6E7EB);--sp-ink:var(--fd-text,#17181C);--sp-ink2:var(--fd-text-2,#4A4D57);--sp-ink3:var(--fd-text-3,#6B6F7B);
-  --sp-lime:#E4FF5A;--sp-sh:0 1px 2px rgba(23,24,28,.06),0 8px 24px -12px rgba(23,24,28,.18);font-family:"Noto Sans Bengali","Hind Siliguri",Inter,system-ui,sans-serif;color:var(--sp-ink);max-width:1500px}
+  --sp-lime:#E4FF5A;--sp-sh:0 1px 2px rgba(23,24,28,.06),0 8px 24px -12px rgba(23,24,28,.18);font-family:"Noto Sans Bengali","Hind Siliguri",Inter,system-ui,sans-serif;color:var(--sp-ink);max-width:2200px;margin-left:auto;margin-right:auto}
 .shp svg{stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .shp .code{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-weight:700;font-variant-numeric:tabular-nums}
 .shp .money{font-family:Inter,system-ui,sans-serif;font-weight:700;font-variant-numeric:tabular-nums}
@@ -68978,8 +68978,8 @@ html[data-theme="dark"] .shp .b-bad{color:#F87171}
 .shp .sp-mrow .nm{flex:1;font-size:14.5px}.shp .sp-mrow .nm small{display:block;color:var(--sp-ink3);font-size:12.5px}
 .shp .sp-tot{display:flex;justify-content:space-between;align-items:baseline;padding:12px 16px 16px;border-top:1px solid var(--sp-line);font-weight:700}
 .shp .sp-tot .money{font-size:18px}
-.shp .sp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--sp-line);border-top:1px solid var(--sp-line)}
-.shp .sp-stats div{background:var(--sp-card);padding:12px 14px}.shp .sp-stats b{display:block;font-size:17px;font-weight:800}.shp .sp-stats span{font-size:12.5px;color:var(--sp-ink3)}
+.shp .sp-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:1px;background:linear-gradient(var(--sp-line),var(--sp-line)) top/100% 1px no-repeat,var(--sp-card);box-shadow:inset 0 -1px 0 var(--sp-line);border-top:1px solid var(--sp-line)}
+.shp .sp-stats div{background:var(--sp-card);padding:12px 14px;box-shadow:1px 0 0 var(--sp-line),0 1px 0 var(--sp-line)}.shp .sp-stats b{display:block;font-size:17px;font-weight:800}.shp .sp-stats span{font-size:12.5px;color:var(--sp-ink3)}
 .shp .sp-form{padding:4px 16px 16px;display:grid;gap:12px}
 .shp .sp-fld label{display:block;font-size:14px;font-weight:600;margin-bottom:5px}
 .shp .sp-fld input,.shp .sp-fld select,.shp .sp-fld textarea{width:100%;height:48px;border-radius:12px;border:1px solid var(--fd-border-strong,#D7D9DF);background:var(--sp-card);color:var(--sp-ink);padding:0 14px;font-size:16px;box-sizing:border-box}
@@ -69019,7 +69019,7 @@ html[data-theme="dark"] .shp .b-bad{color:#F87171}
 .shp .sp-pane-empty{padding:70px 24px;text-align:center;color:var(--sp-ink3);border:2px dashed var(--sp-line);border-radius:20px}
 .shp .sp-pane-empty svg{width:40px;height:40px;margin-bottom:8px}
 @media (min-width:1100px){
-  .shp .sp-split{display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:18px;align-items:start}
+  .shp .sp-split{display:grid;grid-template-columns:minmax(0,1fr) clamp(430px,30vw,640px);gap:18px;align-items:start}
   .shp .sp-pane{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding-bottom:4px}
   .shp .sp-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:12px;align-items:start}
   .shp .sp-col{background:var(--sp-s3);border-radius:18px;padding:10px;min-height:160px}
@@ -69034,6 +69034,8 @@ html[data-theme="dark"] .shp .b-bad{color:#F87171}
 html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!important}
 .shp .sp-kwcard{margin-left:auto;flex:none;border:2px solid var(--sp-ink);border-radius:14px;background:var(--sp-lime);color:#17181C;padding:8px 12px;text-align:center;display:grid;gap:2px}
 .shp .sp-kwcard .code{font-size:20px}.shp .sp-kwcard small{font-size:11.5px;font-weight:600}
+.shp .sp-kwcard .sp-qr{width:92px;height:92px;margin:0 auto 2px;padding:5px}
+.shp .sp-grp .sp-qr{width:46px;height:46px;padding:3px;border-radius:8px}
 .shp .sp-grp{display:flex;align-items:center;gap:8px;padding:10px 16px 6px;border-top:1px solid var(--sp-line);font-weight:700;font-size:14px;background:var(--sp-s2)}
 .shp .sp-grp svg{width:16px;height:16px}.shp .sp-grp>span{flex:1;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .shp .sp-x{border:0;background:none;color:var(--fd-accent,#5748E6);font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:4px;padding:4px 2px}
@@ -69220,15 +69222,16 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
     get('people', 'erpShipPeople', {});
     if (!SH.people) return '<div class="sp-wait">লোড হচ্ছে…</div>';
     if (!SH.people.length) return '<div class="sp-empty">এখনো কোনো বহনকারী নেই। "নতুন" চাপুন; প্রত্যেকে একটা স্থায়ী কিওয়ার্ড পাবেন।</div>';
-    if (wide()) return '<table class="sp-tbl"><thead><tr><th>কিওয়ার্ড</th><th>নাম</th><th>ফোন</th><th class="r">ট্রিপ</th><th class="r">আমাদের থেকে পেয়েছেন</th><th>শেষ ট্রিপ</th></tr></thead><tbody>'
-      + SH.people.map(function (p) { return '<tr class="' + (selId === p.id ? 'sel' : '') + '" data-shp="person" data-v="' + p.id + '"><td class="code">' + esc(p.code || '') + '</td><td><b>' + esc(p.name) + '</b>' + (p.active ? ' <span class="sp-pill pk-air" style="margin:0 0 0 4px">চালান খোলা</span>' : '') + '</td><td class="code" style="font-weight:500">' + esc(p.phone) + '</td><td class="r">' + bn(p.trips) + '</td><td class="r money">' + totTxt(p.total) + '</td><td>' + (day(p.lastAt) || '—') + '</td></tr>'; }).join('') + '</tbody></table>';
+    if (wide()) return '<table class="sp-tbl"><thead><tr><th>কিওয়ার্ড</th><th>নাম</th><th>ফোন</th><th class="r">ট্রিপ</th><th class="r">ব্যাগ</th><th class="r">আমাদের থেকে পেয়েছেন</th><th>শেষ ট্রিপ</th></tr></thead><tbody>'
+      + SH.people.map(function (p) { return '<tr class="' + (selId === p.id ? 'sel' : '') + '" data-shp="person" data-v="' + p.id + '"><td class="code">' + esc(p.code || '') + '</td><td><b>' + esc(p.name) + '</b>' + (p.active ? ' <span class="sp-pill pk-air" style="margin:0 0 0 4px">চালান খোলা</span>' : '') + '</td><td class="code" style="font-weight:500">' + esc(p.phone) + '</td><td class="r">' + bn(p.trips) + '</td><td class="r">' + bn(p.bags || 0) + '</td><td class="r money">' + totTxt(p.total) + '</td><td>' + (day(p.lastAt) || '—') + '</td></tr>'; }).join('') + '</tbody></table>';
     return SH.people.map(function (p) { return '<button type="button" class="sp-row" data-shp="person" data-v="' + p.id + '"><span class="sp-av">' + esc(ini(p.name)) + '</span><span class="sp-mid"><span class="sp-kw">' + esc(p.name) + ' <small class="code" style="color:var(--sp-ink3)">' + esc(p.code || '') + '</small></span><span class="sp-sub">' + bn(p.trips) + 'টা ট্রিপ · ' + totTxt(p.total) + '</span>' + (p.active ? '<span class="sp-pill pk-air">চালান খোলা</span>' : '') + '</span></button>'; }).join('');
   }
 
   // ---------- one shipment
   function tag(s) {
     var st = STEPS[s.type] || STEPS.trip, c = s.carrier;
-    var right = s.type === 'trip' ? (c ? '<button type="button" class="sp-kwcard" data-shp="person" data-v="' + c.id + '"><span class="code">' + esc(c.code) + '</span><small>বহনকারীর কিওয়ার্ড</small></button>' : '') : '';
+    var right = s.type === 'trip' && c ? '<button type="button" class="sp-kwcard" data-shp="person" data-v="' + c.id + '">' + qr(c.code) + '<span class="code">' + esc(c.code) + '</span><small>বহনকারীর কিওয়ার্ড</small></button>'
+      : '<div class="sp-kwcard">' + qr(s.code) + '<span class="code">' + esc(s.code) + '</span><small>চালানের QR</small></div>';
     return '<div class="sp-tag"><div class="hole"></div><div class="head"><div style="flex:1;min-width:0"><div class="big code">' + esc(s.code) + '</div><span class="sp-kwb">' + esc(nick(s)) + '</span><span class="sp-type">' + (s.type === 'air' ? I.plane + 'এয়ার কার্গো' : I.user + 'বহনকারী দিয়ে') + '</span>'
       + '<div class="sp-route code"><span>' + s.from + '<small>' + CITY[s.from] + '</small></span><span class="ln">' + I.plane + '</span><span style="text-align:right">' + s.to + '<small>' + CITY[s.to] + '</small></span></div></div>' + right + '</div><div class="sp-perf"></div><div class="sp-rail">'
       + st.map(function (x, i) { var k = i < s.step ? 'done' : i === s.step ? (s.late ? 'bad now' : 'now') : ''; return '<div class="sp-st ' + k + '"><i></i>' + x + '</div>'; }).join('') + '</div></div>';
@@ -69243,7 +69246,7 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
   }
   function groups(s) {
     var G = [];
-    (s.bags || []).forEach(function (b) { G.push({ key: 'b' + b.id, bag: b, title: chip(b.code, I.bag) + ' ' + esc(b.nickname) + ' <small style="color:var(--sp-ink3)">· ব্যাগ ' + bn(b.bodyNo) + '</small>', items: s.items.filter(function (i) { return i.bagId === b.id; }) }); });
+    (s.bags || []).forEach(function (b) { G.push({ key: 'b' + b.id, bag: b, title: qr(b.code) + chip(b.code, I.bag) + ' ' + esc(b.nickname) + ' <small style="color:var(--sp-ink3)">· ব্যাগ ' + bn(b.bodyNo) + '</small>', items: s.items.filter(function (i) { return i.bagId === b.id; }) }); });
     ['hand', 'own', 'cargo'].forEach(function (p) { var it = s.items.filter(function (i) { return i.place === p; }); if (it.length) G.push({ key: p, title: I[PLACE[p][1]] + ' ' + PLACE[p][0], items: it }); });
     return G;
   }
@@ -69398,13 +69401,13 @@ html[data-bizkind="cargo"] #tabbar button[data-tab="inbox"]{display:none!importa
     var open = p.trips.filter(function (t) { return !t.done; });
     var h = backBtn('people', 'সব বহনকারী') + '<section class="sp-card"><div class="sp-person" style="padding-top:16px"><span class="sp-av lg">' + (p.photo ? '<img alt="" src="' + esc(p.photo) + '">' : esc(ini(p.name))) + '</span><span class="who"><b style="font-size:19px">' + esc(p.name) + '</b><span class="code" style="font-weight:500">' + esc(p.phone || '') + '</span><span>' + esc(p.city || '') + '</span></span></div>'
       + '<div style="display:flex;gap:8px;padding:0 16px 14px;flex-wrap:wrap">' + (p.phone ? '<a class="sp-mini" href="tel:' + esc(p.phone.replace(/[^\d+]/g, '')) + '">' + I.phone + 'ফোন</a>' : '') + (p.phone && p.waOk ? '<a class="sp-mini" target="_blank" rel="noopener" href="https://wa.me/' + esc(p.phone.replace(/\D/g, '')) + '">' + I.wa + 'হোয়াটসঅ্যাপ</a>' : '<span class="sp-pill pk-n" style="align-self:center;margin:0">হোয়াটসঅ্যাপে সম্মতি নেই</span>') + (p.email ? '<a class="sp-mini" href="mailto:' + esc(p.email) + '">' + I.mail + '</a>' : '') + '<button type="button" class="sp-mini" data-shp="editperson">বদলান</button></div>'
-      + '<div class="sp-stats"><div><b>' + bn(p.trips.length) + '</b><span>ট্রিপ</span></div><div><b>' + bn(p.trips.filter(function (t) { return t.from === 'ICN'; }).length) + ' / ' + bn(p.trips.filter(function (t) { return t.from === 'DAC'; }).length) + '</b><span>কোরিয়া→ঢাকা / ঢাকা→কোরিয়া</span></div><div><b>' + (open.length ? bn(open.length) + 'টা খোলা' : 'নেই') + '</b><span>এখন</span></div></div></section>';
+      + '<div class="sp-stats"><div><b>' + bn(p.trips.length) + '</b><span>ট্রিপ</span></div><div><b>' + bn(p.trips.filter(function (t) { return t.from === 'ICN'; }).length) + ' / ' + bn(p.trips.filter(function (t) { return t.from === 'DAC'; }).length) + '</b><span>কোরিয়া→ঢাকা / ঢাকা→কোরিয়া</span></div><div><b>' + bn(p.bags || 0) + '</b><span>আমাদের ব্যাগ নিয়েছেন</span></div><div><b>' + bn(p.pcs || 0) + '</b><span>পিস প্রোডাক্ট এনেছেন</span></div><div><b>' + (open.length ? bn(open.length) + 'টা খোলা' : 'নেই') + '</b><span>এখন</span></div></div></section>';
     h += '<section class="sp-card sp-kwbox"><div class="sp-kwrow">' + qr(p.code) + '<div><small>স্থায়ী কিওয়ার্ড</small><div class="code" style="font-size:30px">' + esc(p.code) + '</div><p class="sp-muted">এটা কখনো বদলাবে না। এই কার্ড স্ক্যান করলে উনার এখনকার চালান খুলবে।</p></div></div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 16px"><button type="button" class="sp-sec" data-shp="printperson">' + I.print + 'কার্ড প্রিন্ট</button><button type="button" class="sp-sec" data-shp="pngperson">' + I.down + 'ছবি সেভ (হোয়াটসঅ্যাপে পাঠাতে)</button></div></section>';
     if (open.length) h += '<section class="sp-card"><h4>' + I.box + 'এখন খোলা চালান</h4>' + open.map(function (t) { return '<button type="button" class="sp-li" data-shp="go" data-v="' + esc(t.code) + '">' + chip(t.code, I.box) + '<span class="nm">' + t.from + ' → ' + t.to + '<small>' + day(t.at, t.from) + '</small></span><span class="sp-pill pk-air" style="margin:0">খুলুন</span></button>'; }).join('') + '</section>';
     h += '<section class="sp-card"><h4>' + I.money + 'আমাদের থেকে পেয়েছেন</h4>' + (p.pays.length ? p.pays.map(function (x) { return '<div class="sp-mrow"><span class="nm">' + esc(x.code) + ' ' + (x.kind === 'fee' ? 'ফি' : 'কাস্টমস ফেরত') + '<small>' + day(x.at) + '</small></span><span class="money">' + fm(x.amt, x.cur) + '</span></div>'; }).join('') + '<div class="sp-tot"><span>মোট</span><span class="money">' + totTxt(p.total) + '</span></div>' : '<div class="sp-empty" style="margin:4px 16px 16px">এখনো কিছু লেখা হয়নি</div>') + '</section>';
     var past = p.trips.filter(function (t) { return t.done; });
-    if (past.length) h += '<section class="sp-card"><h4>' + I.done + 'আগের ট্রিপ</h4>' + past.map(function (t) { return '<button type="button" class="sp-li" data-shp="go" data-v="' + esc(t.code) + '">' + chip(t.code, I.box) + '<span class="nm">' + t.from + ' → ' + t.to + '<small>' + day(t.at, t.from) + '</small></span><span class="sp-pill pk-ok" style="margin:0">মিলেছে</span></button>'; }).join('') + '</section>';
+    if (past.length) h += '<section class="sp-card"><h4>' + I.done + 'আগের ট্রিপ</h4>' + past.map(function (t) { return '<button type="button" class="sp-li" data-shp="go" data-v="' + esc(t.code) + '">' + chip(t.code, I.box) + '<span class="nm">' + t.from + ' → ' + t.to + '<small>' + day(t.at, t.from) + ' · ' + bn(t.bags || 0) + 'টা ব্যাগ · ' + bn(t.pcs || 0) + ' পিস</small></span><span class="sp-pill pk-ok" style="margin:0">মিলেছে</span></button>'; }).join('') + '</section>';
     if (p.note) h += '<section class="sp-card"><h4>নোট</h4><p style="padding:0 16px 16px;margin:0" data-noi18n>' + esc(p.note) + '</p></section>';
     return h + '<div class="sp-act"><button type="button" class="sp-pri" data-shp="tripfor">' + I.box + 'উনাকে নতুন চালান দিন</button></div>';
   }

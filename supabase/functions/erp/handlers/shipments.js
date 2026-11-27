@@ -467,7 +467,9 @@ export async function erpShipBagReplace(ctx, payload) {
 // ---------- travellers
 async function peopleStats(ctx, id) {
   return ctx.tx`select s.id, s.code, s.type, s.from_port, s.to_port, s.step, s.depart_at, s.land_at, s.created_at, s.checked_at,
-      s.fee_amt, s.fee_cur, s.customs_amt, s.customs_by, s.carrier_id
+      s.fee_amt, s.fee_cur, s.customs_amt, s.customs_by, s.carrier_id,
+      (select count(*) from ship_trip_bags tb where tb.ship_id = s.id and tb.removed_at is null)::int as bag_n,
+      (select coalesce(sum(i.qty), 0) from ship_items i where i.ship_id = s.id)::int as pcs_n
     from ships s where s.business_id = ${ctx.biz} and s.carrier_id ${id ? ctx.tx`= ${id}` : ctx.tx`is not null`} order by coalesce(s.depart_at, s.created_at) desc`;
 }
 function moneyOf(trips) {
@@ -487,6 +489,7 @@ export async function erpShipPeople(ctx) {
     const mine = trips.filter((s) => Number(s.carrier_id) === Number(p.id));
     const m = moneyOf(mine);
     return { id: Number(p.id), code: p.code, name: p.name, phone: p.phone, email: p.email, city: p.city, waOk: p.wa_ok, trips: mine.length,
+      bags: mine.reduce((a, s) => a + Number(s.bag_n || 0), 0), pcs: mine.reduce((a, s) => a + Number(s.pcs_n || 0), 0),
       lastAt: mine[0] ? iso(mine[0].depart_at || mine[0].created_at) : null, total: m.total, active: mine.some((s) => !s.checked_at) };
   }) };
 }
@@ -499,7 +502,8 @@ export async function erpShipPerson(ctx, payload) {
   const m = moneyOf(trips);
   return { id: Number(p.id), code: p.code, name: p.name, phone: p.phone, email: p.email, city: p.city, waOk: p.wa_ok, note: p.note, photo: p.photo || '',
     since: iso(p.created_at), removed: !!p.removed_at, total: m.total, pays: m.pays,
-    trips: trips.map((s) => ({ id: Number(s.id), code: s.code, from: s.from_port, to: s.to_port, step: stepNow(s, ctx.now), at: iso(s.depart_at || s.created_at), done: !!s.checked_at })) };
+    bags: trips.reduce((a, s) => a + Number(s.bag_n || 0), 0), pcs: trips.reduce((a, s) => a + Number(s.pcs_n || 0), 0),
+    trips: trips.map((s) => ({ id: Number(s.id), code: s.code, bags: Number(s.bag_n || 0), pcs: Number(s.pcs_n || 0), from: s.from_port, to: s.to_port, step: stepNow(s, ctx.now), at: iso(s.depart_at || s.created_at), done: !!s.checked_at })) };
 }
 export async function erpShipPersonSave(ctx, payload) {
   await gate(ctx);

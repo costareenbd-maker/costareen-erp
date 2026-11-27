@@ -89,6 +89,9 @@ r = await owner('erpShipMoney', [{ id: tr, customs: -5 }]);
 check('negative customs refused', !r.ok, r);
 r = await owner('erpShipPerson', [{ id: pid }]);
 check('traveller profile money', r.ok && r.result.code === 'C-0001' && r.result.total.KRW === 90000 && r.result.total.BDT === 4500 && r.result.trips.length === 1, r);
+check('traveller profile counts bags and pieces', r.ok && r.result.bags >= 1 && r.result.pcs > 0 && r.result.trips[0].bags === r.result.bags, r.result && { bags: r.result.bags, pcs: r.result.pcs });
+r = await owner('erpShipPeople', []);
+check('traveller list counts bags', r.ok && r.result.people.some((p) => p.id === pid && p.bags >= 1 && p.pcs > 0), r.ok && r.result.people.map((p) => [p.id, p.bags]));
 
 // 7. bag replaced: same code, bag number 2, history; QR unchanged (code is the QR)
 r = await owner('erpShipBagReplace', [{ id: bag1, reason: '' }]);
