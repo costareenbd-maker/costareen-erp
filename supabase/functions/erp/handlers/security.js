@@ -14,6 +14,7 @@ const str = (v) => String(v == null ? '' : v).trim();
 
 // what an action is called on the screen; anything not here is spelled out from its name
 const WORDS = {
+  erpShipNew: 'Made a new shipment', erpShipItems: 'Changed what is inside a shipment', erpShipStep: 'Moved a shipment to its next step', erpShipCarrier: 'Set who carries a bag', erpShipAir: 'Saved air cargo details', erpShipCheck: 'Counted a shipment on arrival', erpShipMoney: 'Wrote a shipment’s fee or customs duty', erpShipReturn: 'Opened a bag’s return trip', erpShipPersonSave: 'Saved a carrier’s details',
   erpPhoneAlertsOn: 'Switched phone alerts on for a device', erpPhoneAlertsOff: 'Switched phone alerts off for a device', erpPhoneAlertsTest: 'Sent a test phone alert', erpOrderAlertTest: 'Sent a test WhatsApp order alert', erpChatReviews: 'Hid or showed a customer review', erpInboxLearn: 'Taught the AI salesperson from the team chats', erpCustomerGroups: 'Changed the customer WhatsApp groups', erpWaNumberAdd: 'Added a WhatsApp number', erpWaNumberSet: 'Changed a WhatsApp number', erpWaNumberRemove: 'Removed a WhatsApp number',
   erpUndoReceipt: 'Undid goods received by mistake (and lowered the supplier bill)',
   erpSkillSuggest: 'Asked the AI to suggest skills', erpSkillSuggestDismiss: 'Said a suggested skill is not useful',

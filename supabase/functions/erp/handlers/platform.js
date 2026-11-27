@@ -116,6 +116,8 @@ export async function erpPlatformCreate(ctx, payload) {
       await ctx.tx`insert into lookups ${ctx.tx(rows, 'business_id', 'kind', 'value', 'sort_order')}`;
     }
     for (const [k, v] of [['business_name', name], ['currency', 'BDT'], ['default_reorder', '5'], ['default_lead_time', '7']]) await setConfig(nctx, k, v);
+    // ship-1: a vendor shipment business shows the shipment screens only
+    if (payload.kind === 'cargo') await setConfig(nctx, 'business_kind', 'cargo');
     await ctx.tx`select set_config('request.jwt.claims', ${mine}, true)`;
   } catch (e) {
     await ctx.tx`select set_config('request.jwt.claims', ${mine}, true)`;
