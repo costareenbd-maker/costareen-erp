@@ -5349,3 +5349,11 @@ airlines: per-journey bag tag; on-board couriers: one job per trip with hand-ove
   Dev: erp-devsync-native applied 179 + function + web; demo data migrated (TR codes, C-0001/C-0002).
 - NOT done: live, staff logins, L2 traveller self-fill link page, L3 WhatsApp/bell (the keyword goes in those
   messages), a real camera scan on a phone (the reader is the ERP's existing scanOpen).
+
+## ship-3 (27 Nov 2026, dev) - QR on shipment page, wide screens, bags per traveller
+Owner: no QR visible on the shipment, page stuck to one side on his big screen, check every asked feature is there.
+Shipment tag now carries the traveller keyword QR (or the shipment QR for air / no traveller); each bag group shows its QR.
+Shipments screen centred, up to 2200px, side pane clamp(430px,30vw,640px). Traveller list/profile count bags taken
+and pieces carried. NOT done: L2 carrier self-fill link, L3 bell + WhatsApp reminders (Alvi's number), L4 receive
+into Costareen/Oliareen, live + logins for Mehedi/Dipu/Rakib, a real phone-camera scan of a printed tag.
+
