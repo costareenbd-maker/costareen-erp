@@ -5367,3 +5367,11 @@ bell and the shipment page still show everything. Page: attention list on the bo
 shipment with send now. NOT done: Alvi's phone is not linked (owner/Alvi scan the QR under Settings > Connections on the
 shipment business); sales-role staff see the list on the shipment screen but not the top-bar bell (manager+ only).
 
+
+### ship-4 follow-up (27 Nov 2026): Alvi's WhatsApp linked on dev
+Owner chose Alvi's number (the live Costareen inbox line 'Faujia Alvi', evolution2). Its server address, instance and
+key were copied into the dev Vendor Shipment business (Settings > Connections reads them). On dev, messages to travellers
+are off (demo phones) and no team numbers are set; one test went to the owner's own number. ship-4b: a message that does
+not fit a shipment can no longer be sent by hand. Known risk: replies to Alvi's number arrive in Costareen's inbox where
+the Costareen AI answers. Live: copy again into the live cargo business when it is made.
+
