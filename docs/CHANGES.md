@@ -5547,3 +5547,5 @@ no number linked yet. Not seen live yet: a real patient chat, the doctor's yes/n
   "লোড হচ্ছে…", on Oliareen cream #FBF3F0. Centred on computer and phone.
 - Device flag localStorage `bn_splash_oli` = 1 (set by bnSplashRemember when the active business is Oliareen, removed
   otherwise and on both sign-outs). A new device / unknown state still gets the neutral Benndar B loader (no photo).
+- Checked on dev (1440 + 390). LIVE #89 29 Nov 2026 (owner yes): #88 page + these hunks, sw cz-shell-v4-native-nosplasholi2,
+  costareen-erp + office-erp; live shows the logo loader when the device remembers Oliareen.
