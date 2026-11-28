@@ -5423,3 +5423,5 @@ structure, with two small choices.
   refused). Now live jobs use their own work dirs (d91xxxxx), a plan is re-used only when made for the same database,
   the upload passes no draft id. The engine also runs unchanged on a database without migration 187. That live job
   stays failed: Raj resends the prompt.
+
+- 28 Nov 2026 #84: studioref-1 released to LIVE (owner yes): migration 187 on postgres + both *_native, 4 function files = live + only the studioref diff, page = #83 source + studioref hunks; real browser upload checked; Raj told on WhatsApp with marked screenshots.
