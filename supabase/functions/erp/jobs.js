@@ -86,6 +86,13 @@ async function studioJob(deps, sql, out) {
   try { ids = (await sql`select distinct business_id from content_studio_jobs where state in ('done', 'failed') and notified_at is null and finished_at > now() - interval '1 day'`).map((r) => r.business_id); } catch (_) { ids = []; }
   if (tick && ids.length) for (const row of await owners(sql, ids)) { try { out['studio:' + row.name] = await asBusiness(deps, row, 'studio:notify', (ctx) => tick(ctx)); } catch (e) { out['studio:' + row.name] = String((e && e.message) || e); } }
 }
+/** clinic-1 (handlers/clinic.js): holds that ran out, the doctor's nudge, the patients' reminders. */
+async function clinicJob(deps, sql, out) {
+  const tick = await maybe('./handlers/clinic.js', 'clinicTick');
+  let ids = [];
+  try { ids = (await sql`select distinct business_id from clinic_consults where state in ('requested', 'confirmed') and starts_at > now() - interval '1 hour'`).map((r) => r.business_id); } catch (_) { ids = []; }
+  if (tick && ids.length) for (const row of await owners(sql, ids)) { try { out['clinic:' + row.name] = await asBusiness(deps, row, 'clinic:tick', (ctx) => tick(ctx)); } catch (e) { out['clinic:' + row.name] = String((e && e.message) || e); } }
+}
 /** final-server (10 Nov 2026): the server's own logs do not grow for ever. Each table keeps what its screens read
  *  (errors 180 days - the provider's error list; AI log 180 days; speed samples 30 days; activity 90 days as in core.js;
  *  public-page hit counters 1 day; skill previews 7 days). Each delete is its own statement: one missing table never
@@ -213,11 +220,13 @@ async function runJobNow(deps, job) {
     await crmJob(deps, sql, out);
     await contentJob(deps, sql, out);
     await studioJob(deps, sql, out);
+    await clinicJob(deps, sql, out);
   } else if (job === 'crm') {
     // the same event delivery alone (n8n-1: the dev ERP's timer runs only this, no inbox/social/ads)
     await crmJob(deps, sql, out);
     await contentJob(deps, sql, out);
     await studioJob(deps, sql, out);
+    await clinicJob(deps, sql, out);
   } else if (job === 'drive') {
     // copies of new files into each connected owner's Google Drive
     const tick = await maybe('./handlers/google.js', 'driveTick');

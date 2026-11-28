@@ -69956,5 +69956,605 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
 })();
 </script>
 
+<!-- clinic-1 (owner 28 Nov 2026): Doctor desk (ডাক্তার ডেস্ক). Doctors and patients; the schedule draws one line per doctor
+     (Line Map grammar: a lane per doctor in its own colour, a slot = a chip that says its time; ring = free, fill = confirmed,
+     amber = waits for the doctor's yes, tint = seen, red = did not come). Tap a slot = the patient; tap the line's name =
+     the doctor. The WhatsApp booking assistant (handlers/clinic.js) works on its own number; this page shows what it did.
+     Server: erpClinic*, owner-only labs app 'clinic'. Classes dk-* (never the ERP's short global words). -->
+<style>
+.dk{--dk-ink:#16181D;--dk-ink2:#454A55;--dk-ink3:#5C626E;--dk-rule:#E4E6EA;--dk-shelf:#F2F3F5;--dk-paper:#fff;--dk-alert:#E0301E;--dk-alert-ink:#A8260F;--dk-alert-soft:#FDECEA;
+  --dk-wait:#F2A900;--dk-wait-soft:#FFF4D6;--dk-wait-ink:#6B4A00;--dk-lime:var(--fd-lime,#E4FF5A);--dk-go:#1EA35A;
+  font:400 15px/1.5 "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;color:var(--dk-ink);font-variant-numeric:tabular-nums;max-width:1320px}
+html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE;--dk-rule:#2E3238;--dk-shelf:#23262C;--dk-paper:#17191D;--dk-alert-soft:#3A1E1B;--dk-alert-ink:#FF9C8F;--dk-wait-soft:#3A3014;--dk-wait-ink:#FFD877}
+.dk *{box-sizing:border-box}
+.dk ::selection{background:var(--dk-lime);color:#16181D}
+.dk button{font:inherit;color:inherit;cursor:pointer}
+.dk :focus-visible{outline:2px solid var(--dk-ink);outline-offset:2px}
+.dk-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+.dk-head h1{font:700 22px/1.25 "Hind Siliguri";margin:0}
+.dk-sp{flex:1}
+.dk-tabs{display:inline-flex;gap:2px;background:var(--dk-shelf);border-radius:999px;padding:3px;max-width:100%;overflow-x:auto}
+.dk-tabs button{border:0;background:none;border-radius:999px;padding:7px 15px;font:600 14px "Hind Siliguri";color:var(--dk-ink2);white-space:nowrap;min-height:38px}
+.dk-tabs button[aria-selected="true"]{background:var(--dk-lime);color:#16181D}
+.dk-tabs em{font:700 11.5px "Pretendard Variable",sans-serif;font-style:normal;background:var(--dk-wait);color:#16181D;border-radius:999px;padding:0 7px;margin-left:5px}
+.dk-seg{display:inline-flex;gap:2px;background:var(--dk-shelf);border-radius:999px;padding:3px}
+.dk-seg button{border:0;background:none;border-radius:999px;padding:5px 13px;font:600 13.5px "Hind Siliguri";color:var(--dk-ink2)}
+.dk-seg button[aria-pressed="true"]{background:var(--dk-paper);color:var(--dk-ink);box-shadow:0 0 0 1.5px var(--dk-ink) inset}
+.dk-btn{min-height:38px;border-radius:10px;border:0;background:var(--dk-shelf);padding:0 14px;font:600 14px "Hind Siliguri";display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.dk-btn:hover{filter:brightness(.97)}
+.dk-btn.dark{background:var(--dk-ink);color:var(--dk-paper)}.dk-btn.amber{background:var(--dk-wait);color:#16181D}.dk-btn.red{background:var(--dk-alert);color:#fff}
+.dk-btn.ghost{background:none;box-shadow:0 0 0 1px var(--dk-rule) inset}
+.dk-btn.sm{min-height:32px;font-size:13px;padding:0 11px;border-radius:9px}
+.dk-btn[disabled]{opacity:.5;cursor:default}
+.dk svg{width:16px;height:16px;flex:none}
+.dk-add svg{width:18px;height:18px}
+.dk-ib{width:34px;height:34px;border-radius:9px;border:0;background:var(--dk-shelf);display:inline-grid;place-items:center}
+.dk-wb{background:var(--dk-ink);color:var(--dk-paper);border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:16px;margin:0 0 18px}
+.dk-wb b.f{font:800 34px/1 "Hind Siliguri"}
+.dk-wb p{margin:0;font-weight:600}.dk-wb small{display:block;opacity:.75;font-weight:400;font-size:13px}
+.dk-wb.calm{background:var(--dk-shelf);color:var(--dk-ink)}
+.dk-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 10px}
+.dk-bar h2{font:700 17px "Hind Siliguri";margin:0 6px 0 0}
+.dk-date{display:flex;align-items:center;gap:6px;font:600 14px "Hind Siliguri"}
+.dk-map{border:1px solid var(--dk-rule);border-radius:14px;overflow:hidden;background:var(--dk-paper)}
+.dk-row{display:grid;grid-template-columns:184px minmax(0,1fr);border-top:1px solid var(--dk-rule)}
+.dk-row:first-child{border-top:0}
+.dk-lab{padding:10px 12px;display:flex;align-items:center;gap:10px;border:0;border-right:1px solid var(--dk-rule);background:var(--dk-paper);text-align:left;min-width:0}
+.dk-lab:hover{background:var(--dk-shelf)}
+.dk-lab b{display:block;font:700 14.5px/1.25 "Hind Siliguri"}
+.dk-lab small{display:block;color:var(--dk-ink3);font-size:12.5px;line-height:1.35}
+.dk-dav{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 15px "Hind Siliguri";flex:none;position:relative}
+.dk-dav i{position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;background:var(--dk-go);border:2px solid var(--dk-paper)}
+.dk-dav i.off{background:#B4B9C1}
+.dk-lane{display:flex;align-items:center;gap:6px;padding:18px 14px 14px;overflow-x:auto;min-width:0;position:relative}
+.dk-lane::-webkit-scrollbar{height:6px}.dk-lane::-webkit-scrollbar-thumb{background:#D5D8DD;border-radius:9px}
+.dk-track{display:flex;align-items:center;gap:6px;background:linear-gradient(var(--dc),var(--dc)) 0 50%/100% 3px no-repeat;flex:none}
+.dk-chip{flex:none;width:76px;min-height:48px;border-radius:12px;padding:5px 9px;font:600 12.5px/1.25 "Hind Siliguri";display:flex;flex-direction:column;justify-content:center;border:0;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.dk-chip .tm{font:700 12.5px "Hind Siliguri"}
+.dk-chip span{overflow:hidden;text-overflow:ellipsis}
+.dk-chip.confirmed{background:var(--dc);color:#fff}
+.dk-chip.requested{background:var(--dk-wait-soft);box-shadow:0 0 0 2px var(--dk-wait) inset;color:var(--dk-wait-ink)}
+.dk-chip.done{background:color-mix(in srgb,var(--dc) 16%,var(--dk-paper));color:var(--dk-ink2)}
+.dk-chip.no_show{background:var(--dk-alert-soft);box-shadow:0 0 0 2px var(--dk-alert) inset;color:var(--dk-alert-ink)}
+.dk-chip.free{background:var(--dk-paper);box-shadow:0 0 0 1.5px color-mix(in srgb,var(--dc) 50%,var(--dk-paper)) inset;color:var(--dk-ink3)}
+.dk-chip.free.wide{width:104px}
+.dk-chip:hover{transform:translateY(-1px);box-shadow:0 2px 8px rgba(22,24,29,.18)}
+.dk-chip.free:hover{box-shadow:0 0 0 1.5px var(--dc) inset,0 2px 8px rgba(22,24,29,.12)}
+.dk-seg-l{flex:none;font:600 12px "Hind Siliguri";color:var(--dk-ink2);background:var(--dk-paper);padding:2px 9px;border-radius:999px;box-shadow:0 0 0 1px var(--dk-rule) inset}
+.dk-gap{flex:none;width:18px;height:3px;background:repeating-linear-gradient(90deg,var(--dc) 0 3px,transparent 3px 6px);opacity:.6}
+.dk-now{flex:none;align-self:stretch;width:2px;background:var(--dk-ink);position:relative;margin:0 4px}
+.dk-now b{position:absolute;top:-14px;left:50%;transform:translateX(-50%);font:700 11px "Hind Siliguri";background:var(--dk-ink);color:var(--dk-paper);border-radius:6px;padding:0 6px;white-space:nowrap}
+.dk-offday{flex:1;padding:12px;border-radius:10px;background:repeating-linear-gradient(135deg,var(--dk-shelf) 0 8px,var(--dk-paper) 8px 16px);text-align:center;font:600 13px "Hind Siliguri";color:var(--dk-ink2)}
+.dk-add{display:flex;align-items:center;gap:10px;padding:12px 14px;color:var(--dk-ink2);font-weight:600;border:0;border-top:1px dashed #C9CDD4;background:none;width:100%;text-align:left}
+.dk-add:hover{background:var(--dk-shelf)}
+.dk-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 2px 0;font-size:12.5px;color:var(--dk-ink3)}
+.dk-legend i{display:inline-block;width:22px;height:12px;border-radius:4px;vertical-align:-1px;margin-right:6px}
+/* week + month */
+.dk-wk{display:grid;border:1px solid var(--dk-rule);border-radius:14px;overflow:auto;background:var(--dk-paper)}
+.dk-wk>div{border-top:1px solid var(--dk-rule);border-left:1px solid var(--dk-rule);padding:8px;min-width:0}
+.dk-wk .hd{font:600 12.5px "Hind Siliguri";color:var(--dk-ink3);border-top:0;text-align:center;background:var(--dk-shelf)}
+.dk-wk .hd.today{background:var(--dk-lime);color:#16181D}
+.dk-wk .lb{border-left:0}
+.dk-wk .cell{display:flex;flex-direction:column;gap:4px}
+.dk-wk .cell.today{background:color-mix(in srgb,var(--dk-lime) 18%,var(--dk-paper))}
+.dk-mini{border:0;border-radius:8px;padding:3px 7px;font:600 12px/1.3 "Hind Siliguri";text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dk-mini.confirmed{background:var(--dc);color:#fff}.dk-mini.requested{background:var(--dk-wait-soft);box-shadow:0 0 0 1.5px var(--dk-wait) inset;color:var(--dk-wait-ink)}
+.dk-mini.done{background:color-mix(in srgb,var(--dc) 16%,var(--dk-paper));color:var(--dk-ink2)}.dk-mini.no_show{background:var(--dk-alert-soft);color:var(--dk-alert-ink)}
+.dk-freec{font-size:12px;color:var(--dk-ink3);border:0;background:none;text-align:left;padding:2px 4px;border-radius:6px}
+.dk-freec:hover{background:var(--dk-shelf)}
+.dk-cnt{font:800 18px "Hind Siliguri";color:var(--dc)}
+/* lists */
+.dk-sec{font:700 17px "Hind Siliguri";margin:22px 0 8px;display:flex;align-items:center;gap:8px}
+.dk-fr{display:grid;grid-template-columns:96px 22px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--dk-rule);background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:left}
+.dk-fr:hover{background:color-mix(in srgb,var(--dk-shelf) 60%,transparent)}
+.dk-fr .tmx{font:700 14.5px "Hind Siliguri"}
+.dk-nd{width:14px;height:14px;border-radius:50%;border:3px solid var(--dc);background:var(--dk-paper);justify-self:center}
+.dk-nd.confirmed{background:var(--dc)}.dk-nd.requested{border-color:var(--dk-wait);box-shadow:0 0 0 4px var(--dk-wait-soft)}.dk-nd.done{opacity:.4;background:var(--dc)}.dk-nd.no_show,.dk-nd.cancelled,.dk-nd.declined,.dk-nd.expired{border-color:var(--dk-alert)}
+.dk-fr b{font-weight:700}.dk-fr small{display:block;color:var(--dk-ink3);font-size:13px}
+.dk-tag{display:inline-flex;align-items:center;border-radius:999px;padding:2px 10px;font:600 12.5px "Hind Siliguri";background:var(--dk-shelf);color:var(--dk-ink2);white-space:nowrap}
+.dk-tag.w{background:var(--dk-wait-soft);color:var(--dk-wait-ink)}.dk-tag.x{background:var(--dk-alert-soft);color:var(--dk-alert-ink)}.dk-tag.ok{box-shadow:0 0 0 1px var(--dk-ink) inset;background:var(--dk-paper);color:var(--dk-ink)}
+.dk-nowl{display:flex;align-items:center;gap:8px;font:700 12px "Hind Siliguri";margin:2px 0}
+.dk-nowl::after{content:"";flex:1;height:2px;background:var(--dk-ink)}
+.dk-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.dk-card{border:1px solid var(--dk-rule);border-radius:14px;padding:13px 14px;background:var(--dk-paper);min-width:0}
+.dk-card .k{font:600 12.5px "Hind Siliguri";color:var(--dk-ink3);display:flex;align-items:center;gap:6px}
+.dk-card .k i{width:8px;height:8px;border-radius:50%;background:var(--dk-wait)}
+.dk-card p{margin:4px 0 10px;font-size:14px}
+.dk-acts{display:flex;gap:6px;flex-wrap:wrap}
+.dk-hold{height:5px;border-radius:999px;background:var(--dk-shelf);overflow:hidden;margin:2px 0 10px}
+.dk-hold i{display:block;height:100%;background:var(--dk-wait)}
+.dk-idle{padding:26px;border:1px dashed #C9CDD4;border-radius:14px;text-align:center;color:var(--dk-ink2)}
+.dk-idle b{display:block;font:700 17px "Hind Siliguri";color:var(--dk-ink);margin-bottom:4px}
+.dk-search{display:flex;gap:8px;margin-bottom:10px}
+.dk-in,.dk-ta,.dk-sel{width:100%;min-height:40px;border:1px solid var(--dk-rule);border-radius:10px;padding:8px 11px;font:500 14.5px "Hind Siliguri";background:var(--dk-paper);color:var(--dk-ink)}
+.dk-ta{min-height:76px;resize:vertical}
+.dk-in:focus,.dk-ta:focus,.dk-sel:focus{outline:none;border-color:var(--dk-ink);box-shadow:0 0 0 3px #16181D14}
+.dk-pl{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 6px;border:0;border-top:1px solid var(--dk-rule);background:none;width:100%;text-align:left}
+.dk-pl:hover{background:var(--dk-shelf)}
+.dk-pav{width:44px;height:44px;border-radius:50%;background:var(--dk-shelf);display:grid;place-items:center;font:700 16px "Hind Siliguri"}
+.dk-docs{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.dk-doc{border:1px solid var(--dk-rule);border-radius:14px;padding:14px;background:var(--dk-paper);text-align:left;position:relative;overflow:hidden}
+.dk-doc::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--dc)}
+.dk-doc .top{display:flex;gap:12px;align-items:center}
+.dk-wkg{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:10px}
+.dk-wkg span{font:600 11px "Hind Siliguri";color:var(--dk-ink3);text-align:center}
+.dk-wkg i{height:8px;border-radius:4px;background:var(--dk-shelf)}
+.dk-wkg i.y{background:var(--dc)}
+/* drawer */
+.dk-scrim{position:fixed;inset:0;background:rgba(22,24,29,.30);z-index:9000}
+.dk-dr{position:fixed;top:12px;right:12px;bottom:12px;width:min(480px,calc(100vw - 24px));background:var(--dk-paper);border-radius:20px;box-shadow:0 10px 30px rgba(22,24,29,.18);z-index:9001;overflow:auto;padding:22px 24px 28px;overscroll-behavior:contain}
+.dk-drh{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.dk-drh h3{margin:0;font:700 20px/1.2 "Hind Siliguri"}
+.dk-drh small{color:var(--dk-ink3)}
+.dk-kv{display:grid;grid-template-columns:118px minmax(0,1fr);gap:6px 12px;font-size:14px;margin:12px 0 14px}
+.dk-kv dt{color:var(--dk-ink3)}.dk-kv dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.dk-h4{font:700 15px "Hind Siliguri";margin:18px 0 8px;display:flex;align-items:center;gap:8px}
+.dk-h4::after{content:"";flex:1;height:1px;background:var(--dk-rule)}
+.dk-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.dk-photos button{aspect-ratio:1;border-radius:12px;background:var(--dk-shelf) center/cover no-repeat;border:0}
+.dk-hist{border-left:2px solid var(--dk-rule);margin-left:6px;padding-left:16px}
+.dk-hist div{position:relative;padding:0 0 12px;font-size:14px}
+.dk-hist div::before{content:"";position:absolute;left:-23px;top:6px;width:12px;height:12px;border-radius:50%;border:3px solid var(--dc,#5C626E);background:var(--dk-paper)}
+.dk-hist small{display:block;color:var(--dk-ink3)}
+.dk-bub{border-radius:10px 10px 10px 2px;padding:6px 9px;font-size:13.5px;margin:6px 40px 6px 0;background:#E7FFDB;color:#111B21}
+.dk-bub.out{background:var(--dk-paper);box-shadow:0 0 0 1px var(--dk-rule) inset;color:var(--dk-ink);border-radius:10px 10px 2px 10px;margin:6px 0 6px 40px}
+.dk-bub small{display:block;color:#667781;font-size:11px;text-align:right}
+.dk-consent{display:flex;gap:8px;align-items:center;background:var(--dk-shelf);border-radius:12px;padding:9px 12px;font-size:13.5px}
+.dk-consent.no{background:var(--dk-wait-soft);color:var(--dk-wait-ink)}
+.dk-cbox{border:1px solid var(--dk-rule);border-radius:14px;padding:12px;margin:10px 0}
+.dk-cbox.on{box-shadow:0 0 0 2px var(--dk-ink) inset}
+.dk-f{display:grid;gap:4px;margin:0 0 10px;font:600 13px "Hind Siliguri";color:var(--dk-ink2)}
+.dk-f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dk-hrs{display:grid;grid-template-columns:70px 1fr 1fr 1fr 1fr;gap:6px;align-items:center;font-size:13px}
+.dk-hrs .dk-in{min-height:34px;padding:4px 6px;font-size:13px}
+.dk-check{display:flex;gap:8px;align-items:center;font-size:14px;margin:8px 0}
+.dk-slots{display:flex;flex-wrap:wrap;gap:6px}
+.dk-slots button{border:0;border-radius:9px;padding:6px 10px;background:var(--dk-shelf);font:600 13px "Hind Siliguri"}
+.dk-slots button[aria-pressed="true"]{background:var(--dk-ink);color:var(--dk-paper)}
+.dk-load{height:76px;border-radius:14px;background:linear-gradient(90deg,var(--dk-shelf),color-mix(in srgb,var(--dk-shelf) 50%,var(--dk-paper)),var(--dk-shelf));background-size:200% 100%;animation:dkShim 1.4s linear infinite}
+@keyframes dkShim{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.dk *{animation:none!important;transition:none!important}}
+@media (max-width:760px){
+  .dk-row{grid-template-columns:1fr}.dk-lab{border-right:0;border-bottom:1px solid var(--dk-rule)}
+  .dk-wb{padding:12px 14px}.dk-wb b.f{font-size:28px}
+  .dk-fr{grid-template-columns:70px 18px minmax(0,1fr);row-gap:6px}.dk-fr>.dk-tag,.dk-fr>.dk-acts{grid-column:3;justify-self:start}
+  .dk-dr{top:auto;left:0;right:0;bottom:0;width:auto;max-height:88vh;border-radius:20px 20px 0 0;padding:18px 16px 28px}
+  .dk-kv{grid-template-columns:100px minmax(0,1fr)}
+  .dk-hrs{grid-template-columns:52px 1fr 1fr;}
+  .dk-hrs .b2{display:none}
+}
+</style>
+<script>
+(function () {
+  if (typeof go !== 'function' || typeof srv !== 'function') return;
+  var K = { tab: 'sched', day: null, days: 1, D: null, busy: false, err: '', pats: null, q: '', dr: null, url: {}, timer: null };
+  window.dkState = K;
+  var ICON = '<path d="M8 3v5a4 4 0 0 0 8 0V3"/><path d="M12 12v3a5 5 0 0 0 10 0v-2"/><circle cx="22" cy="11" r="1"/><path d="M6 3h4M14 3h4"/>';
+  var SV = function (p) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; };
+  var I = { l: SV('<path d="M15 5l-7 7 7 7"/>'), r: SV('<path d="M9 5l7 7-7 7"/>'), x: SV('<path d="M6 6l12 12M18 6 6 18"/>'), plus: SV('<path d="M12 5v14M5 12h14"/>'),
+    vid: SV('<rect x="3" y="6" width="13" height="12" rx="3"/><path d="M16 10.5 21 8v8l-5-2.5z"/>'), wa: SV('<path d="M4 20l1.3-3.8A8 8 0 1 1 8 19z"/>'), reload: SV('<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/>'),
+    cam: SV('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>'), ok: SV('<path d="M5 12.5l4.5 4.5L19 7"/>') };
+  var BN = '০১২৩৪৫৬৭৮৯';
+  var bn = function (s) { return String(s).replace(/[0-9]/g, function (d) { return BN[d]; }); };
+  var DAYS = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র', 'শনি'], DAYSF = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
+  var MON = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
+  var ST = { requested: 'ডাক্তারের উত্তরের অপেক্ষায়', confirmed: 'পাকা', done: 'দেখা হয়েছে', no_show: 'রোগী আসেননি', cancelled: 'বাতিল', declined: 'ডাক্তার পারবেন না', expired: 'সময় পার, ছাড়া হয়েছে' };
+  var errOf = function (e) { return (e && e.message) || String(e); };
+  function on() { if (!ME || !ME.role) return false; var a = ME.apps || {}; return !!ME.platform || (a.off || []).indexOf('clinic') < 0; }
+  function canAct() { return !!(ME && (ME.role === 'manager' || ME.role === 'shareholder' || ME.role === 'owner')); }
+  // Dhaka helpers (the page shows Dhaka time; the server keeps UTC)
+  function dk(t) { var u = new Date(new Date(t).getTime() + 6 * 3600e3); return { day: u.toISOString().slice(0, 10), min: u.getUTCHours() * 60 + u.getUTCMinutes(), wd: u.getUTCDay() }; }
+  function atISO(day, hhmm) { var p = hhmm.split(':'); return new Date(Date.parse(day + 'T00:00:00Z') + ((+p[0]) * 60 + (+p[1]) - 360) * 60e3).toISOString(); }
+  function addDay(day, n) { return new Date(Date.parse(day + 'T00:00:00Z') + n * 864e5).toISOString().slice(0, 10); }
+  function clock(min) { var h = Math.floor(min / 60) % 24, m = min % 60; var p = h < 4 ? 'রাত' : h < 12 ? 'সকাল' : h < 15 ? 'দুপুর' : h < 18 ? 'বিকাল' : h < 20 ? 'সন্ধ্যা' : 'রাত'; return p + ' ' + bn((h % 12 || 12) + ':' + ('0' + m).slice(-2)); }
+  function short(min) { var h = Math.floor(min / 60) % 24, m = min % 60; return bn((h % 12 || 12) + ':' + ('0' + m).slice(-2)); }
+  function mOf(hhmm) { var p = String(hhmm).split(':'); return (+p[0]) * 60 + (+p[1]); }
+  function dayLabel(day) { var d = new Date(day + 'T00:00:00Z'); return DAYSF[d.getUTCDay()] + ', ' + bn(d.getUTCDate()) + ' ' + MON[d.getUTCMonth()]; }
+  function whenOf(t) { var x = dk(t); return dayLabel(x.day) + ', ' + clock(x.min); }
+  function initial(n) { var s = String(n || '').replace(/^(ডা\.?|Dr\.?)\s*/i, '').trim(); return s ? s[0] : '?'; }
+  function docOf(id) { return ((K.D && K.D.doctors) || []).filter(function (d) { return d.id === Number(id); })[0]; }
+  function conOf(id) { return ((K.D && K.D.consults) || []).concat((K.D && K.D.waits) || []).filter(function (c) { return c.id === Number(id); })[0]; }
+  function nmF(n) { return esc(String(n || '').split(/\s+/)[0] || ''); }
+
+  if (typeof fdxNav === 'function') fdxNav('clinic', 'Doctor desk', ICON, 'dash');
+  try { VIEW_NAMES.clinic = 'Doctor desk'; FDH_SUB.clinic = 'Doctors, patients and the booking assistant'; } catch (e) {}
+  try { SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpClinic|erpClinicSlots|erpClinicPatients|erpClinicPatient|erpClinicPhotoUrl|')); } catch (e) {}
+  try { if (typeof BN_DICT !== 'undefined') BN_DICT['Doctor desk'] = 'ডাক্তার ডেস্ক'; } catch (e) {}
+  function navSync() { var b = document.querySelector('#nav button[data-view="clinic"]'); if (b) b.style.display = on() ? '' : 'none'; }
+
+  function load(force) {
+    if (K.busy && !force) return;
+    if (!K.day) K.day = dk(new Date()).day;
+    K.busy = true;
+    srv('erpClinic', [{ day: K.day, days: K.days }], function (r) { K.busy = false; K.err = ''; K.D = r; if (!K.day) K.day = r.day; paint(); poll(); },
+      function (e) { K.busy = false; K.err = errOf(e); paint(); });
+  }
+  function poll() { if (K.timer) clearTimeout(K.timer); K.timer = setTimeout(function () { K.timer = null; if (typeof VIEW !== 'undefined' && VIEW === 'clinic' && !K.dr) load(); }, 45000); }
+  function loadPats() { srv('erpClinicPatients', [{ q: K.q }], function (r) { K.pats = r.patients; paint(); }, function (e) { toast(esc(errOf(e)), true); }); }
+
+  // ---------------------------------------------------------------- schedule
+  function waitBar() {
+    var w = (K.D.waits || []);
+    if (!w.length) {
+      var b = K.D.bot || {};
+      return '<div class="dk-wb calm"><p>' + (b.on ? 'কিছুই আপনার অপেক্ষায় নেই' : 'বুকিং বটের WhatsApp নম্বর এখনো জোড়া হয়নি') +
+        '<small>' + (b.on ? 'বট আজ ' + bn(b.chats) + 'টা চ্যাট দেখেছে, ' + bn(b.booked) + 'টা বুকিং করেছে' : 'Inbox › WhatsApp নম্বর-এ একটা নম্বর জুড়ে কাজ হিসেবে “Doctor booking” বাছুন') + '</small></p>' +
+        (b.on ? '' : '<span class="dk-sp"></span><button type="button" class="dk-btn dark" data-dk="tab" data-v="bot">কীভাবে জুড়বেন</button>') + '</div>';
+    }
+    return '<div class="dk-wb"><b class="f">' + bn(w.length) + '</b><p>' + bn(w.length) + 'টা বুকিং ডাক্তারের উত্তরের অপেক্ষায়<small>বট ডাক্তারকে WhatsApp-এ জিজ্ঞেস করেছে; সময় পার হলে রোগীকে অন্য সময় দেবে</small></p><span class="dk-sp"></span>' +
+      '<button type="button" class="dk-btn amber" data-dk="jump" data-v="dk-waits">দেখুন</button></div>';
+  }
+  function zoomBar() {
+    var seg = [[1, 'দিন'], [7, '৭ দিন'], [30, '৩০ দিন']].map(function (z) { return '<button type="button" aria-pressed="' + (K.days === z[0]) + '" data-dk="zoom" data-v="' + z[0] + '">' + z[1] + '</button>'; }).join('');
+    var lab = K.days === 1 ? (K.day === K.D.today ? 'আজ' : dayLabel(K.day)) : dayLabel(K.day) + ' থেকে';
+    return '<div class="dk-bar"><h2>' + lab + '</h2><div class="dk-seg" role="group" aria-label="কত দিন">' + seg + '</div><span class="dk-sp"></span>' +
+      '<div class="dk-date"><button type="button" class="dk-ib" data-dk="step" data-v="-1" aria-label="আগে">' + I.l + '</button>' +
+      (K.day !== K.D.today ? '<button type="button" class="dk-btn sm ghost" data-dk="today">আজ</button>' : '') +
+      '<input type="date" class="dk-in" style="width:auto;min-height:34px" value="' + K.day + '" data-dkc="day" aria-label="তারিখ">' +
+      '<button type="button" class="dk-ib" data-dk="step" data-v="1" aria-label="পরে">' + I.r + '</button></div></div>';
+  }
+  function docLabel(d, extra) {
+    return '<button type="button" class="dk-lab" data-dk="doc" data-v="' + d.id + '"><span class="dk-dav" style="background:' + esc(d.color || '#5C626E') + '">' + esc(initial(d.name)) + '<i class="' + (d.active ? '' : 'off') + '"></i></span>' +
+      '<span style="min-width:0"><b data-noi18n="1">ডা. ' + esc(d.name) + '</b><small>' + esc((d.treats || 'চর্মরোগ').split(/[,،]/)[0]) + ' · ' + bn(d.slotMin) + ' মিনিট</small>' + (extra ? '<small>' + extra + '</small>' : '') + '</span></button>';
+  }
+  function dayLane(d) {
+    var day = K.day, now = new Date(K.D.now), nowM = dk(now).min, isToday = day === K.D.today;
+    var cs = (K.D.consults || []).filter(function (c) { return c.doctorId === d.id && dk(c.startsAt).day === day && c.state !== 'cancelled' && c.state !== 'declined' && c.state !== 'expired'; });
+    var free = ((K.D.free || {})[d.id] || {})[day] || [];
+    var off = (K.D.offs || []).filter(function (o) { return o.doctorId === d.id && o.day === day && !o.from; })[0];
+    var wd = new Date(day + 'T00:00:00Z').getUTCDay(), hours = (d.hours || []).filter(function (h) { return h.weekday === wd; });
+    var meta = bn(cs.length) + ' জন · ' + bn(free.length) + 'টা ফাঁকা';
+    if (!d.active) return '<div class="dk-row" style="--dc:' + esc(d.color) + '">' + docLabel(d, 'এখন রোগী দেখছেন না') + '<div class="dk-lane"><div class="dk-offday">এই ডাক্তার এখন বন্ধ রাখা আছে</div></div></div>';
+    if (off || !hours.length) {
+      if (!cs.length) return '<div class="dk-row" style="--dc:' + esc(d.color) + '">' + docLabel(d, off ? 'ছুটি' : 'এই দিনে বসেন না') + '<div class="dk-lane"><div class="dk-offday">' + (off ? 'ছুটি' + (off.reason ? ' · ' + esc(off.reason) : '') : 'এই দিনে রোগী দেখেন না') + '</div></div></div>';
+    }
+    // events in time order: consults and free runs, grouped by the doctor's sittings
+    var items = cs.map(function (c) { return { m: dk(c.startsAt).min, c: c }; }).concat(free.map(function (f) { return { m: mOf(f), f: f }; })).sort(function (a, b) { return a.m - b.m; });
+    var out = [], lastSit = -1, nowPut = !isToday;
+    function sitOf(m) { for (var i = 0; i < hours.length; i++) { var a = mOf(hours[i].from), b = mOf(hours[i].to); if (m >= a && m < b) return i; } return -1; }
+    var i = 0;
+    while (i < items.length) {
+      var it = items[i], si = sitOf(it.m);
+      if (si !== lastSit) { if (out.length) out.push('<span class="dk-gap"></span>'); var h = hours[si]; out.push('<span class="dk-seg-l">' + (h ? clock(mOf(h.from)).split(' ')[0] + ' ' + short(mOf(h.from)) + '–' + short(mOf(h.to)) : 'বাড়তি') + '</span>'); lastSit = si; }
+      if (!nowPut && it.m > nowM) { out.push('<span class="dk-now"><b>এখন ' + short(nowM) + '</b></span>'); nowPut = true; }
+      if (it.c) {
+        var c = it.c;
+        out.push('<button type="button" class="dk-chip ' + esc(c.state) + '" data-dk="con" data-v="' + c.id + '" aria-label="' + esc(clock(it.m) + ', ' + c.patientName + ', ' + (ST[c.state] || c.state)) + '"><span class="tm">' + short(it.m) + (c.state === 'done' ? ' ✓' : '') + '</span><span data-noi18n="1">' + (c.state === 'no_show' ? 'আসেননি' : nmF(c.patientName)) + '</span></button>');
+        i++;
+      } else {
+        var run = [it]; i++;
+        while (i < items.length && items[i].f && sitOf(items[i].m) === si && (isToday ? (items[i].m > nowM) === (it.m > nowM) : true)) { run.push(items[i]); i++; }
+        out.push('<button type="button" class="dk-chip free' + (run.length > 1 ? ' wide' : '') + '" data-dk="free" data-doc="' + d.id + '" data-v="' + run[0].f + '" aria-label="' + esc(clock(run[0].m) + ' থেকে ' + bn(run.length) + 'টা ফাঁকা সময়, বুক করুন') + '"><span class="tm">' + short(run[0].m) + (run.length > 1 ? '–' + short(run[run.length - 1].m) : '') + '</span><span>' + bn(run.length) + 'টা ফাঁকা</span></button>');
+      }
+    }
+    if (!nowPut && isToday && items.length) out.push('<span class="dk-now"><b>এখন ' + short(nowM) + '</b></span>');
+    if (!items.length) out.push('<div class="dk-offday">' + (isToday ? 'আজ আর ফাঁকা সময় নেই' : 'এই দিনে ফাঁকা সময় নেই') + '</div>');
+    return '<div class="dk-row" style="--dc:' + esc(d.color) + '">' + docLabel(d, meta) + '<div class="dk-lane"><div class="dk-track">' + out.join('') + '</div></div></div>';
+  }
+  function weekGrid() {
+    var ds = (K.D.doctors || []).filter(function (d) { return d.active; }), n = K.days;
+    var days = []; for (var i = 0; i < n; i++) days.push(addDay(K.day, i));
+    if (n === 30) {
+      var head = '<div class="hd lb"></div>' + days.map(function (d) { var x = new Date(d + 'T00:00:00Z'); return '<div class="hd' + (d === K.D.today ? ' today' : '') + '">' + DAYS[x.getUTCDay()] + '<br>' + bn(x.getUTCDate()) + '</div>'; }).join('');
+      var rows = ds.map(function (doc) {
+        return '<div class="lb" style="padding:0">' + docLabel(doc) + '</div>' + days.map(function (d) {
+          var cs = (K.D.consults || []).filter(function (c) { return c.doctorId === doc.id && dk(c.startsAt).day === d && (c.state === 'confirmed' || c.state === 'requested' || c.state === 'done'); });
+          var w = cs.some(function (c) { return c.state === 'requested'; });
+          return '<div class="cell' + (d === K.D.today ? ' today' : '') + '" style="--dc:' + esc(doc.color) + ';align-items:center;justify-content:center">' + (cs.length ? '<button type="button" class="dk-freec" data-dk="goday" data-v="' + d + '"><span class="dk-cnt">' + bn(cs.length) + '</span>' + (w ? ' <i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--dk-wait)"></i>' : '') + '</button>' : '') + '</div>';
+        }).join('');
+      }).join('');
+      return '<div class="dk-wk" style="grid-template-columns:184px repeat(30,minmax(34px,1fr))">' + head + rows + '</div>';
+    }
+    var head7 = '<div class="hd lb"></div>' + days.map(function (d) { var x = new Date(d + 'T00:00:00Z'); return '<div class="hd' + (d === K.D.today ? ' today' : '') + '">' + DAYS[x.getUTCDay()] + ' ' + bn(x.getUTCDate()) + '</div>'; }).join('');
+    var rows7 = ds.map(function (doc) {
+      return '<div class="lb" style="padding:0;display:flex">' + docLabel(doc) + '</div>' + days.map(function (d) {
+        var cs = (K.D.consults || []).filter(function (c) { return c.doctorId === doc.id && dk(c.startsAt).day === d && ['confirmed', 'requested', 'done', 'no_show'].indexOf(c.state) >= 0; });
+        var fr = ((K.D.free || {})[doc.id] || {})[d] || [];
+        var offD = (K.D.offs || []).filter(function (o) { return o.doctorId === doc.id && o.day === d && !o.from; })[0], wdD = new Date(d + 'T00:00:00Z').getUTCDay(), sits = (doc.hours || []).some(function (h) { return h.weekday === wdD; });
+        return '<div class="cell' + (d === K.D.today ? ' today' : '') + '" style="--dc:' + esc(doc.color) + '">' + (offD ? '<span class="dk-tag">ছুটি</span>' : !sits ? '<span style="font-size:12px;color:var(--dk-ink3)">বসেন না</span>' : '') + cs.map(function (c) { return '<button type="button" class="dk-mini ' + esc(c.state) + '" data-dk="con" data-v="' + c.id + '"><span>' + short(dk(c.startsAt).min) + '</span> <span data-noi18n="1">' + nmF(c.patientName) + '</span></button>'; }).join('') +
+          (fr.length ? '<button type="button" class="dk-freec" data-dk="free" data-doc="' + doc.id + '" data-day="' + d + '" data-v="' + fr[0] + '">' + bn(fr.length) + 'টা ফাঁকা</button>' : '') + '</div>';
+      }).join('');
+    }).join('');
+    return '<div class="dk-wk" style="grid-template-columns:184px repeat(7,minmax(108px,1fr))">' + head7 + rows7 + '</div>';
+  }
+  function legend() {
+    return '<div class="dk-legend"><span><i style="background:' + esc(((K.D.doctors || [])[0] || {}).color || '#0E7C86') + '"></i>পাকা</span><span><i style="background:var(--dk-wait-soft);box-shadow:0 0 0 2px var(--dk-wait) inset"></i>ডাক্তারের হ্যাঁ-র অপেক্ষায়</span>' +
+      '<span><i style="background:var(--dk-shelf);box-shadow:0 0 0 1px var(--dk-rule) inset"></i>দেখা হয়েছে</span><span><i style="background:var(--dk-alert-soft);box-shadow:0 0 0 2px var(--dk-alert) inset"></i>রোগী আসেননি</span><span><i style="box-shadow:0 0 0 1.5px var(--dk-ink3) inset"></i>ফাঁকা — চাপলে বুক</span></div>';
+  }
+  function dayFlow() {
+    var day = K.day, cs = (K.D.consults || []).filter(function (c) { return dk(c.startsAt).day === day; }).sort(function (a, b) { return a.startsAt < b.startsAt ? -1 : 1; });
+    if (!cs.length) return '';
+    var nowT = new Date(K.D.now).getTime(), put = day !== K.D.today, rows = [];
+    cs.forEach(function (c) {
+      if (!put && new Date(c.startsAt).getTime() > nowT) { rows.push('<div class="dk-nowl">এখন ' + short(dk(K.D.now).min) + '</div>'); put = true; }
+      var d = docOf(c.doctorId) || {};
+      var tag = c.state === 'requested' ? '<span class="dk-tag w">অপেক্ষায়</span>' : c.state === 'confirmed' ? (c.paid ? '<span class="dk-tag ok">পাকা · ফি পাওয়া</span>' : '<span class="dk-tag ok">পাকা</span>') : '<span class="dk-tag' + (/no_show|cancelled|declined|expired/.test(c.state) ? ' x' : '') + '">' + (ST[c.state] || c.state) + '</span>';
+      rows.push('<button type="button" class="dk-fr" data-dk="con" data-v="' + c.id + '" style="--dc:' + esc(d.color || '#5C626E') + '"><span class="tmx">' + clock(dk(c.startsAt).min) + '</span><span class="dk-nd ' + esc(c.state) + '"></span><span style="min-width:0"><b data-noi18n="1">' + esc(c.patientName) + '</b>' + (c.concern ? ' · <span data-noi18n="1">' + esc(c.concern) + '</span>' : '') +
+        '<small>ডা. <span data-noi18n="1">' + esc(d.name || '') + '</span> · ' + esc(c.no) + (c.fee ? ' · ৳' + Math.round(c.fee) : '') + (c.source === 'bot' ? ' · বট বুক করেছে' : '') + '</small></span>' + tag + '</button>');
+    });
+    return '<h2 class="dk-sec">' + (day === K.D.today ? 'আজকের রোগী' : dayLabel(day) + '-এর রোগী') + '</h2>' + rows.join('');
+  }
+  function waitsHtml() {
+    var w = K.D.waits || [];
+    if (!w.length) return '';
+    var nowT = new Date(K.D.now).getTime();
+    return '<h2 class="dk-sec" id="dk-waits">আপনার দেখা দরকার</h2><div class="dk-cards">' + w.map(function (c) {
+      var d = docOf(c.doctorId) || {}, left = c.holdUntil ? Math.max(0, Math.round((new Date(c.holdUntil).getTime() - nowT) / 60e3)) : 0, tot = d.holdMin || 20;
+      return '<div class="dk-card"><div class="k"><i></i>ডা. <span data-noi18n="1">' + esc(d.name || '') + '</span> উত্তর দেননি · ' + esc(c.no) + '</div>' +
+        '<p><b data-noi18n="1">' + esc(c.patientName) + '</b>' + (c.concern ? ' · <span data-noi18n="1">' + esc(c.concern) + '</span>' : '') + '<br>' + esc(whenOf(c.startsAt)) + (c.doctorSaid ? '<br><span style="color:var(--dk-ink3)">ডাক্তার লিখেছেন: “<span data-noi18n="1">' + esc(c.doctorSaid) + '</span>”</span>' : '') + '</p>' +
+        '<div class="dk-hold" title="' + bn(left) + ' মিনিট বাকি"><i style="width:' + Math.min(100, Math.round(left / tot * 100)) + '%"></i></div>' +
+        (canAct() ? '<div class="dk-acts"><button type="button" class="dk-btn sm dark" data-dk="act" data-a="confirm" data-v="' + c.id + '">পাকা করুন</button><button type="button" class="dk-btn sm" data-dk="act" data-a="ask" data-v="' + c.id + '">আবার জিজ্ঞেস করুন</button><button type="button" class="dk-btn sm ghost" data-dk="act" data-a="decline" data-v="' + c.id + '">ডাক্তার পারবেন না</button></div>' : '') + '</div>';
+    }).join('') + '</div>';
+  }
+  function schedHtml() {
+    var ds = K.D.doctors || [];
+    if (!ds.length) return '<div class="dk-idle"><b>এখনো কোনো ডাক্তার নেই</b>প্রথম ডাক্তার যোগ করুন: নাম, WhatsApp, ফি আর কোন দিন কখন বসেন।<br><br><button type="button" class="dk-btn dark" data-dk="newdoc">' + I.plus + 'ডাক্তার যোগ করুন</button></div>';
+    var map = K.days === 1 ? '<div class="dk-map">' + ds.map(dayLane).join('') + (canAct() ? '<button type="button" class="dk-add" data-dk="newdoc">' + I.plus + 'ডাক্তার যোগ করুন — নতুন লাইন নিচে বসবে</button>' : '') + '</div>' : weekGrid();
+    return waitBar() + zoomBar() + map + legend() + waitsHtml() + (K.days === 1 ? dayFlow() : '');
+  }
+  // ---------------------------------------------------------------- patients / doctors / bot
+  function patsHtml() {
+    if (!K.pats) { loadPats(); return '<div class="dk-load"></div>'; }
+    var rows = K.pats.map(function (p) {
+      var sub = [p.age ? bn(p.age) + ' বছর' : '', p.concern].filter(Boolean).join(' · ');
+      var right = p.nextAt ? '<span class="dk-tag ok">' + esc(whenOf(p.nextAt)) + '</span>' : p.lastAt ? '<span class="dk-tag">শেষ দেখা ' + esc(dayLabel(dk(p.lastAt).day)) + '</span>' : '<span class="dk-tag">এখনো দেখা হয়নি</span>';
+      return '<button type="button" class="dk-pl" data-dk="pat" data-v="' + p.id + '"><span class="dk-pav" data-noi18n="1">' + esc(initial(p.name)) + '</span><span style="min-width:0"><b data-noi18n="1">' + esc(p.name || p.phone) + '</b><small style="display:block;color:var(--dk-ink3)" data-noi18n="1">' + esc(sub) + '</small></span>' + right + '</button>';
+    }).join('');
+    return '<div class="dk-search"><input class="dk-in" type="search" placeholder="নাম, ফোন বা সমস্যা দিয়ে খুঁজুন" value="' + esc(K.q) + '" data-dkc="q" aria-label="রোগী খুঁজুন">' + (canAct() ? '<button type="button" class="dk-btn dark" data-dk="newpat">' + I.plus + 'নতুন রোগী</button>' : '') + '</div>' +
+      (K.pats.length ? rows : '<div class="dk-idle"><b>' + (K.q ? 'কাউকে পাওয়া গেল না' : 'এখনো কোনো রোগী নেই') + '</b>বট নতুন রোগীর তথ্য নিজেই এখানে রাখবে। হাতেও যোগ করতে পারেন।</div>');
+  }
+  function weekBars(d) { var by = {}; (d.hours || []).forEach(function (h) { by[h.weekday] = 1; }); return '<div class="dk-wkg">' + [6, 0, 1, 2, 3, 4, 5].map(function (w) { return '<span>' + DAYS[w] + '<i class="' + (by[w] ? 'y' : '') + '" style="display:block;margin-top:3px"></i></span>'; }).join('') + '</div>'; }
+  function docsHtml() {
+    var ds = K.D.doctors || [];
+    return '<div class="dk-bar"><span class="dk-sp"></span>' + (canAct() ? '<button type="button" class="dk-btn dark" data-dk="newdoc">' + I.plus + 'ডাক্তার যোগ করুন</button>' : '') + '</div>' +
+      (ds.length ? '<div class="dk-docs">' + ds.map(function (d) {
+        return '<button type="button" class="dk-doc" data-dk="doc" data-v="' + d.id + '" style="--dc:' + esc(d.color) + '"><div class="top"><span class="dk-dav" style="background:' + esc(d.color) + '">' + esc(initial(d.name)) + '<i class="' + (d.active ? '' : 'off') + '"></i></span><span style="min-width:0"><b data-noi18n="1" style="display:block;font:700 16px \'Hind Siliguri\'">ডা. ' + esc(d.name) + '</b><small style="color:var(--dk-ink3)" data-noi18n="1">' + esc(d.title || 'ডিগ্রি লেখা হয়নি') + '</small></span></div>' +
+          '<div style="margin-top:8px;font-size:13.5px;color:var(--dk-ink2)" data-noi18n="1">' + esc(d.treats || '') + '</div><div style="margin-top:6px;font-size:13.5px">৳' + Math.round(d.fee) + ' · ' + bn(d.slotMin) + ' মিনিট · ' + (d.phone ? 'WhatsApp আছে' : '<span style="color:var(--dk-alert-ink)">WhatsApp নেই</span>') + '</div>' + weekBars(d) + '</button>';
+      }).join('') + '</div>' : '<div class="dk-idle"><b>এখনো কোনো ডাক্তার নেই</b>যোগ করলে সময়সূচিতে তাঁর নিজের লাইন বসবে।</div>');
+  }
+  function botHtml() {
+    var b = K.D.bot || {}, s = K.D.settings || {}, own = ME && (ME.role === 'owner' || ME.platform);
+    var f = function (k, label, ta) { return '<label class="dk-f">' + label + (ta ? '<textarea class="dk-ta" data-set="' + k + '"' + (own ? '' : ' disabled') + '>' + esc(s[k] || '') + '</textarea>' : '<input class="dk-in" data-set="' + k + '" value="' + esc(s[k] == null ? '' : s[k]) + '"' + (own ? '' : ' disabled') + '>') + '</label>'; };
+    return '<div class="dk-wb' + (b.on ? ' calm' : '') + '"><p>' + (b.on ? 'বুকিং বট চালু' + (b.live ? '' : ' (প্র্যাকটিস মোডে)') + ' · ' + esc(b.name) : 'বুকিং বটের WhatsApp নম্বর জোড়া নেই') +
+      '<small>' + (b.on ? 'গত ২৪ ঘণ্টায় ' + bn(b.chats) + 'টা চ্যাট, ' + bn(b.booked) + 'টা বুকিং' : 'Alvi-র মতো আলাদা একটা নম্বর লাগবে। Inbox › WhatsApp নম্বর › নতুন নম্বর জুড়ুন › কাজ: “Doctor booking”।') + '</small></p>' +
+      (b.on ? '' : '<span class="dk-sp"></span><button type="button" class="dk-btn dark" data-dk="goinbox">Inbox খুলুন</button>') + '</div>' +
+      '<div class="dk-cards" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))"><div class="dk-card"><h3 class="dk-h4" style="margin-top:0">বট যা করে</h3><div class="dk-hist" style="--dc:var(--dk-ink)">' +
+      ['রোগী লিখলে: সমস্যা আর কতদিন, তারপর সম্মতি, নাম-বয়স — এক প্রশ্নে এক কথা', 'ডাক্তারের ফাঁকা ৩টা সময় দেয়; রোগী বাছলে সময়টা ধরে রাখে', 'ডাক্তারকে WhatsApp-এ জিজ্ঞেস করে; “হ্যাঁ” = পাকা, “না” = রোগীকে অন্য সময়', 'উত্তর না এলে অর্ধেক সময়ে একবার মনে করায়; সময় পার হলে ছেড়ে দেয়', 'আগের দিন আর কলের আগে রোগীকে রিমাইন্ডার (লিংকসহ); ডাক্তারকেও', 'নিজেকে কখনো AI বলে না; রোগ নির্ণয় বা ওষুধের কথা বলে না — ডাক্তার বলবেন'].map(function (t) { return '<div>' + t + '</div>'; }).join('') +
+      '</div></div><div class="dk-card"><h3 class="dk-h4" style="margin-top:0">বটের নিয়ম' + (own ? '' : ' (শুধু মালিক বদলাতে পারেন)') + '</h3>' +
+      f('agent_name', 'বটের নাম (মানুষের নাম)') + f('pay_text', 'ফি কীভাবে দেবে (bKash / Nagad)') + f('consent_text', 'সম্মতির কথা', true) +
+      '<div class="dk-f2">' + f('min_notice', 'কত মিনিট আগে পর্যন্ত বুক') + f('remind_soon', 'কলের কত মিনিট আগে রিমাইন্ডার') + '</div>' +
+      f('doctor_group', 'ডাক্তারদের WhatsApp গ্রুপ (ঐচ্ছিক, …@g.us)') + f('team_phones', 'ডাক্তার উত্তর না দিলে কাকে জানাবে (ফোন)') + f('extra', 'আরও যা জানা দরকার (আপনার নিজের কথা)', true) +
+      (own ? '<button type="button" class="dk-btn dark" data-dk="saveset">সেভ করুন</button>' : '') + '</div></div>';
+  }
+  function view() {
+    if (!on()) return '<div class="dk"><div class="dk-idle"><b>ডাক্তার ডেস্ক এই ব্যবসায় চালু নেই</b>Apps › Only me থেকে চালু করুন।</div></div>';
+    var w = K.D ? (K.D.waits || []).length : 0;
+    var tabs = [['sched', 'সময়সূচি', w], ['pats', 'রোগী', 0], ['docs', 'ডাক্তার', 0], ['bot', 'বুকিং বট', 0]];
+    var head = '<div class="dk-head"><h1>ডাক্তার ডেস্ক</h1><div class="dk-tabs" role="tablist" aria-label="ডাক্তার ডেস্ক">' + tabs.map(function (t) { return '<button type="button" role="tab" aria-selected="' + (K.tab === t[0]) + '" data-dk="tab" data-v="' + t[0] + '">' + t[1] + (t[2] ? '<em>' + bn(t[2]) + '</em>' : '') + '</button>'; }).join('') + '</div><span class="dk-sp"></span>' +
+      (canAct() && K.tab === 'sched' ? '<button type="button" class="dk-btn ghost" data-dk="book">' + I.plus + 'হাতে বুকিং</button>' : '') + '<button type="button" class="dk-ib" data-dk="reload" aria-label="নতুন করে আনুন">' + I.reload + '</button></div>';
+    if (K.err && !K.D) return '<div class="dk">' + head + '<div class="dk-idle"><b>আনা গেল না</b>' + esc(K.err) + '<br><br><button type="button" class="dk-btn" data-dk="reload">আবার চেষ্টা</button></div></div>';
+    if (!K.D) return '<div class="dk">' + head + '<div class="dk-load"></div><div class="dk-load" style="margin-top:10px;height:160px"></div></div>';
+    var body = { sched: schedHtml, pats: patsHtml, docs: docsHtml, bot: botHtml }[K.tab] || schedHtml;
+    return '<div class="dk">' + head + body() + '</div>';
+  }
+  function paint() { navSync(); if (typeof VIEW === 'undefined' || VIEW !== 'clinic') return; var v = el('view'); if (!v) return; var y = window.scrollY; var a = document.activeElement, keep = a && a.getAttribute && a.getAttribute('data-dkc'); var pos = keep && a.selectionStart; v.innerHTML = view(); if (keep) { var n = v.querySelector('[data-dkc="' + keep + '"]'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} } } window.scrollTo(0, y); drawDr(); }
+  var rp = repaint;
+  repaint = function () { navSync(); if (typeof VIEW === 'undefined' || VIEW !== 'clinic') return rp.apply(this, arguments); paint(); if (!K.D && !K.busy) load(); };
+  setTimeout(navSync, 0);
+
+  // ---------------------------------------------------------------- drawers
+  function closeDr() { K.dr = null; drawDr(); }
+  function drawDr() {
+    var old = document.getElementById('dk-drw'); if (old) old.remove();
+    if (!K.dr || typeof VIEW === 'undefined' || VIEW !== 'clinic') return;
+    var w = document.createElement('div'); w.id = 'dk-drw'; w.className = 'dk';
+    w.innerHTML = '<div class="dk-scrim" data-dk="close"></div><div class="dk-dr" role="dialog" aria-modal="true" aria-label="' + esc(K.dr.title || '') + '">' + (K.dr.html || '<div class="dk-load"></div>') + '</div>';
+    document.body.appendChild(w);
+    var f = w.querySelector('[autofocus]') || w.querySelector('.dk-dr button'); if (f && !K.dr.kept) { try { f.focus({ preventScroll: true }); } catch (e) {} K.dr.kept = 1; }
+    (K.dr.photos || []).forEach(function (id) { var b = w.querySelector('[data-ph="' + id + '"]'); if (!b) return; if (K.url[id]) { b.style.backgroundImage = 'url("' + K.url[id] + '")'; return; } srv('erpClinicPhotoUrl', [{ id: id }], function (r) { K.url[id] = r.url; b.style.backgroundImage = 'url("' + r.url + '")'; }, function () {}); });
+  }
+  function openDr(title, html, extra) { K.dr = Object.assign({ title: title, html: html }, extra || {}); drawDr(); }
+  function drHead(av, title, sub, color) { return '<div class="dk-drh"><span class="' + (color ? 'dk-dav' : 'dk-pav') + '" style="width:52px;height:52px;font-size:19px;' + (color ? 'background:' + esc(color) : '') + '" data-noi18n="1">' + esc(av) + '</span><span style="min-width:0;flex:1"><h3 data-noi18n="1">' + esc(title) + '</h3><small data-noi18n="1">' + esc(sub || '') + '</small></span><button type="button" class="dk-ib" data-dk="close" aria-label="বন্ধ করুন">' + I.x + '</button></div>'; }
+  function consultBox(c, focus) {
+    var d = docOf(c.doctorId) || { name: c.doctorName || '', color: '#5C626E' };
+    var acts = [];
+    if (canAct()) {
+      if (c.state === 'requested') acts.push(['confirm', 'পাকা করুন', 'dark'], ['ask', 'আবার জিজ্ঞেস', ''], ['decline', 'ডাক্তার পারবেন না', 'ghost']);
+      if (c.state === 'confirmed') acts.push(['link', 'কল লিংক', 'dark'], ['done', 'দেখা হয়েছে', ''], ['no_show', 'আসেননি', 'ghost'], ['move', 'সময় বদলান', 'ghost']);
+      if (c.state === 'requested' || c.state === 'confirmed') acts.push(['cancel', 'বাতিল', 'ghost']);
+      if ((c.state === 'confirmed' || c.state === 'done') && c.fee) acts.push(['paid', c.paid ? 'ফি-র দাগ তুলুন' : 'ফি পেয়েছি', 'ghost']);
+      if (c.state === 'done') acts.push(['note', 'ডাক্তারের নোট', 'ghost']);
+    }
+    return '<div class="dk-cbox' + (focus ? ' on' : '') + '" style="--dc:' + esc(d.color) + '"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>' + esc(whenOf(c.startsAt)) + '</b><span class="dk-tag' + (c.state === 'requested' ? ' w' : /no_show|cancelled|declined|expired/.test(c.state) ? ' x' : c.state === 'confirmed' ? ' ok' : '') + '">' + (ST[c.state] || c.state) + '</span></div>' +
+      '<div style="font-size:13.5px;color:var(--dk-ink2);margin:4px 0 8px">ডা. <span data-noi18n="1">' + esc(d.name) + '</span> · ' + esc(c.no) + (c.fee ? ' · ৳' + Math.round(c.fee) + (c.paid ? ' পাওয়া গেছে' + (c.payNote ? ' (' + esc(c.payNote) + ')' : '') : ' বাকি') : '') + (c.source === 'bot' ? ' · বট বুক করেছে' : '') + '</div>' +
+      (c.concern ? '<div style="font-size:14px;margin-bottom:6px" data-noi18n="1">' + esc(c.concern) + '</div>' : '') +
+      (c.videoLink ? '<div style="font-size:13.5px;margin-bottom:6px;overflow-wrap:anywhere">লিংক: <span data-noi18n="1">' + esc(c.videoLink) + '</span></div>' : '') +
+      (c.doctorNote ? '<div style="font-size:13.5px;margin-bottom:6px">ডাক্তারের নোট: <span data-noi18n="1">' + esc(c.doctorNote) + '</span></div>' : '') +
+      (c.reason ? '<div style="font-size:13px;color:var(--dk-ink3);margin-bottom:6px" data-noi18n="1">' + esc(c.reason) + '</div>' : '') +
+      (acts.length ? '<div class="dk-acts">' + acts.map(function (a) { return '<button type="button" class="dk-btn sm ' + a[2] + '" data-dk="act" data-a="' + a[0] + '" data-v="' + c.id + '">' + a[1] + '</button>'; }).join('') + '</div>' : '') + '</div>';
+  }
+  function openPatient(id, focusConsult) {
+    openDr('রোগী', '', {});
+    srv('erpClinicPatient', [{ id: Number(id) }], function (r) {
+      if (!K.dr) return;
+      var p = r.patient, open = r.consults.filter(function (c) { return c.state === 'requested' || c.state === 'confirmed'; }), past = r.consults.filter(function (c) { return !(c.state === 'requested' || c.state === 'confirmed'); });
+      var sub = [p.age ? bn(p.age) + ' বছর' : '', p.gender === 'f' ? 'মহিলা' : p.gender === 'm' ? 'পুরুষ' : '', p.area].filter(Boolean).join(' · ');
+      var kv = [['সমস্যা', p.concern], ['কতদিন', p.since], ['ত্বকের ধরন', p.skinType], ['এখন যা মাখেন', p.routine], ['অ্যালার্জি / ওষুধ', p.allergies], ['ফোন', p.phone], ['নোট', p.notes]].filter(function (x) { return x[1]; });
+      var html = drHead(initial(p.name), p.name || p.phone, sub) +
+        '<div class="dk-acts">' + (canAct() ? '<button type="button" class="dk-btn dark" data-dk="book" data-p="' + p.id + '">' + I.plus + 'সময় দিন</button><button type="button" class="dk-btn ghost" data-dk="editpat" data-v="' + p.id + '">তথ্য বদলান</button><label class="dk-btn ghost" style="cursor:pointer">' + I.cam + 'ছবি দিন<input type="file" accept="image/*" data-dkc="photo" data-v="' + p.id + '" hidden></label>' : '') + '</div>' +
+        '<dl class="dk-kv">' + kv.map(function (x) { return '<dt>' + x[0] + '</dt><dd data-noi18n="1">' + esc(x[1]) + '</dd>'; }).join('') + '</dl>' +
+        '<div class="dk-consent' + (p.consentAt ? '' : ' no') + '">' + I.ok + (p.consentAt ? 'রোগী তথ্য ও ছবি ডাক্তারকে দেখাতে রাজি · ' + esc(dayLabel(dk(p.consentAt).day)) : 'সম্মতি এখনো নেওয়া হয়নি') + '</div>' +
+        (open.length ? '<h4 class="dk-h4">সামনের বুকিং</h4>' + open.map(function (c) { return consultBox(c, c.id === Number(focusConsult)); }).join('') : '') +
+        (r.photos.length ? '<h4 class="dk-h4">ছবি (' + bn(r.photos.length) + ')</h4><div class="dk-photos">' + r.photos.map(function (x) { return '<button type="button" data-ph="' + x.id + '" data-dk="photo" data-v="' + x.id + '" aria-label="ছবি বড় করে দেখুন"></button>'; }).join('') + '</div>' : '') +
+        (past.length ? '<h4 class="dk-h4">আগের দেখা</h4>' + past.map(function (c) { return c.id === Number(focusConsult) ? consultBox(c, true) : '<div class="dk-hist" style="--dc:' + esc((docOf(c.doctorId) || {}).color || '#5C626E') + '"><div><b>' + esc(dayLabel(dk(c.startsAt).day)) + ' · ডা. <span data-noi18n="1">' + esc(c.doctorName) + '</span></b><small>' + (ST[c.state] || c.state) + (c.doctorNote ? ' · “<span data-noi18n="1">' + esc(c.doctorNote) + '</span>”' : '') + '</small></div></div>'; }).join('') : '') +
+        (r.chat.length ? '<h4 class="dk-h4">বটের সাথে কথা</h4>' + r.chat.map(function (m) { var x = dk(m.at); return '<div class="dk-bub' + (m.dir === 'in' ? '' : ' out') + '"><span data-noi18n="1">' + esc(m.text || (m.kind === 'image' ? '[ছবি]' : m.kind === 'audio' ? '[ভয়েস]' : '')) + '</span><small>' + bn(x.day.slice(8)) + ' ' + MON[+x.day.slice(5, 7) - 1].slice(0, 3) + ', ' + short(x.min) + '</small></div>'; }).join('') : '') +
+        (r.events.length ? '<h4 class="dk-h4">কী কী হয়েছে</h4><div class="dk-hist" style="--dc:var(--dk-ink3)">' + r.events.slice(0, 12).map(function (e) { return '<div><span data-noi18n="1">' + esc(e.what) + '</span><small>' + esc(e.by) + ' · ' + esc(whenOf(e.at)) + '</small></div>'; }).join('') + '</div>' : '');
+      K.dr.html = html; K.dr.title = p.name; K.dr.photos = r.photos.map(function (x) { return x.id; }); K.dr.pid = p.id; K.dr.consults = r.consults; drawDr();
+    }, function (e) { closeDr(); toast(esc(errOf(e)), true); });
+  }
+  function openDoctor(id) {
+    var d = docOf(id); if (!d) return;
+    var by = {}; (d.hours || []).forEach(function (h) { (by[h.weekday] = by[h.weekday] || []).push(clock(mOf(h.from)) + '–' + short(mOf(h.to))); });
+    var today = (K.D.consults || []).filter(function (c) { return c.doctorId === d.id && dk(c.startsAt).day === K.D.today && (c.state === 'confirmed' || c.state === 'done'); }).length;
+    var offs = (K.D.offs || []).filter(function (o) { return o.doctorId === d.id; });
+    var html = drHead(initial(d.name), 'ডা. ' + d.name, [d.title, d.regNo ? 'BMDC ' + d.regNo : ''].filter(Boolean).join(' · '), d.color) +
+      '<div class="dk-cards" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px">' + [[bn(today), 'আজ রোগী'], ['৳' + Math.round(d.fee), 'প্রতি দেখা'], [bn(d.slotMin) + ' মি.', 'প্রতি দেখার সময়']].map(function (x) { return '<div style="background:var(--dk-shelf);border-radius:12px;padding:10px 12px"><b style="display:block;font:800 20px \'Hind Siliguri\'">' + x[0] + '</b><small style="color:var(--dk-ink3)">' + x[1] + '</small></div>'; }).join('') + '</div>' +
+      '<dl class="dk-kv">' + [['যা দেখেন', d.treats], ['ভাষা', d.langs], ['বিরতি', bn(d.gapMin) + ' মিনিট'], ['WhatsApp', d.phone || 'নেই — বট জিজ্ঞেস করতে পারবে না'], ['উত্তরের অপেক্ষা', bn(d.holdMin) + ' মিনিট' + (d.autoOk ? ' · ফাঁকা সময়ে নিজে পাকা' : '')], ['কলের লিংক', d.videoLink || 'WhatsApp ভিডিও কল'], ['পরিচয়', d.about]].filter(function (x) { return x[1]; }).map(function (x) { return '<dt>' + x[0] + '</dt><dd data-noi18n="1">' + esc(x[1]) + '</dd>'; }).join('') + '</dl>' +
+      '<h4 class="dk-h4">সপ্তাহের সময়</h4><dl class="dk-kv">' + [6, 0, 1, 2, 3, 4, 5].map(function (w) { return '<dt>' + DAYSF[w] + '</dt><dd>' + (by[w] ? by[w].join(', ') : '<span style="color:var(--dk-ink3);font-weight:400">বসেন না</span>') + '</dd>'; }).join('') + '</dl>' +
+      (offs.length ? '<h4 class="dk-h4">ছুটি</h4>' + offs.map(function (o) { return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span>' + esc(dayLabel(o.day)) + (o.from ? ' ' + clock(mOf(o.from)) + '–' + short(mOf(o.to)) : '') + (o.reason ? ' · <span data-noi18n="1">' + esc(o.reason) + '</span>' : '') + '</span>' + (canAct() ? '<button type="button" class="dk-btn sm ghost" data-dk="unoff" data-v="' + o.id + '">তুলে দিন</button>' : '') + '</div>'; }).join('') : '') +
+      (canAct() ? '<div class="dk-acts" style="margin-top:16px"><button type="button" class="dk-btn dark" data-dk="editdoc" data-v="' + d.id + '">প্রোফাইল ও সময় বদলান</button><button type="button" class="dk-btn ghost" data-dk="offform" data-v="' + d.id + '">ছুটি যোগ করুন</button></div>' : '');
+    openDr('ডাক্তার', html);
+  }
+  var WD_ORDER = [6, 0, 1, 2, 3, 4, 5];
+  function docForm(d) {
+    d = d || { slotMin: 20, gapMin: 5, holdMin: 20, langs: 'বাংলা', hours: [], active: true };
+    var by = {}; (d.hours || []).forEach(function (h) { (by[h.weekday] = by[h.weekday] || []).push(h); });
+    var inp = function (k, label, v, type) { return '<label class="dk-f">' + label + '<input class="dk-in" data-df="' + k + '" type="' + (type || 'text') + '" value="' + esc(v == null ? '' : v) + '"></label>'; };
+    var hrs = '<div class="dk-hrs"><span></span><span>শুরু</span><span>শেষ</span><span class="b2">২য় শুরু</span><span class="b2">২য় শেষ</span>' + WD_ORDER.map(function (w) {
+      var a = by[w] || []; return '<span>' + DAYS[w] + '</span><input class="dk-in" type="time" data-hw="' + w + '" data-i="0f" value="' + esc(a[0] ? a[0].from : '') + '"><input class="dk-in" type="time" data-hw="' + w + '" data-i="0t" value="' + esc(a[0] ? a[0].to : '') + '"><input class="dk-in b2" type="time" data-hw="' + w + '" data-i="1f" value="' + esc(a[1] ? a[1].from : '') + '"><input class="dk-in b2" type="time" data-hw="' + w + '" data-i="1t" value="' + esc(a[1] ? a[1].to : '') + '">';
+    }).join('') + '</div>';
+    return drHead(d.name ? initial(d.name) : '+', d.id ? 'ডা. ' + d.name : 'নতুন ডাক্তার', d.id ? 'প্রোফাইল ও সময় বদলান' : 'নাম, WhatsApp আর কখন বসেন', d.color || '#5C626E') +
+      '<form data-dkform="doc" data-v="' + (d.id || '') + '">' + inp('name', 'নাম (ডা. ছাড়া)', d.name) + inp('title', 'ডিগ্রি', d.title) + '<div class="dk-f2">' + inp('regNo', 'BMDC নম্বর', d.regNo) + inp('phone', 'WhatsApp নম্বর', d.phone, 'tel') + '</div>' +
+      inp('treats', 'যা দেখেন (কমা দিয়ে)', d.treats) + '<div class="dk-f2">' + inp('fee', 'ফি (৳)', d.fee, 'number') + inp('langs', 'ভাষা', d.langs) + '</div>' +
+      '<div class="dk-f2">' + inp('slotMin', 'প্রতি দেখা (মিনিট)', d.slotMin, 'number') + inp('gapMin', 'মাঝে বিরতি (মিনিট)', d.gapMin, 'number') + '</div>' +
+      '<div class="dk-f2">' + inp('holdMin', 'ডাক্তারের উত্তরের অপেক্ষা (মিনিট)', d.holdMin, 'number') + inp('videoLink', 'নিজের কলের লিংক (ঐচ্ছিক)', d.videoLink, 'url') + '</div>' +
+      '<label class="dk-f">পরিচয় (রোগীরা যা জানবেন)<textarea class="dk-ta" data-df="about">' + esc(d.about || '') + '</textarea></label>' +
+      '<label class="dk-check"><input type="checkbox" data-df="autoOk"' + (d.autoOk ? ' checked' : '') + '> ফাঁকা সময়ে বট নিজেই পাকা করবে (ডাক্তারকে জিজ্ঞেস না করে)</label>' +
+      (d.id ? '<label class="dk-check"><input type="checkbox" data-df="active"' + (d.active ? ' checked' : '') + '> এখন রোগী দেখছেন</label>' : '') +
+      '<h4 class="dk-h4">কোন দিন কখন বসেন</h4>' + hrs +
+      '<div class="dk-acts" style="margin-top:16px"><button type="submit" class="dk-btn dark">সেভ করুন</button><button type="button" class="dk-btn ghost" data-dk="close">থাক</button></div></form>';
+  }
+  function patForm(p) {
+    p = p || {};
+    var inp = function (k, label, v, type) { return '<label class="dk-f">' + label + '<input class="dk-in" data-pf="' + k + '" type="' + (type || 'text') + '" value="' + esc(v == null ? '' : v) + '"></label>'; };
+    return drHead(p.name ? initial(p.name) : '+', p.id ? p.name : 'নতুন রোগী', p.id ? 'তথ্য বদলান' : 'যা জানা আছে শুধু সেটুকু') +
+      '<form data-dkform="pat" data-v="' + (p.id || '') + '"><div class="dk-f2">' + inp('name', 'নাম', p.name) + inp('phone', 'ফোন', p.phone, 'tel') + '</div>' +
+      '<div class="dk-f2">' + inp('age', 'বয়স', p.age, 'number') + '<label class="dk-f">লিঙ্গ<select class="dk-sel" data-pf="gender"><option value="">—</option><option value="f"' + (p.gender === 'f' ? ' selected' : '') + '>মহিলা</option><option value="m"' + (p.gender === 'm' ? ' selected' : '') + '>পুরুষ</option></select></label></div>' +
+      inp('concern', 'সমস্যা', p.concern) + '<div class="dk-f2">' + inp('since', 'কতদিন', p.since) + inp('skinType', 'ত্বকের ধরন', p.skinType) + '</div>' + inp('area', 'এলাকা', p.area) +
+      inp('routine', 'এখন যা মাখেন', p.routine) + inp('allergies', 'অ্যালার্জি / ওষুধ / গর্ভাবস্থা', p.allergies) + '<label class="dk-f">টিমের নোট<textarea class="dk-ta" data-pf="notes">' + esc(p.notes || '') + '</textarea></label>' +
+      (p.consentAt ? '' : '<label class="dk-check"><input type="checkbox" data-pf="consent"> রোগী তথ্য ও ছবি ডাক্তারকে দেখাতে রাজি (মুখে বা চ্যাটে বলেছেন)</label>') +
+      '<div class="dk-acts" style="margin-top:12px"><button type="submit" class="dk-btn dark">সেভ করুন</button><button type="button" class="dk-btn ghost" data-dk="close">থাক</button></div></form>';
+  }
+  function bookForm(o) {
+    o = o || {};
+    var ds = (K.D.doctors || []).filter(function (d) { return d.active; });
+    var docSel = '<select class="dk-sel" data-bf="doctor">' + ds.map(function (d) { return '<option value="' + d.id + '"' + (Number(o.doctor) === d.id ? ' selected' : '') + '>ডা. ' + esc(d.name) + '</option>'; }).join('') + '</select>';
+    return drHead('+', 'নতুন বুকিং', 'ফাঁকা সময় থেকে বাছুন') +
+      '<form data-dkform="book"><label class="dk-f">ডাক্তার' + docSel + '</label><label class="dk-f">দিন<input class="dk-in" type="date" data-bf="day" value="' + esc(o.day || K.day) + '"></label>' +
+      '<div class="dk-f">সময়<div class="dk-slots" data-bslots="1"><div class="dk-load" style="height:34px"></div></div></div>' +
+      (o.patient ? '<input type="hidden" data-bf="patient" value="' + o.patient + '"><div class="dk-consent" style="margin-bottom:10px">রোগী: <b data-noi18n="1">' + esc(o.patientName || '') + '</b></div>'
+        : '<div class="dk-f2"><label class="dk-f">রোগীর নাম<input class="dk-in" data-bf="name"></label><label class="dk-f">ফোন<input class="dk-in" type="tel" data-bf="phone"></label></div>') +
+      '<label class="dk-f">সমস্যা<input class="dk-in" data-bf="concern"></label>' +
+      '<label class="dk-check"><input type="checkbox" data-bf="ask"> ডাক্তারকে WhatsApp-এ জিজ্ঞেস করুন (না দিলে এখনই পাকা)</label>' +
+      '<div class="dk-acts" style="margin-top:12px"><button type="submit" class="dk-btn dark">বুক করুন</button><button type="button" class="dk-btn ghost" data-dk="close">থাক</button></div></form>';
+  }
+  function fillSlots(pick) {
+    var w = document.getElementById('dk-drw'); if (!w) return;
+    var box = w.querySelector('[data-bslots]'), d = w.querySelector('[data-bf="doctor"]'), day = w.querySelector('[data-bf="day"]');
+    if (!box || !d || !day) return;
+    srv('erpClinicSlots', [{ doctorId: Number(d.value), day: day.value }], function (r) {
+      K.dr.slot = pick && r.slots.indexOf(pick) >= 0 ? pick : (r.slots[0] || null);
+      box.innerHTML = r.slots.length ? r.slots.map(function (s) { return '<button type="button" data-dk="pickslot" data-v="' + s + '" aria-pressed="' + (s === K.dr.slot) + '">' + clock(mOf(s)) + '</button>'; }).join('') : '<span style="color:var(--dk-ink3)">এই দিনে ফাঁকা সময় নেই</span>';
+    }, function (e) { box.textContent = errOf(e); });
+  }
+  function act(id, a, extra) {
+    var args = Object.assign({ id: Number(id), action: a }, extra || {});
+    srv('erpClinicAct', [args], function (r) { toast(a === 'confirm' ? 'পাকা হলো, রোগীকে জানানো হয়েছে' : a === 'ask' ? 'ডাক্তারকে আবার জিজ্ঞেস করা হলো' : 'হয়ে গেছে'); load(true); if (K.dr && K.dr.pid) openPatient(K.dr.pid, r && r.id ? r.id : id); }, function (e) { toast(esc(errOf(e)), true); });
+  }
+  function readFile(f, cb) { var rd = new FileReader(); rd.onload = function () { var img = new Image(); img.onload = function () { var s = Math.min(1, 1600 / Math.max(img.width, img.height)); var cv = document.createElement('canvas'); cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); cb(cv.toDataURL('image/jpeg', 0.86)); }; img.onerror = function () { toast('ছবিটা খোলা গেল না', true); }; img.src = rd.result; }; rd.readAsDataURL(f); }
+
+  // ---------------------------------------------------------------- clicks
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest && ev.target.closest('[data-dk]'); if (!b || !b.closest('.dk')) return;
+    var k = b.getAttribute('data-dk'), v = b.getAttribute('data-v');
+    if (k === 'tab') { K.tab = v; if (v === 'pats') K.pats = null; closeDr(); paint(); window.scrollTo(0, 0); return; }
+    if (k === 'reload') { K.pats = null; load(true); return; }
+    if (k === 'zoom') { K.days = Number(v); load(true); return; }
+    if (k === 'step') { K.day = addDay(K.day, Number(v) * K.days); load(true); return; }
+    if (k === 'today') { K.day = K.D.today; load(true); return; }
+    if (k === 'goday') { K.day = v; K.days = 1; load(true); return; }
+    if (k === 'jump') { var t = document.getElementById(v); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    if (k === 'close') { closeDr(); return; }
+    if (k === 'con') { var c = conOf(v); if (c) openPatient(c.patientId, c.id); return; }
+    if (k === 'pat') { openPatient(v); return; }
+    if (k === 'doc') { openDoctor(v); return; }
+    if (k === 'newdoc') { openDr('নতুন ডাক্তার', docForm()); return; }
+    if (k === 'editdoc') { openDr('ডাক্তার', docForm(docOf(v))); return; }
+    if (k === 'newpat') { openDr('নতুন রোগী', patForm()); return; }
+    if (k === 'editpat') { srv('erpClinicPatient', [{ id: Number(v) }], function (r) { openDr('রোগী', patForm(r.patient)); }, function (e) { toast(esc(errOf(e)), true); }); return; }
+    if (k === 'free') { if (!canAct()) return; openDr('নতুন বুকিং', bookForm({ doctor: b.getAttribute('data-doc'), day: b.getAttribute('data-day') || K.day })); fillSlots(v); return; }
+    if (k === 'book') { var pid = b.getAttribute('data-p'); var pn = pid && K.dr && K.dr.title; openDr('নতুন বুকিং', bookForm({ patient: pid, patientName: pn })); fillSlots(); return; }
+    if (k === 'pickslot') { K.dr.slot = v; [].forEach.call(b.parentNode.children, function (x) { x.setAttribute('aria-pressed', String(x === b)); }); return; }
+    if (k === 'goinbox') { go('inbox'); return; }
+    if (k === 'photo') { if (K.url[v]) window.open(K.url[v], '_blank', 'noopener'); return; }
+    if (k === 'unoff') { srv('erpClinicOffStrike', [{ id: Number(v) }], function () { toast('ছুটি তুলে দেওয়া হলো'); closeDr(); load(true); }, function (e) { toast(esc(errOf(e)), true); }); return; }
+    if (k === 'offform') {
+      openDr('ছুটি', drHead('—', 'ছুটি যোগ করুন', 'পুরো দিন হলে সময় ফাঁকা রাখুন') + '<form data-dkform="off" data-v="' + v + '"><label class="dk-f">দিন<input class="dk-in" type="date" data-of="day" value="' + K.day + '" autofocus></label><div class="dk-f2"><label class="dk-f">থেকে<input class="dk-in" type="time" data-of="from"></label><label class="dk-f">পর্যন্ত<input class="dk-in" type="time" data-of="to"></label></label></div><label class="dk-f">কারণ<input class="dk-in" data-of="reason"></label><div class="dk-acts"><button type="submit" class="dk-btn dark">সেভ করুন</button><button type="button" class="dk-btn ghost" data-dk="close">থাক</button></div></form>');
+      return;
+    }
+    if (k === 'saveset') {
+      var o = {}; [].forEach.call(document.querySelectorAll('[data-set]'), function (x) { o[x.getAttribute('data-set')] = x.value; });
+      srv('erpClinicSettingsSave', [o], function () { toast('সেভ হয়েছে'); load(true); }, function (e) { toast(esc(errOf(e)), true); }); return;
+    }
+    if (k === 'act') {
+      var a = b.getAttribute('data-a'), c2 = conOf(v) || ((K.dr && K.dr.consults) || []).filter(function (x) { return x.id === Number(v); })[0] || {};
+      if (a === 'cancel') { var why = prompt('বাতিলের কারণ লিখুন'); if (!why) return; act(v, 'cancel', { reason: why, tell: confirm('রোগীকে WhatsApp-এ জানাবেন?') }); return; }
+      if (a === 'link') { var l = prompt('কলের লিংক (https://…), খালি রাখলে WhatsApp ভিডিও কল', c2.videoLink || ''); if (l === null) return; act(v, 'link', { link: l.trim(), tell: !!l.trim() && confirm('রোগীকে লিংক পাঠাবেন?') }); return; }
+      if (a === 'note') { var n = prompt('ডাক্তার কী বললেন (রোগীর জন্য নোট)', c2.doctorNote || ''); if (n === null) return; act(v, 'note', { note: n }); return; }
+      if (a === 'paid') { var pn2 = c2.paid ? '' : prompt('কীভাবে পেলেন (যেমন bKash শেষ ৪ সংখ্যা)', ''); if (pn2 === null) return; act(v, 'paid', { paid: !c2.paid, note: pn2 || '' }); return; }
+      if (a === 'no_show') { act(v, 'no_show', { tell: confirm('রোগীকে নতুন সময়ের কথা জানাবেন?') }); return; }
+      if (a === 'move') { openDr('সময় বদল', bookForm({ doctor: c2.doctorId, day: dk(c2.startsAt).day, patient: c2.patientId, patientName: c2.patientName })); K.dr.move = Number(v); fillSlots(); return; }
+      act(v, a); return;
+    }
+  });
+  document.addEventListener('change', function (ev) {
+    var t = ev.target; if (!t.closest || !t.closest('.dk')) return;
+    if (t.getAttribute('data-dkc') === 'day' && t.value) { K.day = t.value; load(true); return; }
+    if (t.getAttribute('data-bf') === 'doctor' || t.getAttribute('data-bf') === 'day') { fillSlots(); return; }
+    if (t.getAttribute('data-dkc') === 'photo' && t.files && t.files[0]) {
+      var pid = t.getAttribute('data-v');
+      readFile(t.files[0], function (data) { srv('erpClinicPhotoAdd', [{ patientId: Number(pid), mime: 'image/jpeg', data: data }], function () { toast('ছবি রাখা হলো'); openPatient(pid); }, function (e) { toast(esc(errOf(e)), true); }); });
+    }
+  });
+  var qT = null;
+  document.addEventListener('input', function (ev) { var t = ev.target; if (t.getAttribute && t.getAttribute('data-dkc') === 'q') { K.q = t.value; clearTimeout(qT); qT = setTimeout(loadPats, 300); } });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && K.dr) closeDr(); });
+  document.addEventListener('submit', function (ev) {
+    var f = ev.target; if (!f.getAttribute || !f.getAttribute('data-dkform')) return;
+    ev.preventDefault();
+    var kind = f.getAttribute('data-dkform'), id = f.getAttribute('data-v');
+    var val = function (attr, k) { var x = f.querySelector('[' + attr + '="' + k + '"]'); return !x ? undefined : x.type === 'checkbox' ? x.checked : x.value; };
+    var btn = f.querySelector('[type="submit"]'); if (btn) btn.disabled = true;
+    var fail = function (e) { if (btn) btn.disabled = false; toast(esc(errOf(e)), true); };
+    if (kind === 'doc') {
+      var a = {}; ['name', 'title', 'regNo', 'phone', 'treats', 'fee', 'langs', 'slotMin', 'gapMin', 'holdMin', 'videoLink', 'about', 'autoOk', 'active'].forEach(function (k) { var x = val('data-df', k); if (x !== undefined) a[k] = x; });
+      if (id) a.id = Number(id);
+      var hours = []; WD_ORDER.forEach(function (w) { ['0', '1'].forEach(function (i) { var fr = val('data-i', i + 'f') === undefined ? '' : (f.querySelector('[data-hw="' + w + '"][data-i="' + i + 'f"]') || {}).value, to = (f.querySelector('[data-hw="' + w + '"][data-i="' + i + 't"]') || {}).value; if (fr && to) hours.push({ weekday: w, from: fr, to: to }); }); });
+      srv('erpClinicDoctorSave', [a], function (r) { srv('erpClinicHoursSave', [{ doctorId: r.id, hours: hours }], function () { toast('সেভ হয়েছে'); closeDr(); load(true); }, fail); }, fail);
+      return;
+    }
+    if (kind === 'pat') {
+      var p = {}; ['name', 'phone', 'age', 'gender', 'concern', 'since', 'skinType', 'area', 'routine', 'allergies', 'notes', 'consent'].forEach(function (k) { var x = val('data-pf', k); if (x !== undefined) p[k] = x; });
+      if (id) p.id = Number(id);
+      srv('erpClinicPatientSave', [p], function (r) { toast('সেভ হয়েছে'); K.pats = null; openPatient(r.id); if (K.tab === 'pats') paint(); }, fail);
+      return;
+    }
+    if (kind === 'off') {
+      srv('erpClinicOffSave', [{ doctorId: Number(id), day: val('data-of', 'day'), from: val('data-of', 'from'), to: val('data-of', 'to'), reason: val('data-of', 'reason') }], function (r) { toast(r.clash ? 'ছুটি রাখা হলো — ওই সময়ে ' + bn(r.clash) + 'টা বুকিং আছে, সেগুলো বদলান' : 'ছুটি রাখা হলো', !!r.clash); closeDr(); load(true); }, fail);
+      return;
+    }
+    if (kind === 'book') {
+      if (!K.dr || !K.dr.slot) { fail('একটা ফাঁকা সময় বাছুন।'); return; }
+      var day = val('data-bf', 'day'), doc = Number(val('data-bf', 'doctor')), ask = !!val('data-bf', 'ask');
+      if (K.dr.move) { var mv = K.dr.move; srv('erpClinicAct', [{ id: mv, action: 'move', doctorId: doc, day: day, time: K.dr.slot, askDoctor: ask, tell: true }], function () { toast('সময় বদলানো হলো'); closeDr(); load(true); }, fail); return; }
+      var args = { doctorId: doc, day: day, time: K.dr.slot, concern: val('data-bf', 'concern'), askDoctor: ask };
+      var pid2 = val('data-bf', 'patient');
+      if (pid2) args.patientId = Number(pid2); else args.patient = { name: val('data-bf', 'name'), phone: val('data-bf', 'phone'), concern: val('data-bf', 'concern') };
+      srv('erpClinicBook', [args], function (r) { toast(r.state === 'confirmed' ? 'বুক হলো (' + r.no + ')' : 'ডাক্তারকে জিজ্ঞেস করা হলো (' + r.no + ')'); closeDr(); load(true); }, fail);
+    }
+  });
+})();
+</script>
+
 </body>
 </html>

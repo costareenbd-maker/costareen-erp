@@ -24,6 +24,7 @@ export const PURPOSES = {
   chat: { name: 'Customer chat', help: 'The AI answers (when it is on) and the team gets alerts' },
   send: { name: 'Sending only', help: 'Bills and PDFs go out from it; messages that come in are kept, nobody is answered' },
   collect: { name: 'Collect data', help: 'Messages are kept for the records; nobody is answered, no alerts' },
+  clinic: { name: 'Doctor booking', help: 'The Doctor desk\u2019s booking assistant answers here: free times, patient details, asks the doctor, reminders' },
 };
 export function purposeOf(ch) { const p = str(ch && ch.settings && ch.settings.purpose); return PURPOSES[p] ? p : 'chat'; }
 

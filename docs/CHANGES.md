@@ -5412,3 +5412,37 @@ structure, with two small choices.
 - NOT done: the night clip desk does not read studio-requests by itself (Flow is by hand, 01:00-07:00 KST); when a night
   clip lands in the brand library, Raj presses "আরো ভালো করুন" to get it in a new version. HEIC pictures show as an icon
   in the browser (the engine converts them). Live waits for the owner's yes.
+
+## clinic-1 — Doctor desk (ডাক্তার ডেস্ক), 28 Nov 2026 (dev, owner-only app `clinic`)
+
+Owner (28 Nov): Oliareen's dermatologists now see customers on video calls; keep doctor and patient profiles, a WhatsApp
+bot like Alvi books the slot and asks the doctor itself, and the schedule shows one line per doctor like the Brand desk
+(tap a slot = the patient, tap the line = the doctor). Research: cal.com (weekly hours + overrides, length/buffer/notice,
+"requires confirmation"), Medplum/FHIR (hold -> pending -> booked, serialised booking), Jane/Cliniko/DocTime (status
+colours, reminder with the call link, pay first in Bangladesh). Mock + screenshots in `.impeccable/mocks/doctor-desk-2026-11-28/`.
+
+- Migration `188_clinic.sql`: clinic_doctors, clinic_hours (weekly, Dhaka minutes), clinic_offs (struck, never deleted),
+  clinic_patients (consent date + words), clinic_consults (requested / confirmed / done / no_show / cancelled / declined /
+  expired; nothing deleted), clinic_events, clinic_photos. RLS manager.
+- `handlers/clinic.js`: erpClinic (day / 7 / 30 days, free slots, waits, bot state) + slots, patients, patient page
+  (consults, photos, the bot chat, history), doctor save + weekly hours + days off, patient save + photos, book (the
+  doctor's row is locked; overlap refused; outside hours refused unless "any time"), erpClinicAct (confirm, decline, ask
+  again, cancel with reason, done / no-show after the time, paid, note + follow-up, call link, move = old cancelled + new),
+  assistant settings (owner only).
+- The bot: a WhatsApp number with purpose **clinic** (wanumbers.js "Doctor booking"). inbox.js: ingest lets clinic chats
+  through, agentReply hands them to `clinicReply` (its own prompt + tools: doctors, free_times, save_patient, book,
+  my_bookings, cancel_booking, handover; consent before details; never says it is an AI; never diagnoses), deliver no
+  longer reroutes a clinic number to Alvi. `doctorInbound`: the doctor's "হ্যাঁ" / "না" / "#C-12 ok" from their own phone
+  (or in the doctors' group set in the settings) confirms or declines; the patient is told at once with the fee/pay text
+  or three other times. Photos the patient sent in the chat are put on the profile at booking.
+- Timer `clinicJob` (jobs.js, with the studio job): holds that ran out -> expired + other times to the patient + team
+  phones; the doctor nudged once half-way; reminders the day before (3-24 h, unpaid fee) and N minutes before (link; the
+  doctor hears it too).
+- Page block `clinic-1` (menu "Doctor desk"): tabs সময়সূচি / রোগী / ডাক্তার / বুকিং বট; wait bar; day lanes per doctor
+  (sittings, free runs merged, now rule), 7-day grid, 30-day counts; "আপনার দেখা দরকার" cards; today's flow; drawers for
+  patient, doctor, booking (free slots), doctor form with weekly hours, day off; bot rules form.
+- Tests: `clinic_test.mjs` 48/48; apps_test / wanumbers_test counts updated (+1 app, +1 purpose); inbox, superior,
+  cgroups, salesagent, mgrdesk, holds, studio, contentdesk, serverfinal, shareholder, reviews green.
+- NOT done: the bot's own WhatsApp number (owner gives a SIM, then Inbox > WhatsApp numbers > purpose Doctor booking);
+  real doctor + hours on Oliareen (only demo on dev); live release waits for the owner's yes; payment is marked by hand
+  (no bKash API); WhatsApp group booking by patients only talks times (health details go to a direct chat, by design).

@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ডাক্তার ডেস্ক — mock</title>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"Pretendard Variable";src:url(../../../web/fonts/PretendardStdVariable.woff2) format("woff2");font-weight:45 920}
+:root{--ink:#16181D;--ink2:#454A55;--ink3:#5C626E;--rule:#E4E6EA;--shelf:#F2F3F5;--ground:#EDEEF1;--white:#fff;--alert:#E0301E;--alert-ink:#A8260F;--wait:#F2A900;--wait-soft:#FFF4D6;--lime:#E4FF5A;
+--d1:#0E7C86;--d2:#B4467A;--go:#1EA35A}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ground);color:var(--ink);font:400 15px/1.5 "Hind Siliguri","Pretendard Variable",system-ui;font-variant-numeric:tabular-nums}
+::selection{background:var(--lime);color:var(--ink)}
+button{font:inherit;color:inherit;cursor:pointer}
+.num,.t{font-family:"Pretendard Variable","Hind Siliguri";}
+/* top bar */
+.top{height:56px;display:flex;align-items:center;gap:12px;padding:0 20px}
+.top b{font-size:17px}
+.biz{display:flex;align-items:center;gap:8px;background:#fff;border-radius:999px;padding:5px 12px 5px 6px;font-weight:600;font-size:14px}
+.biz i{width:24px;height:24px;border-radius:50%;background:#C7A27C;display:grid;place-items:center;color:#fff;font-style:normal;font-size:12px}
+.top .sp{flex:1}
+.av{width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:700}
+/* shell */
+.shell{display:grid;grid-template-columns:228px minmax(0,1fr);gap:14px;padding:0 14px 14px}
+.rail{padding:6px 4px}
+.rail h2{font:600 12px "Hind Siliguri";color:var(--ink3);margin:16px 10px 6px}
+.ri{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-radius:10px;font:600 14.5px "Hind Siliguri";color:var(--ink2)}
+.ri svg{width:19px;height:19px;flex:none}
+.ri.on{background:var(--lime);color:var(--ink)}
+.ri em{margin-left:auto;font:700 12px "Pretendard Variable";font-style:normal;background:var(--wait);color:var(--ink);border-radius:999px;padding:1px 8px}
+.sheet{background:#fff;border-radius:24px;padding:22px 26px 28px;min-width:0}
+.side{background:#fff;border-radius:24px;padding:20px 18px;align-self:start;grid-column:2;min-width:0}
+@media (min-width:761px){.side{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:start}.side h2{grid-column:1/-1;margin:0}.side .card{margin:0}.side .botline{margin:0;align-self:stretch}}
+h1{font:700 22px/1.25 "Hind Siliguri";margin:0}
+.hd{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.hd .sp{flex:1}
+.pills{display:inline-flex;background:var(--shelf);border-radius:999px;padding:3px;gap:2px}
+.pills button{border:0;background:none;border-radius:999px;padding:6px 14px;font:600 13.5px "Hind Siliguri";color:var(--ink2)}
+.pills button.on{background:var(--lime);color:var(--ink)}
+.pills.q button.on{background:#fff;box-shadow:0 0 0 1.5px var(--ink) inset;color:var(--ink)}
+.btn{height:38px;border-radius:10px;border:0;background:var(--shelf);padding:0 14px;font:600 14px "Hind Siliguri";display:inline-flex;align-items:center;gap:7px}
+.btn.dark{background:var(--ink);color:#fff}.btn.amber{background:var(--wait)}.btn.ghost{background:none;box-shadow:0 0 0 1px var(--rule) inset}
+.btn.sm{height:32px;font-size:13px;padding:0 11px;border-radius:9px}
+.btn svg{width:16px;height:16px}
+/* wait bar */
+.wb{background:var(--ink);color:#fff;border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:16px;margin:4px 0 18px}
+.wb .f{font:800 34px/1 "Pretendard Variable"}
+.wb p{margin:0;font-weight:600}.wb small{display:block;color:#C9CDD4;font-weight:400;font-size:13px}
+.wb .sp{flex:1}
+/* schedule */
+.sch-h{display:flex;align-items:center;gap:10px;margin:6px 0 10px}
+.sch-h h2{font:700 17px "Hind Siliguri";margin:0 8px 0 0}
+.sch-h .sp{flex:1}
+.date{display:flex;align-items:center;gap:6px;font:600 14px "Hind Siliguri"}
+.ib{width:32px;height:32px;border-radius:9px;border:0;background:var(--shelf);display:grid;place-items:center}
+.ib svg{width:16px;height:16px}
+.map{border:1px solid var(--rule);border-radius:14px;overflow:hidden;position:relative}
+.mrow{display:grid;grid-template-columns:190px 1fr;min-height:76px;border-top:1px solid var(--rule)}
+.mrow.head{min-height:34px;border-top:0;background:#FAFAFB}
+.lab{padding:10px 12px;display:flex;align-items:center;gap:10px;border-right:1px solid var(--rule);background:#fff;cursor:pointer;text-align:left;border-top:0;border-bottom:0;border-left:0}
+.lab:hover{background:#F7F8F9}
+.dav{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 15px "Hind Siliguri";flex:none;position:relative}
+.dav::after{content:"";position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;background:var(--go);border:2px solid #fff}
+.dav.off::after{background:#B4B9C1}
+.lab b{display:block;font:700 14.5px/1.25 "Hind Siliguri"}
+.lab small{display:block;color:var(--ink3);font-size:12.5px;line-height:1.3}
+.track{position:relative}
+.hrs{display:grid;grid-template-columns:repeat(13,1fr);height:100%}
+.hrs span{border-left:1px solid #F0F1F3;font:600 12px "Pretendard Variable";color:var(--ink3);padding:8px 0 0 6px}
+.head .hrs span{border-left-color:var(--rule)}
+.band{position:absolute;top:14px;bottom:14px;border-radius:10px}
+.band.b1{background:color-mix(in srgb,var(--d1) 8%,#fff);box-shadow:0 0 0 1px color-mix(in srgb,var(--d1) 22%,#fff) inset}
+.band.b2{background:color-mix(in srgb,var(--d2) 8%,#fff);box-shadow:0 0 0 1px color-mix(in srgb,var(--d2) 22%,#fff) inset}
+.free{position:absolute;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;border:2px solid currentColor;opacity:.45;background:#fff}
+.chip{position:absolute;top:50%;transform:translateY(-50%);height:46px;border-radius:12px;padding:5px 9px;font:600 12.5px/1.25 "Hind Siliguri";display:flex;flex-direction:column;justify-content:center;white-space:nowrap;overflow:hidden;border:0;text-align:left}
+.chip .t{font:700 12.5px "Pretendard Variable"}
+.chip.ok{background:var(--dc);color:#fff}
+.chip.wt{background:var(--wait-soft);box-shadow:0 0 0 2px var(--wait) inset;color:#5C3D00}
+.chip.dn{background:color-mix(in srgb,var(--dc) 14%,#fff);color:var(--ink2)}
+.chip.dn .t::after{content:" ✓"}
+.chip.ns{background:#FDECEA;box-shadow:0 0 0 2px var(--alert) inset;color:var(--alert-ink)}
+.chip.sel{outline:2px solid var(--ink);outline-offset:2px}
+.now{position:absolute;top:0;bottom:0;width:2px;background:var(--ink);z-index:2}
+.now::before{content:"এখন ৪:১৫";position:absolute;top:-1px;left:4px;font:700 11px "Hind Siliguri";background:var(--ink);color:#fff;border-radius:6px;padding:0 6px;white-space:nowrap}
+.addrow{display:flex;align-items:center;gap:10px;padding:12px;color:var(--ink2);font-weight:600;border-top:1px dashed #C9CDD4;background:#FCFCFD}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin:10px 2px 0;font-size:12.5px;color:var(--ink3)}
+.legend i{display:inline-block;width:22px;height:12px;border-radius:4px;vertical-align:-1px;margin-right:6px}
+.lane{display:flex;flex-direction:column;gap:10px;padding:18px 14px 12px;min-width:0;overflow-x:auto}
+.grp{display:flex;flex-wrap:nowrap;align-items:center;gap:6px;background:linear-gradient(var(--dc),var(--dc)) 0 24px/100% 3px no-repeat}
+.lane::-webkit-scrollbar{height:6px}.lane::-webkit-scrollbar-thumb{background:#D5D8DD;border-radius:9px}
+.lane .chip{position:static;transform:none;flex:none;width:74px;height:48px;padding:5px 10px;cursor:pointer}
+.chip.w2{width:100px!important}.gap{flex:none;width:18px;height:3px;background:repeating-linear-gradient(90deg,var(--dc) 0 3px,transparent 3px 6px);opacity:.6}
+.chip.fr0{background:#fff;box-shadow:0 0 0 1.5px color-mix(in srgb,var(--dc) 45%,#fff) inset;color:var(--ink3);border:0;outline-offset:0}
+.chip.fr0 .t{color:var(--ink2)}
+.seg{flex:none;font:600 12px "Hind Siliguri";color:var(--ink2);background:#fff;padding:2px 8px;border-radius:999px;box-shadow:0 0 0 1px var(--rule) inset;margin:0 2px}
+.nowr{flex:none;align-self:stretch;width:2px;background:var(--ink);position:relative;margin:0 6px}
+.nowr{font-size:0}.nowr::before{content:"এখন ৪:১৫";font:700 11px "Hind Siliguri";position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:6px;padding:0 6px;white-space:nowrap}
+.offday{flex:1;padding:12px;border-radius:10px;background:repeating-linear-gradient(135deg,#F5F6F8 0 8px,#fff 8px 16px);text-align:center;font:600 13px "Hind Siliguri";color:var(--ink2)}
+.mrow{grid-template-columns:184px minmax(0,1fr)}
+/* day flow */
+.flow{margin-top:22px}
+.flow h2{font:700 17px "Hind Siliguri";margin:0 0 8px}
+.fr{display:grid;grid-template-columns:86px 24px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--rule)}
+.fr .tm{font:700 14.5px "Hind Siliguri"}
+.fr .nd{width:14px;height:14px;border-radius:50%;border:3px solid var(--dc);background:#fff;justify-self:center}
+.fr.ok .nd{background:var(--dc)}
+.fr.wt .nd{border-color:var(--wait);box-shadow:0 0 0 4px var(--wait-soft)}
+.fr b{font-weight:700}.fr small{display:block;color:var(--ink3);font-size:13px}
+.tag{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 10px;font:600 12.5px "Hind Siliguri";background:var(--shelf);box-shadow:0 0 0 1px var(--ink) inset}
+.tag.w{background:var(--wait-soft);box-shadow:none;color:#7A5200}
+.tag.d{box-shadow:none;color:var(--ink3)}
+.nowline{display:flex;align-items:center;gap:8px;color:var(--ink);font:700 12px "Hind Siliguri";margin:2px 0}
+.nowline::after{content:"";flex:1;height:2px;background:var(--ink)}
+.acts{display:flex;gap:6px}
+/* side */
+.side h2{font:700 17px "Hind Siliguri";margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.side h2 em{font:700 12px "Pretendard Variable";font-style:normal;background:var(--wait);border-radius:999px;padding:1px 8px}
+.card{border:1px solid var(--rule);border-radius:14px;padding:13px 14px;margin-bottom:10px}
+.card .k{font:600 12.5px "Hind Siliguri";color:var(--ink3);display:flex;align-items:center;gap:6px}
+.card .k .dot{width:8px;height:8px;border-radius:50%}
+.card p{margin:4px 0 10px;font-size:14px}
+.card .acts{flex-wrap:wrap}
+.bub{background:#E7FFDB;border-radius:10px 10px 10px 2px;padding:6px 9px;font-size:13.5px;margin:6px 0 8px;color:#111B21}
+.bub.me{background:#fff;box-shadow:0 0 0 1px var(--rule) inset;border-radius:10px 10px 2px 10px}
+.bub small{display:block;color:#667781;font:11px "Pretendard Variable";text-align:right}
+.hold{height:5px;border-radius:999px;background:var(--shelf);overflow:hidden;margin:2px 0 10px}
+.hold i{display:block;height:100%;width:62%;background:var(--wait)}
+.botline{display:flex;align-items:center;gap:10px;background:var(--shelf);border-radius:14px;padding:10px 12px;margin-top:14px;font-size:13.5px}
+.botline b{display:block}
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(22,24,29,.28);display:none;z-index:9}
+.drawer{position:fixed;top:12px;right:12px;bottom:12px;width:460px;background:#fff;border-radius:20px;box-shadow:0 10px 30px rgba(22,24,29,.18);display:none;z-index:10;overflow:auto;padding:22px 24px}
+body.p .scrim,body.d .scrim,body.p #pat,body.d #doc{display:block}
+.dr-h{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.dr-h .sp{flex:1}
+.pav{width:52px;height:52px;border-radius:50%;background:var(--shelf);display:grid;place-items:center;font:700 19px "Hind Siliguri"}
+.dr-h h3{margin:0;font:700 20px/1.2 "Hind Siliguri"}
+.dr-h small{color:var(--ink3)}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;font-size:14px;margin:10px 0 16px}
+.kv dt{color:var(--ink3)}.kv dd{margin:0;font-weight:600}
+.sec{font:700 15px "Hind Siliguri";margin:18px 0 8px;display:flex;align-items:center;gap:8px}
+.sec::after{content:"";flex:1;height:1px;background:var(--rule)}
+.ph{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ph div{aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,#E9D7C9,#D7B9A4)}
+.ph div:nth-child(2){background:linear-gradient(135deg,#E3CDBF,#C9A58E)}
+.ph div:nth-child(3){background:linear-gradient(135deg,#EFDDCF,#DDBFAA)}
+.hist{border-left:2px solid var(--rule);margin-left:6px;padding-left:16px}
+.hist div{position:relative;padding:0 0 12px;font-size:14px}
+.hist div::before{content:"";position:absolute;left:-23px;top:6px;width:12px;height:12px;border-radius:50%;border:3px solid var(--d1);background:#fff}
+.hist small{display:block;color:var(--ink3)}
+.consent{display:flex;gap:8px;align-items:center;background:var(--shelf);border-radius:12px;padding:9px 12px;font-size:13.5px}
+.wk{display:grid;grid-template-columns:44px repeat(7,1fr);gap:4px;font:600 12px "Hind Siliguri";text-align:center}
+.wk span{padding:4px 0;color:var(--ink3)}
+.wk i{height:26px;border-radius:7px;background:var(--shelf)}
+.wk i.y{background:color-mix(in srgb,var(--d1) 22%,#fff);box-shadow:0 0 0 1px color-mix(in srgb,var(--d1) 40%,#fff) inset}
+.stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.stat3 div{background:var(--shelf);border-radius:12px;padding:10px 12px}
+.stat3 b{display:block;font:800 22px "Pretendard Variable"}
+.stat3 small{color:var(--ink3);font-size:12.5px}
+/* phone */
+@media (max-width:760px){
+ .top{padding:0 14px}.top .hide{display:none}
+ .shell{grid-template-columns:1fr;padding:0 0 80px;gap:10px}
+ .rail{display:none}.sheet{border-radius:20px;padding:16px 14px}.side{border-radius:20px;margin:0}
+ .wb{padding:12px 14px}.wb .f{font-size:28px}.wb .btn{display:none}
+ .sch-h{flex-wrap:wrap}.sch-h .sp{display:none}
+ .map{overflow-x:auto}.mrow{grid-template-columns:1fr}.lab{position:static;flex-direction:row}.map{overflow:visible}
+ .lab{position:sticky;left:0;z-index:3;padding:8px;flex-direction:column;align-items:flex-start;gap:4px}
+ .lab small{display:none}.lab b{font-size:13px}
+ .dav{width:32px;height:32px;font-size:13px}
+ .fr{grid-template-columns:70px 18px 1fr;row-gap:6px}.fr .acts,.fr>.tag{grid-column:3;justify-self:start}.fr .tm{font-size:13.5px}
+ .tabbar{position:fixed;left:0;right:0;bottom:0;height:68px;background:#fff;border-top:1px solid var(--rule);display:grid;grid-template-columns:repeat(5,1fr);z-index:8}
+ .tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:600 12px "Hind Siliguri";color:var(--ink2);text-decoration:none}
+ .tabbar a.on{color:var(--ink)}.tabbar a.on svg{background:var(--lime);border-radius:999px;padding:2px 12px;box-sizing:content-box}
+ .tabbar svg{width:20px;height:20px}
+ .drawer{left:0;right:0;bottom:0;top:auto;width:auto;max-height:86vh;border-radius:20px 20px 0 0}
+}
+@media (min-width:761px){.tabbar{display:none}}
+</style></head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11 12 4l8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v5a4 4 0 0 0 8 0V3"/><path d="M12 12v3a5 5 0 0 0 10 0v-2"/><circle cx="22" cy="11" r="0.5"/><path d="M6 3h4M14 3h4"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.4-4A8 8 0 1 1 9 19.5z"/></symbol>
+<symbol id="i-rule" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h13"/></symbol>
+<symbol id="i-l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></symbol>
+<symbol id="i-r" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+<symbol id="i-vid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="3"/><path d="M16 10.5 21 8v8l-5-2.5z"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-wa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.3-3.8A8 8 0 1 1 8 19z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 .8a4 4 0 0 1-1.8-1.8l.8-1-1-2z"/></symbol>
+</defs></svg>
+
+<div class="top"><b class="hide">শনিবার ২৮ নভেম্বর</b>
+ <span class="biz"><i>O</i>Oliareen</span><span class="sp"></span><span class="av">N</span></div>
+
+<div class="shell">
+ <nav class="rail" style="grid-row:1/span 2">
+  <div class="ri"><svg><use href="#i-home"/></svg>হোম</div>
+  <h2>ডাক্তার ডেস্ক</h2>
+  <div class="ri on"><svg><use href="#i-cal"/></svg>সময়সূচি<em>২</em></div>
+  <div class="ri"><svg><use href="#i-user"/></svg>রোগী</div>
+  <div class="ri"><svg><use href="#i-doc"/></svg>ডাক্তার</div>
+  <div class="ri"><svg><use href="#i-chat"/></svg>বটের কথা</div>
+  <div class="ri"><svg><use href="#i-rule"/></svg>নিয়ম</div>
+ </nav>
+
+
+ <main class="sheet" style="grid-column:2">
+  <div class="hd"><h1>সময়সূচি</h1><span class="sp"></span>
+   <button class="btn ghost sm"><svg><use href="#i-plus"/></svg>হাতে বুকিং</button></div>
+
+  <div class="wb"><span class="f">২</span><p>২টা বুকিং ডাক্তারের উত্তরের অপেক্ষায়<small>বট ডাক্তারকে WhatsApp-এ জিজ্ঞেস করেছে; ২০ মিনিটে উত্তর না এলে আপনাকে জানাবে</small></p><span class="sp"></span><button class="btn amber">দেখুন</button></div>
+
+  <div class="sch-h"><h2>আজ</h2>
+   <div class="pills"><button class="on">দিন</button><button>৭ দিন</button><button>৩০ দিন</button></div>
+   <span class="sp"></span>
+   <div class="date"><button class="ib" aria-label="আগের দিন"><svg><use href="#i-l"/></svg></button>শনি, ২৮ নভেম্বর<button class="ib" aria-label="পরের দিন"><svg><use href="#i-r"/></svg></button></div>
+  </div>
+
+  <div class="map">
+   <div class="mrow" style="--dc:var(--d1)">
+    <button class="lab" onclick="document.body.className='d'"><span class="dav" style="background:var(--d1)">স</span><span><b>ডা. সাবরিনা হক</b><small>চর্মরোগ · ২০ মিনিট</small><small>আজ ৫ জন · ৪টা ফাঁকা</small></span></button>
+    <div class="lane"><div class="grp">
+     <span class="seg">দুপুর</span>
+     <button class="chip dn"><span class="t">১:০০</span>রুমানা</button>
+     <button class="chip dn"><span class="t">২:০০</span>তাহসিন</button>
+     <button class="chip ns"><span class="t">৩:০০</span>আসেননি</button>
+     <button class="chip fr0"><span class="t">৩:৪০</span>১টা ফাঁকা</button>
+     <span class="nowr">এখন ৪:১৫</span>
+     <button class="chip ok sel" onclick="document.body.className='p'"><span class="t">৪:৪০</span>নাদিয়া</button>
+     <span class="gap"></span><span class="seg">সন্ধ্যা</span>
+     <button class="chip fr0 w2"><span class="t">৭:০০–৭:৪৫</span>২টা ফাঁকা</button>
+     <button class="chip wt"><span class="t">৮:০০</span>ফারহানা</button>
+     <button class="chip wt"><span class="t">৯:০০</span>জেসমিন</button>
+     <button class="chip fr0"><span class="t">৯:৪০</span>১টা ফাঁকা</button>
+    </div></div></div>
+   <div class="mrow" style="--dc:var(--d2)">
+    <button class="lab"><span class="dav off" style="background:var(--d2)">ম</span><span><b>ডা. মেহজাবিন রহমান</b><small>চর্মরোগ · ৩০ মিনিট</small><small>আজ ছুটি</small></span></button>
+    <div class="lane"><span class="offday">আজ রোগী দেখছেন না · কাল সকাল ১১টা থেকে ৬টা ফাঁকা</span></div></div>
+   <div class="addrow"><svg width="18" height="18"><use href="#i-plus"/></svg>ডাক্তার যোগ করুন — নতুন লাইন নিচে বসবে</div>
+  </div>
+  <div class="legend"><span><i style="background:var(--d1)"></i>বুকিং পাকা</span><span><i style="background:var(--wait-soft);box-shadow:0 0 0 2px var(--wait) inset"></i>ডাক্তারের হ্যাঁ-র অপেক্ষায়</span><span><i style="background:color-mix(in srgb,var(--d1) 14%,#fff)"></i>দেখা হয়ে গেছে</span><span><i style="background:#FDECEA;box-shadow:0 0 0 2px var(--alert) inset"></i>রোগী আসেননি</span><span><i style="border:2px solid var(--d1);border-radius:50%;width:10px;height:10px;opacity:.5"></i>ফাঁকা স্লট</span></div>
+
+  <section class="flow"><h2>আজকের রোগী</h2>
+   <div class="fr" style="--dc:var(--d1)"><span class="tm">দুপুর ১:০০</span><span class="nd" style="background:var(--d1);opacity:.35"></span><span><b>রুমানা আক্তার</b> · ব্রণ, দাগ<small>ডা. সাবরিনা হক · ভিডিও কল ১৮ মিনিট · ডাক্তারের নোট দেওয়া হয়েছে</small></span><span class="tag d">দেখা হয়েছে</span></div>
+   <div class="fr" style="--dc:var(--d1)"><span class="tm">বিকাল ৩:০০</span><span class="nd" style="border-color:var(--alert)"></span><span><b>সুমাইয়া ইসলাম</b> · মেছতা<small>লিংক পাঠানো হয়েছিল, ১০ মিনিট অপেক্ষা; বট নতুন সময় জানতে চেয়েছে</small></span><span class="tag" style="box-shadow:none;background:#FDECEA;color:var(--alert-ink)">আসেননি</span></div>
+   <div class="nowline">এখন ৪:১৫</div>
+   <div class="fr ok" style="--dc:var(--d1)"><span class="tm">বিকাল ৪:৪০</span><span class="nd"></span><span><b>নাদিয়া চৌধুরী</b> · শুষ্ক ত্বক, লালচে ভাব<small>ডা. সাবরিনা হক · ৳800 দেওয়া · রিমাইন্ডার গেছে ১ ঘণ্টা আগে</small></span><span class="acts"><button class="btn dark sm"><svg><use href="#i-vid"/></svg>কল লিংক</button></span></div>
+   <div class="fr wt" style="--dc:var(--d1)"><span class="tm">রাত ৮:০০</span><span class="nd"></span><span><b>ফারহানা সুলতানা</b> · চুল পড়া<small>ডাক্তারের উত্তরের অপেক্ষায় · ১২ মিনিট বাকি</small></span><span class="tag w">অপেক্ষায়</span></div>
+   <div class="fr wt" style="--dc:var(--d1)"><span class="tm">রাত ৯:০০</span><span class="nd"></span><span><b>জেসমিন নাহার</b> · ব্রণ (ফলো-আপ)<small>আগের দেখা: ১৪ নভেম্বর · ডাক্তারের উত্তরের অপেক্ষায়</small></span><span class="tag w">অপেক্ষায়</span></div>
+  </section>
+ </main>
+ <aside class="side">
+  <h2>আপনার দেখা দরকার <em>২</em></h2>
+  <div class="card"><div class="k"><span class="dot" style="background:var(--wait)"></span>ডাক্তার উত্তর দেননি · রাত ৮:০০</div>
+   <div class="bub me">ডা. আপা, আজ রাত ৮টায় ফারহানা সুলতানা (চুল পড়া) — নিতে পারবেন? হ্যাঁ / না লিখুন 🙏<small>৩:৫৯ ✓✓</small></div>
+   <div class="hold"><i></i></div>
+   <div class="acts"><button class="btn sm">আবার জিজ্ঞেস করুন</button><button class="btn ghost sm">অন্য সময় দিন</button></div></div>
+  <div class="card"><div class="k"><span class="dot" style="background:var(--ink)"></span>নতুন রোগী · ছবি পাঠিয়েছেন</div>
+   <p>মারিয়া (২৪) — "মুখে ছোট ছোট দানা, ২ মাস ধরে"। বট কাল সন্ধ্যা ৬টা বলছে।</p>
+   <div class="acts"><button class="btn dark sm">রাজি</button><button class="btn ghost sm">চ্যাট দেখুন</button></div></div>
+  <div class="botline"><svg width="22" height="22" style="color:var(--go);flex:none"><use href="#i-wa"/></svg><span><b>বুকিং বট চালু</b>আজ ১১টা চ্যাট · ৪টা বুকিং · ১টা আপনার কাছে</span></div>
+ </aside>
+
+
+</div>
+
+<nav class="tabbar"><a class="on"><svg><use href="#i-cal"/></svg>সময়সূচি</a><a><svg><use href="#i-user"/></svg>রোগী</a><a><svg><use href="#i-doc"/></svg>ডাক্তার</a><a><svg><use href="#i-chat"/></svg>বট</a><a><svg><use href="#i-rule"/></svg>আরও</a></nav>
+
+<div class="scrim" onclick="document.body.className=''"></div>
+<div class="drawer" id="pat">
+ <div class="dr-h"><span class="pav">না</span><span><h3>নাদিয়া চৌধুরী</h3><small>২৯ বছর · মহিলা · মিরপুর, ঢাকা</small></span><span class="sp"></span><button class="ib" onclick="document.body.className=''"><svg><use href="#i-x"/></svg></button></div>
+ <div class="acts"><button class="btn dark"><svg><use href="#i-vid"/></svg>কল লিংক পাঠান</button><button class="btn ghost"><svg><use href="#i-wa"/></svg>WhatsApp</button><button class="btn ghost">সময় বদলান</button></div>
+ <dl class="kv"><dt>আজকের সময়</dt><dd>বিকাল ৪:৪০ · ডা. সাবরিনা হক</dd><dt>সমস্যা</dt><dd>শুষ্ক ত্বক, গালে লালচে ভাব, ৩ সপ্তাহ</dd><dt>ত্বকের ধরন</dt><dd>শুষ্ক · সেনসিটিভ</dd><dt>এখন যা মাখেন</dt><dd>COSRX Snail Mucin, সানস্ক্রিন</dd><dt>ফি</dt><dd><span class="num">৳800</span> · bKash দেওয়া</dd><dt>ফোন</dt><dd class="num">01•••••4521</dd></dl>
+ <div class="consent"><svg width="18" height="18" style="color:var(--go)"><use href="#i-user"/></svg>রোগী ছবি আর তথ্য ডাক্তারকে দেখাতে রাজি · ২৭ নভেম্বর</div>
+ <div class="sec">ছবি (৩)</div><div class="ph"><div></div><div></div><div></div></div>
+ <div class="sec">আগের দেখা</div>
+ <div class="hist"><div><b>৩১ অক্টোবর · ডা. সাবরিনা হক</b><small>"ব্যারিয়ার রিপেয়ার, ২ সপ্তাহ রেটিনল বন্ধ"</small></div><div><b>Oliareen থেকে কেনা</b><small>Round Lab Birch Moisturizer · ১২ নভেম্বর</small></div></div>
+ <div class="sec">বটের সাথে কথা</div>
+ <div class="bub">আপু, আমার গাল লাল হয়ে যাচ্ছে, ডাক্তার দেখাতে চাই<small>২৭ নভে, ৯:১২</small></div>
+ <div class="bub me">জি আপু, ডা. সাবরিনা হক কাল বিকাল ৪:৪০ এ ফাঁকা আছেন। এই সময়টা রাখি?<small>৯:১৩ ✓✓</small></div>
+</div>
+
+<div class="drawer" id="doc">
+ <div class="dr-h"><span class="dav" style="background:var(--d1);width:52px;height:52px;font-size:19px">স</span><span><h3>ডা. সাবরিনা হক</h3><small>MBBS, DDV (চর্ম ও যৌন) · BMDC A-•••••</small></span><span class="sp"></span><button class="ib" onclick="document.body.className=''"><svg><use href="#i-x"/></svg></button></div>
+ <div class="stat3"><div><b class="num">5</b><small>আজ রোগী</small></div><div><b class="num">23</b><small>এ মাসে দেখা</small></div><div><b class="num">৳800</b><small>প্রতি দেখা</small></div></div>
+ <dl class="kv"><dt>যা দেখেন</dt><dd>ব্রণ, মেছতা, চুল পড়া, সেনসিটিভ ত্বক</dd><dt>ভাষা</dt><dd>বাংলা, English</dd><dt>প্রতি দেখা</dt><dd>২০ মিনিট + ৫ মিনিট বিরতি</dd><dt>WhatsApp</dt><dd class="num">01•••••7788</dd><dt>বট কীভাবে জিজ্ঞেস করে</dt><dd>প্রতি বুকিংয়ে হ্যাঁ/না · ২০ মিনিট অপেক্ষা</dd></dl>
+ <div class="sec">সপ্তাহের সময়</div>
+ <div class="wk"><span></span><span>শনি</span><span>রবি</span><span>সোম</span><span>মঙ্গল</span><span>বুধ</span><span>বৃহ</span><span>শুক্র</span>
+  <span>দুপুর</span><i class="y"></i><i class="y"></i><i></i><i class="y"></i><i></i><i class="y"></i><i></i>
+  <span>রাত</span><i class="y"></i><i class="y"></i><i class="y"></i><i class="y"></i><i class="y"></i><i></i><i></i></div>
+ <div class="sec">ছুটি</div><p style="margin:0;font-size:14px">৫ ডিসেম্বর (শুক্র) · ১২–১৪ ডিসেম্বর</p>
+ <div class="acts" style="margin-top:16px"><button class="btn dark">প্রোফাইল বদলান</button><button class="btn ghost">ছুটি যোগ করুন</button></div>
+</div>
+<script>if(location.hash==='#p')document.body.className='p';if(location.hash==='#d')document.body.className='d';</script>
+</body></html>

@@ -158,7 +158,8 @@ const byPerson = (ctx, who) => who && who.author === 'team' && !(ctx.s && ctx.s.
 
 /** Send something to the customer and write it down (an AI message, a team reply, an update). */
 export async function deliver(ctx, ch, conv, contact, msg, who) {
-  if (!isChatCh(ch) && !byPerson(ctx, who)) {
+  // clinic-1: the Doctor desk's number answers its own patients itself (it is not the manager's quiet number)
+  if (!isChatCh(ch) && str(((ch && ch.settings) || {}).purpose) !== 'clinic' && !byPerson(ctx, who)) {
     if (msg.kind === 'seen' || msg.kind === 'typing') return { ok: true };
     const ai = await aiWaChannel(ctx);
     if (!ai || ai.id === ch.id || !contact) {
@@ -250,10 +251,12 @@ async function keepAd(ctx, conv, ad) {
 export async function ingest(ctx, ch, ev) {
   if (ev.type === 'comment') return handleComment(ctx, ch, ev);
   if (!ev.from) return {};
+  // clinic-1: a doctor answering the booking assistant (yes / no) on the clinic number - never a patient chat
+  if (!ev.echo && /^wa_/.test(ch.kind) && purposeOf(ch) === 'clinic') { try { if (await ctx.tx.savepoint(async () => (await import('./clinic.js')).doctorInbound(ctx, ch, ev))) return { doctor: true }; } catch (e) { console.error('doctorInbound', e && e.message); } }
   // cgroup-1: a WhatsApp group: only our customer groups, on Faujia's number; our team's own messages pause the AI
   if (ev.group) {
     if (ev.echo) { /* our own message in a group: kept as it came back below */ }
-    else {
+    else if (purposeOf(ch) !== 'clinic') {
       try { const g = await ctx.tx.savepoint(async () => (await import('./cgroups.js')).groupInbound(ctx, ch, ev)); if (g) return g; } catch (e) { console.error('groupInbound', e && e.message); return {}; }
     }
   }
@@ -316,7 +319,7 @@ export async function ingest(ctx, ch, ev) {
   // hold-1: "confirm" / "ok" while one of this customer's orders waits for their OK (any WhatsApp number)
   try { await ctx.tx.savepoint(async () => (await import('./holds.js')).holdReply(ctx, ch, contact, conv, text)); } catch (e) { console.error('holdReply', e && e.message); }
   // multi-wa-1: a number kept for sending or collecting data keeps what comes in, answers nobody, alerts nobody
-  if (purposeOf(ch) !== 'chat') return { conversationId: conv.id };
+  if (purposeOf(ch) !== 'chat' && purposeOf(ch) !== 'clinic') return { conversationId: conv.id };
   // review-1: a star tap / "5" after the review card rates the shop; the thanks goes out, the AI does not answer it
   try { if (await ctx.tx.savepoint(async () => (await import('./reviews.js')).chatStars(ctx, ch, contact, conv, text, ev.payload))) return { conversationId: conv.id }; } catch (e) { console.error('chatStars', e && e.message); }
   const answerable = (ch.status === 'live' || conv.is_test) && conv.mode === 'ai' && await aiAllowed(ctx, ch);
@@ -923,6 +926,8 @@ export async function agentReply(ctx, conv, opts) {
   const test = !!opts.test;
   const ch = opts.channel || await chOf(ctx, conv.channel_id);
   const contact = opts.contact || await contactOf(ctx, conv.contact_id);
+  // clinic-1: the Doctor desk's own number is answered by the booking assistant, not the sales agent
+  if (purposeOf(ch) === 'clinic') return (await import('./clinic.js')).clinicReply(ctx, conv, ch, contact, opts);
   const p = await profile(ctx, test);
   // sales-2: what the ERP already knows (the business's own details on invoices) fills what the Agent Desk left empty
   try { const q = await qProf(ctx); for (const k of ['phone', 'address']) if (!str(p[k]) && str(q[k])) p[k] = str(q[k]); if (str(q.website)) p.website = str(q.website); if (str(q.email)) p.email = str(q.email); } catch (_) { /* fine */ }

@@ -27,7 +27,7 @@ const chRow = async (id) => (await sql`select * from inbox_channels where id = $
 
 // ---- 1. no server yet
 let r = await owner('erpWaNumbers', []);
-check('the list opens with no number and says the server is not set', r.ok && r.result.numbers.length === 0 && r.result.serverReady === false && r.result.purposes.length === 3, r);
+check('the list opens with no number and says the server is not set', r.ok && r.result.numbers.length === 0 && r.result.serverReady === false && r.result.purposes.length === 4, r);
 r = await owner('erpWaNumberAdd', [{ name: 'Bills', purpose: 'send', acceptRisk: true }]);
 check('without the server a number cannot be made', !r.ok && /server is not set up/.test(r.error), r);
 await sql`insert into business_secrets (business_id, key, value) values (${FIX.B}, 'WA_SERVER_URL', 'https://wa.test'), (${FIX.B}, 'WA_SERVER_KEY', 'GLOBAL')`;
