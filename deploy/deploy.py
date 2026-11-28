@@ -167,6 +167,7 @@ def step_web():
     shutil.copytree(os.path.join(ROOT, 'web', 'vendor'), os.path.join(out, 'vendor'))   # the barcode reader (loaded only when scanning)
     shutil.copytree(os.path.join(ROOT, 'web', 'games'), os.path.join(out, 'games'))   # games load on demand (no photos in them)
     shutil.copytree(os.path.join(ROOT, 'web', 'fonts'), os.path.join(out, 'fonts'))   # the FilaDash look's fonts (Inter + Noto Sans Bengali, OFL)
+    shutil.copytree(os.path.join(ROOT, 'web', 'c'), os.path.join(out, 'c'))   # ship-8: the traveller's own page (works offline: c/sw.js)
     if DEV:
         dev_version(out)   # devsync-1: what is on the dev ERP - the page's "What's on dev" badge reads it
     # Stage 1e: only the published copy is minified (the source stays readable); a failed minify stops the deploy

@@ -172,14 +172,18 @@ export async function erpShipFind(ctx, payload) {
   throw new Error('Nothing found for "' + q.slice(0, 40) + '". Check the code on the tag or card.');
 }
 
-async function personUpsert(ctx, pp, id) {
+export async function personUpsert(ctx, pp, id) {
   const name = str(pp.name).slice(0, 80);
   if (!name) throw new Error('Type the traveller’s name.');
-  const phone = str(pp.phone).replace(/[^\d+ -]/g, '').slice(0, 24), email = str(pp.email).slice(0, 120);
+  const { e164 } = await import('./shipteam.js');
+  const raw = str(pp.phone), phone = raw ? e164(raw) : '', email = str(pp.email).slice(0, 120);
+  if (raw && !phone) throw new Error('Write the phone with + and the country code (for example +82 10.., +880 17..).');
   if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error('That email does not look right.');
   const photo = pp.photo === undefined ? undefined : str(pp.photo);
   if (photo && (!IMG.test(photo) || photo.length > 150000)) throw new Error('That photo could not be used. Try another one.');
   const f = { name, phone, email, city: str(pp.city).slice(0, 60), wa_ok: !!pp.waOk, note: str(pp.note).slice(0, 1000) };
+  if (pp.addrBd !== undefined) f.addr_bd = str(pp.addrBd).slice(0, 200);
+  if (pp.addrKr !== undefined) f.addr_kr = str(pp.addrKr).slice(0, 200);
   if (photo !== undefined) f.photo = photo || null;
   if (id) {
     const r = await ctx.tx`update ship_people set ${ctx.tx(f)} where business_id = ${ctx.biz} and id = ${int(id)} and removed_at is null returning id`;
@@ -536,6 +540,7 @@ export async function erpShipPerson(ctx, payload) {
   const trips = await peopleStats(ctx, id);
   const m = moneyOf(trips);
   return { id: Number(p.id), code: p.code, name: p.name, phone: p.phone, email: p.email, city: p.city, waOk: p.wa_ok, note: p.note, photo: p.photo || '',
+    addrBd: p.addr_bd || '', addrKr: p.addr_kr || '', selfJoined: !!p.self_joined,
     since: iso(p.created_at), removed: !!p.removed_at, total: m.total, pays: m.pays,
     bags: trips.reduce((a, s) => a + Number(s.bag_n || 0), 0), pcs: trips.reduce((a, s) => a + Number(s.pcs_n || 0), 0),
     trips: trips.map((s) => ({ id: Number(s.id), code: s.code, bags: Number(s.bag_n || 0), pcs: Number(s.pcs_n || 0), from: s.from_port, to: s.to_port, step: stepNow(s, ctx.now), at: iso(s.depart_at || s.created_at), done: !!s.checked_at })) };

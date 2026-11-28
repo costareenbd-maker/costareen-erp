@@ -406,7 +406,7 @@ Deno.serve(async (req) => {
   const q0 = new URL(req.url).searchParams;
   const tid = tenantOf(req, q0);
   // public routes, a company on the bridge, and every company copy (calls carry their own sign-in, never a cookie) answer any page
-  const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || q0.get('pub') || q0.get('chat') || /^(order|bill|item|avatar|media|land|join|hold|holdbill|holdpdf|review)$/.test(q0.get('inbox') || '') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
+  const headers = { ...cors(req.headers.get('origin'), !!(tid || q0.get('install') || q0.get('control') || q0.get('signin') || q0.get('pub') || q0.get('chat') || /^(order|bill|item|avatar|media|land|join|hold|holdbill|holdpdf|review|portal)$/.test(q0.get('inbox') || '') || (INSTALL && INSTALL.id))), 'Content-Type': 'application/json' };
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
   // final-server (10 Nov 2026): a request body has a ceiling. Every upload the page makes (a receive file, a photo for
   // the AI reader, a backup to restore) is well under it; anything bigger is refused in plain words before it is read
@@ -514,7 +514,7 @@ async function serveWith(deps: any, req: Request, q0: URLSearchParams, headers: 
   }
   // the Inbox (handlers/inbox.js): channel webhooks ?inbox=hook&ch=<id>&k=<key> (GET = Meta's check, POST = events),
   // and the website chat ?chat=<channel id>&a=info|start|send|poll (public; the visitor carries a signed id)
-  if (q0.get('inbox') === 'hook' || q0.get('meta') === 'hook' || q0.get('chat') || /^(order|bill|item|avatar|media|land|join|hold|holdbill|holdpdf|review)$/.test(q0.get('inbox') || '')) {
+  if (q0.get('inbox') === 'hook' || q0.get('meta') === 'hook' || q0.get('chat') || /^(order|bill|item|avatar|media|land|join|hold|holdbill|holdpdf|review|portal)$/.test(q0.get('inbox') || '')) {
     try { return await inboxRoute(deps, req, q0, headers); }
     catch (e) { console.error('inbox', e); return new Response('{"ok":false}', { status: 200, headers }); }
   }
@@ -681,6 +681,20 @@ async function inboxRoute(deps: any, req: Request, q0: URLSearchParams, headers:
       r = await asOwner(row.business_id, 'leads:form', (ctx) => ld.leadFormSend(ctx, tok, b, ip));
     } else r = await asOwner(row.business_id, 'leads:form', (ctx) => ld.leadFormPage(ctx, tok));
     return new Response(JSON.stringify((r && r.body) || { ok: false }), { status: (r && r.status) || 200, headers });
+  }
+  // ship-8: the traveller's own page (handlers/shipportal.js portalAct; web/c/) - his key (k) or the sign-up link (j)
+  if (what === 'portal') {
+    const sp: any = await import('./handlers/shipportal.js');
+    const k = String(q0.get('k') || ''), j = String(q0.get('j') || ''), a = String(q0.get('a') || '');
+    const nf = new Response('{"ok":false,"error":"This page is not available."}', { status: 404, headers });
+    if (!/^[a-z-]{2,12}$/.test(a) || (!/^[0-9a-f]{32}$/.test(k) && !/^[0-9a-f]{32}$/.test(j))) return nf;
+    const row = k ? (await deps.sql`select business_id from ship_people where portal_token = ${k} and removed_at is null`)[0]
+                  : (await deps.sql`select business_id from business_config where key = 'ship_join_token' and value = ${j}`)[0];
+    if (!row) return nf;
+    let b: any = {};
+    if (req.method === 'POST') { try { b = await req.json(); } catch (_) { b = {}; } }
+    const r: any = await asOwner(row.business_id, 'inbox:portal', (ctx) => sp.portalAct(ctx, a, { k: k || '', j: k ? '' : j, body: b }));
+    return new Response(JSON.stringify((r && r.body) || { ok: false }), { status: (r && r.status) || 200, headers: { ...headers, 'Cache-Control': 'private, no-store' } });
   }
   // review-1: the review page a customer opens from the chat after delivery (handlers/reviews.js; web/review.html)
   if (what === 'review') {

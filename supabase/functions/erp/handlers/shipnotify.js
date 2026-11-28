@@ -28,6 +28,8 @@ import { getConfig, setConfig } from '../lib/ext.js';
 import { roleAtLeast } from '../allow.js';
 import { waNumber, evoCall, erpEvoStatus } from './campaigns.js';
 import { stepNow } from './shipments.js';
+import { teamAt } from './shipteam.js';
+import { portalToken, portalUrl } from './shipportal.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const int = (v) => { const n = parseInt(v, 10); return Number.isFinite(n) ? n : 0; };
@@ -38,6 +40,7 @@ const CITY = { ICN: 'সিউল', DAC: 'ঢাকা' };
 const BND = '০১২৩৪৫৬৭৮৯';
 const MON = ['জানু', 'ফেব্রু', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টে', 'অক্টো', 'নভে', 'ডিসে'];
 export const KINDS = {
+  c_3d: { to: 'carrier', name: '৩ দিন আগে' },
   c_eve: { to: 'carrier', name: 'আগের দিন মনে করানো' },
   c_day: { to: 'carrier', name: 'ফ্লাইটের দিন' },
   c_land: { to: 'carrier', name: 'নামার পর' },
@@ -88,6 +91,14 @@ async function shortOf(ctx, shipId) {
 }
 
 /** The words of one message (null = this kind does not apply to this shipment). */
+async function meetLines(ctx, s) {
+  const team = await teamAt(ctx, s.to_port);
+  let link = '';
+  // a read (the shipment page's preview) may not write: the token is made inside a savepoint, a refusal leaves no link
+  try { link = portalUrl(ctx, await ctx.tx.savepoint((sp) => portalToken({ ...ctx, tx: sp }, Number(s.carrier_id)))); } catch (_) { link = ''; }
+  return (team.length ? '\nআপনার থেকে লাগেজ বুঝে নেবেন:\n' + team.slice(0, 4).map((m) => '• ' + m.name + (m.phone ? ' ' + m.phone : '')).join('\n') : '')
+    + (link ? '\nকোথায় দেখা হবে, কে আসবেন, ছবি সহ সব আপনার পাতায় (একবার খুলে রাখলে নেট ছাড়াও দেখা যাবে): ' + link : '');
+}
 async function words(ctx, s, kind, now) {
   const biz = str(ctx.s.businessName);
   const bags = s.bag_n ? bn(s.bag_n) + 'টা লাগেজ (' + str(s.bag_codes) + ')' : 'কোনো লাগেজ নেই';
@@ -96,18 +107,20 @@ async function words(ctx, s, kind, now) {
   const route = s.from_port + ' → ' + s.to_port;
   const sign = biz ? '\n— ' + biz : '';
   switch (kind) {
+    case 'c_3d':
+      return 'আসসালামু আলাইকুম ' + str(s.c_name) + '।\nআপনার ' + fl + '(' + route + ') ' + dep + ' (' + CITY[s.from_port] + ' সময়)। আমাদের ' + bags + ' আপনার সাথে যাবে।' + (await meetLines(ctx, s)) + sign;
     case 'c_eve': {
       const w = whenWord(s.depart_at, s.from_port, now);
       return 'আসসালামু আলাইকুম ' + str(s.c_name) + '।\nমনে করিয়ে দিচ্ছি: ' + (w ? w + ' ' : '') + dep + ' (' + CITY[s.from_port] + ' সময়) আপনার ' + fl + '(' + route + ')।\n'
         + 'দয়া করে ফ্লাইটের কমপক্ষে ২ ঘণ্টা আগে এয়ারপোর্টে পৌঁছাবেন।\n'
         + 'আপনার সাথে আমাদের ' + bags + '।' + (s.hand_pcs ? ' হাতে রাখার জিনিস: ' + bn(s.hand_pcs) + ' পিস।' : '') + '\n'
-        + 'আপনার কিওয়ার্ড: ' + str(s.c_code) + sign;
+        + 'আপনার কিওয়ার্ড: ' + str(s.c_code) + (await meetLines(ctx, s)) + sign;
     }
     case 'c_day':
       return str(s.c_name) + ', আজ ' + dep + ' আপনার ' + fl + '(' + route + ')।\nফ্লাইটের ২ ঘণ্টা আগে এয়ারপোর্টে থাকুন। লাগেজ: ' + (s.bag_n ? str(s.bag_codes) : '—') + '।\nকিওয়ার্ড: ' + str(s.c_code) + sign;
     case 'c_land':
       return 'আশা করি নিরাপদে ' + CITY[s.to_port] + ' পৌঁছেছেন, ' + str(s.c_name) + '।\nআমাদের লোক আপনার সাথে যোগাযোগ করবেন। '
-        + (s.bag_n ? 'লাগেজ ' + str(s.bag_codes) + ' তাঁদের হাতে দিন।' : 'জিনিসগুলো তাঁদের হাতে দিন।') + ' কিওয়ার্ড ' + str(s.c_code) + ' বললেই হবে।' + sign;
+        + (s.bag_n ? 'লাগেজ ' + str(s.bag_codes) + ' তাঁদের হাতে দিন।' : 'জিনিসগুলো তাঁদের হাতে দিন।') + ' কিওয়ার্ড ' + str(s.c_code) + ' বললেই হবে।' + (await meetLines(ctx, s)) + sign;
     case 't_eve': {
       const w = whenWord(s.depart_at, s.from_port, now);
       return '✈️ ' + (w || dep) + ' আসছে: ' + str(s.c_name) + ' (' + str(s.c_code) + ')\n' + fl + route + ' · ছাড়বে ' + dep + ' · নামবে ' + (land || 'জানা নেই') + ' (' + CITY[s.to_port] + ' সময়)\n'
@@ -151,6 +164,7 @@ function plan(s, now) {
   }
   if (!s.carrier_id) return out;
   if (dep) {
+    out.push({ kind: 'c_3d', from: dep - 72 * H, to: dep - 30 * H });
     out.push({ kind: 'c_eve', from: dep - 24 * H, to: dep - 6 * H });
     out.push({ kind: 'c_day', from: dep - 5 * H, to: dep - 2 * H });
     out.push({ kind: 't_eve', from: dep - 24 * H, to: dep });
@@ -226,6 +240,8 @@ export async function shipNotifyTick(ctx) {
 export async function shipBell(ctx) {
   if (str(await getConfig(ctx, 'business_kind', '')) !== 'cargo') return [];
   const now = ctx.now, n = new Date(now).getTime(), out = [];
+  const nreq = (await ctx.tx`select count(*)::int n from ship_requests where business_id = ${ctx.biz} and state = 'new'`)[0].n;
+  if (nreq) out.push({ key: 'ship:req:' + nreq, level: 'warn', title: bn(nreq) + 'টা নতুন লাগেজ অনুরোধ', detail: 'বহনকারীরা জানিয়েছেন কবে যাচ্ছেন', go: 'ship:req' });
   const ships = await load(ctx, ctx.tx`(s.checked_at is null or s.checked_at > now() - interval '1 day')`);
   for (const s of ships) {
     const st = stepNow(s, now), dep = s.depart_at ? new Date(s.depart_at).getTime() : null, land = s.land_at ? new Date(s.land_at).getTime() : null;
