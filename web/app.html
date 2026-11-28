@@ -70229,6 +70229,39 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
 .dk-dav i{position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;background:var(--dk-go);border:2px solid var(--dk-paper)}
 .dk-dav i.off{background:#B4B9C1}
 .dk-dav .dk-dimg,.dk-drh .dk-dimg{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:50% 20%;display:block}
+/* dkcard-1: doctor profile cards */
+.dk .dk-docs{grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px}
+.dk .dkc{display:flex;flex-direction:column;gap:14px;padding:18px 18px 16px;border-radius:16px;cursor:pointer;font:inherit;color:inherit;
+  transition:border-color .2s cubic-bezier(.22,1,.36,1),box-shadow .2s cubic-bezier(.22,1,.36,1),transform .2s cubic-bezier(.22,1,.36,1)}
+.dk .dkc:hover{border-color:color-mix(in srgb,var(--dc) 45%,var(--dk-rule));box-shadow:0 2px 4px rgba(22,24,29,.04),0 12px 28px -10px rgba(22,24,29,.16);transform:translateY(-1px)}
+.dk .dkc:focus-visible{outline:2px solid var(--dc);outline-offset:3px}
+.dkc-who{display:grid;grid-template-columns:112px minmax(0,1fr);gap:16px;align-items:start}
+.dkc-pic{display:block;width:112px;aspect-ratio:4/5;border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--dc) 14%,var(--dk-paper));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--dc) 22%,transparent)}
+.dkc-pic img{width:100%;height:100%;object-fit:cover;object-position:50% 18%;display:block}
+.dkc-pic.none{display:grid;place-items:center}
+.dkc-pic.none b{font:700 40px/1 "Hind Siliguri",sans-serif;color:var(--dc)}
+.dkc-id{display:flex;flex-direction:column;gap:3px;min-width:0;padding-top:2px}
+.dkc-st{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;font:600 12px/1 "Hind Siliguri",sans-serif;color:var(--dk-ink2);
+  background:var(--dk-shelf);border-radius:999px;padding:5px 9px 4px;margin-bottom:4px}
+.dkc-st i{width:7px;height:7px;border-radius:50%;background:var(--dk-go)}
+.dkc-st.off i{background:#B4B9C1}
+.dkc-nm{font:700 19px/1.25 "Hind Siliguri",sans-serif;color:var(--dk-ink);overflow-wrap:anywhere}
+.dkc-dg{font-size:13.5px;line-height:1.45;color:var(--dk-ink2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dkc-reg{font-size:12.5px;color:var(--dk-ink3);font-variant-numeric:tabular-nums}
+.dkc-tr{font-size:13px;line-height:1.45;color:var(--dk-ink2);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dkc-facts{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--dk-rule);padding-top:12px}
+.dkc-facts>span{display:flex;flex-direction:column;gap:2px;padding:0 10px;border-left:1px solid var(--dk-rule)}
+.dkc-facts>span:first-child{padding-left:0;border-left:0}
+.dkc-facts b{font:700 16px/1.2 "Hind Siliguri",sans-serif;color:var(--dk-ink);font-variant-numeric:tabular-nums}
+.dkc-facts b.no{color:var(--dk-alert-ink)}
+.dkc-facts small{font-size:12px;color:var(--dk-ink3)}
+.dk .dkc .dk-wkg{margin-top:0}
+.dkc-drh{align-items:flex-start}
+.dkc-pic.big{width:104px;flex:none}
+.dkc-drh h3{margin-top:6px}
+@media (max-width:767px){.dk .dk-docs{grid-template-columns:1fr}.dkc-who{grid-template-columns:96px minmax(0,1fr);gap:14px}.dkc-pic{width:96px}.dkc-nm{font-size:18px}}
+@media (prefers-reduced-motion:reduce){.dk .dkc{transition:none}.dk .dkc:hover{transform:none}}
 .dk-lane{display:flex;align-items:center;gap:6px;padding:18px 14px 14px;overflow-x:auto;min-width:0;position:relative}
 .dk-lane::-webkit-scrollbar{height:6px}.dk-lane::-webkit-scrollbar-thumb{background:#D5D8DD;border-radius:9px}
 .dk-track{display:flex;align-items:center;gap:6px;background:linear-gradient(var(--dc),var(--dc)) 0 50%/100% 3px no-repeat;flex:none}
@@ -70534,8 +70567,7 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
     var ds = K.D.doctors || [];
     return '<div class="dk-bar"><span class="dk-sp"></span>' + (canAct() ? '<button type="button" class="dk-btn dark" data-dk="newdoc">' + I.plus + 'ডাক্তার যোগ করুন</button>' : '') + '</div>' +
       (ds.length ? '<div class="dk-docs">' + ds.map(function (d) {
-        return '<button type="button" class="dk-doc" data-dk="doc" data-v="' + d.id + '" style="--dc:' + esc(d.color) + '"><div class="top"><span class="dk-dav" style="background:' + esc(d.color) + '">' + davIn(d) + '<i class="' + (d.active ? '' : 'off') + '"></i></span><span style="min-width:0"><b data-noi18n="1" style="display:block;font:700 16px \'Hind Siliguri\'">ডা. ' + esc(d.name) + '</b><small style="color:var(--dk-ink3)" data-noi18n="1">' + esc(d.title || 'ডিগ্রি লেখা হয়নি') + '</small></span></div>' +
-          '<div style="margin-top:8px;font-size:13.5px;color:var(--dk-ink2)" data-noi18n="1">' + esc(d.treats || '') + '</div><div style="margin-top:6px;font-size:13.5px">৳' + Math.round(d.fee) + ' · ' + bn(d.slotMin) + ' মিনিট · ' + (d.phone ? 'WhatsApp আছে' : '<span style="color:var(--dk-alert-ink)">WhatsApp নেই</span>') + '</div>' + weekBars(d) + '</button>';
+        return dkCard(d);   // dkcard-1
       }).join('') + '</div>' : '<div class="dk-idle"><b>এখনো কোনো ডাক্তার নেই</b>যোগ করলে সময়সূচিতে তাঁর নিজের লাইন বসবে।</div>');
   }
   function connHtml(own) {
@@ -70600,8 +70632,27 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
     (K.dr.photos || []).forEach(function (id) { var b = w.querySelector('[data-ph="' + id + '"]'); if (!b) return; if (K.url[id]) { b.style.backgroundImage = 'url("' + K.url[id] + '")'; return; } srv('erpClinicPhotoUrl', [{ id: id }], function (r) { K.url[id] = r.url; b.style.backgroundImage = 'url("' + r.url + '")'; }, function () {}); });
   }
   function openDr(title, html, extra) { K.dr = Object.assign({ title: title, html: html }, extra || {}); drawDr(); }
+  // dkcard-1 (29 Nov 2026, owner: "the doctor's photo is far too small for the card"): a profile card - a 4:5 portrait,
+  // who they are beside it, the working facts and the week under it. No photo = the initial on the doctor's own colour.
+  function dkPortrait(d, cls) {
+    return '<span class="' + cls + (d.photoUrl ? '' : ' none') + '" style="--dc:' + esc(d.color || '#5C626E') + '">' +
+      (d.photoUrl ? '<img src="' + esc(d.photoUrl) + '" alt="ডা. ' + esc(d.name) + '" loading="lazy" decoding="async">' : '<b data-noi18n="1">' + esc(initial(d.name)) + '</b>') + '</span>';
+  }
+  function dkCard(d) {
+    var fee = d.fee ? '৳' + Math.round(d.fee) : 'ফ্রি', on = d.active;
+    return '<button type="button" class="dk-doc dkc" data-dk="doc" data-v="' + d.id + '" style="--dc:' + esc(d.color || '#5C626E') + '">' +
+      '<span class="dkc-who">' + dkPortrait(d, 'dkc-pic') +
+        '<span class="dkc-id"><span class="dkc-st' + (on ? '' : ' off') + '"><i></i>' + (on ? 'রোগী দেখছেন' : 'এখন বন্ধ') + '</span>' +
+          '<b class="dkc-nm" data-noi18n="1">ডা. ' + esc(d.name) + '</b>' +
+          '<span class="dkc-dg" data-noi18n="1">' + esc(d.title || 'ডিগ্রি লেখা হয়নি') + '</span>' +
+          (d.regNo ? '<span class="dkc-reg">BMDC <span data-noi18n="1">' + esc(d.regNo) + '</span></span>' : '') +
+          (d.treats ? '<span class="dkc-tr" data-noi18n="1">' + esc(d.treats) + '</span>' : '') + '</span></span>' +
+      '<span class="dkc-facts"><span><b>' + fee + '</b><small>প্রতি দেখা</small></span><span><b>' + bn(d.slotMin) + ' মি.</b><small>প্রতি রোগী</small></span>' +
+        '<span><b class="' + (d.phone ? '' : 'no') + '">' + (d.phone ? 'আছে' : 'নেই') + '</b><small>WhatsApp</small></span></span>' +
+      weekBars(d) + '</button>';
+  }
   function davIn(d) { return d && d.photoUrl ? '<img class="dk-dimg" src="' + esc(d.photoUrl) + '" alt="">' : esc(initial(d.name)); }   // oli-look-1: the doctor's photo
-  function drHead(av, title, sub, color, photo) { return '<div class="dk-drh"><span class="' + (color ? 'dk-dav' : 'dk-pav') + '" style="width:' + (photo ? 72 : 52) + 'px;height:' + (photo ? 72 : 52) + 'px;font-size:19px;' + (color ? 'background:' + esc(color) : '') + '" data-noi18n="1">' + (photo ? '<img class="dk-dimg" src="' + esc(photo) + '" alt="">' : esc(av)) + '</span><span style="min-width:0;flex:1"><h3 data-noi18n="1">' + esc(title) + '</h3><small data-noi18n="1">' + esc(sub || '') + '</small></span><button type="button" class="dk-ib" data-dk="close" aria-label="বন্ধ করুন">' + I.x + '</button></div>'; }
+  function drHead(av, title, sub, color, photo) { return '<div class="dk-drh' + (photo ? ' dkc-drh' : '') + '">' + (photo ? '<span class="dkc-pic big" style="--dc:' + esc(color || '#5C626E') + '"><img src="' + esc(photo) + '" alt=""></span>' : '<span class="' + (color ? 'dk-dav' : 'dk-pav') + '" style="width:52px;height:52px;font-size:19px;' + (color ? 'background:' + esc(color) : '') + '" data-noi18n="1">' + esc(av) + '</span>') + '<span style="min-width:0;flex:1"><h3 data-noi18n="1">' + esc(title) + '</h3><small data-noi18n="1">' + esc(sub || '') + '</small></span><button type="button" class="dk-ib" data-dk="close" aria-label="বন্ধ করুন">' + I.x + '</button></div>'; }
   function consultBox(c, focus) {
     var d = docOf(c.doctorId) || { name: c.doctorName || '', color: '#5C626E' };
     var acts = [];
