@@ -5549,3 +5549,17 @@ no number linked yet. Not seen live yet: a real patient chat, the doctor's yes/n
   otherwise and on both sign-outs). A new device / unknown state still gets the neutral Benndar B loader (no photo).
 - Checked on dev (1440 + 390). LIVE #89 29 Nov 2026 (owner yes): #88 page + these hunks, sw cz-shell-v4-native-nosplasholi2,
   costareen-erp + office-erp; live shows the logo loader when the device remembers Oliareen.
+
+2026-11-29 — oli-look-1 (owner: Oliareen's icon instead of the cut-off logo; Oliareen-only colours; desks fill the monitor; doctor photo)
+- Menu logo slot (#bizMark, both paint paths incl. the first-paint fd_shell copy): while Oliareen is the business in use it shows
+  Oliareen's square mark (G:/oliareen-brand/mark/oliareen-mark-rose.svg, inline) instead of the wide "oliareen BEAUTY &
+  SKINCARE" logo that was cut off in the square. The uploaded wide logo is untouched (invoices, quotations, letterheads).
+- Oliareen-only colours: fdThemeNow wrapper puts rose #AB3C50 as the accent (fdAccentTokens, contrast-checked) and, in light
+  mode, a warm cream page (#FBF3F0, rose-tinted surfaces / borders / sidebar) on top of the person's own theme; html[data-oli].
+  Never saved as their theme choice; any other business keeps its own look; switching business repaints at once.
+- Doctor desk (.dk, was max 1320px) and Content desk (.cd, was max 1280px) now fill the screen; on big monitors they grow:
+  zoom 1.1 from 1700px wide, 1.22 from 2100, 1.35 from 2500, 1.6 from 3200.
+- Doctor photo: erpClinicDoctorPhoto (manager+, JPG/PNG/WEBP up to 6 MB, file in the clinic folder, name kept in
+  business_config clinic_dphoto_<doctor id> - no migration); erpClinic gives photoUrl per doctor. The page shows it in the
+  doctor card, the schedule lane and the doctor sheet (72px), with a "ছবি দিন / ছবি বদলান" button on the doctor sheet.
+- Tests: clinic_test 61 (4 new: sales refused, non-picture refused, manager sets it, photo link only for that doctor).

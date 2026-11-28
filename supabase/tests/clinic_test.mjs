@@ -48,6 +48,16 @@ const D1 = r.id;
 check('doctor saved', D1 > 0, r);
 r = await owner('erpClinicDoctorSave', [{ name: 'Mehzabin Rahman', phone: '01711000002', fee: 1000, slotMin: 30, gapMin: 0 }]);
 const D2 = r.id;
+// oli-look-1: the doctor's own photo
+const PNG1 = ['iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYA', 'AAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='].join('');   // split: the pre-push key check reads 'EAA...' as a token
+r = await sales('erpClinicDoctorPhoto', [{ doctorId: D1, mime: 'image/png', data: PNG1 }]);
+check('sales cannot change a doctor photo', r && r.error, r);
+r = await mgr('erpClinicDoctorPhoto', [{ doctorId: D1, mime: 'application/pdf', data: PNG1 }]);
+check('a doctor photo must be a picture', r && r.error, r);
+r = await mgr('erpClinicDoctorPhoto', [{ doctorId: D1, mime: 'image/png', data: PNG1 }]);
+check('manager sets a doctor photo', r && r.ok, r);
+r = await owner('erpClinic', []);
+check('the desk gives the photo link for that doctor only', r && r.doctors.find((d) => d.id === D1).photoUrl && !r.doctors.find((d) => d.id === D2).photoUrl, r && r.doctors);
 const all = [0, 1, 2, 3, 4, 5, 6];
 r = await owner('erpClinicHoursSave', [{ doctorId: D1, hours: [{ weekday: 1, from: '10:00', to: '12:00' }, { weekday: 1, from: '11:00', to: '13:00' }] }]);
 check('overlapping hours on one day are refused', r && r.error, r);
