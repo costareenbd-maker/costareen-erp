@@ -114,10 +114,10 @@ async function words(ctx, s, kind, now) {
         + bags + (s.hand_pcs ? ' + হাতে ' + bn(s.hand_pcs) + ' পিস' : '') + ' · মোট ' + bn(s.pcs) + ' পিস\nচালান ' + s.code;
     }
     case 't_land':
-      return '🛬 ' + str(s.c_name) + ' (' + str(s.c_code) + ') ' + CITY[s.to_port] + '-তে নেমেছেন (' + land + ')।\n' + bags + ' · ' + bn(s.pcs) + ' পিস। রিসিভ করে স্ক্যান করুন। চালান ' + s.code;
+      return '🛬 ' + str(s.c_name) + ' (' + str(s.c_code) + ') ' + CITY[s.to_port] + '-তে নেমেছেন (' + land + ')।\n' + bags + ' · ' + bn(s.pcs) + ' পিস। হাতে নিয়ে লাগেজ বা কিওয়ার্ড স্ক্যান করুন। চালান ' + s.code;
     case 't_late': {
       const h = Math.floor((new Date(now).getTime() - new Date(s.land_at).getTime()) / H);
-      return '⚠️ ' + s.code + ': নামার ' + bn(h) + ' ঘণ্টা পরেও রিসিভ হয়নি।\n' + (s.carrier_id ? str(s.c_name) + ' (' + str(s.c_code) + ') ' + str(s.c_phone) + '\n' : '') + bags;
+      return '⚠️ ' + s.code + ': নামার ' + bn(h) + ' ঘণ্টা পরেও কেউ হাতে পায়নি।\n' + (s.carrier_id ? str(s.c_name) + ' (' + str(s.c_code) + ') ' + str(s.c_phone) + '\n' : '') + bags;
     }
     case 't_count': {
       const rows = await shortOf(ctx, s.id);
@@ -128,7 +128,7 @@ async function words(ctx, s, kind, now) {
       return '📦 এয়ার কার্গো ' + s.code + (str(s.awb) ? ' (AWB ' + str(s.awb) + ')' : '') + ' ' + (whenWord(s.land_at, s.to_port, now) || '') + ' ' + land + ' পৌঁছানোর কথা।'
         + (str(s.forwarder) ? '\nফরওয়ার্ডার: ' + str(s.forwarder) : '') + (s.cartons ? ' · ' + bn(s.cartons) + ' কার্টন' : '');
     case 'a_land':
-      return '📦 এয়ার কার্গো ' + s.code + (str(s.awb) ? ' (AWB ' + str(s.awb) + ')' : '') + ' পৌঁছানোর সময় হয়ে গেছে (' + land + ')। ফরওয়ার্ডারের সাথে কথা বলে রিসিভ করুন।';
+      return '📦 এয়ার কার্গো ' + s.code + (str(s.awb) ? ' (AWB ' + str(s.awb) + ')' : '') + ' পৌঁছানোর সময় হয়ে গেছে (' + land + ')। ফরওয়ার্ডারের সাথে কথা বলে বুঝে নিন।';
     default: return null;
   }
 }
@@ -233,13 +233,13 @@ export async function shipBell(ctx) {
     const go = 'ship:' + s.code;
     if (s.checked_at) {
       const rows = await shortOf(ctx, s.id);
-      if (rows.length) out.push({ key: 'ship:count:' + s.code, level: 'warn', title: s.code + ': গোনায় মিলছে না', detail: rows.length + ' রকম প্রোডাক্টে গরমিল', go });
+      if (rows.length) out.push({ key: 'ship:count:' + s.code, level: 'warn', title: s.code + ': গোনায় মিলছে না', detail: bn(rows.length) + ' রকম প্রোডাক্টে গরমিল', go });
       continue;
     }
-    if (st === 4 && land && !s.received_at && n - land > LATE_MS) out.push({ key: 'ship:late:' + s.code, level: 'bad', title: s.code + ': নামার পরেও রিসিভ হয়নি', detail: who + ' · নেমেছে ' + bnAt(s.land_at, s.to_port), go });
-    else if (land && !s.received_at && n >= land && (s.type === 'air' || st === 4)) out.push({ key: 'ship:land:' + s.code, level: 'warn', title: s.code + ': ' + (s.type === 'air' ? 'পৌঁছানোর কথা' : 'নেমেছে') + ', রিসিভ করুন', detail: who + ' · ' + bnAt(s.land_at, s.to_port), go });
+    if (st === 4 && land && !s.received_at && n - land > LATE_MS) out.push({ key: 'ship:late:' + s.code, level: 'bad', title: s.code + ': নামার পরেও কেউ হাতে পায়নি', detail: who + ' · নেমেছে ' + bnAt(s.land_at, s.to_port), go });
+    else if (land && !s.received_at && n >= land && (s.type === 'air' || st === 4)) out.push({ key: 'ship:land:' + s.code, level: 'warn', title: s.code + ': ' + (s.type === 'air' ? 'পৌঁছানোর কথা' : 'নেমেছে') + ', বুঝে নিন', detail: who + ' · ' + bnAt(s.land_at, s.to_port), go });
     else if (st === 3) out.push({ key: 'ship:air:' + s.code, level: 'info', title: s.code + ': এখন আকাশে', detail: who + ' · নামবে ' + (bnAt(s.land_at, s.to_port) || 'জানা নেই'), go });
-    else if (dep && dep > n && dep - n < 24 * H) out.push({ key: 'ship:dep:' + s.code, level: 'info', title: s.code + ': ' + (whenWord(s.depart_at, s.from_port, now) || '') + ' ফ্লাইট', detail: who + ' · ' + bnAt(s.depart_at, s.from_port) + ' · ' + (s.bag_n || 0) + ' ব্যাগ', go });
+    else if (dep && dep > n && dep - n < 24 * H) out.push({ key: 'ship:dep:' + s.code, level: 'info', title: s.code + ': ' + (whenWord(s.depart_at, s.from_port, now) || '') + ' ফ্লাইট', detail: who + ' · ' + bnAt(s.depart_at, s.from_port) + ' · ' + bn(s.bag_n || 0) + 'টা লাগেজ', go });
     else if (s.type === 'air' && land && land > n && land - n < 24 * H) out.push({ key: 'ship:eta:' + s.code, level: 'info', title: s.code + ': কাল পৌঁছাবে', detail: who + ' · ' + bnAt(s.land_at, s.to_port), go });
     else if (s.type === 'trip' && st >= 2 && st < 4 && !dep) out.push({ key: 'ship:noflight:' + s.code, level: 'warn', title: s.code + ': ফ্লাইটের সময় দেওয়া নেই', detail: who + ' · সময় না দিলে মনে করানো যাবে না', go });
   }

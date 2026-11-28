@@ -86,7 +86,7 @@ await owner('erpShipPersonSave', [{ id: pid, name: 'Arif', phone: '+82 10-1111-2
 // late: landed > 4 h, not received (move the flight into the past so the step follows the clock)
 await sql`update ships set depart_at = now() - interval '12 hours', land_at = now() - interval '5 hours' where id = ${tr}`;
 r = await tick(new Date());
-check('late: team told', evo.sent.some((m) => /রিসিভ হয়নি/.test(m.text)), { r, sent: evo.sent.slice(4) });
+check('late: team told', evo.sent.some((m) => /হাতে পায়নি/.test(m.text)), { r, sent: evo.sent.slice(4) });
 r = await mgr('erpAlerts', []);
 check('bell: late is red', r.ok && r.result.alerts.some((a) => a.key === 'ship:late:' + code && a.level === 'bad'), r.ok && r.result.alerts);
 
