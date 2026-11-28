@@ -70924,19 +70924,19 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
 
   function load(quiet) {
     if (!SS.pid || SS.busy.load) return; SS.busy.load = 1; var pid = SS.pid;
-    srv('erpStudioSteps', [{ id: pid }], function (r) { SS.busy.load = 0; if (SS.pid !== pid) return;
+    srv('erpStudioSteps', [{ id: pid }], function (r) { SS.busy.load = 0; SS.err = ''; if (SS.pid !== pid) return;
       var had = SS.d && SS.d.versions.length; SS.d = r;
       if (SS.view == null) SS.view = r.steps.step || 2;
       if (SS.ver == null || (had != null && r.versions.length > had)) SS.ver = r.versions.length ? r.versions[r.versions.length - 1].version : null;
       if (had != null && r.versions.length > had) SS.view = 4;
       paint(); poll(r.steps.jobs.length > 0); },
-      function (e) { SS.busy.load = 0; if (!quiet) { toast(esc(errOf(e)), true, 9000); paint(); } });
+      function (e) { SS.busy.load = 0; if (!quiet) { SS.err = errOf(e); toast(esc(SS.err), true, 9000); paint(); } });
   }
   function poll(on) {
     if (SS.timer) { clearTimeout(SS.timer); SS.timer = null; }
     if (on) SS.timer = setTimeout(function () { SS.timer = null; var S = X().S; if (typeof VIEW !== 'undefined' && VIEW === 'contentdesk' && window.cdCore && window.cdCore.CD.tab === 'studio' && S.view === 'steps') load(true); }, 9000);
   }
-  function open(pid, step) { var S = X().S; S.view = 'steps'; S.pid = Number(pid); SS.pid = Number(pid); SS.d = null; SS.view = step || null; SS.ver = null; SS.edit = null; SS.noteOpen = null; SS.vidFb = ''; SS.picFb = ''; load(); }
+  function open(pid, step) { var S = X().S; SS.err = ''; S.view = 'steps'; S.pid = Number(pid); SS.pid = Number(pid); SS.d = null; SS.view = step || null; SS.ver = null; SS.edit = null; SS.noteOpen = null; SS.vidFb = ''; SS.picFb = ''; load(); }
   function reach(d) {
     var st = d.steps, r = 2;
     if (st.cards.length || st.jobs.some(function (j) { return j.kind === 'cards'; }) || st.step >= 3) r = 3;
@@ -70944,7 +70944,7 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
     return r;
   }
   function job(kind) { return ((SS.d && SS.d.steps.jobs) || []).filter(function (j) { return j.kind === kind; })[0] || null; }
-  function adv(t) { return t ? '<div class="ss-adv"><span class="av">AI</span><div data-noi18n="1">' + esc(t) + '</div></div>' : ''; }
+  function adv(t) { return t ? '<div class="ss-adv"><span class="av" data-noi18n="1">AI</span><div data-noi18n="1">' + esc(t) + '</div></div>' : ''; }
   function failLine(kind) { var f = SS.d.steps.failed; return f && f.kind === kind ? '<div class="st-drop">' + esc(f.note || 'কাজটা হয়নি, আবার চেষ্টা করুন।') + '</div>' : ''; }
   function picById(id) { return SS.d.steps.pics.filter(function (p) { return p.id === id; })[0] || null; }
 
@@ -71047,7 +71047,9 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
   }
   function stepsHtml() {
     var back = '<button type="button" class="st-back" data-st="home">' + I().back + 'স্টুডিও</button>';
-    if (!SS.d || SS.d.project.id !== SS.pid) { if (!SS.busy.load) load(); return back + '<div class="cd-panel cd-empty">আনা হচ্ছে…</div>'; }
+    if (!SS.d || SS.d.project.id !== SS.pid) {
+      if (SS.err) return back + '<div class="cd-panel cd-empty">' + esc(SS.err) + '<br><button type="button" class="ss-btn l" data-ss="retry" style="max-width:240px;margin:12px auto 0">আবার চেষ্টা করুন</button></div>';
+      if (!SS.busy.load) load(); return back + '<div class="cd-panel cd-empty">আনা হচ্ছে…</div>'; }
     var d = SS.d, r = reach(d), v = Math.min(SS.view || d.steps.step || 2, 4);
     var h = back + '<h1 class="st-title" data-noi18n="1">' + esc(d.project.title || 'ভিডিও') + '</h1>' + stepper(v, d.mine ? r : r);
     if (!d.mine) h += '<p class="ss-sub">শুধু দেখার জন্য: এটা ' + esc((X().S.home && (X().S.home.projects.filter(function (p) { return p.id === d.project.id; })[0] || {}).who) || 'অন্য কারো') + '-এর ভিডিও।</p>';
@@ -71082,6 +71084,7 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
     var w = t.getAttribute('data-ss'), id = t.getAttribute('data-id'), n = Number(id), x = X(), S = x.S;
     if (w === 'oneshot') { SS.oneShot = true; paint(); return; }
     if (w === 'stepsmode') { SS.oneShot = false; paint(); return; }
+    if (w === 'retry') { SS.err = ''; load(); paint(); return; }
     if (w === 'start') {
       if (S.jsonOpen === 'home' && String(S.jsonVal || '').trim()) { x.jsonAdd('home', S.jsonVal); if (S.jsonOpen === 'home') return; }
       var idea = String(S.draft || '').trim(), sp = S.spec.home;
