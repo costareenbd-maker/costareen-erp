@@ -492,6 +492,8 @@ export async function doctorInbound(ctx, ch, ev) {
   if (!sender) return false;
   const docs = await ctx.tx`select * from clinic_doctors where business_id = ${ctx.biz} and active and phone <> ''`;
   const d = docs.find((x) => wa(x.phone) === sender || wa(x.phone).slice(-10) === sender.slice(-10));
+  // clinic-2: a phone on the team list gives the bot orders (never a patient chat)
+  if (!d && teamPhones(s).some((p) => p === sender || p.slice(-10) === sender.slice(-10))) return teamOrder(ctx, ch, ev, sender, s);
   if (!d) return !!ev.group;                    // the team group: only doctors' answers matter; nobody else is answered
   const text = str(ev.text);
   const reply = async (t) => { const to = ev.group ? str(s.doctor_group) : wa(d.phone); await sendWa(ctx, to, t); };
@@ -791,7 +793,155 @@ export async function clinicReply(ctx, conv, ch, contact, opts) {
   return { sent, handover: effects.handover };
 }
 
+// ------------------------------------------------------------------ clinic-2: link the bot's WhatsApp with a code
+// Owner 29 Nov 2026: "give me the keyword to scan and switch the bot on". The Doctor desk's Bot tab links the bot's own
+// number: the server makes the number on THIS business's WhatsApp server (Oliareen: its own separate Evolution, /evoc) and
+// gives an 8-letter pairing code; on the bot's phone WhatsApp > Linked devices > Link with phone number takes it. A QR
+// is given too. The number is always kept for the job 'clinic' - it never becomes a sales / Alvi number.
+const fetchOf = (ctx) => (ctx.deps && ctx.deps.fetch) || fetch;
+async function wcall(ctx, url, opts) {
+  try {
+    const res = await fetchOf(ctx)(url, { method: opts.method || 'POST', headers: { 'content-type': 'application/json', ...(opts.headers || {}) }, body: opts.body === undefined ? undefined : JSON.stringify(opts.body) });
+    const text = await res.text(); let json = {}; try { json = JSON.parse(text) || {}; } catch (_) { json = {}; }
+    return { ok: res.status >= 200 && res.status < 300, status: res.status, json };
+  } catch (e) { return { ok: false, status: 0, json: {}, error: String((e && e.message) || e) }; }
+}
+async function ownerOnly(ctx) {
+  if (!roleAtLeast(ctx.s.role, 'shareholder') && !(await platformAdmin(ctx))) throw new Error('বটের WhatsApp শুধু মালিক জুড়তে পারেন।');
+}
+export async function erpClinicConnect(ctx, payload) {
+  await gate(ctx); await ownerOnly(ctx);
+  const a = payload || {};
+  const ph = PH11(a.phone);
+  if (!ph) throw new Error('বটের সিমের নম্বর দিন (১১ সংখ্যা, 01 দিয়ে শুরু)।');
+  const url = str(await (await import('../lib/ext.js')).getSecret(ctx, 'WA_SERVER_URL')).replace(/\/+$/, ''), key = str(await (await import('../lib/ext.js')).getSecret(ctx, 'WA_SERVER_KEY'));
+  if (!url || !key) throw new Error('এই ব্যবসার আলাদা WhatsApp সার্ভার এখনো বসানো হয়নি।');
+  const { chSecret, chSecretSet, evoSetHook } = await import('./inboxch.js');
+  let ch = (await ctx.tx`select * from inbox_channels where business_id = ${ctx.biz} and kind = 'wa_evo' and status <> 'removed' and settings->>'purpose' = 'clinic' order by created_at desc limit 1`)[0];
+  if (!ch) {
+    const inst = 'clinic-' + globalThis.crypto.randomUUID().replace(/-/g, '').slice(0, 8);
+    const r = await wcall(ctx, url + '/instance/create', { headers: { apikey: key }, body: { instanceName: inst, integration: 'WHATSAPP-BAILEYS', qrcode: true } });
+    if (!r.ok) throw new Error('WhatsApp সার্ভার নম্বরটা বানাতে পারল না (' + (r.status || 'উত্তর নেই') + ')। এক মিনিট পরে আবার চেষ্টা করুন।');
+    const token = str(typeof r.json.hash === 'string' ? r.json.hash : r.json.hash && (r.json.hash.apikey || r.json.hash.token)) || str(r.json.token);
+    const settings = { wait_s: 8, revert_min: 60, purpose: 'clinic', erp_made: true, number_wanted: ph };
+    ch = (await ctx.tx`insert into inbox_channels (business_id, kind, name, external_id, status, ai_on, settings, created_by)
+                       values (${ctx.biz}, 'wa_evo', ${'ডাক্তার বুকিং'}, ${inst}, 'live', true, ${ctx.tx.json(settings)}, ${byName(ctx)}) returning *`)[0];
+    await chSecretSet(ctx, ch, 'URL', url);
+    await chSecretSet(ctx, ch, 'KEY', token || key);
+    const base = str(ctx.deps && ctx.deps.hookBase);
+    if (base) await evoSetHook(ctx, ch, base + (base.includes('?') ? '&' : '?') + 'inbox=hook&ch=' + ch.id + '&k=' + ch.hook_key);
+  } else if (str((ch.settings || {}).number_wanted) !== ph) {
+    await ctx.tx`update inbox_channels set settings = coalesce(settings, '{}'::jsonb) || ${ctx.tx.json({ number_wanted: ph })} where id = ${ch.id}`;
+  }
+  const base2 = str(await chSecret(ctx, ch, 'URL')).replace(/\/+$/, ''), key2 = str(await chSecret(ctx, ch, 'KEY'));
+  const st = await wcall(ctx, base2 + '/instance/connectionState/' + encodeURIComponent(ch.external_id), { method: 'GET', headers: { apikey: key2 } });
+  const state = str((st.json.instance && st.json.instance.state) || st.json.state);
+  if (state === 'open') return { state, linked: true, channelId: ch.id };
+  const c = await wcall(ctx, base2 + '/instance/connect/' + encodeURIComponent(ch.external_id) + '?number=' + wa(ph), { method: 'GET', headers: { apikey: key2 } });
+  if (!c.ok) throw new Error('কোড আনা গেল না (' + (c.status || 'উত্তর নেই') + ')। আবার চাপুন।');
+  let qr = str(c.json.base64); if (qr && qr.indexOf('data:image') !== 0) qr = 'data:image/png;base64,' + qr;
+  const code = str(c.json.pairingCode).toUpperCase();
+  return { state: state || 'connecting', linked: false, channelId: ch.id, code: code ? code.slice(0, 4) + '-' + code.slice(4) : '', qr };
+}
+export async function erpClinicConnectState(ctx) {
+  await gate(ctx);
+  const ch = (await ctx.tx`select * from inbox_channels where business_id = ${ctx.biz} and kind = 'wa_evo' and status <> 'removed' and settings->>'purpose' = 'clinic' order by created_at desc limit 1`)[0];
+  if (!ch) return { state: 'none', linked: false };
+  const { evoState } = await import('./inboxch.js');
+  const st = await evoState(ctx, ch);
+  return { state: str(st.state), linked: str(st.state) === 'open', name: str(ch.name) };
+}
+
+// ------------------------------------------------------------------ clinic-2: the team gives the bot orders on WhatsApp
+// Owner 29 Nov 2026: "the bot does everything, but on our command; only booking runs by itself". A WhatsApp to the bot's
+// number from a phone in the settings' team list (or the owner's) is an ORDER, never a patient chat: the AI reads it
+// and uses the desk's own actions (schedule, waits, a patient, book, confirm / cancel / done / no-show / paid / move,
+// a doctor's week, a day off, ask the doctor again, a message to a patient). It answers the sender with what it did.
+const TEAM_TOOLS = [
+  { name: 'schedule', description: 'Bookings and free times for a day (yyyy-mm-dd, Dhaka), every doctor.', parameters: { type: 'OBJECT', properties: { day: { type: 'STRING' } }, required: ['day'] } },
+  { name: 'waiting', description: 'Bookings waiting for a doctor\'s yes.', parameters: { type: 'OBJECT', properties: {} } },
+  { name: 'doctors', description: 'Doctors: id, name, fee, minutes, weekly hours.', parameters: { type: 'OBJECT', properties: {} } },
+  { name: 'find_patient', description: 'Find patients by name, phone or problem.', parameters: { type: 'OBJECT', properties: { q: { type: 'STRING' } }, required: ['q'] } },
+  { name: 'book', description: 'Book a consult. patient_id, or name + phone for a new patient. confirm=true books it at once; false asks the doctor first.',
+    parameters: { type: 'OBJECT', properties: { doctor_id: { type: 'NUMBER' }, patient_id: { type: 'NUMBER' }, name: { type: 'STRING' }, phone: { type: 'STRING' }, day: { type: 'STRING' }, time: { type: 'STRING' }, concern: { type: 'STRING' }, confirm: { type: 'BOOLEAN' } }, required: ['doctor_id', 'day', 'time'] } },
+  { name: 'change', description: 'Change one booking by its number (C-12): action confirm | cancel | done | no_show | paid | move | ask_doctor. cancel needs reason; move needs day + time; tell=true tells the patient.',
+    parameters: { type: 'OBJECT', properties: { no: { type: 'STRING' }, action: { type: 'STRING' }, reason: { type: 'STRING' }, day: { type: 'STRING' }, time: { type: 'STRING' }, note: { type: 'STRING' }, tell: { type: 'BOOLEAN' } }, required: ['no', 'action'] } },
+  { name: 'set_hours', description: 'Replace a doctor\'s weekly hours. hours = [{weekday 0=Sun..6=Sat, from "HH:MM", to "HH:MM"}].',
+    parameters: { type: 'OBJECT', properties: { doctor_id: { type: 'NUMBER' }, hours: { type: 'ARRAY', items: { type: 'OBJECT', properties: { weekday: { type: 'NUMBER' }, from: { type: 'STRING' }, to: { type: 'STRING' } } } } }, required: ['doctor_id', 'hours'] } },
+  { name: 'day_off', description: 'A doctor\'s day off (whole day, or from-to).', parameters: { type: 'OBJECT', properties: { doctor_id: { type: 'NUMBER' }, day: { type: 'STRING' }, from: { type: 'STRING' }, to: { type: 'STRING' }, reason: { type: 'STRING' } }, required: ['doctor_id', 'day'] } },
+  { name: 'message_patient', description: 'Send a WhatsApp from the bot to a patient (by booking number or patient phone). Use the exact words the team asked for, politely.',
+    parameters: { type: 'OBJECT', properties: { no: { type: 'STRING' }, phone: { type: 'STRING' }, text: { type: 'STRING' } }, required: ['text'] } },
+];
+export function teamPhones(s) { return str(s.team_phones).split(/[,;\s]+/).map(wa).filter((x) => x.length >= 11); }
+async function teamOrder(ctx, ch, ev, sender, s) {
+  const text = str(ev.text);
+  const say = async (t) => sendWa(ctx, ev.group ? str(s.doctor_group) : sender, t);
+  if (!text) return true;
+  const { geminiTools } = await import('../lib/gemini.js');
+  const memKey = 'clinic_team_chat_' + sender.slice(-10);
+  let mem = [];
+  try { mem = JSON.parse((await getConfig(ctx, memKey, '')) || '[]') || []; } catch (_) { mem = []; }
+  const by = 'WhatsApp ' + sender;
+  const asTeam = { ...ctx, s: { ...ctx.s, name: by, role: roleAtLeast(ctx.s.role, 'owner') ? ctx.s.role : 'owner' } };
+  const noOf = (v) => str(v).toUpperCase().replace(/^#?\s*C-?\s*/, 'C-');
+  const run = async (name, a) => {
+    a = a || {};
+    try {
+      if (name === 'schedule') {
+        if (!okDay(a.day)) return { error: 'day yyyy-mm-dd' };
+        const r = await erpClinic(asTeam, { day: a.day, days: 1 });
+        return { day: a.day, doctors: r.doctors.map((d) => ({ id: d.id, name: d.name, free: (r.free[d.id] || {})[a.day] || [] })),
+                 bookings: r.consults.map((c) => ({ no: c.no, doctor_id: c.doctorId, patient: c.patientName, time: hhmm(dhaka(c.startsAt).min), state: c.state, paid: c.paid })) };
+      }
+      if (name === 'waiting') return { waiting: (await erpClinic(asTeam, {})).waits.map((c) => ({ no: c.no, patient: c.patientName, when: when(c.startsAt), doctor_said: c.doctorSaid })) };
+      if (name === 'doctors') return { doctors: (await erpClinic(asTeam, {})).doctors.map((d) => ({ id: d.id, name: d.name, fee: d.fee, minutes: d.slotMin, phone: d.phone, hours: d.hours, active: d.active })) };
+      if (name === 'find_patient') return { patients: (await erpClinicPatients(asTeam, { q: a.q })).patients.slice(0, 8).map((p) => ({ id: p.id, name: p.name, phone: p.phone, concern: p.concern, next: p.nextAt ? when(p.nextAt) : null })) };
+      if (name === 'book') {
+        const args = { doctorId: a.doctor_id, day: a.day, time: a.time, concern: a.concern, askDoctor: a.confirm === false };
+        if (a.patient_id) args.patientId = a.patient_id; else args.patient = { name: a.name, phone: a.phone, concern: a.concern };
+        return await ctx.tx.savepoint(async () => erpClinicBook(asTeam, args));
+      }
+      if (name === 'change') {
+        const c = (await ctx.tx`select id from clinic_consults where business_id = ${ctx.biz} and no = ${noOf(a.no)}`)[0];
+        if (!c) return { error: 'no booking ' + a.no };
+        const action = str(a.action) === 'ask_doctor' ? 'ask' : str(a.action);
+        return await ctx.tx.savepoint(async () => erpClinicAct(asTeam, { id: c.id, action, reason: a.reason, day: a.day, time: a.time, note: a.note, tell: !!a.tell }));
+      }
+      if (name === 'set_hours') return await ctx.tx.savepoint(async () => erpClinicHoursSave(asTeam, { doctorId: a.doctor_id, hours: a.hours || [] }));
+      if (name === 'day_off') return await ctx.tx.savepoint(async () => erpClinicOffSave(asTeam, { doctorId: a.doctor_id, day: a.day, from: a.from, to: a.to, reason: a.reason }));
+      if (name === 'message_patient') {
+        const t = str(a.text).slice(0, 1000);
+        if (!t) return { error: 'what should I write?' };
+        if (a.no) {
+          const c = (await ctx.tx`select * from clinic_consults where business_id = ${ctx.biz} and no = ${noOf(a.no)}`)[0];
+          if (!c) return { error: 'no booking ' + a.no };
+          return await tellPatient(ctx, c, t);
+        }
+        const ph = PH11(a.phone);
+        if (!ph) return { error: 'give a booking number or the patient\'s phone' };
+        return await sendWa(ctx, wa(ph), t);
+      }
+      return { error: 'unknown tool' };
+    } catch (e) { return { error: String((e && e.message) || e) }; }
+  };
+  const system = ['You are the booking desk of ' + (str((await ctx.tx`select name from businesses where id = ${ctx.biz}`)[0]?.name) || 'the shop') + ' (doctor video consultations). A person from OUR TEAM writes to you on WhatsApp.',
+    'Do exactly what they ask, with the tools; ask one short question only when something needed is missing (which doctor, which day). Never invent a booking number, a time or a patient.',
+    'Answer in their language and script, short, plain, like a colleague: what you did, or what you found. Dates and times in Dhaka. Today = ' + dhaka(ctx.now).day + ', now ' + when(ctx.now) + '.',
+    'Weekdays: 0 Sunday, 1 Monday, 2 Tuesday, 3 Wednesday, 4 Thursday, 5 Friday, 6 Saturday. Times as HH:MM 24-hour.'].join('\n');
+  const contents = mem.slice(-8).map((m) => ({ role: m.r, parts: [{ text: m.t }] })).concat([{ role: 'user', parts: [{ text }] }]);
+  let out = '';
+  try {
+    const res = await geminiTools(ctx, { system, contents, tools: TEAM_TOOLS, run, purpose: 'clinic-team', conversationId: null });
+    out = str(res.text);
+  } catch (e) { out = 'এই মুহূর্তে করতে পারলাম না: ' + String((e && e.message) || e).slice(0, 160); }
+  if (!out) out = 'হয়ে গেছে।';
+  mem = mem.concat([{ r: 'user', t: text.slice(0, 600) }, { r: 'model', t: out.slice(0, 600) }]).slice(-12);
+  try { await setConfig(ctx, memKey, JSON.stringify(mem)); } catch (_) { /* memory is a help, not a must */ }
+  await say(out);
+  return true;
+}
+
 export const HANDLERS = {
   erpClinic, erpClinicSlots, erpClinicPatients, erpClinicPatient, erpClinicDoctorSave, erpClinicHoursSave, erpClinicOffSave, erpClinicOffStrike,
-  erpClinicPatientSave, erpClinicPhotoAdd, erpClinicPhotoUrl, erpClinicPhotoStrike, erpClinicBook, erpClinicAct, erpClinicSettingsSave,
+  erpClinicPatientSave, erpClinicPhotoAdd, erpClinicPhotoUrl, erpClinicPhotoStrike, erpClinicBook, erpClinicAct, erpClinicSettingsSave, erpClinicConnect, erpClinicConnectState,
 };

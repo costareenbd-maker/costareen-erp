@@ -182,4 +182,41 @@ r = await owner('erpClinicSettingsSave', [{ agent_name: 'নুসরাত', pa
 check('owner saves the assistant\'s rules', r && r.settings && r.settings.pay_text === 'bKash 01700000000', r);
 check('Bangla time words', cl.clock(20 * 60) === 'রাত ৮:০০' && cl.clock(13 * 60 + 5) === 'দুপুর ১:০৫' && cl.yesNo('হ্যাঁ') === 'yes' && cl.yesNo('#C-3 ok') === 'yes' && cl.yesNo('না') === 'no' && cl.yesNo('kal?') === '');
 
+// ---- clinic-2: the team gives orders on WhatsApp; the bot's number is linked with a pairing code
+await owner('erpClinicSettingsSave', [{ team_phones: '01799000001' }]);
+script = [
+  [{ functionCall: { name: 'schedule', args: { day: tomorrow } } }],
+  [{ text: 'কাল ডা. Sabrina Hoque-এর ৩টা বুকিং।' }],
+];
+wa.length = 0;
+res = await asB(async (ctx) => ib.ingest(ctx, W, { from: '8801799000001', text: 'kal ke ke ase?', id: 't1' }));
+check('a team phone\'s message is an order (not a patient chat)', res && res.doctor, res);
+check('the bot answers the team phone with what it found', waTo('8801799000001').some((m) => /বুকিং/.test(waText(m))), wa);
+check('no patient conversation for the team phone', (await sql`select count(*)::int n from inbox_conversations v join inbox_contacts k on k.id = v.contact_id where v.channel_id = ${W.id} and k.external_id like '%799000001%'`)[0].n === 0);
+const cnoRow = (await sql`select no from clinic_consults where business_id = ${FIX.B} and state = 'confirmed' and starts_at > now() order by starts_at limit 1`)[0];
+script = [
+  [{ functionCall: { name: 'change', args: { no: cnoRow.no, action: 'paid', note: 'bKash 1111' } } }],
+  [{ text: 'ফি পাওয়া দাগ দিলাম।' }],
+];
+await asB(async (ctx) => ib.ingest(ctx, W, { from: '8801799000001', text: cnoRow.no + ' er fee paisi bkash 1111', id: 't2' }));
+check('an order changes the booking (fee marked paid)', (await sql`select paid from clinic_consults where business_id = ${FIX.B} and no = ${cnoRow.no}`)[0].paid === true);
+await sql`insert into business_secrets (business_id, key, value) values (${FIX.B}, 'WA_SERVER_URL', 'https://evoc.test'), (${FIX.B}, 'WA_SERVER_KEY', 'kk') on conflict (business_id, key) do update set value = excluded.value`;
+web.on(/evoc\.test/, (url) => {
+  if (/instance\/create/.test(url)) return { status: 201, body: { hash: 'tok1', qrcode: {} } };
+  if (/connectionState/.test(url)) return { status: 200, body: { instance: { state: 'connecting' } } };
+  if (/instance\/connect\//.test(url)) return { status: 200, body: { pairingCode: 'WZYEH1YY', base64: 'iVBORw0KGgo=' } };
+  return { status: 200, body: {} };
+});
+r = await mgr('erpClinicConnect', [{ phone: '01700000009' }]);
+check('only the owner links the bot\'s number', r && r.error, r);
+await sql`update inbox_channels set status = 'removed' where id = ${W.id}`;
+r = await owner('erpClinicConnect', [{ phone: '01700000009' }]);
+check('linking gives an 8-letter pairing code and a QR', r && r.code === 'WZYE-H1YY' && /^data:image/.test(r.qr) && !r.linked, r);
+const nch = (await sql`select * from inbox_channels where business_id = ${FIX.B} and kind = 'wa_evo' and status <> 'removed' and settings->>'purpose' = 'clinic'`);
+check('the number is made for the clinic job only, on this business\'s own server', nch.length === 1 && nch[0].settings.number_wanted === '01700000009', nch);
+r = await owner('erpClinicConnect', [{ phone: '01700000009' }]);
+check('asking again reuses the same number', r && r.channelId === nch[0].id, r);
+r = await mgr('erpClinicConnectState', []);
+check('the page reads whether the phone is linked', r && r.state === 'connecting' && r.linked === false, r);
+
 done();

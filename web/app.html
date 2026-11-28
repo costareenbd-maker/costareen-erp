@@ -70373,7 +70373,7 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
 
   if (typeof fdxNav === 'function') fdxNav('clinic', 'Doctor desk', ICON, 'dash');
   try { VIEW_NAMES.clinic = 'Doctor desk'; FDH_SUB.clinic = 'Doctors, patients and the booking assistant'; } catch (e) {}
-  try { SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpClinic|erpClinicSlots|erpClinicPatients|erpClinicPatient|erpClinicPhotoUrl|')); } catch (e) {}
+  try { SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpClinicConnectState|erpClinic|erpClinicSlots|erpClinicPatients|erpClinicPatient|erpClinicPhotoUrl|')); } catch (e) {}
   try { if (typeof BN_DICT !== 'undefined') BN_DICT['Doctor desk'] = 'ডাক্তার ডেস্ক'; } catch (e) {}
   try { if (typeof I18N_BN !== 'undefined') I18N_BN['Doctor desk'] = 'ডাক্তার ডেস্ক'; } catch (e) {}
   try { if (typeof AP_LOOK !== 'undefined' && AP_LOOK && !AP_LOOK.clinic) AP_LOOK.clinic = { c: '#0E7C86', i: ICON }; } catch (e) {}
@@ -70529,18 +70529,38 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
           '<div style="margin-top:8px;font-size:13.5px;color:var(--dk-ink2)" data-noi18n="1">' + esc(d.treats || '') + '</div><div style="margin-top:6px;font-size:13.5px">৳' + Math.round(d.fee) + ' · ' + bn(d.slotMin) + ' মিনিট · ' + (d.phone ? 'WhatsApp আছে' : '<span style="color:var(--dk-alert-ink)">WhatsApp নেই</span>') + '</div>' + weekBars(d) + '</button>';
       }).join('') + '</div>' : '<div class="dk-idle"><b>এখনো কোনো ডাক্তার নেই</b>যোগ করলে সময়সূচিতে তাঁর নিজের লাইন বসবে।</div>');
   }
+  function connHtml(own) {
+    var c = K.conn || {};
+    if (c.linked) return '<div class="dk-card" style="margin:0 0 14px;display:flex;gap:10px;align-items:center">' + I.ok + '<b>বটের WhatsApp যুক্ত হয়েছে।</b><span style="color:var(--dk-ink3)">এখন থেকে রোগীর মেসেজের উত্তর বট দেবে।</span></div>';
+    if (!own) return '';
+    var steps = '<ol style="margin:8px 0 0;padding-left:20px;font-size:14px;line-height:1.7"><li>বটের সিমের ফোনে WhatsApp খুলুন</li><li>Settings › Linked devices › Link a device</li><li>“Link with phone number instead” চাপুন</li><li>এই কোডটা লিখুন</li></ol>';
+    return '<div class="dk-card" style="margin:0 0 14px"><h3 class="dk-h4" style="margin-top:0">বটের WhatsApp জুড়ুন</h3>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="dk-f" style="margin:0;flex:1 1 220px">বটের সিমের নম্বর<input class="dk-in" type="tel" data-dkc="connph" placeholder="01XXXXXXXXX" value="' + esc(c.phone || '') + '"></label>' +
+      '<button type="button" class="dk-btn dark" data-dk="connect"' + (c.busy ? ' disabled' : '') + '>' + (c.busy ? 'আনছি…' : c.code ? 'নতুন কোড' : 'কোড আনুন') + '</button></div>' +
+      (c.code ? '<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-top:14px"><div><div style="font:800 34px/1 \'Pretendard Variable\',sans-serif;letter-spacing:.08em" data-noi18n="1">' + esc(c.code) + '</div>' + steps +
+        '<div style="margin-top:8px;font-size:13px;color:var(--dk-ink3)">' + (c.state === 'open' ? 'যুক্ত হয়েছে' : 'ফোনে কোড দেওয়ার অপেক্ষায়… (কোড কয়েক মিনিট পর বদলে যায়; না হলে “নতুন কোড”)') + '</div></div>' +
+        (c.qr ? '<div style="text-align:center"><img alt="QR" src="' + esc(c.qr) + '" style="width:168px;height:168px;border-radius:12px;border:1px solid var(--dk-rule)"><div style="font-size:12px;color:var(--dk-ink3)">অথবা এই QR স্ক্যান করুন</div></div>' : '') + '</div>' : '') + '</div>';
+  }
+  function connPoll() {
+    if (K.connT) clearTimeout(K.connT);
+    K.connT = setTimeout(function () {
+      K.connT = null;
+      if (typeof VIEW === 'undefined' || VIEW !== 'clinic' || K.tab !== 'bot' || !K.conn || !K.conn.code || K.conn.linked) return;
+      srv('erpClinicConnectState', [], function (r) { K.conn.state = r.state; K.conn.linked = !!r.linked; if (r.linked) { toast('বটের WhatsApp যুক্ত হয়েছে'); load(true); } else connPoll(); paint(); }, function () { connPoll(); });
+    }, 5000);
+  }
   function botHtml() {
     var b = K.D.bot || {}, s = K.D.settings || {}, own = ME && (ME.role === 'owner' || ME.platform);
     var f = function (k, label, ta) { return '<label class="dk-f">' + label + (ta ? '<textarea class="dk-ta" data-set="' + k + '"' + (own ? '' : ' disabled') + '>' + esc(s[k] || '') + '</textarea>' : '<input class="dk-in" data-set="' + k + '" value="' + esc(s[k] == null ? '' : s[k]) + '"' + (own ? '' : ' disabled') + '>') + '</label>'; };
     return '<div class="dk-wb' + (b.on ? ' calm' : '') + '"><p>' + (b.on ? 'বুকিং বট চালু' + (b.live ? '' : ' (প্র্যাকটিস মোডে)') + ' · ' + esc(b.name) : 'বুকিং বটের WhatsApp নম্বর জোড়া নেই') +
-      '<small>' + (b.on ? 'গত ২৪ ঘণ্টায় ' + bn(b.chats) + 'টা চ্যাট, ' + bn(b.booked) + 'টা বুকিং' : 'Alvi-র মতো আলাদা একটা নম্বর লাগবে। Inbox › WhatsApp নম্বর › নতুন নম্বর জুড়ুন › কাজ: “Doctor booking”।') + '</small></p>' +
-      (b.on ? '' : '<span class="dk-sp"></span><button type="button" class="dk-btn amber" data-dk="goinbox">Inbox খুলুন</button>') + '</div>' +
+      '<small>' + (b.on ? 'গত ২৪ ঘণ্টায় ' + bn(b.chats) + 'টা চ্যাট, ' + bn(b.booked) + 'টা বুকিং' : 'বটের নিজের সিমের নম্বর নিচে লিখে “কোড আনুন” চাপুন। নম্বরটা আলাদা সার্ভারে থাকবে, অন্য কোনো নম্বরের সাথে মিশবে না।') + '</small></p>' +
+      '</div>' + connHtml(own) +
       '<div class="dk-cards" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))"><div class="dk-card"><h3 class="dk-h4" style="margin-top:0">বট যা করে</h3><div class="dk-hist" style="--dc:var(--dk-ink)">' +
-      ['রোগী লিখলে: সমস্যা আর কতদিন, তারপর সম্মতি, নাম-বয়স — এক প্রশ্নে এক কথা', 'ডাক্তারের ফাঁকা ৩টা সময় দেয়; রোগী বাছলে সময়টা ধরে রাখে', 'ডাক্তারকে WhatsApp-এ জিজ্ঞেস করে; “হ্যাঁ” = পাকা, “না” = রোগীকে অন্য সময়', 'উত্তর না এলে অর্ধেক সময়ে একবার মনে করায়; সময় পার হলে ছেড়ে দেয়', 'আগের দিন আর কলের আগে রোগীকে রিমাইন্ডার (লিংকসহ); ডাক্তারকেও', 'নিজেকে কখনো AI বলে না; রোগ নির্ণয় বা ওষুধের কথা বলে না — ডাক্তার বলবেন'].map(function (t) { return '<div>' + t + '</div>'; }).join('') +
+      ['বুকিং নিজে নিজে চলে; বাকি সব কাজ শুধু টিমের কমান্ডে (টিমের নম্বর থেকে বটকে লিখুন: “কাল কে কে আছে?”, “C-3 বাতিল করো”, “ডাক্তার শনিবার ৬টা-৯টা বসবেন”, “C-5-কে লিংক পাঠাও”)', 'রোগী লিখলে: সমস্যা আর কতদিন, তারপর সম্মতি, নাম-বয়স — এক প্রশ্নে এক কথা', 'ডাক্তারের ফাঁকা ৩টা সময় দেয়; রোগী বাছলে সময়টা ধরে রাখে', 'ডাক্তারকে WhatsApp-এ জিজ্ঞেস করে; “হ্যাঁ” = পাকা, “না” = রোগীকে অন্য সময়', 'উত্তর না এলে অর্ধেক সময়ে একবার মনে করায়; সময় পার হলে ছেড়ে দেয়', 'আগের দিন আর কলের আগে রোগীকে রিমাইন্ডার (লিংকসহ); ডাক্তারকেও', 'নিজেকে কখনো AI বলে না; রোগ নির্ণয় বা ওষুধের কথা বলে না — ডাক্তার বলবেন'].map(function (t) { return '<div>' + t + '</div>'; }).join('') +
       '</div></div><div class="dk-card"><h3 class="dk-h4" style="margin-top:0">বটের নিয়ম' + (own ? '' : ' (শুধু মালিক বদলাতে পারেন)') + '</h3>' +
       f('agent_name', 'বটের নাম (মানুষের নাম)') + f('pay_text', 'ফি কীভাবে দেবে (bKash / Nagad)') + f('consent_text', 'সম্মতির কথা', true) +
       '<div class="dk-f2">' + f('min_notice', 'কত মিনিট আগে পর্যন্ত বুক') + f('remind_soon', 'কলের কত মিনিট আগে রিমাইন্ডার') + '</div>' +
-      f('doctor_group', 'ডাক্তারদের WhatsApp গ্রুপ (ঐচ্ছিক, …@g.us)') + f('team_phones', 'ডাক্তার উত্তর না দিলে কাকে জানাবে (ফোন)') + f('extra', 'আরও যা জানা দরকার (আপনার নিজের কথা)', true) +
+      f('doctor_group', 'ডাক্তারদের WhatsApp গ্রুপ (ঐচ্ছিক, …@g.us)') + f('team_phones', 'টিমের নম্বর (কমা দিয়ে): এঁরা বটকে WhatsApp-এ কাজ দিতে পারবেন, আর ডাক্তার উত্তর না দিলে খবর পাবেন') + f('extra', 'আরও যা জানা দরকার (আপনার নিজের কথা)', true) +
       (own ? '<button type="button" class="dk-btn dark" data-dk="saveset">সেভ করুন</button>' : '') + '</div></div>';
   }
   function view() {
@@ -70684,7 +70704,7 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
   document.addEventListener('click', function (ev) {
     var b = ev.target.closest && ev.target.closest('[data-dk]'); if (!b || !b.closest('.dk')) return;
     var k = b.getAttribute('data-dk'), v = b.getAttribute('data-v');
-    if (k === 'tab') { K.tab = v; if (v === 'pats') K.pats = null; closeDr(); paint(); window.scrollTo(0, 0); return; }
+    if (k === 'tab') { K.tab = v; if (v === 'pats') K.pats = null; if (v === 'bot' && !(K.conn && K.conn.code)) srv('erpClinicConnectState', [], function (r) { K.conn = Object.assign(K.conn || {}, { state: r.state, linked: !!r.linked }); paint(); }, function () {}); closeDr(); paint(); window.scrollTo(0, 0); return; }
     if (k === 'reload') { K.pats = null; load(true); return; }
     if (k === 'zoom') { K.days = Number(v); load(true); return; }
     if (k === 'step') { K.day = addDay(K.day, Number(v) * K.days); load(true); return; }
@@ -70703,6 +70723,13 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
     if (k === 'book') { var pid = b.getAttribute('data-p'); var pn = pid && K.dr && K.dr.title; openDr('নতুন বুকিং', bookForm({ patient: pid, patientName: pn })); fillSlots(); return; }
     if (k === 'pickslot') { K.dr.slot = v; [].forEach.call(b.parentNode.children, function (x) { x.setAttribute('aria-pressed', String(x === b)); }); return; }
     if (k === 'goinbox') { go('inbox'); return; }
+    if (k === 'connect') {
+      var inp = document.querySelector('[data-dkc="connph"]'); var ph = inp ? inp.value.trim() : '';
+      K.conn = Object.assign(K.conn || {}, { phone: ph, busy: true }); paint();
+      srv('erpClinicConnect', [{ phone: ph }], function (r) { K.conn = { phone: ph, code: r.code, qr: r.qr, state: r.state, linked: !!r.linked }; paint(); if (!r.linked) connPoll(); else load(true); },
+        function (e) { K.conn.busy = false; paint(); toast(esc(errOf(e)), true); });
+      return;
+    }
     if (k === 'photo') { if (K.url[v]) window.open(K.url[v], '_blank', 'noopener'); return; }
     if (k === 'unoff') { srv('erpClinicOffStrike', [{ id: Number(v) }], function () { toast('ছুটি তুলে দেওয়া হলো'); closeDr(); load(true); }, function (e) { toast(esc(errOf(e)), true); }); return; }
     if (k === 'offform') {
