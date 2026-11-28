@@ -5482,3 +5482,5 @@ colours, reminder with the call link, pay first in Bangladesh). Mock + screensho
   sent link stays, other business has none). studio_test + contentdesk_test and every other suite green.
 - NOT done: Instagram / TikTok / Facebook often need a login for yt-dlp; then the job runs without the style video and
   says so (no cookies are used on purpose). Live waits for the owner's yes.
+
+- 28 Nov 2026 nolimit-1: the Studio prompt / feedback has no length limit any more (was 4000 characters, cut silently). Owner asked; Raj told on WhatsApp. Test: a 13,000-character prompt is kept whole (studio_test 36/36).

@@ -117,6 +117,16 @@ check('the manager cannot read another person\'s rules', r && r.error, r);
 r = await owner('erpStudioAsk', [{ projectId: P, prompt: 'owner feedback' }]);
 check('owner cannot write feedback into the manager\'s video', r && r.error, r);
 
+// nolimit-1 (owner 28 Nov 2026): no length limit on a prompt
+const longPrompt = 'দীর্ঘ প্রম্পট '.repeat(1000) + 'শেষ';
+r = await owner('erpStudioAsk', [{ prompt: longPrompt }]);
+check('a 13,000-character prompt is accepted', r && r.jobId > 0, r);
+if (r && r.jobId) {
+  const jl = await sql`select length(prompt)::int n from content_studio_jobs where id = ${r.jobId}`;
+  const ml = await sql`select length(body)::int n from content_studio_msgs where id = ${r.msgId}`;
+  check('the whole long prompt is kept (job + work log)', jl[0].n === longPrompt.length && ml[0].n === longPrompt.length, { job: jl[0].n, msg: ml[0].n, want: longPrompt.length });
+}
+
 // phone
 r = await mgr('erpStudioPhone', [{ phone: '123' }]);
 check('a bad number is refused', r && r.error, r);

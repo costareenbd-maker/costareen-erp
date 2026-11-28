@@ -36,7 +36,7 @@ import { gate, studioCtx } from './contentdesk.js';
 const str = (v) => String(v == null ? '' : v).trim();
 const int = (v) => { const n = parseInt(v, 10); return n > 0 ? n : 0; };
 const iso = (d) => (d ? new Date(d).toISOString() : null);
-const MAX_PROMPT = 4000;
+// nolimit-1 (owner 28 Nov 2026): no length limit on a prompt or a feedback (was 4000 characters, cut silently)
 const MAX_OPEN = 5, ASK_GAP_S = 5;
 const STALE_MS = 10 * 60e3;   // the engine writes studio_engine every minute while it works
 const KINDS = ['rule', 'term', 'style'];
@@ -138,7 +138,7 @@ export async function erpStudioProject(ctx, payload) {
 export async function erpStudioAsk(ctx, payload) {
   await gate(ctx, 'manager');
   const p = payload || {};
-  const prompt = str(p.prompt).slice(0, MAX_PROMPT);
+  const prompt = str(p.prompt);
   if (prompt.length < 3) throw new Error('কী ভিডিও চান, একটু লিখুন।');
   // owner 26 Nov 2026 (nobody may probe the platform): no daily limit on videos, but no flooding either - at most
   // MAX_OPEN jobs of one person waiting at once and one ask per ASK_GAP_S seconds
