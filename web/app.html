@@ -68756,8 +68756,9 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
     var MON = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
     return bn(d.getUTCDate()) + ' ' + MON[d.getUTCMonth()] + ', ' + (h < 5 ? 'রাত' : h < 12 ? 'সকাল' : h < 16 ? 'দুপুর' : h < 18 ? 'বিকাল' : h < 20 ? 'সন্ধ্যা' : 'রাত') + ' ' + bn(h % 12 || 12) + ':' + bn(('0' + m).slice(-2)); }
   // studioref-1: the attach tray (one per person; the server keeps what is uploaded and not sent yet)
+  var trayKey = 0;
   function mergeTray(list) {
-    (list || []).forEach(function (r) { if (!S.tray.some(function (t) { return t.id === r.id; })) S.tray.push({ id: r.id, kind: r.kind, name: r.name, url: r.url, mode: r.mode, note: r.note, state: 'ready', pct: 100 }); });
+    (list || []).forEach(function (r) { if (!S.tray.some(function (t) { return t.id === r.id; })) S.tray.push({ key: 'k' + (++trayKey), id: r.id, kind: r.kind, name: r.name, url: r.url, mode: r.mode, note: r.note, state: 'ready', pct: 100 }); });
   }
   function trayHtml() {
     if (!S.tray.length) return '';
@@ -68776,7 +68777,6 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
     return '<button type="button" class="st-att" data-st="att" data-id="' + where + '" aria-label="ছবি বা ভিডিও দিন" aria-expanded="' + (S.attOpen === where) + '">' + I.clip + '</button>' +
       (S.attOpen === where ? '<div class="st-attm" role="menu"><button type="button" role="menuitem" data-st="attpick" data-id="image">' + I.pic + 'ছবি দিন</button><button type="button" role="menuitem" data-st="attpick" data-id="video">' + I.film + 'ভিডিও দিন</button></div>' : '');
   }
-  var trayKey = 0;
   function trayFind(key) { return S.tray.filter(function (t) { return String(t.key) === String(key); })[0]; }
   function putFile(up, file, t, ok, bad) {
     var x = new XMLHttpRequest(); x.open('PUT', up.url, true); x.setRequestHeader('content-type', up.contentType || file.type || 'application/octet-stream'); x.setRequestHeader('x-upsert', 'true');
@@ -68790,7 +68790,8 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
       var t = { key: 'k' + (++trayKey), kind: /^video\//.test(file.type) || /\.(mp4|mov|webm)$/i.test(file.name) ? 'video' : 'image', name: file.name, state: 'up', pct: 0, mode: 'better' };
       try { t.local = URL.createObjectURL(file); } catch (e) { t.local = ''; }
       S.tray.push(t); repaint2();
-      var drop = function (e) { S.tray = S.tray.filter(function (x) { return x !== t; }); toast(esc(errOf(e)), true, 9000); repaint2(); };
+      var drop = function (e) { S.tray = S.tray.filter(function (x) { return x !== t; }); if (t.id) srv('erpStudioRefRemove', [{ id: t.id }], function () {}, function () {});
+        toast(esc(errOf(e)), true, 9000); repaint2(); };
       srv('erpStudioRefUpload', [{ name: file.name, mime: file.type, bytes: file.size }], function (r) {
         t.id = r.ref.id;
         if (t.gone) { srv('erpStudioRefRemove', [{ id: t.id }], function () {}, function () {}); return; }
