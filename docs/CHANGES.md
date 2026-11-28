@@ -5609,3 +5609,11 @@ no number linked yet. Not seen live yet: a real patient chat, the doctor's yes/n
   video/link in the idea only shapes the card text (not the cut pace of the still video); pictures are not checked by a
   second AI pass before he sees them (the advice line is the check). Live waits for the owner's yes (one combined kit with
   studioref-2 + studiojson-1).
+
+2026-11-29 — dkcard-1 (owner: "the doctor's photo is far too small for the card - make them beautiful and professional", /impeccable polish)
+- Doctor desk > ডাক্তার: each doctor is a profile card - a 4:5 portrait (112px; 96px on a phone), a status pill (রোগী দেখছেন /
+  এখন বন্ধ), name 19px, degrees (2 lines max), BMDC number, what they treat; under a rule three figures (fee or ফ্রি, minutes
+  per patient, WhatsApp আছে / নেই) and the week bar. No photo = the initial large on the doctor's own colour. Hover lifts the
+  card with a soft shadow, keyboard focus ring in the doctor's colour, reduced motion respected. Grid min 360px, one column on a phone.
+- Doctor sheet: a 104px 4:5 portrait beside the name when there is a photo (the round initial stays when there is none).
+- Dev checked 1440 + 390 (no sideways scroll). Only the card markup line, drHead and the clinic CSS changed.
