@@ -5629,3 +5629,5 @@ no number linked yet. Not seen live yet: a real patient chat, the doctor's yes/n
 - Page: the box asks every 3 s, swaps the QR image in place (no flicker), shows "N সেকেন্ড আগে নতুন হয়েছে", 220px QR with
   the steps for the QR, stops after 4 minutes ("নতুন কোড" starts again), and turns into "যুক্ত হয়েছে" the moment the scan lands.
 - Tests: clinic_test 65 (4 new: sales refused, current QR while connecting, no new round while connecting, linked when open).
+- NOT the cure for "Couldn't link device": Evolution 2.3.7's Baileys drops companion_reg_refresh (evolution-api #2696); handled separately.
+- LIVE #95 29 Nov 2026 (owner yes): function allow.js + clinic.js (live #94 + this diff), page #94 + these hunks, sw cz-shell-v4-native-clinicqr1.
