@@ -5617,3 +5617,4 @@ no number linked yet. Not seen live yet: a real patient chat, the doctor's yes/n
   card with a soft shadow, keyboard focus ring in the doctor's colour, reduced motion respected. Grid min 360px, one column on a phone.
 - Doctor sheet: a 104px 4:5 portrait beside the name when there is a photo (the round initial stays when there is none).
 - Dev checked 1440 + 390 (no sideways scroll). Only the card markup line, drHead and the clinic CSS changed.
+- LIVE #93 29 Nov 2026 (owner yes): #92 page + these hunks, sw cz-shell-v4-native-dkcard1, costareen-erp + office-erp.
