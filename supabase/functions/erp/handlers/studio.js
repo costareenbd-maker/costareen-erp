@@ -15,10 +15,19 @@
 //   erpStudioPhone({phone})              the WhatsApp number the "your video is ready" message goes to
 //   studioBell(ctx)                      the bell lines (alerts.js) - finished versions not opened yet
 //   studioNotifyTick(ctx)                minute timer: the WhatsApp message for each finished version, once
+// studioref-1 (owner 28 Nov 2026): reference pictures (avatar / product / content: shown in the video, or the model for a
+// night clip) and reference videos (the style structure: "same" or "better") attached to a prompt or a feedback.
+//   erpStudioRefUpload({name, mime, bytes})   a signed upload address (pictures jpg/png/webp/heic <= 15 MB, 6 per ask;
+//                                             videos mp4/mov/webm <= 200 MB, 2 per ask) -> the browser PUTs the file
+//   erpStudioRefConfirm({id})                 the file is in: ready to send (a 1-hour link for the chip)
+//   erpStudioRefSet({id, mode?, note?})       a video's choice ("same" | "better") or a short note, before sending
+//   erpStudioRefRemove({id})                  take it off before sending (the row stays, state 'removed')
+//   erpStudioAsk({..., refIds: [..]})         sends them with the prompt / feedback; after that they stay with the log
+//   erpContentStudioRefs({biz, key, jobId})   the PC engine: a job's refs with 1-hour links (engine key, like the upload)
 import { roleAtLeast } from '../allow.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { phone11 } from '../lib/phone.js';
-import { gate } from './contentdesk.js';
+import { gate, studioCtx } from './contentdesk.js';
 
 const str = (v) => String(v == null ? '' : v).trim();
 const int = (v) => { const n = parseInt(v, 10); return n > 0 ? n : 0; };
@@ -90,6 +99,7 @@ export async function erpStudio(ctx) {
     rules: Number((await ctx.tx`select count(*)::int n from content_studio_rules where business_id = ${ctx.biz} and user_id = ${ctx.s.userId} and active`)[0].n),
     phone: str((JSON.parse((await getConfig(ctx, 'studio_phones', '')) || '{}') || {})[ctx.s.userId] || ''),
     canSeeAll: all,
+    attach: await openOut(ctx),   // studioref-1: the attach tray (uploaded, not sent yet)
   };
 }
 
@@ -107,10 +117,16 @@ export async function erpStudioProject(ctx, payload) {
   const failed = jobs.length && jobs[jobs.length - 1].state === 'failed' ? str(jobs[jobs.length - 1].note) : '';
   const remembered = await ctx.tx`select id, body, msg_id from content_studio_rules where project_id = ${p.id} and active and source like 'মতামত%'`;
   if (p.user_id === ctx.s.userId) await ctx.tx`update content_studio_jobs set seen_at = now() where project_id = ${p.id} and state = 'done' and seen_at is null`;
+  // studioref-1: the pictures / videos each prompt and feedback carried (1-hour links: the log shows the thumbnails)
+  const refRows = await ctx.tx`select * from content_studio_refs where business_id = ${ctx.biz} and project_id = ${p.id} and state = 'sent' order by id`;
+  const refsOf = {};
+  for (const x of refRows) (refsOf[Number(x.msg_id)] = refsOf[Number(x.msg_id)] || []).push(await refOut(ctx, x, true));
   return {
     project: projOut(p, open ? { ...open, place } : null), mine: p.user_id === ctx.s.userId,
     versions, failed, engine: await engineState(ctx),
-    log: msgs.map((m) => ({ id: Number(m.id), engine: !m.user_id, who: m.user_id ? str(m.who) : '', body: str(m.body), version: m.version == null ? null : Number(m.version), at: iso(m.created_at) })),
+    log: msgs.map((m) => ({ id: Number(m.id), engine: !m.user_id, who: m.user_id ? str(m.who) : '', body: str(m.body), version: m.version == null ? null : Number(m.version), at: iso(m.created_at),
+      refs: refsOf[Number(m.id)] || [] })),
+    attach: p.user_id === ctx.s.userId ? await openOut(ctx) : [],
     remembered: remembered.map((r) => ({ id: Number(r.id), body: str(r.body), msgId: r.msg_id == null ? null : Number(r.msg_id) })),
   };
 }
@@ -126,6 +142,7 @@ export async function erpStudioAsk(ctx, payload) {
                                     max(created_at) last from content_studio_jobs where business_id = ${ctx.biz} and user_id = ${ctx.s.userId}`)[0];
   if (mine.open >= MAX_OPEN) throw new Error('আপনার ' + MAX_OPEN + 'টা ভিডিও এখন লাইনে আছে। এগুলো শেষ হলে আরো পাঠান।');
   if (mine.last && Date.now() - new Date(mine.last).getTime() < ASK_GAP_S * 1000) throw new Error('একটু থামুন, কয়েক সেকেন্ড পরে আবার পাঠান।');
+  const refs = await takeRefs(ctx, p.refIds);   // studioref-1: checked before anything is written
   let pr;
   if (p.projectId) {
     pr = await project(ctx, p.projectId);
@@ -147,7 +164,9 @@ export async function erpStudioAsk(ctx, payload) {
   const m = (await ctx.tx`insert into content_studio_msgs (business_id, project_id, user_id, body) values (${ctx.biz}, ${pr.id}, ${ctx.s.userId}, ${prompt}) returning id`)[0];
   const j = (await ctx.tx`insert into content_studio_jobs (business_id, project_id, user_id, kind, prompt) values (${ctx.biz}, ${pr.id}, ${ctx.s.userId}, ${kind}, ${prompt}) returning id`)[0];
   await ctx.tx`update content_studio_projects set updated_at = now() where id = ${pr.id}`;
-  return { projectId: Number(pr.id), jobId: Number(j.id), msgId: Number(m.id) };
+  if (refs.length) await ctx.tx`update content_studio_refs set state = 'sent', sent_at = now(), project_id = ${pr.id}, msg_id = ${m.id}, job_id = ${j.id}
+                                where id in ${ctx.tx(refs.map((r) => r.id))}`;
+  return { projectId: Number(pr.id), jobId: Number(j.id), msgId: Number(m.id), refs: refs.length };
 }
 
 export async function erpStudioFinish(ctx, payload) {
@@ -204,6 +223,127 @@ export async function erpStudioVideoUrl(ctx, payload) {
   const url = await s.url(ctx.biz, 'content', str(v.file_path).replace(/^content\//, ''), 3600);
   if (!url) throw new Error('ভিডিওর লিংক বানানো গেল না। একটু পরে আবার চেষ্টা করুন।');
   return { url, expiresIn: 3600 };
+}
+
+// ------------------------------------------------------------------ studioref-1: reference pictures and videos
+const REF_TYPES = {
+  jpg: ['image', 'image/jpeg'], jpeg: ['image', 'image/jpeg'], png: ['image', 'image/png'], webp: ['image', 'image/webp'],
+  heic: ['image', 'image/heic'], heif: ['image', 'image/heif'],
+  mp4: ['video', 'video/mp4'], mov: ['video', 'video/quicktime'], webm: ['video', 'video/webm'],
+};
+export const REF_LIMIT = { image: { max: 6, bytes: 15 * 1024 * 1024, word: 'ছবি', mb: '১৫' }, video: { max: 2, bytes: 200 * 1024 * 1024, word: 'ভিডিও', mb: '২০০' } };
+const bn = (n) => String(n).replace(/[0-9]/g, (d) => '০১২৩৪৫৬৭৮৯'[d]);
+function refType(name, mime) {
+  const ext = (str(name).toLowerCase().match(/\.([a-z0-9]{2,5})$/) || [])[1] || '';
+  const t = REF_TYPES[ext];
+  if (t) return { ext: ext === 'jpeg' ? 'jpg' : ext, kind: t[0], mime: t[1] };
+  const m = str(mime).toLowerCase();   // a phone sometimes gives a name with no extension: the type decides
+  const e2 = ext ? '' : Object.keys(REF_TYPES).find((k) => REF_TYPES[k][1] === m);
+  return e2 ? { ext: e2 === 'jpeg' ? 'jpg' : e2, kind: REF_TYPES[e2][0], mime: m } : null;
+}
+async function refUrl(ctx, path, secs) {
+  const s = ctx.deps && ctx.deps.storage;
+  if (!s || !s.url) return '';
+  try { return (await s.url(ctx.biz, 'content', str(path).replace(/^content\//, ''), secs || 3600)) || ''; } catch (_) { return ''; }
+}
+async function refOut(ctx, r, withUrl) {
+  const used = r.used && typeof r.used === 'object' ? r.used : {};
+  return { id: Number(r.id), kind: str(r.kind), name: str(r.name), mime: str(r.mime), bytes: Number(r.bytes) || 0, note: str(r.note),
+    mode: str(r.mode) || 'better', state: str(r.state), msgId: r.msg_id == null ? null : Number(r.msg_id),
+    shown: !!used.shown, night: str(used.night), url: withUrl && r.state !== 'uploading' ? await refUrl(ctx, r.file_path, 3600) : '' };
+}
+async function myOpenRefs(ctx) {
+  return ctx.tx`select * from content_studio_refs where business_id = ${ctx.biz} and user_id = ${ctx.s.userId}
+                and (state = 'ready' or (state = 'uploading' and created_at > now() - interval '2 hours')) order by id`;
+}
+async function openOut(ctx) {
+  const out = [];
+  for (const r of await myOpenRefs(ctx)) if (r.state === 'ready') out.push(await refOut(ctx, r, true));
+  return out;
+}
+async function myRef(ctx, id) {
+  const r = (await ctx.tx`select * from content_studio_refs where business_id = ${ctx.biz} and id = ${int(id)}`)[0];
+  if (!r || r.user_id !== ctx.s.userId) throw new Error('এই ফাইলটা পাওয়া গেল না।');
+  return r;
+}
+export async function erpStudioRefUpload(ctx, payload) {
+  await gate(ctx, 'manager');
+  const p = payload || {};
+  const t = refType(p.name, p.mime);
+  if (!t) throw new Error('এই ধরনের ফাইল নেওয়া যায় না। ছবি: JPG, PNG, WEBP, HEIC; ভিডিও: MP4, MOV, WEBM।');
+  const L = REF_LIMIT[t.kind];
+  const bytes = Math.round(Number(p.bytes) || 0);
+  if (!(bytes > 0)) throw new Error('ফাইলটা খালি মনে হচ্ছে। আরেকবার বাছুন।');
+  if (bytes > L.bytes) throw new Error(L.word + ' ' + L.mb + ' MB-এর বেশি হলে নেওয়া যায় না। ছোট করে দিন।');
+  const open = (await myOpenRefs(ctx)).filter((r) => r.kind === t.kind);
+  if (open.length >= L.max) throw new Error('একবারে সর্বোচ্চ ' + bn(L.max) + 'টা ' + L.word + ' দেওয়া যায়।');
+  const s = ctx.deps && ctx.deps.storage;
+  if (!s || !s.signUpload) throw new Error('এই সার্ভারে ফাইল রাখার ব্যবস্থা নেই।');
+  const name = 'studio-refs/' + crypto.randomUUID() + '.' + t.ext;
+  const up = await s.signUpload(ctx.biz, 'content', name);
+  const r = (await ctx.tx`insert into content_studio_refs (business_id, user_id, kind, file_path, name, mime, bytes)
+                          values (${ctx.biz}, ${ctx.s.userId}, ${t.kind}, ${'content/' + name}, ${str(p.name).slice(0, 120) || name}, ${t.mime}, ${bytes}) returning *`)[0];
+  return { ref: await refOut(ctx, r, false), upload: { url: up.url, token: up.token, path: 'content/' + name, contentType: t.mime, maxBytes: L.bytes } };
+}
+export async function erpStudioRefConfirm(ctx, payload) {
+  await gate(ctx, 'manager');
+  const r = await myRef(ctx, payload && payload.id);
+  if (r.state === 'removed' || r.state === 'sent') throw new Error('এই ফাইলটা আর বদলানো যায় না।');
+  const u = (await ctx.tx`update content_studio_refs set state = 'ready', confirmed_at = coalesce(confirmed_at, now()) where id = ${r.id} returning *`)[0];
+  return { ref: await refOut(ctx, u, true) };
+}
+export async function erpStudioRefSet(ctx, payload) {
+  await gate(ctx, 'manager');
+  const p = payload || {};
+  const r = await myRef(ctx, p.id);
+  if (r.state !== 'ready' && r.state !== 'uploading') throw new Error('পাঠানোর পর আর বদলানো যায় না।');
+  const mode = p.mode == null ? str(r.mode) : str(p.mode);
+  if (!['same', 'better'].includes(mode)) throw new Error('"হুবহু এই ধরনে" না "আরো ভালো করে"?');
+  const note = p.note == null ? r.note : (str(p.note).slice(0, 200) || null);
+  const u = (await ctx.tx`update content_studio_refs set mode = ${mode}, note = ${note} where id = ${r.id} returning *`)[0];
+  return { ref: await refOut(ctx, u, false) };
+}
+export async function erpStudioRefRemove(ctx, payload) {
+  await gate(ctx, 'manager');
+  const r = await myRef(ctx, payload && payload.id);
+  if (r.state === 'sent') throw new Error('পাঠানো ফাইল কাজের খাতায় থেকে যায়, সরানো যায় না।');
+  await ctx.tx`update content_studio_refs set state = 'removed', removed_at = now() where id = ${r.id}`;
+  return { ok: true };
+}
+// the refs a prompt / feedback carries: the person's own, uploaded, not sent yet; at most 6 pictures and 2 videos
+async function takeRefs(ctx, ids) {
+  const want = [...new Set((Array.isArray(ids) ? ids : []).map(int).filter(Boolean))];
+  if (!want.length) return [];
+  if (want.length > REF_LIMIT.image.max + REF_LIMIT.video.max) throw new Error('এত ফাইল একবারে দেওয়া যায় না।');
+  const rows = await ctx.tx`select * from content_studio_refs where business_id = ${ctx.biz} and id in ${ctx.tx(want)}`;
+  if (rows.length !== want.length || rows.some((r) => r.user_id !== ctx.s.userId)) throw new Error('একটা ফাইল পাওয়া গেল না। পাতাটা নতুন করে আনুন।');
+  if (rows.some((r) => r.state === 'uploading')) throw new Error('একটা ফাইল এখনো উঠছে। শেষ হলে পাঠান।');
+  if (rows.some((r) => r.state !== 'ready')) throw new Error('একটা ফাইল আগেই পাঠানো বা সরানো হয়েছে।');
+  for (const k of ['image', 'video']) {
+    if (rows.filter((r) => r.kind === k).length > REF_LIMIT[k].max) throw new Error('একবারে সর্বোচ্চ ' + bn(REF_LIMIT[k].max) + 'টা ' + REF_LIMIT[k].word + ' দেওয়া যায়।');
+  }
+  return rows;
+}
+
+// the PC engine reads a job's refs: the engine key of THIS business (like erpContentStudioUploadUrl), 1-hour links;
+// it also writes back what it did with each one (shown in the video / a night clip asked for) - the log shows it
+export async function erpContentStudioRefs(ctx, payload) {
+  const c2 = await studioCtx(ctx, payload);
+  const p = payload || {};
+  const job = int(p.jobId);
+  if (!job) throw new Error('Which studio job?');
+  const j = (await c2.tx`select id, project_id from content_studio_jobs where business_id = ${c2.biz} and id = ${job}`)[0];
+  if (!j) throw new Error('That studio job is not in this business.');
+  if (p.used && typeof p.used === 'object') {
+    for (const [id, u] of Object.entries(p.used)) {
+      const v = { shown: !!(u && u.shown), night: str(u && u.night).slice(0, 300) };
+      await c2.tx`update content_studio_refs set used = ${c2.tx.json(v)} where business_id = ${c2.biz} and job_id = ${job} and id = ${int(id)}`;
+    }
+  }
+  const rows = await c2.tx`select * from content_studio_refs where business_id = ${c2.biz} and job_id = ${job} and state = 'sent' order by id`;
+  const out = [];
+  for (const r of rows) out.push({ ...(await refOut(c2, r, true)), path: str(r.file_path) });
+  return { jobId: job, projectId: Number(j.project_id), refs: out };
 }
 
 // ------------------------------------------------------------------ the person's own rules
@@ -311,4 +451,5 @@ export async function studioNotifyTick(ctx) {
 }
 
 export const HANDLERS = { erpStudio, erpStudioProject, erpStudioAsk, erpStudioFinish, erpStudioVideoUrl, erpStudioRules, erpStudioRuleSave,
-  erpStudioRuleRemove, erpStudioForget, erpStudioPhone };
+  erpStudioRuleRemove, erpStudioForget, erpStudioPhone, erpStudioRefUpload, erpStudioRefConfirm, erpStudioRefSet, erpStudioRefRemove,
+  erpContentStudioRefs };

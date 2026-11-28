@@ -5382,3 +5382,33 @@ the Costareen AI answers. Live: copy again into the live cargo business when it 
 - ship-7/8: team who meets travellers (182) and the traveller's own page web/c/ (183, handlers/shipportal.js, index.ts ?inbox=portal). Owner's rules: own details only without a bag; shipment view from carrier set until staff receive; his scan only logs; staff scans never change the carrier; new phone = WhatsApp code. Offline: c/sw.js + localStorage copy + cached QR picture. Requests (I can take luggage) -> ERP list -> make shipment. Airport guides + office number + meeting note. Reminder 3 days before the flight. Blueprint/mock .impeccable/mocks/traveller-portal-2026-11-28.
 - NOT done: live; a real iPhone/Android check of install + offline (the preview browser refuses service workers); camera scan of the bag on the traveller page (a tap confirms instead); team members on dev not added; join link not yet sent to anyone.
 
+
+
+## studioref-1 (28 Nov 2026, dev) - reference pictures and videos in the Content desk Studio
+Owner (28 Nov): "the prompting site made for Raj bhai - give it a place for reference images and reference videos";
+then: pictures = avatar / content pictures, shown inside the video or used to make new shots; a video = the style
+structure, with two small choices.
+- Migration 187 `content_studio_refs` (kind image|video, file path in the business's own `content/studio-refs/`, name,
+  type, size, note, mode same|better, state uploading|ready|sent|removed, `used` = what the engine did). RLS like 177,
+  no delete policy: removing before sending keeps the row; after sending the refs stay with the work log.
+- handlers/studio.js: `erpStudioRefUpload` (signed upload; pictures JPG/PNG/WEBP/HEIC <= 15 MB, 6 per ask; videos
+  MP4/MOV/WEBM <= 200 MB, 2 per ask; manager gate), `erpStudioRefConfirm`, `erpStudioRefSet` (video: "হুবহু এই ধরনে" /
+  "এই ধরনে, আরো ভালো করে"), `erpStudioRefRemove`; `erpStudioAsk` takes `refIds` (new video and feedback);
+  `erpStudio` / `erpStudioProject` return the attach tray and each log line's refs with 1-hour links;
+  `erpContentStudioRefs` = the PC engine reads a job's refs with the business's engine key (like the video upload).
+- Page (studio block): a small paperclip next to the send button (both bars) opens "ছবি দিন" / "ভিডিও দিন"; chips above
+  the bar (thumbnail, upload bar, ×); a video chip has the two choices; the work log shows each prompt's files and what
+  the engine did ("ছবি ভিডিওর ভেতরে দেখানো হয়েছে", "ছবি দিয়ে নতুন ক্লিপ রাতে বানানো হবে").
+- Engine (G:/bendar-brand/bizdesk/studio, backups *.bak-studioref1): studio_run.py downloads the job's refs into
+  work/studio-refs-job<N>; each picture becomes a 9:16 still with a slow push and is offered to the planner as clip
+  ref<id> (always shown); the brief writer and the scene planner (Claude) see the pictures and a 4x2 contact sheet of each
+  style video, plus its cut pace and words (faster-whisper small on the PC); "same" = follow the structure closely,
+  "better" = this frame made more real/beautiful by the Bootcamp rules. When a new shot FROM a picture would be better,
+  the picture + shot wish is saved in G:/ai-flow-inbox/<brand>/studio-requests for the night clip desk and the log says
+  so. bizvideo.py: 3 small STUDIO hooks in prepare() (ref clips into the clip list, ref text + pictures to the planner,
+  her picture shots keep their file). Owner's locked rules untouched; nothing is posted.
+- Tests: supabase/tests/studioref_test.mjs (36): upload sign/confirm, type and size limits, 6/2 per ask, remove keeps
+  the row, sent refs fixed, project log shows refs, engine call key-gated, sales refused, other business untouched.
+- NOT done: the night clip desk does not read studio-requests by itself (Flow is by hand, 01:00-07:00 KST); when a night
+  clip lands in the brand library, Raj presses "আরো ভালো করুন" to get it in a new version. HEIC pictures show as an icon
+  in the browser (the engine converts them). Live waits for the owner's yes.

@@ -348,7 +348,7 @@ export async function erpContentVideoSave(ctx, payload) {
 // The business video studio (owner's PC/Mac) names the business in the call and proves itself with THAT business's
 // content-engine key (BRAND_BRIDGE_KEY), like erpBrandDeskHello: the owner's key keeps its own active business, so the
 // personal Brand desk is never switched (owner 19 Nov 2026: zero loss for the personal setup).
-async function studioCtx(ctx, p) {
+export async function studioCtx(ctx, p) {
   if (!roleAtLeast(ctx.s.role, 'owner')) throw new Error('Only the owner\'s studio uploads videos.');
   const biz = str(p && p.biz);
   const mine = await ctx.tx`select 1 from public.my_business_ids('owner') b(id) where b.id::text = ${biz}`;
