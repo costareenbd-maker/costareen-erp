@@ -65,7 +65,15 @@ async function sendWa(ctx, phone, text) {
   } catch (_) { return false; }
 }
 function meOut(p) {
-  return { name: p.name, phone: p.phone || '', addrBd: p.addr_bd || '', addrKr: p.addr_kr || '', photo: p.photo || '', code: p.code, waOk: !!p.wa_ok };
+  return { name: p.name, phone: p.phone || '', phoneKr: p.phone_kr || '', phoneBd: p.phone_bd || '',
+    waOn: p.phone && p.phone === p.phone_bd && p.phone !== p.phone_kr ? 'bd' : 'kr',
+    emName: p.em_name || '', emRelation: p.em_relation || '', emPhone: p.em_phone || '',
+    addrBd: p.addr_bd || '', addrKr: p.addr_kr || '', photo: p.photo || '', code: p.code, waOk: !!p.wa_ok };
+}
+const CONTACT = ['phoneKr', 'phoneBd', 'waOn', 'emName', 'emRelation', 'emPhone'];
+function contactOf(b) { const o = {}; for (const k of CONTACT) if (b[k] !== undefined) o[k] = b[k]; return o; }
+async function byPhone(ctx, phone) {
+  return (await ctx.tx`select * from ship_people where business_id = ${ctx.biz} and removed_at is null and ${phone} in (phone, phone_kr, phone_bd) order by id limit 1`)[0];
 }
 /** The one shipment he holds now: carrier set by staff, not yet received by staff. */
 async function activeTrip(ctx, personId) {
@@ -120,7 +128,9 @@ export async function portalAct(ctx, a, { k, j, body }) {
       const ph = b.phone === undefined ? p.phone : b.phone;
       const photo = b.photo === undefined ? undefined : str(b.photo);
       if (photo && (!IMG.test(photo) || photo.length > 300000)) return bad(400, 'ছবিটা নেওয়া গেল না। আরেকটা দিন।');
-      try { await personUpsert(ctx, { name: b.name === undefined ? p.name : b.name, phone: ph, email: p.email, city: p.city, waOk: b.waOk === undefined ? p.wa_ok : !!b.waOk, note: p.note, photo, addrBd: b.addrBd, addrKr: b.addrKr }, p.id); }
+      const two = b.phoneKr !== undefined || b.phoneBd !== undefined;
+      if (two && !e164(b.phoneKr) && !e164(b.phoneBd)) return bad(400, 'অন্তত একটা ফোন নম্বর দিন।');
+      try { await personUpsert(ctx, { name: b.name === undefined ? p.name : b.name, ...(two ? contactOf(b) : { phone: ph }), email: p.email, city: p.city, waOk: b.waOk === undefined ? p.wa_ok : !!b.waOk, note: p.note, photo, addrBd: b.addrBd, addrKr: b.addrKr, emName: b.emName, emRelation: b.emRelation, emPhone: b.emPhone }, p.id); }
       catch (e) { return bad(400, msgBn(e)); }
       const p2 = (await ctx.tx`select * from ship_people where id = ${p.id}`)[0];
       return { status: 200, body: await mePayload(ctx, p2) };
@@ -159,25 +169,28 @@ export async function portalAct(ctx, a, { k, j, body }) {
   if (!j || j !== str(await getConfig(ctx, 'ship_join_token', ''))) return bad(404, 'এই লিংকটা খোলা নেই।');
   if (a === 'join-info') return { status: 200, body: { ok: true, biz: { name: str(ctx.s.businessName), logo: await logoOf(ctx) } } };
   if (a === 'join') {
-    const phone = e164(b.phone);
     if (!str(b.name)) return bad(400, 'আপনার নাম লিখুন।');
-    if (!phone) return bad(400, 'ফোন নম্বর দেশের কোড সহ লিখুন (যেমন +82 10…, +880 17…)।');
-    const had = (await ctx.tx`select id from ship_people where business_id = ${ctx.biz} and phone = ${phone} and removed_at is null`)[0];
+    const nums = [b.phoneKr, b.phoneBd, b.phone].map(e164).filter(Boolean);
+    if ((b.phoneKr || b.phoneBd || b.phone) && !nums.length) return bad(400, 'ফোন নম্বর দেশের কোড সহ লিখুন (যেমন +82 10…, +880 17…)।');
+    if (!nums.length) return bad(400, 'অন্তত একটা ফোন নম্বর দিন।');
+    const phone = nums[0];
+    let had = null; for (const n of nums) { had = had || await byPhone(ctx, n); }
     if (had) return bad(409, 'এই নম্বরে আগেই একজন আছেন। কোড দিয়ে খুলুন।', { exists: true });
     const photo = str(b.photo);
     if (photo && (!IMG.test(photo) || photo.length > 300000)) return bad(400, 'ছবিটা নেওয়া গেল না। আরেকটা দিন।');
     let id;
-    try { id = await personUpsert(ctx, { name: b.name, phone, waOk: !!b.waOk, photo: photo || undefined, addrBd: b.addrBd, addrKr: b.addrKr }, 0); }
+    try { id = await personUpsert(ctx, { name: b.name, ...(b.phoneKr !== undefined || b.phoneBd !== undefined ? contactOf(b) : { phone }), waOk: !!b.waOk, photo: photo || undefined, addrBd: b.addrBd, addrKr: b.addrKr, emName: b.emName, emRelation: b.emRelation, emPhone: b.emPhone }, 0); }
     catch (e) { return bad(400, msgBn(e)); }
     await ctx.tx`update ship_people set self_joined = true where id = ${id}`;
     const tok = await portalToken(ctx, id);
     const url = portalUrl(ctx, tok);
-    if (url && b.waOk) await sendWa(ctx, phone, 'আসসালামু আলাইকুম ' + str(b.name) + '। এটা আপনার নিজের পাতা, রেখে দিন: ' + url);
+    const wa = (await ctx.tx`select phone from ship_people where id = ${id}`)[0].phone;
+    if (url && b.waOk && wa) await sendWa(ctx, wa, 'আসসালামু আলাইকুম ' + str(b.name) + '। আপনার বহনকারী প্রোফাইলের লিংক, রেখে দিন: ' + url);
     return { status: 200, body: { ok: true, key: tok } };
   }
   if (a === 'code') {
     const phone = e164(b.phone);
-    const p = phone ? (await ctx.tx`select * from ship_people where business_id = ${ctx.biz} and phone = ${phone} and removed_at is null`)[0] : null;
+    const p = phone ? await byPhone(ctx, phone) : null;
     // the same answer whether or not the number is known (no list of our travellers for strangers)
     const okBody = { status: 200, body: { ok: true, sent: true } };
     if (!p) return okBody;
@@ -185,12 +198,12 @@ export async function portalAct(ctx, a, { k, j, body }) {
     if (recent >= 3) return bad(429, 'অনেকবার কোড চাওয়া হয়েছে। এক ঘণ্টা পরে আবার চেষ্টা করুন।');
     const code = String(100000 + (parseInt(hex(4), 16) % 900000));
     await ctx.tx`insert into ship_portal_codes (business_id, person_id, code_hash, expires_at) values (${ctx.biz}, ${p.id}, ${await sha(code + ':' + p.id)}, now() + interval '10 minutes')`;
-    await sendWa(ctx, phone, 'আপনার কোড: ' + code + '\nকাউকে বলবেন না। ১০ মিনিট চলবে।');
+    await sendWa(ctx, p.phone || phone, 'আপনার কোড: ' + code + '\nকাউকে বলবেন না। ১০ মিনিট চলবে।');
     return okBody;
   }
   if (a === 'verify') {
     const phone = e164(b.phone), code = str(b.code).replace(/\D/g, '');
-    const p = phone ? (await ctx.tx`select * from ship_people where business_id = ${ctx.biz} and phone = ${phone} and removed_at is null`)[0] : null;
+    const p = phone ? await byPhone(ctx, phone) : null;
     const fail = bad(400, 'কোড মেলেনি। আবার দেখুন বা নতুন কোড চান।');
     if (!p || code.length !== 6) return fail;
     const c = (await ctx.tx`select * from ship_portal_codes where person_id = ${p.id} and used_at is null and expires_at > now() order by id desc limit 1`)[0];

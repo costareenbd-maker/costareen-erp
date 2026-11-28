@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#00565A">
-<title>আপনার পাতা · Benndar Express</title>
+<title>বহনকারী প্রোফাইল · Benndar Express</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -66,7 +66,11 @@ section>h2{font-size:17px;margin:0;padding:18px 18px 6px;line-height:1.4}
 .me .face,.person .face{width:72px;height:72px;border-radius:18px;object-fit:cover;background:var(--soft);display:grid;place-items:center;font-size:26px;font-weight:700;color:var(--teal);flex:none}
 .me>div{min-width:0}.me b{display:block;font-size:19px;overflow-wrap:anywhere}.me span{display:block;color:var(--ink-3);font-size:15px}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:15px;padding:0 18px 14px;margin:0}.kv dt{color:var(--ink-3)}.kv dd{margin:0;text-align:right;font-weight:600;overflow-wrap:anywhere}
-.req{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:15px}
+.req{display:grid;gap:4px;font-size:15px}.req .hd{display:flex;justify-content:space-between;gap:10px;align-items:center}.req .hd b{font-size:16px}
+.req .ln{color:var(--ink-2)}.req .why{color:var(--ink-3);font-size:14px}
+.wab{display:inline-block;margin-left:6px;font:700 12.5px Inter,sans-serif;color:var(--ok);background:var(--okbg);border-radius:999px;padding:1px 8px;vertical-align:2px}
+details.em{border:1px solid var(--line);border-radius:14px;padding:4px 14px;margin:0 0 14px}details.em summary{min-height:44px;display:flex;align-items:center;font-weight:700;cursor:pointer}
+details.em[open]{padding-bottom:6px}
 .pill{font-size:14px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap;background:var(--warnbg);color:var(--warn)}.pill.done{background:var(--okbg);color:var(--ok)}.pill.no{background:var(--soft);color:var(--ink-3)}
 .note{border-radius:14px;padding:12px 14px;font-size:15px;margin:0 0 14px;display:flex;gap:10px;align-items:flex-start}
 .note.warn{background:var(--warnbg);color:var(--warn)}.note.ok{background:var(--okbg);color:var(--ok)}.note.bad{background:var(--soft);color:var(--bad)}
@@ -114,9 +118,9 @@ section>h2{font-size:17px;margin:0;padding:18px 18px 6px;line-height:1.4}
 </head>
 <body>
 <header class="top"><div class="brand"><span id="logo"></span><b id="bname">Benndar Express</b></div>
-  <div class="hi"><h1 id="h1">আপনার পাতা</h1><p id="sub"></p></div></header>
+  <div class="hi"><h1 id="h1">বহনকারী প্রোফাইল</h1><p id="sub"></p></div></header>
 <main id="app" aria-live="polite"><div class="skel"></div><div class="skel" style="height:110px"></div></main>
-<p class="foot" id="foot" hidden><b style="font-family:Comfortaa,Inter,sans-serif">Benndar Express</b> · এই পাতা শুধু আপনার জন্য। লিংকটা অন্য কাউকে দেবেন না।</p>
+<p class="foot" id="foot" hidden><b style="font-family:Comfortaa,Inter,sans-serif">Benndar Express</b> · এই লিংকটি শুধু আপনার জন্য। অন্য কাউকে দেবেন না।</p>
 <script>
 (function () {
   'use strict';
@@ -134,7 +138,7 @@ section>h2{font-size:17px;margin:0;padding:18px 18px 6px;line-height:1.4}
   var BN = '০১২৩৪৫৬৭৮৯', MON = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
   var CITY = { ICN: 'সিউল (ইনচন)', DAC: 'ঢাকা' }, CITY1 = { ICN: 'সিউল', DAC: 'ঢাকা' }, TZ = { ICN: 9, DAC: 6 };
   var DIRN = { kr_bd: 'কোরিয়া → ঢাকা', bd_kr: 'ঢাকা → কোরিয়া', both: 'দুই দিকে' };
-  var STN = { 'new': ['দেখা হচ্ছে', ''], talked: ['কথা হয়েছে', ''], made: ['ঠিক হয়েছে', 'done'], no: ['এবার হচ্ছে না', 'no'] };
+  var STN = { 'new': ['অপেক্ষায়', '', 'অনুরোধ পেয়েছি। শিগগিরই যোগাযোগ করব।'], talked: ['আলোচনায়', '', 'কথা হয়েছে। চূড়ান্ত হলে জানাব।'], made: ['নিশ্চিত', 'done', 'চালান ঠিক হয়েছে। বিস্তারিত এই পাতায় দেখবেন।'], no: ['এবার নয়', 'no', 'এবারের যাত্রায় লাগেজ লাগবে না। সহযোগিতার জন্য ধন্যবাদ।'] };
   var I = {
     call: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h3l2 5-2.5 1.5a11 11 0 006 6L16 13l5 2v3a2 2 0 01-2 2A16 16 0 014 5a2 2 0 012-2z"/></svg>',
     wa: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1112 20a8 8 0 01-4.1-1.1z"/></svg>',
@@ -150,7 +154,7 @@ section>h2{font-size:17px;margin:0;padding:18px 18px 6px;line-height:1.4}
     var part = hh < 4 ? 'রাত' : hh < 12 ? 'সকাল' : hh < 15 ? 'দুপুর' : hh < 18 ? 'বিকাল' : hh < 20 ? 'সন্ধ্যা' : 'রাত';
     return bn(x.getUTCDate()) + ' ' + MON[x.getUTCMonth()] + ', ' + part + ' ' + bn((hh % 12) || 12) + ':' + bn(('0' + mm).slice(-2));
   }
-  function dayBn(d) { if (!d) return ''; var x = new Date(d + 'T12:00:00Z'); return bn(x.getUTCDate()) + ' ' + MON[x.getUTCMonth()]; }
+  function dayBn(d) { if (!d) return ''; var x = new Date(d + 'T12:00:00Z'); return bn(x.getUTCDate()) + ' ' + MON[x.getUTCMonth()] + ' ' + bn(x.getUTCFullYear()); }
   function ago(t) { var m = Math.round((Date.now() - new Date(t).getTime()) / 60000); return m < 2 ? 'এইমাত্র' : m < 60 ? bn(m) + ' মিনিট আগে' : m < 1440 ? bn(Math.round(m / 60)) + ' ঘণ্টা আগে' : bn(Math.round(m / 1440)) + ' দিন আগে'; }
   function digits(p) { return String(p || '').replace(/\D/g, ''); }
   // +821044102291 -> +82 10-4410-2291, +8801847800652 -> +880 1847-800652 (easier to read out and check)
@@ -201,21 +205,29 @@ section>h2{font-size:17px;margin:0;padding:18px 18px 6px;line-height:1.4}
     put('cp:me', JSON.stringify(d));
     if (d.active) return showTrip(d, offline);
     var me = d.me;
-    head('আসসালামু আলাইকুম, ' + me.name, 'এটা আপনার নিজের পাতা');
+    head(me.name, 'বহনকারী প্রোফাইল · আইডি ' + me.code);
     var h = offline ? offlineNote(d.at) : '';
-    if (d.thanks) h += '<div class="note ok">' + I.ok + '<span>আমাদের লাগেজ বুঝে নেওয়া হয়েছে। ধন্যবাদ!</span></div>';
-    h += '<section aria-labelledby="h-me"><h2 id="h-me" class="vh">আপনার তথ্য</h2><div class="me" style="padding-top:18px">' + face(me) + '<div><b>' + esc(me.name) + '</b><span class="num">' + esc(pretty(me.phone)) + '</span><span>কিওয়ার্ড <b class="code" style="display:inline;font-size:15px">' + esc(me.code) + '</b></span></div></div>'
-      + '<dl class="kv"><dt>বাংলাদেশ</dt><dd>' + esc(me.addrBd || '—') + '</dd><dt>কোরিয়া</dt><dd>' + esc(me.addrKr || '—') + '</dd></dl>'
-      + '<div class="pad"><button type="button" class="btn sec" data-act="edit">তথ্য বদলান</button></div></section>';
-    h += '<section aria-labelledby="h-rq"><h2 id="h-rq">লাগেজ নিতে চান?</h2><div class="pad"><p class="lead">কবে যাচ্ছেন জানালে আমরা যোগাযোগ করব।</p><button type="button" class="btn pri" data-act="req">লাগেজ নিতে চাই</button></div>';
-    (d.requests || []).forEach(function (r) { var st = STN[r.state] || ['', ''];
-      h += '<div class="row req"><span>' + dayBn(r.leaveOn) + ' · ' + esc(DIRN[r.direction]) + ' · ' + bn(r.bags) + 'টা</span><span class="pill ' + st[1] + '">' + st[0] + '</span></div>'; });
+    if (d.thanks) h += '<div class="note ok">' + I.ok + '<span>আমাদের লাগেজ বুঝে নেওয়া হয়েছে। সহযোগিতার জন্য ধন্যবাদ।</span></div>';
+    function numRow(label, n, wa) { return '<dt>' + label + '</dt><dd class="num">' + (n ? esc(pretty(n)) + (wa ? '<span class="wab">WhatsApp</span>' : '') : '—') + '</dd>'; }
+    var waKr = me.phone && me.phone === me.phoneKr, waBd = me.phone && me.phone === me.phoneBd && !waKr;
+    h += '<section aria-labelledby="h-me"><h2 id="h-me">আপনার তথ্য</h2><div class="me">' + face(me) + '<div><b>' + esc(me.name) + '</b><span>আইডি <b class="code" style="display:inline;font-size:15px">' + esc(me.code) + '</b></span></div></div>'
+      + '<dl class="kv">' + numRow('কোরিয়ার নম্বর', me.phoneKr, waKr) + numRow('বাংলাদেশের নম্বর', me.phoneBd, waBd)
+      + '<dt>কোরিয়ার ঠিকানা</dt><dd>' + esc(me.addrKr || '—') + '</dd><dt>বাংলাদেশের ঠিকানা</dt><dd>' + esc(me.addrBd || '—') + '</dd>'
+      + (me.emName || me.emPhone ? '<dt>জরুরি যোগাযোগ</dt><dd>' + esc([me.emName, me.emRelation ? '(' + me.emRelation + ')' : ''].filter(Boolean).join(' ')) + (me.emPhone ? '<br><span class="num">' + esc(pretty(me.emPhone)) + '</span>' : '') + '</dd>' : '')
+      + '</dl><div class="pad"><button type="button" class="btn sec" data-act="edit">তথ্য হালনাগাদ করুন</button></div></section>';
+    h += '<section aria-labelledby="h-rq"><h2 id="h-rq">লাগেজ নিতে আগ্রহী?</h2><div class="pad"><p class="lead">যাত্রার তারিখ জানালে আমরা যোগাযোগ করব।</p><button type="button" class="btn pri" data-act="req">লাগেজ নেওয়ার অনুরোধ</button></div>';
+    if ((d.requests || []).length) h += '<h2 style="font-size:15px;padding:4px 18px 8px;margin:0;border-top:1px solid var(--line);padding-top:14px">আপনার অনুরোধ</h2>';
+    (d.requests || []).forEach(function (r) { var st = STN[r.state] || ['', '', ''];
+      h += '<div class="row req"><div class="hd"><b>' + esc(DIRN[r.direction]) + '</b><span class="pill ' + st[1] + '">' + st[0] + '</span></div>'
+        + '<span class="ln">যাওয়া: ' + dayBn(r.leaveOn) + (r.returnOn ? ' · ফেরা: ' + dayBn(r.returnOn) : '') + '</span>'
+        + '<span class="ln">আমাদের লাগেজ: ' + bn(r.bags) + 'টা' + (r.devices ? ' · হাতে ইলেকট্রনিক্স: ' + bn(r.devices) + 'টা' : '') + '</span>'
+        + '<span class="why">' + esc(st[2]) + '</span></div>'; });
     h += '</section>' + installCard();
     APP.innerHTML = h;
   }
   function showTrip(d, offline) {
     var s = d.active, me = d.me;
-    head(me.name + ', আপনার কাছে আমাদের লাগেজ', CITY1[s.from] + ' থেকে ' + CITY1[s.to] + ' · চালান ' + s.code);
+    head('চালান ' + s.code, me.name + ' · আইডি ' + me.code + ' · ' + CITY1[s.from] + ' থেকে ' + CITY1[s.to]);
     var h = offline ? offlineNote(d.at) : '<div class="note ok">' + I.ok + '<span>এই পাতা ফোনে রাখা থাকল। নামার পর নেট না থাকলেও খুলবে।</span></div>';
     h += '<section aria-labelledby="h-meet"><h2 id="h-meet">' + esc(CITY1[s.to]) + ' এয়ারপোর্টে যিনি আমাদের লাগেজ বুঝে নেবেন</h2>';
     if (s.team && s.team.length) s.team.forEach(function (m) {
@@ -229,7 +241,7 @@ section>h2{font-size:17px;margin:0;padding:18px 18px 6px;line-height:1.4}
     h += '</section>';
     if (g.steps && g.steps.length) h += '<section aria-labelledby="h-out"><h2 id="h-out">কোন দিক দিয়ে বের হবেন</h2><ol class="steps">' + g.steps.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol>'
       + (g.photos && g.photos.length ? '<div class="gph">' + g.photos.map(function (p, i) { return '<img alt="পথের ছবি ' + bn(i + 1) + '" src="' + esc(p) + '">'; }).join('') + '</div>' : '') + '</section>';
-    h += '<section aria-labelledby="h-kw"><h2 id="h-kw">দেখা হলে এটা দেখান</h2><div class="kw"><div class="qr" id="qr" role="img" aria-label="কিওয়ার্ড ' + esc(me.code) + '-এর QR">' + esc(me.code) + '</div><div><span class="code">' + esc(me.code) + '</span><p>আমাদের লোক QR স্ক্যান করলেই আপনার চালান খুলবে। নেট ছাড়াও দেখা যায়।</p></div></div></section>';
+    h += '<section aria-labelledby="h-kw"><h2 id="h-kw">দেখা হলে এটা দেখান</h2><div class="kw"><div class="qr" id="qr" role="img" aria-label="আইডি ' + esc(me.code) + '-এর QR">' + esc(me.code) + '</div><div><span class="code">' + esc(me.code) + '</span><p>আমাদের লোক QR স্ক্যান করলেই আপনার চালান খুলবে। নেট ছাড়াও দেখা যায়।</p></div></div></section>';
     h += '<section aria-labelledby="h-fl"><h2 id="h-fl">আপনার ফ্লাইট' + (s.flightNo ? ' <span class="code">' + esc(s.flightNo) + '</span>' : '') + '</h2>'
       + '<div class="route"><div><b>' + esc(s.from) + '</b><span>' + esc(CITY[s.from]) + '</span></div>' + I.plane + '<div><b>' + esc(s.to) + '</b><span>' + esc(CITY[s.to]) + '</span></div></div>'
       + '<div class="times"><div><small>ছাড়বে (' + esc(CITY1[s.from]) + 'র সময়)</small><b>' + when(s.departAt, s.from) + '</b></div><div><small>নামবে (' + esc(CITY1[s.to]) + 'র সময়)</small><b>' + when(s.landAt, s.to) + '</b></div></div></section>';
@@ -250,26 +262,35 @@ section>h2{font-size:17px;margin:0;padding:18px 18px 6px;line-height:1.4}
   }
   function showJoin(info) {
     brand(info && info.biz); el('foot').hidden = false;
-    head('আপনার তথ্য দিন', 'একবার দিলেই হবে। পরে এই পাতা থেকেই বদলাতে পারবেন।');
+    REQ.waOn = 'kr';
+    head('বহনকারী হিসেবে নিবন্ধন', 'তথ্যগুলো একবার দিলেই হবে। পরে এখান থেকেই হালনাগাদ করতে পারবেন।');
     APP.innerHTML = '<section><form id="f-join" class="pad" style="padding-top:18px" novalidate>' + profileFields({}) + '<label class="chk"><input type="checkbox" id="f-wa" checked> হোয়াটসঅ্যাপে আমাকে মনে করিয়ে দিতে পারেন</label><p class="err" id="err"></p><button class="btn pri" type="submit">জমা দিন</button></form></section>'
-      + '<section><div class="pad" style="padding-top:14px"><button type="button" class="link" data-act="codeflow">আগে একবার তথ্য দিয়েছেন? ফোন নম্বর দিয়ে খুলুন</button></div></section>';
+      + '<section><div class="pad" style="padding-top:14px"><button type="button" class="link" data-act="codeflow">আগে নিবন্ধন করেছেন? ফোন নম্বর দিয়ে প্রবেশ করুন</button></div></section>';
   }
   function profileFields(me) {
-    return '<div class="fld"><label for="f-name">নাম</label><input class="in" id="f-name" autocomplete="name" maxlength="80" value="' + esc(me.name || '') + '"></div>'
-      + '<div class="fld"><label for="f-phone">ফোন / হোয়াটসঅ্যাপ (দেশের কোড সহ)</label><input class="in num" id="f-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+82 10 …" value="' + esc(me.phone || '') + '"></div>'
+    var wa = me.waOn || 'kr';
+    return '<div class="fld"><label for="f-name">পুরো নাম</label><input class="in" id="f-name" autocomplete="name" maxlength="80" value="' + esc(me.name || '') + '"></div>'
+      + '<div><div class="fld"><label for="f-kr-ph">কোরিয়ার নম্বর</label><input class="in num" id="f-kr-ph" type="tel" inputmode="tel" placeholder="010 …" value="' + esc(me.phoneKr || '') + '"></div>'
+      + '<div class="fld"><label for="f-bd-ph">বাংলাদেশের নম্বর</label><input class="in num" id="f-bd-ph" type="tel" inputmode="tel" placeholder="01 …" value="' + esc(me.phoneBd || '') + '"></div></div>'
+      + '<div class="fld"><span class="lbl">হোয়াটসঅ্যাপ কোন নম্বরে</span><div class="chips" role="group" aria-label="হোয়াটসঅ্যাপ কোন নম্বরে"><button type="button" data-chip="waOn" data-v="kr" aria-pressed="' + (wa === 'kr') + '">কোরিয়ার</button><button type="button" data-chip="waOn" data-v="bd" aria-pressed="' + (wa === 'bd') + '">বাংলাদেশের</button></div></div>'
+      + '<div class="fld"><label for="f-kr">কোরিয়ার ঠিকানা</label><input class="in" id="f-kr" maxlength="200" value="' + esc(me.addrKr || '') + '"></div>'
       + '<div class="fld"><label for="f-bd">বাংলাদেশের ঠিকানা</label><input class="in" id="f-bd" maxlength="200" autocomplete="address-line1" value="' + esc(me.addrBd || '') + '"></div>'
-      + '<div class="fld"><label for="f-kr">কোরিয়ার ঠিকানা (শহর)</label><input class="in" id="f-kr" maxlength="200" value="' + esc(me.addrKr || '') + '"></div>'
-      + '<div class="fld"><span class="lbl">ছবি (চাইলে)</span><div class="photo"><label>' + (me.photo ? '<img alt="" src="' + esc(me.photo) + '">' : I.cam) + '<input type="file" accept="image/*" id="f-photo" aria-label="ছবি তুলুন বা বেছে নিন"></label><span class="lead" style="margin:0">ছবি তুলুন বা বেছে নিন</span></div></div>';
+      + '<details class="em"' + (me.emName || me.emPhone ? ' open' : '') + '><summary>জরুরি যোগাযোগ (ঐচ্ছিক)</summary>'
+      + '<div class="fld"><label for="f-em-n">নাম</label><input class="in" id="f-em-n" maxlength="80" value="' + esc(me.emName || '') + '"></div>'
+      + '<div class="two"><div class="fld"><label for="f-em-r">সম্পর্ক</label><input class="in" id="f-em-r" maxlength="40" value="' + esc(me.emRelation || '') + '"></div>'
+      + '<div class="fld"><label for="f-em-p">ফোন</label><input class="in num" id="f-em-p" type="tel" inputmode="tel" value="' + esc(me.emPhone || '') + '"></div></div></details>'
+      + '<div class="fld"><span class="lbl">ছবি (ঐচ্ছিক)</span><div class="photo"><label>' + (me.photo ? '<img alt="" src="' + esc(me.photo) + '">' : I.cam) + '<input type="file" accept="image/*" id="f-photo" aria-label="ছবি তুলুন বা বেছে নিন"></label><span class="lead" style="margin:0">ছবি তুলুন বা বেছে নিন</span></div></div>';
   }
   function showEdit(d) {
-    head('তথ্য বদলান', '');
+    REQ.waOn = d.me.waOn || 'kr';
+    head('তথ্য হালনাগাদ', 'বহনকারী প্রোফাইল · আইডি ' + d.me.code);
     APP.innerHTML = '<section><form id="f-edit" class="pad" style="padding-top:18px" novalidate>' + profileFields(d.me) + '<label class="chk"><input type="checkbox" id="f-wa"' + (d.me.waOk ? ' checked' : '') + '> হোয়াটসঅ্যাপে আমাকে মনে করিয়ে দিতে পারেন</label><p class="err" id="err"></p><button class="btn pri" type="submit">সেভ করুন</button><button class="btn sec" type="button" data-act="home" style="margin-top:10px">ফিরে যান</button></form></section>';
   }
   var REQ = { direction: 'kr_bd', bags: 1, devices: 0, ownGoods: false };
   function showReq(d) {
     var last = (d.requests || [])[0];
     if (last) { REQ.direction = last.direction; REQ.bags = last.bags; REQ.devices = last.devices; REQ.ownGoods = last.ownGoods; }
-    head('লাগেজ নিতে চাই', 'নাম, ফোন, ঠিকানা আগে থেকেই আছে।');
+    head('লাগেজ নেওয়ার অনুরোধ', 'আপনার নাম, ফোন আর ঠিকানা প্রোফাইল থেকে নেওয়া হবে।');
     function chips(name, opts, cur) { return '<div class="chips" role="group" aria-label="' + name + '">' + opts.map(function (o) { return '<button type="button" data-chip="' + name + '" data-v="' + o[0] + '" aria-pressed="' + (String(cur) === String(o[0])) + '">' + o[1] + '</button>'; }).join('') + '</div>'; }
     function stp(name, label, v) { return '<div class="fld"><span class="lbl" id="l-' + name + '">' + label + '</span><div class="stp" role="group" aria-labelledby="l-' + name + '"><button type="button" data-stp="' + name + '" data-d="-1" aria-label="কমান">−</button><output id="o-' + name + '">' + bn(v) + '</output><button type="button" data-stp="' + name + '" data-d="1" aria-label="বাড়ান">+</button></div></div>'; }
     APP.innerHTML = '<section><form id="f-req" class="pad" style="padding-top:18px" novalidate>'
@@ -283,7 +304,7 @@ section>h2{font-size:17px;margin:0;padding:18px 18px 6px;line-height:1.4}
       + '<p class="err" id="err"></p><button class="btn pri" type="submit">অনুরোধ পাঠান</button><button class="btn sec" type="button" data-act="home" style="margin-top:10px">ফিরে যান</button></form></section>';
   }
   function showCode(step, phone) {
-    head('ফোন নম্বর দিয়ে খুলুন', 'আপনার হোয়াটসঅ্যাপে একটা কোড যাবে');
+    head('ফোন নম্বর দিয়ে প্রবেশ', 'আপনার হোয়াটসঅ্যাপে একটা কোড যাবে');
     APP.innerHTML = '<section><form id="f-code" class="pad" style="padding-top:18px" novalidate>'
       + '<div class="fld"><label for="c-phone">ফোন / হোয়াটসঅ্যাপ (দেশের কোড সহ)</label><input class="in num" id="c-phone" type="tel" inputmode="tel" autocomplete="tel" value="' + esc(phone || '') + '"' + (step === 2 ? ' readonly' : '') + '></div>'
       + (step === 2 ? '<div class="fld"><label for="c-code">হোয়াটসঅ্যাপে আসা ৬ অঙ্কের কোড</label><input class="in num" id="c-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></div>' : '')
@@ -320,10 +341,11 @@ section>h2{font-size:17px;margin:0;padding:18px 18px 6px;line-height:1.4}
   });
   function errOut(t) { var x = el('err'); if (x) { x.textContent = t; x.focus && x.setAttribute('tabindex', '-1'); x.focus(); } }
   function busy(form, on) { var b = form.querySelector('button[type=submit]'); if (b) b.disabled = on; }
-  function profileBody() { var b = { name: el('f-name').value.trim(), phone: el('f-phone').value.trim(), addrBd: el('f-bd').value.trim(), addrKr: el('f-kr').value.trim(), waOk: !!el('f-wa').checked }; if (PHOTO) b.photo = PHOTO; return b; }
+  function profileBody() { var b = { name: el('f-name').value.trim(), phoneKr: el('f-kr-ph').value.trim(), phoneBd: el('f-bd-ph').value.trim(), waOn: REQ.waOn || 'kr', addrBd: el('f-bd').value.trim(), addrKr: el('f-kr').value.trim(),
+      emName: el('f-em-n').value.trim(), emRelation: el('f-em-r').value.trim(), emPhone: el('f-em-p').value.trim(), waOk: !!el('f-wa').checked }; if (PHOTO) b.photo = PHOTO; return b; }
   document.addEventListener('submit', function (e) {
     var f = e.target; e.preventDefault();
-    if (f.id === 'f-join') { var b = profileBody(); if (!b.name) return errOut('আপনার নাম লিখুন।'); busy(f, true);
+    if (f.id === 'f-join') { var b = profileBody(); if (!b.name) return errOut('আপনার নাম লিখুন।'); if (!b.phoneKr && !b.phoneBd) return errOut('অন্তত একটা ফোন নম্বর দিন।'); busy(f, true);
       call('join', b, false).then(function (d) { busy(f, false);
         if (d.ok) { K = d.key; put('cp:key', K); try { history.replaceState(null, '', location.pathname + '?k=' + K + (q.get('api') ? '&api=' + encodeURIComponent(q.get('api')) : '')); } catch (x) {} PHOTO = null; return loadMe(); }
         if (d.exists) { errOut(d.error); return; }

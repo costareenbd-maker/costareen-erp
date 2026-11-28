@@ -69196,7 +69196,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     srv('erpShipFind', [{ q: q }], function (r) {
       if (r.kind === 'trip') { if (r.bag || r.person) toast('খোলা হলো: ' + esc(r.bag || r.person) + ' → ' + esc(r.code)); nav(r.code, replace); }
       else if (r.kind === 'bag') nav('b.' + r.code, replace);
-      else { SH.person = null; nav('p.' + r.id, replace); if (r.choices && r.choices.length > 1) toast('এই কিওয়ার্ডে ' + bn(r.choices.length) + 'টা চালান খোলা আছে। নিচ থেকে বেছে নিন।'); }
+      else { SH.person = null; nav('p.' + r.id, replace); if (r.choices && r.choices.length > 1) toast('এই আইডিে ' + bn(r.choices.length) + 'টা চালান খোলা আছে। নিচ থেকে বেছে নিন।'); }
     }, function (e) { toast(esc(errOf(e)), true); if (replace) nav('', true); });
   }
 
@@ -69232,7 +69232,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
   }
   function tagHtml(code, line1, badge, small) { var p = qrPath(qrUrl(code)); return '<div class="t">' + (p ? '<svg viewBox="-2 -2 ' + (p.n + 4) + ' ' + (p.n + 4) + '" shape-rendering="crispEdges"><rect x="-2" y="-2" width="' + (p.n + 4) + '" height="' + (p.n + 4) + '" fill="#fff"/><path d="' + p.d + '" fill="#000"/></svg>' : '') + '<div><div class="c">' + esc(code) + '</div><div class="n">' + esc(line1) + '</div>' + (badge ? '<span class="b">' + esc(badge) + '</span>' : '') + (small ? '<div class="s">' + esc(small) + '</div>' : '') + '</div></div>'; }
   function printBag(b) { if (!window.qrcode) { qrLib(function () { printBag(b); }); return; } printSheet(b.code, tagHtml(b.code, b.nickname, 'ব্যাগ ' + bn(b.bodyNo), 'স্ক্যান করুন বা কোড লিখুন')); }
-  function printPerson(p) { if (!window.qrcode) { qrLib(function () { printPerson(p); }); return; } printSheet(p.code, tagHtml(p.code, p.name, 'বহনকারীর কিওয়ার্ড', 'এই কার্ড স্ক্যান করলে আপনার চালান খুলবে')); }
+  function printPerson(p) { if (!window.qrcode) { qrLib(function () { printPerson(p); }); return; } printSheet(p.code, tagHtml(p.code, p.name, 'বহনকারীর আইডি', 'এই কার্ড স্ক্যান করলে আপনার চালান খুলবে')); }
   function savePersonPng(p) {
     if (!window.qrcode) { qrLib(function () { savePersonPng(p); }); return; }
     var q = qrPath(qrUrl(p.code)); if (!q) return;
@@ -69242,7 +69242,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     for (var y = 0; y < q.n; y++) for (var x = 0; x < q.n; x++) if (q.q.isDark(y, x)) g.fillRect(ox + (x + 2) * cell, oy + (y + 2) * cell, cell, cell);
     g.fillStyle = '#17181C'; g.font = '700 54px ui-monospace, Consolas, monospace'; g.fillText(p.code, 380, 160);
     g.font = '700 34px "Noto Sans Bengali", "Nirmala UI", sans-serif'; g.fillText(p.name.slice(0, 18), 380, 220);
-    g.font = '24px "Noto Sans Bengali", "Nirmala UI", sans-serif'; g.fillStyle = '#4A4D57'; g.fillText('বহনকারীর কিওয়ার্ড', 380, 270); g.fillText('স্ক্যান করলে আপনার চালান খুলবে', 380, 305);
+    g.font = '24px "Noto Sans Bengali", "Nirmala UI", sans-serif'; g.fillStyle = '#4A4D57'; g.fillText('বহনকারীর আইডি', 380, 270); g.fillText('স্ক্যান করলে আপনার চালান খুলবে', 380, 305);
     var a = document.createElement('a'); a.download = p.code + '.png'; a.href = c.toDataURL('image/png'); document.body.appendChild(a); a.click(); a.remove();
     toast('কার্ড ছবি হিসেবে সেভ হলো। হোয়াটসঅ্যাপে উনাকে পাঠিয়ে দিন।');
   }
@@ -69323,7 +69323,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
       + '<div class="sp-fld"><label for="sp_team">টিমের হোয়াটসঅ্যাপ নম্বর (ঢাকায় যাঁরা মাল বুঝে নেন), কমা দিয়ে</label><input id="sp_team" inputmode="tel" placeholder="01XXXXXXXXX, 01XXXXXXXXX" value="' + esc(N.team || '') + '"' + (ed ? '' : ' disabled') + '></div>'
       + '<p class="sp-muted">টিম পাবে: কাল কে কী নিয়ে আসছেন, নামলেন, নামার ৪ ঘণ্টা পরেও কেউ হাতে না পেলে, গোনায় গরমিল, এয়ার কার্গো পৌঁছানোর আগের দিন।</p>'
       + '<label class="sp-check"><input type="checkbox" id="sp_tc"' + (N.carrier ? ' checked' : '') + (ed ? '' : ' disabled') + '> বহনকারীদেরও পাঠান</label>'
-      + '<p class="sp-muted">বহনকারী পাবেন: আগের দিন (ফ্লাইট কখন, ২ ঘণ্টা আগে এয়ারপোর্টে, কোন লাগেজ, কিওয়ার্ড), ফ্লাইটের দিন, আর নামার পর। শুধু যাঁর প্রোফাইলে "হোয়াটসঅ্যাপে মনে করিয়ে দিতে রাজি" টিক আছে।</p>'
+      + '<p class="sp-muted">বহনকারী পাবেন: আগের দিন (ফ্লাইট কখন, ২ ঘণ্টা আগে এয়ারপোর্টে, কোন লাগেজ, আইডি), ফ্লাইটের দিন, আর নামার পর। শুধু যাঁর প্রোফাইলে "হোয়াটসঅ্যাপে মনে করিয়ে দিতে রাজি" টিক আছে।</p>'
       + '</div>' + (ed ? '<div class="sp-act" style="position:static;padding:0 16px 16px"><button type="button" class="sp-pri" data-shp="nsave">' + I.ok + 'সেভ করুন</button></div>' : '<p class="sp-muted" style="padding:0 16px 16px">বদলাতে পারবেন ম্যানেজার বা মালিক।</p>') + '</section>';
     h += '<section class="sp-card"><h4>' + I.send + 'পাঠানো বার্তা</h4>';
     if (!N.log || !N.log.length) h += '<div class="sp-empty" style="margin:4px 16px 16px">এখনো কিছু যায়নি।</div>';
@@ -69417,8 +69417,8 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
   function peopleView(selId) {
     get('people', 'erpShipPeople', {});
     if (!SH.people) return peopleSeg('people') + joinCard() + '<div class="sp-wait">লোড হচ্ছে…</div>';
-    if (!SH.people.length) return peopleSeg('people') + joinCard() + '<div class="sp-empty">এখনো কোনো বহনকারী নেই। "নতুন" চাপুন; প্রত্যেকে একটা স্থায়ী কিওয়ার্ড পাবেন।</div>';
-    if (wide()) return peopleSeg('people') + joinCard() + '<table class="sp-tbl"><thead><tr><th>কিওয়ার্ড</th><th>নাম</th><th>ফোন</th><th class="r">ট্রিপ</th><th class="r">ব্যাগ</th><th class="r">আমাদের থেকে পেয়েছেন</th><th>শেষ ট্রিপ</th></tr></thead><tbody>'
+    if (!SH.people.length) return peopleSeg('people') + joinCard() + '<div class="sp-empty">এখনো কোনো বহনকারী নেই। "নতুন" চাপুন; প্রত্যেকে একটা স্থায়ী আইডি পাবেন।</div>';
+    if (wide()) return peopleSeg('people') + joinCard() + '<table class="sp-tbl"><thead><tr><th>আইডি</th><th>নাম</th><th>ফোন</th><th class="r">ট্রিপ</th><th class="r">ব্যাগ</th><th class="r">আমাদের থেকে পেয়েছেন</th><th>শেষ ট্রিপ</th></tr></thead><tbody>'
       + SH.people.map(function (p) { return '<tr class="' + (selId === p.id ? 'sel' : '') + '" data-shp="person" data-v="' + p.id + '"><td class="code">' + esc(p.code || '') + '</td><td><b>' + esc(p.name) + '</b>' + (p.active ? ' <span class="sp-pill pk-air" style="margin:0 0 0 4px">চালান খোলা</span>' : '') + '</td><td class="code" style="font-weight:500">' + esc(p.phone) + '</td><td class="r">' + bn(p.trips) + '</td><td class="r">' + bn(p.bags || 0) + '</td><td class="r money">' + totTxt(p.total).split(' + ').join('<br>') + '</td><td>' + (day(p.lastAt) || '—') + '</td></tr>'; }).join('') + '</tbody></table>';
     return peopleSeg('people') + joinCard() + SH.people.map(function (p) { return '<button type="button" class="sp-row" data-shp="person" data-v="' + p.id + '"><span class="sp-av">' + esc(ini(p.name)) + '</span><span class="sp-mid"><span class="sp-kw">' + esc(p.name) + ' <small class="code" style="color:var(--sp-ink3)">' + esc(p.code || '') + '</small></span><span class="sp-sub">' + bn(p.trips) + 'টা ট্রিপ · ' + totTxt(p.total) + '</span>' + (p.active ? '<span class="sp-pill pk-air">চালান খোলা</span>' : '') + '</span></button>'; }).join('');
   }
@@ -69426,7 +69426,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
   // ---------- one shipment
   function tag(s) {
     var st = STEPS[s.type] || STEPS.trip, c = s.carrier;
-    var right = s.type === 'trip' && c ? '<button type="button" class="sp-kwcard" data-shp="person" data-v="' + c.id + '">' + qr(c.code) + '<span class="code">' + esc(c.code) + '</span><small>বহনকারীর কিওয়ার্ড</small></button>'
+    var right = s.type === 'trip' && c ? '<button type="button" class="sp-kwcard" data-shp="person" data-v="' + c.id + '">' + qr(c.code) + '<span class="code">' + esc(c.code) + '</span><small>বহনকারীর আইডি</small></button>'
       : '<div class="sp-kwcard">' + qr(s.code) + '<span class="code">' + esc(s.code) + '</span><small>চালানের QR</small></div>';
     return '<div class="sp-tag"><div class="hole"></div><div class="head"><div style="flex:1;min-width:0"><div class="big code">' + esc(s.code) + '</div><span class="sp-kwb">' + esc(nick(s)) + '</span><span class="sp-type">' + (s.type === 'air' ? I.plane + 'এয়ার কার্গো' : I.user + 'বহনকারী দিয়ে') + '</span>'
       + '<div class="sp-route code"><span>' + s.from + '<small>' + CITY[s.from] + '</small></span><span class="ln">' + I.plane + '</span><span style="text-align:right">' + s.to + '<small>' + CITY[s.to] + '</small></span></div></div>' + right + '</div><div class="sp-perf"></div><div class="sp-rail">'
@@ -69462,7 +69462,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
   }
   function shipView(s) {
     var h = backBtn('', 'সব চালান') + tag(s);
-    if (s.late) h += '<div class="sp-banner b-bad">' + I.warn + '<div><b>নামার ৪ ঘণ্টা পার, কেউ এখনো হাতে পায়নি</b>বহনকারীকে ফোন করুন। হাতে পেলে উনার কিওয়ার্ড বা যেকোনো লাগেজের QR স্ক্যান করুন।</div></div>';
+    if (s.late) h += '<div class="sp-banner b-bad">' + I.warn + '<div><b>নামার ৪ ঘণ্টা পার, কেউ এখনো হাতে পায়নি</b>বহনকারীকে ফোন করুন। হাতে পেলে উনার আইডি বা যেকোনো লাগেজের QR স্ক্যান করুন।</div></div>';
     if (s.type === 'air') {
       h += '<section class="sp-card"><h4>' + I.plane + 'এয়ার কার্গো<button type="button" class="r" data-shp="go" data-v="' + esc(s.code) + '.air">বদলান</button></h4><dl class="sp-kv"><dt>ফরওয়ার্ডার</dt><dd>' + esc(s.forwarder || '—') + '</dd><dt>AWB নম্বর</dt><dd class="code">' + esc(s.awb || '—') + '</dd>'
         + '<dt>কার্টন · ওজন</dt><dd>' + (s.cartons ? bn(s.cartons) + 'টা' : '—') + ' · ' + (s.weightKg ? bn(s.weightKg) + ' কেজি' : '—') + '</dd><dt>নামবে</dt><dd>' + (s.landAt ? when(s.landAt, s.to) : '—') + '</dd></dl>'
@@ -69470,7 +69470,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     } else {
       var c = s.carrier;
       h += '<section class="sp-card"><h4>' + I.user + 'বহনকারী ও ফ্লাইট' + (s.step < 5 ? '<button type="button" class="r" data-shp="go" data-v="' + esc(s.code) + '.carrier">' + (c ? 'বদলান' : 'দিন') + '</button>' : '') + '</h4>';
-      if (c) h += '<button type="button" class="sp-person" data-shp="person" data-v="' + c.id + '"><span class="sp-av">' + esc(ini(c.name)) + '</span><span class="who"><b>' + esc(c.name) + ' <span class="code" style="display:inline;font-size:13px;color:var(--sp-ink3)">' + esc(c.code) + '</span></b><span class="code" style="font-weight:500">' + esc(c.phone) + '</span><span>প্রোফাইল ও কিওয়ার্ড কার্ড</span></span></button>'
+      if (c) h += '<button type="button" class="sp-person" data-shp="person" data-v="' + c.id + '"><span class="sp-av">' + esc(ini(c.name)) + '</span><span class="who"><b>' + esc(c.name) + ' <span class="code" style="display:inline;font-size:13px;color:var(--sp-ink3)">' + esc(c.code) + '</span></b><span class="code" style="font-weight:500">' + esc(c.phone) + '</span><span>প্রোফাইল ও আইডি কার্ড</span></span></button>'
         + '<div style="display:flex;gap:8px;padding:0 16px 12px">' + (c.phone ? '<a class="sp-mini" href="tel:' + esc(c.phone.replace(/[^\d+]/g, '')) + '">' + I.phone + 'ফোন</a>' : '') + (c.phone && c.waOk ? '<a class="sp-mini" target="_blank" rel="noopener" href="https://wa.me/' + esc(c.phone.replace(/\D/g, '')) + '">' + I.wa + 'হোয়াটসঅ্যাপ</a>' : '') + '</div>'
         + '<dl class="sp-kv"><dt>ফ্লাইট</dt><dd class="code">' + esc(s.flightNo || '—') + '</dd><dt>ছাড়বে</dt><dd>' + (s.departAt ? when(s.departAt, s.from) + ' (' + CITY[s.from] + ')' : '—') + '</dd><dt>নামবে</dt><dd>' + (s.landAt ? when(s.landAt, s.to) + ' (' + CITY[s.to] + ')' : '—') + '</dd><dt>ফেরার ফ্লাইট</dt><dd>' + (s.returnOn ? day(s.returnOn + 'T12:00:00Z') : 'জানা নেই') + '</dd></dl>';
       else h += '<div class="sp-empty" style="margin:4px 16px 16px">এখনো কাউকে দেওয়া হয়নি</div>';
@@ -69524,9 +69524,9 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     var opts = ppl.map(function (p) { return '<option value="' + p.id + '"' + (c && c.id === p.id ? ' selected' : '') + '>' + esc((p.code ? p.code + ' · ' : '') + p.name) + (p.phone ? ' · ' + esc(p.phone) : '') + '</option>'; }).join('');
     var offF = s.from === 'ICN' ? 9 : 6, offT = s.to === 'ICN' ? 9 : 6;
     return backBtn(s.code, s.code) + '<section class="sp-card"><h4>' + I.user + 'কে নিয়ে যাচ্ছেন</h4><div class="sp-form">'
-      + (ppl.length ? '<div class="sp-fld"><label for="sp_cp">আগের বহনকারী (কিওয়ার্ড বা নাম)</label><select id="sp_cp"><option value="">— নতুন মানুষ —</option>' + opts + '</select></div>' : '')
+      + (ppl.length ? '<div class="sp-fld"><label for="sp_cp">আগের বহনকারী (আইডি বা নাম)</label><select id="sp_cp"><option value="">— নতুন মানুষ —</option>' + opts + '</select></div>' : '')
       + '<div id="sp_newp"' + (c ? ' hidden' : '') + '><div class="sp-fld"><label for="sp_cn">নাম</label><input id="sp_cn" maxlength="80"></div><div class="sp-two" style="margin-top:12px"><div class="sp-fld"><label for="sp_cph">ফোন / হোয়াটসঅ্যাপ</label><input id="sp_cph" inputmode="tel" placeholder="+880 / +82"></div><div class="sp-fld"><label for="sp_ce">ইমেইল</label><input id="sp_ce" inputmode="email"></div></div>'
-      + '<div class="sp-fld" style="margin-top:12px"><label for="sp_cc">শহর</label><input id="sp_cc" maxlength="60"></div><label class="sp-check" style="margin-top:12px"><input type="checkbox" id="sp_cw"> হোয়াটসঅ্যাপে মনে করিয়ে দিতে রাজি</label><p class="sp-muted" style="margin-top:8px">নতুন মানুষ সেভ হলে একটা স্থায়ী কিওয়ার্ড (যেমন C-0007) আর QR কার্ড পাবেন। পাসপোর্ট নম্বর রাখা হয় না।</p></div>'
+      + '<div class="sp-fld" style="margin-top:12px"><label for="sp_cc">শহর</label><input id="sp_cc" maxlength="60"></div><label class="sp-check" style="margin-top:12px"><input type="checkbox" id="sp_cw"> হোয়াটসঅ্যাপে মনে করিয়ে দিতে রাজি</label><p class="sp-muted" style="margin-top:8px">নতুন মানুষ সেভ হলে একটা স্থায়ী আইডি (যেমন C-0007) আর QR কার্ড পাবেন। পাসপোর্ট নম্বর রাখা হয় না।</p></div>'
       + '</div></section><section class="sp-card"><h4>' + I.plane + 'ফ্লাইট</h4><div class="sp-form">'
       + '<div class="sp-fld"><label for="sp_fn">ফ্লাইট নম্বর</label><input id="sp_fn" class="code" style="font-weight:600" value="' + esc(s.flightNo || '') + '" placeholder="KE 0657"></div>'
       + '<div class="sp-fld"><label for="sp_fd">ছাড়বে (' + CITY[s.from] + 'র সময়)</label><input id="sp_fd" type="datetime-local" value="' + (s.departAt ? dtl(s.departAt, offF) : '') + '" data-echo="' + offF + '"><small class="sp-muted" id="sp_fd_e">' + (s.departAt ? when(s.departAt, s.from) : '') + '</small></div>'
@@ -69618,9 +69618,12 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     var open = p.trips.filter(function (t) { return !t.done; });
     var h = backBtn('people', 'সব বহনকারী') + '<section class="sp-card"><div class="sp-person" style="padding-top:16px"><span class="sp-av lg">' + (p.photo ? '<img alt="" src="' + esc(p.photo) + '">' : esc(ini(p.name))) + '</span><span class="who"><b style="font-size:19px">' + esc(p.name) + '</b><span class="code" style="font-weight:500">' + esc(p.phone || '') + '</span><span>' + esc(p.city || '') + '</span></span></div>'
       + '<div style="display:flex;gap:8px;padding:0 16px 14px;flex-wrap:wrap">' + (p.phone ? '<a class="sp-mini" href="tel:' + esc(p.phone.replace(/[^\d+]/g, '')) + '">' + I.phone + 'ফোন</a>' : '') + (p.phone && p.waOk ? '<a class="sp-mini" target="_blank" rel="noopener" href="https://wa.me/' + esc(p.phone.replace(/\D/g, '')) + '">' + I.wa + 'হোয়াটসঅ্যাপ</a>' : '<span class="sp-pill pk-n" style="align-self:center;margin:0">হোয়াটসঅ্যাপে সম্মতি নেই</span>') + (p.email ? '<a class="sp-mini" href="mailto:' + esc(p.email) + '">' + I.mail + '</a>' : '') + '<button type="button" class="sp-mini" data-shp="editperson">বদলান</button></div>'
-      + (p.addrBd || p.addrKr ? '<dl class="sp-kv"><dt>বাংলাদেশ</dt><dd>' + esc(p.addrBd || '—') + '</dd><dt>কোরিয়া</dt><dd>' + esc(p.addrKr || '—') + '</dd></dl>' : '')
+      + '<dl class="sp-kv"><dt>কোরিয়ার নম্বর</dt><dd class="code" style="font-weight:600">' + esc(p.phoneKr || '—') + (p.phoneKr && p.phone === p.phoneKr ? ' <span class="sp-pill pk-ok" style="margin:0">WhatsApp</span>' : '') + '</dd>'
+        + '<dt>বাংলাদেশের নম্বর</dt><dd class="code" style="font-weight:600">' + esc(p.phoneBd || '—') + (p.phoneBd && p.phone === p.phoneBd && p.phone !== p.phoneKr ? ' <span class="sp-pill pk-ok" style="margin:0">WhatsApp</span>' : '') + '</dd>'
+        + '<dt>কোরিয়ার ঠিকানা</dt><dd>' + esc(p.addrKr || '—') + '</dd><dt>বাংলাদেশের ঠিকানা</dt><dd>' + esc(p.addrBd || '—') + '</dd>'
+        + (p.emName || p.emPhone ? '<dt>জরুরি যোগাযোগ</dt><dd>' + esc([p.emName, p.emRelation ? '(' + p.emRelation + ')' : ''].filter(Boolean).join(' ')) + (p.emPhone ? '<br><span class="code" style="font-weight:600">' + esc(p.emPhone) + '</span>' : '') + '</dd>' : '') + '</dl>'
       + '<div class="sp-stats"><div><b>' + bn(p.trips.length) + '</b><span>ট্রিপ</span></div><div><b>' + bn(p.trips.filter(function (t) { return t.from === 'ICN'; }).length) + ' / ' + bn(p.trips.filter(function (t) { return t.from === 'DAC'; }).length) + '</b><span>যাওয়া / আসা</span></div><div><b>' + bn(p.bags || 0) + '</b><span>আমাদের ব্যাগ নিয়েছেন</span></div><div><b>' + bn(p.pcs || 0) + '</b><span>পিস প্রোডাক্ট এনেছেন</span></div><div><b>' + (open.length ? bn(open.length) + 'টা খোলা' : 'নেই') + '</b><span>এখন</span></div></div></section>';
-    h += '<section class="sp-card sp-kwbox"><div class="sp-kwrow">' + qr(p.code) + '<div><small>স্থায়ী কিওয়ার্ড</small><div class="code" style="font-size:30px">' + esc(p.code) + '</div><p class="sp-muted">এটা কখনো বদলাবে না। এই কার্ড স্ক্যান করলে উনার এখনকার চালান খুলবে।</p></div></div>'
+    h += '<section class="sp-card sp-kwbox"><div class="sp-kwrow">' + qr(p.code) + '<div><small>স্থায়ী আইডি</small><div class="code" style="font-size:30px">' + esc(p.code) + '</div><p class="sp-muted">এটা কখনো বদলাবে না। এই কার্ড স্ক্যান করলে উনার এখনকার চালান খুলবে।</p></div></div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 16px"><button type="button" class="sp-sec" data-shp="printperson">' + I.print + 'কার্ড প্রিন্ট</button><button type="button" class="sp-sec" data-shp="pngperson">' + I.down + 'ছবি সেভ (হোয়াটসঅ্যাপে পাঠাতে)</button></div></section>';
     h += '<section class="sp-card"><h4>' + I.ext + 'ওনার নিজের পাতা</h4><div class="sp-share"><button type="button" class="sp-mini" data-shp="plinkcopy">' + I.down + 'লিংক কপি</button>' + (p.phone ? '<button type="button" class="sp-mini" data-shp="plinkwa">' + I.wa + 'ওনাকে হোয়াটসঅ্যাপে পাঠান</button>' : '') + '<button type="button" class="sp-mini" data-shp="plinkopen">' + I.ext + 'পাতাটা দেখুন</button></div></section>';
     if (open.length) h += '<section class="sp-card"><h4>' + I.box + 'এখন খোলা চালান</h4>' + open.map(function (t) { return '<button type="button" class="sp-li" data-shp="go" data-v="' + esc(t.code) + '">' + chip(t.code, I.box) + '<span class="nm">' + t.from + ' → ' + t.to + '<small>' + day(t.at, t.from) + '</small></span><span class="sp-pill pk-air" style="margin:0">খুলুন</span></button>'; }).join('') + '</section>';
@@ -69635,11 +69638,14 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     return backBtn(p.id ? 'p.' + p.id : 'people', 'ফিরে যান') + '<section class="sp-card"><h4>' + I.user + (p.id ? 'বহনকারীর তথ্য · ' + esc(p.code || '') : 'নতুন বহনকারী') + '</h4><div class="sp-form">'
       + '<div class="sp-photo"><label>' + (p.photo ? '<img alt="" src="' + esc(p.photo) + '">' : I.cam) + '<input type="file" accept="image/*" id="sp_pph" aria-label="ছবি তুলুন বা বেছে নিন"></label><b style="font-size:14px">ছবি</b></div>'
       + '<div class="sp-fld"><label for="sp_pn">নাম</label><input id="sp_pn" maxlength="80" value="' + esc(p.name || '') + '"></div>'
-      + '<div class="sp-two"><div class="sp-fld"><label for="sp_pp">ফোন / হোয়াটসঅ্যাপ</label><input id="sp_pp" inputmode="tel" value="' + esc(p.phone || '') + '"></div><div class="sp-fld"><label for="sp_pe">ইমেইল</label><input id="sp_pe" inputmode="email" value="' + esc(p.email || '') + '"></div></div>'
+      + '<div class="sp-two"><div class="sp-fld"><label for="sp_pkp">কোরিয়ার নম্বর</label><input id="sp_pkp" inputmode="tel" value="' + esc(p.phoneKr || (p.id ? '' : '')) + '"></div><div class="sp-fld"><label for="sp_pbp">বাংলাদেশের নম্বর</label><input id="sp_pbp" inputmode="tel" value="' + esc(p.phoneBd || '') + '"></div></div>'
+      + '<div class="sp-two"><div class="sp-fld"><label for="sp_pwa">হোয়াটসঅ্যাপ কোন নম্বরে</label><select id="sp_pwa"><option value="kr"' + (p.waOn !== 'bd' ? ' selected' : '') + '>কোরিয়ার</option><option value="bd"' + (p.waOn === 'bd' ? ' selected' : '') + '>বাংলাদেশের</option></select></div><div class="sp-fld"><label for="sp_pe">ইমেইল</label><input id="sp_pe" inputmode="email" value="' + esc(p.email || '') + '"></div></div>'
       + '<div class="sp-two"><div class="sp-fld"><label for="sp_pbd">বাংলাদেশের ঠিকানা</label><input id="sp_pbd" maxlength="200" value="' + esc(p.addrBd || '') + '"></div><div class="sp-fld"><label for="sp_pkr">কোরিয়ার ঠিকানা</label><input id="sp_pkr" maxlength="200" value="' + esc(p.addrKr || '') + '"></div></div>'
       + '<div class="sp-fld"><label for="sp_pc">শহর</label><input id="sp_pc" maxlength="60" value="' + esc(p.city || '') + '"></div>'
       + '<label class="sp-check"><input type="checkbox" id="sp_pw"' + (p.waOk ? ' checked' : '') + '> হোয়াটসঅ্যাপে মনে করিয়ে দিতে রাজি</label>'
-      + '<div class="sp-fld"><label for="sp_pnote">নোট</label><textarea id="sp_pnote" maxlength="1000">' + esc(p.note || '') + '</textarea></div>' + (p.id ? '' : '<p class="sp-muted">সেভ করলে স্থায়ী কিওয়ার্ড তৈরি হবে।</p>') + '</div></section>'
+      + '<div class="sp-fld"><label for="sp_pemn">জরুরি যোগাযোগ (ঐচ্ছিক): নাম</label><input id="sp_pemn" maxlength="80" value="' + esc(p.emName || '') + '"></div>'
+      + '<div class="sp-two"><div class="sp-fld"><label for="sp_pemr">সম্পর্ক</label><input id="sp_pemr" maxlength="40" value="' + esc(p.emRelation || '') + '"></div><div class="sp-fld"><label for="sp_pemp">ফোন</label><input id="sp_pemp" inputmode="tel" value="' + esc(p.emPhone || '') + '"></div></div>'
+      + '<div class="sp-fld"><label for="sp_pnote">নোট</label><textarea id="sp_pnote" maxlength="1000">' + esc(p.note || '') + '</textarea></div>' + (p.id ? '' : '<p class="sp-muted">সেভ করলে স্থায়ী আইডি তৈরি হবে।</p>') + '</div></section>'
       + '<div class="sp-act"><button type="button" class="sp-pri" data-shp="saveperson" data-v="' + (p.id || '') + '">' + I.ok + 'সেভ করুন</button></div>';
   }
 
@@ -69687,7 +69693,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
   // ---------- actions
   function scanThen(fn, hint) {
     if (typeof scanOpen !== 'function') { toast('এই ব্রাউজারে ক্যামেরা নেই। কোড লিখে Enter চাপুন।', true); return; }
-    scanOpen({ hint: hint || 'লাগেজের QR বা বহনকারীর কিওয়ার্ড কার্ড ফ্রেমের ভেতরে আনুন' }).then(function (text) { if (text) fn(text); });
+    scanOpen({ hint: hint || 'লাগেজের QR বা বহনকারীর আইডি কার্ড ফ্রেমের ভেতরে আনুন' }).then(function (text) { if (text) fn(text); });
   }
   function readImg(file, max, then) {
     var fr = new FileReader(); fr.onload = function () { var im = new Image(); im.onload = function () { var k = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); then(c.toDataURL('image/jpeg', 0.8)); }; im.src = fr.result; }; fr.readAsDataURL(file);
@@ -69770,9 +69776,9 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
       return call('erpShipNew', a, function (r) { setCur(r); nav(r.code + '.pack'); });
     }
     if (k === 'saveperson') {
-      var pa = { name: el('sp_pn').value, phone: el('sp_pp').value, email: el('sp_pe').value, city: el('sp_pc').value, addrBd: el('sp_pbd').value, addrKr: el('sp_pkr').value, waOk: el('sp_pw').checked, note: el('sp_pnote').value };
+      var pa = { name: el('sp_pn').value, phoneKr: el('sp_pkp').value, phoneBd: el('sp_pbp').value, waOn: el('sp_pwa').value, emName: el('sp_pemn').value, emRelation: el('sp_pemr').value, emPhone: el('sp_pemp').value, email: el('sp_pe').value, city: el('sp_pc').value, addrBd: el('sp_pbd').value, addrKr: el('sp_pkr').value, waOk: el('sp_pw').checked, note: el('sp_pnote').value };
       if (v) pa.id = Number(v); if (SH.photo) pa.photo = SH.photo;
-      return call('erpShipPersonSave', pa, function (r) { SH.person = r; SH.people = null; SH.photo = null; nav('p.' + r.id); toast(v ? 'সেভ হলো' : 'সেভ হলো। কিওয়ার্ড: ' + esc(r.code)); });
+      return call('erpShipPersonSave', pa, function (r) { SH.person = r; SH.people = null; SH.photo = null; nav('p.' + r.id); toast(v ? 'সেভ হলো' : 'সেভ হলো। আইডি: ' + esc(r.code)); });
     }
     if (!s) return;
     if (k === 'aplace') { SH.addPlace = v; return paint(); }
@@ -69792,7 +69798,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
       var pick = el('sp_cp') ? el('sp_cp').value : '', offF = s.from === 'ICN' ? 9 : 6, offT = s.to === 'ICN' ? 9 : 6;
       var a2 = { id: s.id, flightNo: el('sp_fn').value, departAt: fromDtl(el('sp_fd').value, offF), landAt: fromDtl(el('sp_fa').value, offT), returnOn: el('sp_fr').value || null };
       if (pick) a2.personId = Number(pick); else a2.person = { name: el('sp_cn').value, phone: el('sp_cph').value, email: el('sp_ce').value, city: el('sp_cc').value, waOk: el('sp_cw').checked };
-      return call('erpShipCarrier', a2, function (r) { SH.people = null; setCur(r); nav(r.code); toast('সেভ হলো' + (r.carrier ? '। কিওয়ার্ড: ' + esc(r.carrier.code) : '')); });
+      return call('erpShipCarrier', a2, function (r) { SH.people = null; setCur(r); nav(r.code); toast('সেভ হলো' + (r.carrier ? '। আইডি: ' + esc(r.carrier.code) : '')); });
     }
     if (k === 'saveair') return call('erpShipAir', { id: s.id, forwarder: el('sp_fw').value, awb: el('sp_awb').value, cartons: el('sp_ct').value, weightKg: el('sp_wt').value, landAt: fromDtl(el('sp_la').value, s.to === 'ICN' ? 9 : 6), trackUrl: el('sp_tu').value.trim() }, function (r) { setCur(r); nav(r.code); toast('সেভ হলো'); });
     if (k === 'mcur' || k === 'mcs' || k === 'mby') { var d = SH.money; var mf = el('sp_mf'), ma = el('sp_ma'); if (mf) d.fee = mf.value; if (ma) d.amt = ma.value; if (k === 'mcur') d.cur = v; if (k === 'mcs') d.cs = v; if (k === 'mby') d.by = v; return paint(); }

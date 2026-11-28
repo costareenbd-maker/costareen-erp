@@ -114,20 +114,20 @@ async function words(ctx, s, kind, now) {
       return 'আসসালামু আলাইকুম ' + str(s.c_name) + '।\nমনে করিয়ে দিচ্ছি: ' + (w ? w + ' ' : '') + dep + ' (' + CITY[s.from_port] + ' সময়) আপনার ' + fl + '(' + route + ')।\n'
         + 'দয়া করে ফ্লাইটের কমপক্ষে ২ ঘণ্টা আগে এয়ারপোর্টে পৌঁছাবেন।\n'
         + 'আপনার সাথে আমাদের ' + bags + '।' + (s.hand_pcs ? ' হাতে রাখার জিনিস: ' + bn(s.hand_pcs) + ' পিস।' : '') + '\n'
-        + 'আপনার কিওয়ার্ড: ' + str(s.c_code) + (await meetLines(ctx, s)) + sign;
+        + 'আপনার আইডি: ' + str(s.c_code) + (await meetLines(ctx, s)) + sign;
     }
     case 'c_day':
-      return str(s.c_name) + ', আজ ' + dep + ' আপনার ' + fl + '(' + route + ')।\nফ্লাইটের ২ ঘণ্টা আগে এয়ারপোর্টে থাকুন। লাগেজ: ' + (s.bag_n ? str(s.bag_codes) : '—') + '।\nকিওয়ার্ড: ' + str(s.c_code) + sign;
+      return str(s.c_name) + ', আজ ' + dep + ' আপনার ' + fl + '(' + route + ')।\nফ্লাইটের ২ ঘণ্টা আগে এয়ারপোর্টে থাকুন। লাগেজ: ' + (s.bag_n ? str(s.bag_codes) : '—') + '।\nআইডি: ' + str(s.c_code) + sign;
     case 'c_land':
       return 'আশা করি নিরাপদে ' + CITY[s.to_port] + ' পৌঁছেছেন, ' + str(s.c_name) + '।\nআমাদের লোক আপনার সাথে যোগাযোগ করবেন। '
-        + (s.bag_n ? 'লাগেজ ' + str(s.bag_codes) + ' তাঁদের হাতে দিন।' : 'জিনিসগুলো তাঁদের হাতে দিন।') + ' কিওয়ার্ড ' + str(s.c_code) + ' বললেই হবে।' + (await meetLines(ctx, s)) + sign;
+        + (s.bag_n ? 'লাগেজ ' + str(s.bag_codes) + ' তাঁদের হাতে দিন।' : 'জিনিসগুলো তাঁদের হাতে দিন।') + ' আইডি ' + str(s.c_code) + ' বললেই হবে।' + (await meetLines(ctx, s)) + sign;
     case 't_eve': {
       const w = whenWord(s.depart_at, s.from_port, now);
       return '✈️ ' + (w || dep) + ' আসছে: ' + str(s.c_name) + ' (' + str(s.c_code) + ')\n' + fl + route + ' · ছাড়বে ' + dep + ' · নামবে ' + (land || 'জানা নেই') + ' (' + CITY[s.to_port] + ' সময়)\n'
         + bags + (s.hand_pcs ? ' + হাতে ' + bn(s.hand_pcs) + ' পিস' : '') + ' · মোট ' + bn(s.pcs) + ' পিস\nচালান ' + s.code;
     }
     case 't_land':
-      return '🛬 ' + str(s.c_name) + ' (' + str(s.c_code) + ') ' + CITY[s.to_port] + '-তে নেমেছেন (' + land + ')।\n' + bags + ' · ' + bn(s.pcs) + ' পিস। হাতে নিয়ে লাগেজ বা কিওয়ার্ড স্ক্যান করুন। চালান ' + s.code;
+      return '🛬 ' + str(s.c_name) + ' (' + str(s.c_code) + ') ' + CITY[s.to_port] + '-তে নেমেছেন (' + land + ')।\n' + bags + ' · ' + bn(s.pcs) + ' পিস। হাতে নিয়ে লাগেজ বা আইডি স্ক্যান করুন। চালান ' + s.code;
     case 't_late': {
       const h = Math.floor((new Date(now).getTime() - new Date(s.land_at).getTime()) / H);
       return '⚠️ ' + s.code + ': নামার ' + bn(h) + ' ঘণ্টা পরেও কেউ হাতে পায়নি।\n' + (s.carrier_id ? str(s.c_name) + ' (' + str(s.c_code) + ') ' + str(s.c_phone) + '\n' : '') + bags;

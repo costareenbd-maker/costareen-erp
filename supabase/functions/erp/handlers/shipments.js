@@ -156,7 +156,7 @@ export async function erpShipFind(ctx, payload) {
   let person = null;
   if (code.startsWith('C-')) person = (await ctx.tx`select id, code, name from ship_people where business_id = ${ctx.biz} and code = ${code} and removed_at is null`)[0];
   const digits = q.replace(/\D/g, '');
-  if (!person && !code && digits.length >= 7) person = (await ctx.tx`select id, code, name from ship_people where business_id = ${ctx.biz} and removed_at is null and right(regexp_replace(phone, '[^0-9]', '', 'g'), 9) = ${digits.slice(-9)} limit 1`)[0];
+  if (!person && !code && digits.length >= 7) person = (await ctx.tx`select id, code, name from ship_people where business_id = ${ctx.biz} and removed_at is null and ${digits.slice(-9)} in (right(regexp_replace(phone, '[^0-9]', '', 'g'), 9), right(regexp_replace(phone_kr, '[^0-9]', '', 'g'), 9), right(regexp_replace(phone_bd, '[^0-9]', '', 'g'), 9)) limit 1`)[0];
   if (person) {
     const open = await ctx.tx`select code, from_port, to_port, flight_no from ships where business_id = ${ctx.biz} and carrier_id = ${person.id} and checked_at is null order by id`;
     if (open.length === 1) return { kind: 'trip', code: open[0].code, person: person.code };
@@ -176,12 +176,26 @@ export async function personUpsert(ctx, pp, id) {
   const name = str(pp.name).slice(0, 80);
   if (!name) throw new Error('Type the traveller’s name.');
   const { e164 } = await import('./shipteam.js');
-  const raw = str(pp.phone), phone = raw ? e164(raw) : '', email = str(pp.email).slice(0, 120);
-  if (raw && !phone) throw new Error('Write the phone with + and the country code (for example +82 10.., +880 17..).');
+  const num = (v, what) => { const s = str(v); if (!s) return ''; const e = e164(s); if (!e) throw new Error('Write the ' + what + ' with + and the country code (for example +82 10.., +880 17..).'); return e; };
+  // ship-9: two numbers (Korea, Bangladesh); phone = the WhatsApp one. Old callers still send one 'phone'.
+  let phone, kr, bd;
+  if (pp.phoneKr !== undefined || pp.phoneBd !== undefined) {
+    kr = num(pp.phoneKr, 'Korean number'); bd = num(pp.phoneBd, 'Bangladesh number');
+    phone = (pp.waOn === 'bd' ? bd || kr : kr || bd);
+  } else {
+    phone = num(pp.phone, 'phone');
+    if (phone && !id) { kr = /^\+82/.test(phone) ? phone : ''; bd = /^\+880/.test(phone) ? phone : ''; }
+  }
+  const email = str(pp.email).slice(0, 120);
   if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error('That email does not look right.');
   const photo = pp.photo === undefined ? undefined : str(pp.photo);
   if (photo && (!IMG.test(photo) || photo.length > 150000)) throw new Error('That photo could not be used. Try another one.');
   const f = { name, phone, email, city: str(pp.city).slice(0, 60), wa_ok: !!pp.waOk, note: str(pp.note).slice(0, 1000) };
+  if (kr !== undefined) f.phone_kr = kr;
+  if (bd !== undefined) f.phone_bd = bd;
+  if (pp.emName !== undefined) f.em_name = str(pp.emName).slice(0, 80);
+  if (pp.emRelation !== undefined) f.em_relation = str(pp.emRelation).slice(0, 40);
+  if (pp.emPhone !== undefined) f.em_phone = num(pp.emPhone, 'emergency number');
   if (pp.addrBd !== undefined) f.addr_bd = str(pp.addrBd).slice(0, 200);
   if (pp.addrKr !== undefined) f.addr_kr = str(pp.addrKr).slice(0, 200);
   if (photo !== undefined) f.photo = photo || null;
@@ -541,6 +555,8 @@ export async function erpShipPerson(ctx, payload) {
   const m = moneyOf(trips);
   return { id: Number(p.id), code: p.code, name: p.name, phone: p.phone, email: p.email, city: p.city, waOk: p.wa_ok, note: p.note, photo: p.photo || '',
     addrBd: p.addr_bd || '', addrKr: p.addr_kr || '', selfJoined: !!p.self_joined,
+    phoneKr: p.phone_kr || '', phoneBd: p.phone_bd || '', waOn: p.phone && p.phone === p.phone_bd && p.phone !== p.phone_kr ? 'bd' : 'kr',
+    emName: p.em_name || '', emRelation: p.em_relation || '', emPhone: p.em_phone || '',
     since: iso(p.created_at), removed: !!p.removed_at, total: m.total, pays: m.pays,
     bags: trips.reduce((a, s) => a + Number(s.bag_n || 0), 0), pcs: trips.reduce((a, s) => a + Number(s.pcs_n || 0), 0),
     trips: trips.map((s) => ({ id: Number(s.id), code: s.code, bags: Number(s.bag_n || 0), pcs: Number(s.pcs_n || 0), from: s.from_port, to: s.to_port, step: stepNow(s, ctx.now), at: iso(s.depart_at || s.created_at), done: !!s.checked_at })) };

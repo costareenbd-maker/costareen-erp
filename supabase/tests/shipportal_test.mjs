@@ -122,6 +122,27 @@ check('right code: the same key', x.status === 200 && x.body.key === k, x.body);
 x = await act('verify', { j, body: { phone: '010-4410-2291', code: sentCode[0] } });
 check('a code works once', x.status === 400, x.body);
 
+// ship-9: two numbers (Korea, Bangladesh), WhatsApp on one of them, optional emergency contact
+x = await act('join', { j, body: { name: 'Karim', phoneKr: '010-7777-8888', phoneBd: '01712-555666', waOn: 'bd', emName: 'Rahima', emRelation: 'mother', emPhone: '01811-222333', waOk: true } });
+check('joined with two numbers', x.status === 200 && x.body.key, x.body);
+const k2 = x.body.key;
+x = await act('me', { k: k2 });
+check('both numbers, WhatsApp on the Bangladesh one, emergency contact', x.body.me.phoneKr === '+821077778888' && x.body.me.phoneBd === '+8801712555666' && x.body.me.phone === '+8801712555666' && x.body.me.waOn === 'bd'
+  && x.body.me.emName === 'Rahima' && x.body.me.emPhone === '+8801811222333', x.body.me);
+x = await act('join', { j, body: { name: 'Copy', phoneKr: '+82 10 7777 8888' } });
+check('either of his numbers is already known', x.status === 409 && x.body.exists, x.body);
+x = await act('save', { k: k2, body: { phoneKr: '', phoneBd: '' } });
+check('cannot remove both numbers', x.status === 400, x.body);
+x = await act('save', { k: k2, body: { phoneKr: '010-7777-8888', phoneBd: '01712-555666', waOn: 'kr', emName: '', emRelation: '', emPhone: '' } });
+check('WhatsApp moved to the Korean number, emergency cleared', x.status === 200 && x.body.me.phone === '+821077778888' && x.body.me.emName === '', x.body.me);
+r = await sales('erpShipFind', [{ q: '01712555666' }]);
+check('staff find him by his Bangladesh number', r.ok && r.result.kind === 'person' && r.result.code === 'C-0002', r);
+r = await sales('erpShipPerson', [{ id: (await sql`select id from ship_people where phone_bd = '+8801712555666'`)[0].id }]);
+check('ERP shows both numbers', r.ok && r.result.phoneKr === '+821077778888' && r.result.phoneBd === '+8801712555666' && r.result.waOn === 'kr', r);
+evo.sent.length = 0;
+x = await act('code', { j, body: { phone: '01712-555666' } });
+check('code asked with the other number goes to his WhatsApp number', x.status === 200 && evo.sent.length === 1 && evo.sent[0].number === '821077778888', evo.sent);
+
 // messages: 3 days before, with his own page
 r = await owner('erpShipPersonSave', [{ name: 'Rina', phone: '010-5555-6666', waOk: true }]);
 const p2 = r.result.id;
