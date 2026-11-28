@@ -821,7 +821,7 @@ export async function erpClinicConnect(ctx, payload) {
   let ch = (await ctx.tx`select * from inbox_channels where business_id = ${ctx.biz} and kind = 'wa_evo' and status <> 'removed' and settings->>'purpose' = 'clinic' order by created_at desc limit 1`)[0];
   if (!ch) {
     const inst = 'clinic-' + globalThis.crypto.randomUUID().replace(/-/g, '').slice(0, 8);
-    const r = await wcall(ctx, url + '/instance/create', { headers: { apikey: key }, body: { instanceName: inst, integration: 'WHATSAPP-BAILEYS', qrcode: true } });
+    const r = await wcall(ctx, url + '/instance/create', { headers: { apikey: key }, body: { instanceName: inst, integration: 'WHATSAPP-BAILEYS', qrcode: true, number: wa(ph) } });   // Evolution gives a pairing code only when the number comes at create
     if (!r.ok) throw new Error('WhatsApp সার্ভার নম্বরটা বানাতে পারল না (' + (r.status || 'উত্তর নেই') + ')। এক মিনিট পরে আবার চেষ্টা করুন।');
     const token = str(typeof r.json.hash === 'string' ? r.json.hash : r.json.hash && (r.json.hash.apikey || r.json.hash.token)) || str(r.json.token);
     const settings = { wait_s: 8, revert_min: 60, purpose: 'clinic', erp_made: true, number_wanted: ph };
