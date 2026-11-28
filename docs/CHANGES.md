@@ -5540,3 +5540,10 @@ Doctor desk now in the Today menu group (clinic-1c). Oliareen: 8 unused menu scr
 (from Raj's WhatsApp: poster + prescription pad; hours, WhatsApp, BMDC still empty); assistant renamed "সাদিয়া".
 The booking bot's WhatsApp lives on its OWN Evolution server (Mac evolution-clinic, /evoc), set as Oliareen's server only;
 no number linked yet. Not seen live yet: a real patient chat, the doctor's yes/no, reminders.
+
+2026-11-29 — nosplash-oli-2 (owner: "অলিয়ারিনের ও যে লোগোটা রয়েছে সেই লোগোটা সেট করে দাও অলিয়ারিনের জন্য")
+- Oliareen's loading screen now shows Oliareen's own logo (G:/oliareen-brand logo-rose + mark-rose, inline SVG): the full
+  "oliareen / BEAUTY & SKINCARE" logo on top, the Oliareen mark breathing inside rose / pink rings with a gold dot, and
+  "লোড হচ্ছে…", on Oliareen cream #FBF3F0. Centred on computer and phone.
+- Device flag localStorage `bn_splash_oli` = 1 (set by bnSplashRemember when the active business is Oliareen, removed
+  otherwise and on both sign-outs). A new device / unknown state still gets the neutral Benndar B loader (no photo).
