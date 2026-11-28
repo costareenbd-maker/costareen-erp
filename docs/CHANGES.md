@@ -5557,9 +5557,63 @@ no number linked yet. Not seen live yet: a real patient chat, the doctor's yes/n
 - Oliareen-only colours: fdThemeNow wrapper puts rose #AB3C50 as the accent (fdAccentTokens, contrast-checked) and, in light
   mode, a warm cream page (#FBF3F0, rose-tinted surfaces / borders / sidebar) on top of the person's own theme; html[data-oli].
   Never saved as their theme choice; any other business keeps its own look; switching business repaints at once.
+  The Clean look pins its colours with !important, so the same palette is also set in CSS under html[data-oli="1"]
+  (light: cream page, rose accent, pink #F7C1C5 for the selected states that were lime; dark: deep plum-grey + light rose).
 - Doctor desk (.dk, was max 1320px) and Content desk (.cd, was max 1280px) now fill the screen; on big monitors they grow:
   zoom 1.1 from 1700px wide, 1.22 from 2100, 1.35 from 2500, 1.6 from 3200.
 - Doctor photo: erpClinicDoctorPhoto (manager+, JPG/PNG/WEBP up to 6 MB, file in the clinic folder, name kept in
   business_config clinic_dphoto_<doctor id> - no migration); erpClinic gives photoUrl per doctor. The page shows it in the
   doctor card, the schedule lane and the doctor sheet (72px), with a "ছবি দিন / ছবি বদলান" button on the doctor sheet.
 - Tests: clinic_test 61 (4 new: sales refused, non-picture refused, manager sets it, photo link only for that doctor).
+- LIVE #92 29 Nov 2026 (owner asked): function file-by-file (allow, clinic, security = live + the photo diff only), page = #91 +
+  these hunks (sw cz-shell-v4-native-olilook1). Dr Nusrat Nobi's photo set on live. Dev checked at 1920 / 2560 (photo stand-in on a demo doctor).
+2026-11-29 — studiosteps-1 (owner 28 Nov, mockup approved "হ্যাঁ, বানাও"): the Content desk Studio step by step, for Raj
+- Raj wants to be asked at every step instead of getting a finished video at once. The Studio home now opens on step 1:
+  a stepper on top (আইডিয়া · ছবি · সিনের কার্ড · ভিডিও; done steps ✓ in lime, he can go back), the idea box with the
+  existing 📎 (pictures / video / link / JSON), "ছবি বানান →" and the line "৫–১০ মিনিটে ৪টা ছবি আসবে। ভিডিও এখনো বানানো হবে
+  না।". The old one-shot prompt -> video stays behind a small "সরাসরি ভিডিও বানান" link (and "ধাপে ধাপে বানান" back).
+- Step 2 ছবি: 4 pictures (2 across on a phone, 4 on a computer); a big ✓ on each, "↻ আবার" (same prompt, new picture),
+  "✎ বদলান" (a note -> that picture remade with the change), a free feedback box (the AI decides which pictures to remake
+  and says so in the work log), the AI's advice line (Claude looks at the set, e.g. "৩ নম্বর ছবিতে ... আবার বানাব?"),
+  "আজ আর Nটা ছবি বানানো যাবে", "আরো ৪টা ছবি বানান". Button "Nটা ছবি দিয়ে সিনের কার্ড বানান →".
+- Step 3 সিনের কার্ড: per card the picture, "সিন k · N সেকেন্ড", the spoken line, the on-screen text chip; "✓ ঠিক",
+  "✎ বদলান" (picture picker, seconds, line, on-screen text, or "AI-কে বলুন" for that card only, or "এই সিনটা বাদ দিন"),
+  ↑ ↓, "+ সিন যোগ করুন", the AI's advice line, "ভিডিও এডিট করে দিন →".
+- Step 4 ভিডিও: the video from the cards (each picture a still with the studioref-1 gentle push, the lines voiced in the
+  Studio voice with captions, on-screen text as headlines, the last card as the follow closer, Studio music); versions;
+  feedback -> Claude adjusts the cards (new set, old kept as 'replaced') -> next version; "↺ সিনের কার্ডে ফিরে যান";
+  সেভ / ড্রাফটে দিন as before. A bell line + WhatsApp when the first pictures and each video are ready (remakes and card
+  changes stay quiet). Work log (folded) under every step.
+- Pictures: the business's OWN ChatGPT picture path (gpt-image-2 job on the AI gateway, called inside brand-bizdesk-oliareen
+  with its own AI key), cast faces / his product photos used as the reference picture so faces and products stay the
+  same; Claude writes every picture prompt (bootcamp still rules, Oliareen cast + rooms, no invented products, locked rules
+  win, dropped asks said in Bangla). Day cap 30 (business_config studio_pic_day); over it - or on a ChatGPT usage limit -
+  pictures WAIT (job wait_until: tomorrow 00:05 Dhaka / 30 min) and the page says so; nothing is refused or lost.
+- Server: migration 190 (projects.mode/step/idea/advice, jobs kinds pics/cards/render + detail + wait_until, tables
+  content_studio_pics + content_studio_cards, RLS like 177, nothing deleted). handlers/studiosteps.js (15 calls, manager;
+  engine call erpContentStudioSteps = owner + engine key); studio.js: projects say their mode, the one-shot feedback /
+  "আরো ভালো করুন" refuse a step project, bell/WhatsApp know picture jobs (to_jsonb read, safe without 190). Tests:
+  studiosteps_test 55; studio 36, studioref 60, studiojson 27, contentdesk 116 green.
+- Engine (PC, shared with the LIVE queue; backups studio_run.py.bak-studiosteps1, bizvideo.py.bak-studiosteps1 - bizvideo
+  unchanged): new studio_steps.py; studio_run.py runs picture/card jobs in their own light lane (.studio-light.lock, never
+  behind a render; bizvideo only watches .studio.lock), the heavy lane skips those kinds, a 'render' job builds the plan
+  straight from the cards. A database without 190 has none of these kinds: the live queue runs as before.
+- Engine render details: each picture clip is 14-18 s; a card longer than ~6 s becomes two scenes on the same picture (the
+  house template cuts at most 8 s of a clip per scene, 'FREEZE' otherwise); a retried render job starts its render project clean.
+- Dev check 29 Nov (Oliareen demo, project 3, desktop 1024 + phone 375, no sideways scroll): idea -> 4 REAL pictures on the
+  Oliareen ChatGPT path (~1 min each) + advice line (it caught a mirror reflection that did not match) -> remake with a note
+  -> 3 ticked -> 6 Claude cards (last = follow invite) + advice -> one card changed by the AI -> v1 video 40 s rendered ->
+  feedback "text bigger, last scene shorter" -> v2 (text 1.3x, last card 3 s). Dev videos uploaded to dev storage by hand
+  (STUDIO_DRY_UPLOAD). Screenshots + v1: .impeccable/mocks/studio-steps-2026-11-28/dev/.
+- NOT done: the card "seconds" are a guide (the voice length decides; a short line gets a pause up to 3 s); a style
+  video/link in the idea only shapes the card text (not the cut pace of the still video); pictures are not checked by a
+  second AI pass before he sees them (the advice line is the check). Live waits for the owner's yes (one combined kit with
+  studioref-2 + studiojson-1).
+
+2026-11-29 — dkcard-1 (owner: "the doctor's photo is far too small for the card - make them beautiful and professional", /impeccable polish)
+- Doctor desk > ডাক্তার: each doctor is a profile card - a 4:5 portrait (112px; 96px on a phone), a status pill (রোগী দেখছেন /
+  এখন বন্ধ), name 19px, degrees (2 lines max), BMDC number, what they treat; under a rule three figures (fee or ফ্রি, minutes
+  per patient, WhatsApp আছে / নেই) and the week bar. No photo = the initial large on the doctor's own colour. Hover lifts the
+  card with a soft shadow, keyboard focus ring in the doctor's colour, reduced motion respected. Grid min 360px, one column on a phone.
+- Doctor sheet: a 104px 4:5 portrait beside the name when there is a photo (the round initial stays when there is none).
+- Dev checked 1440 + 390 (no sideways scroll). Only the card markup line, drHead and the clinic CSS changed.
