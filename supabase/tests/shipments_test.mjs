@@ -93,13 +93,35 @@ check('traveller profile counts bags and pieces', r.ok && r.result.bags >= 1 && 
 r = await owner('erpShipPeople', []);
 check('traveller list counts bags', r.ok && r.result.people.some((p) => p.id === pid && p.bags >= 1 && p.pcs > 0), r.ok && r.result.people.map((p) => [p.id, p.bags]));
 
+// 6b. ship-6: bag photos (at least two when made; up to six; struck out, never deleted)
+const PH = (c) => ({ photo: 'data:image/jpeg;base64,' + c.repeat(40), thumb: 'data:image/jpeg;base64,' + c.repeat(8) });
+r = await sales('erpShipBagNew', [{ nickname: 'Photo bag', photos: [PH('A'), PH('B')] }]);
+check('new bag with two photos', r.ok && r.result.photos.length === 2 && r.result.photoMax === 6 && r.result.photos[0].by, r);
+const pb = r.result;
+r = await sales('erpShipBagPhoto', [{ id: pb.id, add: { photo: 'data:text/html;base64,AAAA' } }]);
+check('not a picture refused', !r.ok && /photo/.test(r.error), r);
+r = await sales('erpShipBagPhoto', [{ id: pb.id, remove: pb.photos[0].id }]);
+check('photo struck out', r.ok && r.result.photos.length === 1, r);
+const kept = await sql`select count(*)::int n from ship_bag_photos where bag_id = ${pb.id}`;
+check('struck photo still kept', kept[0].n === 2, kept);
+for (let i = 0; i < 5; i++) r = await sales('erpShipBagPhoto', [{ id: pb.id, add: PH('C') }]);
+check('six photos allowed', r.ok && r.result.photos.length === 6, r.ok ? r.result.photos.length : r);
+r = await sales('erpShipBagPhoto', [{ id: pb.id, add: PH('D') }]);
+check('seventh refused', !r.ok && /At most 6/.test(r.error), r);
+r = await owner('erpShipBags', []);
+check('bag list carries a small picture', r.ok && r.result.bags.find((b) => b.id === pb.id).thumb.indexOf('data:image/jpeg') === 0 && r.result.bags.find((b) => b.id === pb.id).photos === 6, r.ok && r.result.bags.map((b) => [b.code, b.photos]));
+r = await owner('erpShipBagPhoto', [{ id: bag1, add: PH('E') }]);
+r = await owner('erpShip', [{ id: tr }]);
+check('shipment shows the bag picture', r.ok && r.result.bags.find((b) => b.id === bag1).thumb.indexOf('data:image') === 0, r.ok && r.result.bags);
+
 // 7. bag replaced: same code, bag number 2, history; QR unchanged (code is the QR)
 r = await owner('erpShipBagReplace', [{ id: bag1, reason: '' }]);
 check('replace needs a reason', !r.ok, r);
 r = await sales('erpShipBagReplace', [{ id: bag1, reason: 'torn' }]);
 check('sales cannot replace', !r.ok, r);
-r = await owner('erpShipBagReplace', [{ id: bag1, reason: 'torn', nickname: 'Blue big (new)' }]);
+r = await owner('erpShipBagReplace', [{ id: bag1, reason: 'torn', nickname: 'Blue big (new)', photos: [PH('F'), PH('G')] }]);
 check('bag 2, same code, history', r.ok && r.result.code === 'BG-0001' && r.result.bodyNo === 2 && r.result.changes.length === 1 && r.result.trips[0].bodyNo === 1, r);
+check('new bag has its own photos, old ones in history', r.ok && r.result.photos.length === 2 && r.result.oldPhotos.length === 1 && r.result.oldPhotos[0].bodyNo === 1, r.ok && [r.result.photos.length, r.result.oldPhotos]);
 
 // 8. the way back takes the same bags, airports swapped; then the bags open it
 r = await owner('erpShipReturn', [{ id: tr }]);
@@ -107,7 +129,7 @@ check('way back TR-0003 with both bags', r.ok && r.result.code === 'TR-0003' && 
 r = await owner('erpShipFind', [{ q: 'BG-0001' }]);
 check('bag now opens the way back', r.ok && r.result.code === 'TR-0003', r);
 r = await owner('erpShipBags', []);
-check('bag list', r.ok && r.result.bags.length === 2 && r.result.bags[0].openTrip === 'TR-0003', r);
+check('bag list', r.ok && r.result.bags.length === 3 && r.result.bags[0].openTrip === 'TR-0003', r);
 
 // 9. air cargo
 r = await owner('erpShipNew', [{ type: 'air', from: 'ICN', to: 'DAC', forwarder: 'Hanjin', awb: '180-4471 2203', cartons: 3, weightKg: 42 }]);

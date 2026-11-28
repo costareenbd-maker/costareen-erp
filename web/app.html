@@ -69063,6 +69063,20 @@ html[data-theme="dark"] .shp .sp-nt .why{color:#FBBF24}
 .shp .sp-add select{flex:1 1 200px;height:46px;border-radius:12px;border:1px solid var(--fd-border-strong,#D7D9DF);background:var(--sp-card);color:var(--sp-ink);padding:0 10px;font-size:15px;min-width:0}
 .shp .sp-kwrow{display:flex;gap:16px;align-items:center;padding:16px}.shp .sp-kwrow small{color:var(--sp-ink3);font-weight:600}
 .shp .sp-kwbox{border:0}
+.shp .sp-phs{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px;padding:4px 16px 16px}
+.shp .sp-ph{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;background:var(--sp-s2);border:0;padding:0}
+.shp .sp-ph img{width:100%;height:100%;object-fit:cover;display:block}
+.shp .sp-ph .x{position:absolute;top:6px;right:6px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(23,24,28,.72);color:#fff;display:grid;place-items:center}
+.shp .sp-ph .x svg{width:18px;height:18px}
+.shp label.sp-ph{display:grid;place-items:center;align-content:center;gap:6px;cursor:pointer;border:2px dashed var(--fd-border-strong,#D7D9DF);background:var(--sp-card);color:var(--sp-ink2);font-weight:600;font-size:14px;text-align:center;padding:8px}
+.shp label.sp-ph svg{width:28px;height:28px}.shp label.sp-ph input{position:absolute;width:1px;height:1px;opacity:0}
+.shp label.sp-ph:focus-within{outline:2px solid var(--sp-ink);outline-offset:2px}
+.shp .sp-thumb{width:52px;height:52px;border-radius:12px;object-fit:cover;flex:none;background:var(--sp-s2)}
+.shp .sp-grp .sp-thumb{width:72px;height:72px}
+.shp .sp-oldph{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 16px}.shp .sp-oldph img{width:64px;height:64px;border-radius:10px;object-fit:cover;opacity:.75}
+.sp-lb{position:fixed;inset:0;z-index:300;background:rgba(10,11,13,.88);display:grid;place-items:center;padding:16px}
+.sp-lb img{max-width:100%;max-height:calc(100vh - 96px);border-radius:12px}
+.sp-lb button{position:fixed;top:14px;right:14px;width:48px;height:48px;border-radius:50%;border:0;background:#fff;color:#17181C;font-size:24px;font-weight:700;cursor:pointer}
 .shp :focus-visible{outline:2px solid var(--sp-ink);outline-offset:2px}
 html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
 .shp .sp-find input:focus-visible{outline:0}
@@ -69104,11 +69118,12 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     swap: '<svg viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>',
     down: '<svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
     ext: '<svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg>',
+    x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l2 2H4z"/><path d="M10 21h4"/></svg>',
     send: '<svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg>'
   };
   var ICON = '<rect x="5" y="7" width="14" height="13" rx="2.5"/><path d="M9 7V4.5h6V7M9 11v5M15 11v5"/>';
-  var SH = { list: null, people: null, bags: null, cur: null, person: null, bag: null, filter: '', busy: '', err: '', counts: {}, money: null, newType: 'trip', loadedFor: '', lastFor: '', addPlace: '', notify: null, notes: {} };
+  var SH = { list: null, people: null, bags: null, cur: null, person: null, bag: null, filter: '', busy: '', err: '', counts: {}, money: null, newType: 'trip', loadedFor: '', lastFor: '', addPlace: '', notify: null, notes: {}, newPhotos: [], bnewFor: 0 };
   var STEPS = { trip: ['প্যাক', 'সিল', 'দেওয়া', 'উড়ছে', 'নেমেছে', 'পেয়েছি', 'মিলানো'], air: ['প্যাক', 'বুক', 'পিকআপ', 'উড়ছে', 'কাস্টমস', 'পেয়েছি', 'মিলানো'] };
   var CITY = { ICN: 'সিউল', DAC: 'ঢাকা' };
   var PLACE = { hand: ['হাতে', 'hand'], own: ['উনার নিজের ব্যাগে', 'bag'], cargo: ['কার্গোতে', 'box'] };
@@ -69307,7 +69322,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     get('bags', 'erpShipBags', {});
     if (!SH.bags) return '<div class="sp-wait">লোড হচ্ছে…</div>';
     if (!SH.bags.length) return '<div class="sp-empty">এখনো কোনো লাগেজ নেই। "নতুন" চাপলে কোড আর QR তৈরি হবে।</div>';
-    return SH.bags.map(function (b) { return '<button type="button" class="sp-row' + (sel === b.code ? ' sel' : '') + '" data-shp="go" data-v="b.' + esc(b.code) + '">' + chip(b.code, I.bag) + '<span class="sp-mid"><span class="sp-kw">' + esc(b.nickname) + ' <small style="color:var(--sp-ink3)">· ব্যাগ ' + bn(b.bodyNo) + '</small></span><span class="sp-sub">' + bn(b.trips) + 'টা ট্রিপ' + (b.openTrip ? ' · এখন ' + esc(b.openTrip) + '-এ' : ' · খালি, তৈরি') + '</span>' + (b.retired ? '<span class="sp-pill pk-n">বাতিল</span>' : '') + '</span></button>'; }).join('');
+    return SH.bags.map(function (b) { return '<button type="button" class="sp-row' + (sel === b.code ? ' sel' : '') + '" data-shp="go" data-v="b.' + esc(b.code) + '">' + (b.thumb ? '<img class="sp-thumb" alt="" src="' + esc(b.thumb) + '">' : '') + chip(b.code, I.bag) + '<span class="sp-mid"><span class="sp-kw">' + esc(b.nickname) + ' <small style="color:var(--sp-ink3)">· ব্যাগ ' + bn(b.bodyNo) + '</small></span><span class="sp-sub">' + bn(b.trips) + 'টা ট্রিপ' + (b.openTrip ? ' · এখন ' + esc(b.openTrip) + '-এ' : ' · খালি, তৈরি') + (b.photos < 2 ? ' · ছবি নেই' : '') + '</span>' + (b.retired ? '<span class="sp-pill pk-n">বাতিল</span>' : '') + '</span></button>'; }).join('');
   }
   function peopleView(selId) {
     get('people', 'erpShipPeople', {});
@@ -69337,7 +69352,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
   }
   function groups(s) {
     var G = [];
-    (s.bags || []).forEach(function (b) { G.push({ key: 'b' + b.id, bag: b, title: qr(b.code) + chip(b.code, I.bag) + ' ' + esc(b.nickname) + ' <small style="color:var(--sp-ink3)">· ব্যাগ ' + bn(b.bodyNo) + '</small>', items: s.items.filter(function (i) { return i.bagId === b.id; }) }); });
+    (s.bags || []).forEach(function (b) { G.push({ key: 'b' + b.id, bag: b, title: qr(b.code) + (b.thumb ? '<img class="sp-thumb" alt="' + esc(b.nickname) + '" src="' + esc(b.thumb) + '">' : '') + chip(b.code, I.bag) + ' ' + esc(b.nickname) + ' <small style="color:var(--sp-ink3)">· ব্যাগ ' + bn(b.bodyNo) + '</small>', items: s.items.filter(function (i) { return i.bagId === b.id; }) }); });
     ['hand', 'own', 'cargo'].forEach(function (p) { var it = s.items.filter(function (i) { return i.place === p; }); if (it.length) G.push({ key: p, title: I[PLACE[p][1]] + ' ' + PLACE[p][0], items: it }); });
     return G;
   }
@@ -69404,7 +69419,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     var h = backBtn(s.code, s.code) + '<div class="sp-banner b-info">' + I.box + '<div>' + (s.type === 'air' ? 'কার্গোতে কী কী যাচ্ছে লিখুন।' : 'আগে লাগেজ যোগ করুন, তারপর প্রোডাক্ট লিখুন: কোন লাগেজে, নাকি হাতে, নাকি উনার নিজের ব্যাগে।') + ' সিল করার পর আর বদলানো যাবে না।</div></div>';
     if (s.type === 'trip') h += '<section class="sp-card"><h4>' + I.bag + 'লাগেজ যোগ করুন</h4><div class="sp-add" style="border-top:0">'
       + (free.length ? '<select id="sp_bagpick" aria-label="আগের লাগেজ"><option value="">— আগের লাগেজ বেছে নিন —</option>' + free.map(function (b) { return '<option value="' + b.id + '">' + esc(b.code + ' · ' + b.nickname + ' · ব্যাগ ' + bn(b.bodyNo)) + '</option>'; }).join('') + '</select><button type="button" class="sp-sec" data-shp="bagin" style="height:46px">যোগ</button>' : '')
-      + '<input id="sp_newbag" placeholder="নতুন লাগেজের ডাকনাম" maxlength="60" aria-label="নতুন লাগেজের ডাকনাম"><button type="button" class="sp-sec" data-shp="bagnew" style="height:46px">' + I.qr + 'নতুন লাগেজ (নতুন QR)</button></div>'
+      + '<button type="button" class="sp-sec" data-shp="bagnewtrip" style="height:46px">' + I.qr + 'নতুন লাগেজ (ছবি + নতুন QR)</button></div>'
       + '<p class="sp-muted" style="padding:0 16px 12px">লাগেজের QR স্ক্যান করেও যোগ করা যায়: <button type="button" class="sp-x" data-shp="bagscan">' + I.qr + ' স্ক্যান</button></p></section>';
     h += itemsCard(s, true);
     if (places.length) h += '<section class="sp-card"><h4>' + I.plus + 'প্রোডাক্ট লিখুন</h4><div class="sp-quick" style="padding:0 16px">' + places.map(function (p) { return '<button type="button" data-shp="aplace" data-v="' + esc(p[0]) + '" class="' + (SH.addPlace === p[0] ? 'on' : '') + '">' + esc(p[1]) + '</button>'; }).join('') + '</div>'
@@ -69477,16 +69492,36 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     var h = backBtn('bags', 'সব লাগেজ') + '<div class="sp-tag"><div class="hole"></div><div class="head"><div style="flex:1;min-width:0"><div class="big code">' + esc(b.code) + '</div><span class="sp-kwb">' + esc(b.nickname) + '</span><span class="sp-type">' + I.bag + 'ব্যাগ ' + bn(b.bodyNo) + (b.retired ? ' · বাতিল' : '') + '</span>'
       + '<p class="sp-muted" style="margin-top:12px">এই কোড আর QR কখনো বদলাবে না। ব্যাগ বদলালে শুধু ব্যাগ নম্বর বাড়বে।</p></div>' + qr(b.code) + '</div></div>';
     h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" class="sp-sec" data-shp="printbag">' + I.print + 'ট্যাগ প্রিন্ট</button>' + (canMoney() && !b.retired ? '<button type="button" class="sp-sec" data-shp="go" data-v="b.' + esc(b.code) + '.replace">' + I.swap + 'ব্যাগ বদলান</button>' : '') + '<button type="button" class="sp-sec" data-shp="bagrename">নাম বদলান</button></div>';
+    h += '<section class="sp-card"><h4>' + I.cam + 'ছবি · ব্যাগ ' + bn(b.bodyNo) + '</h4>' + (b.photos.length < 2 ? '<div class="sp-banner b-warn" style="margin:0 16px 10px">' + I.warn + '<div>এই ব্যাগের অন্তত ২টা ছবি দিন, যাতে এয়ারপোর্টে চেনা যায়।</div></div>' : '')
+      + '<div class="sp-phs">' + b.photos.map(function (x, i) { return '<div class="sp-ph"><button type="button" class="sp-ph" style="width:100%;height:100%" data-shp="phview" data-v="' + i + '" aria-label="ছবি ' + bn(i + 1) + ' বড় করে দেখুন"><img alt="" src="' + esc(x.thumb || x.photo) + '"></button><button type="button" class="x" data-shp="phrm" data-v="' + x.id + '" aria-label="ছবি ' + bn(i + 1) + ' বাদ দিন">' + I.x + '</button></div>'; }).join('')
+      + (b.photos.length < (b.photoMax || 6) ? '<label class="sp-ph">' + I.cam + '<span>' + (b.photos.length < 2 ? 'ছবি ' + bn(b.photos.length + 1) + ' · ' + PHN[b.photos.length] : 'আরও ছবি') + '</span><input type="file" accept="image/*" capture="environment" data-ph="bag" multiple></label>' : '') + '</div>'
+      + (b.oldPhotos && b.oldPhotos.length ? '<h4 style="padding-top:0;font-size:14px">আগের ব্যাগের ছবি</h4><div class="sp-oldph">' + b.oldPhotos.map(function (x) { return '<img alt="ব্যাগ ' + bn(x.bodyNo) + '" title="ব্যাগ ' + bn(x.bodyNo) + '" src="' + esc(x.thumb) + '">'; }).join('') + '</div>' : '') + '</section>';
     if (b.openTrip) h += '<div class="sp-banner b-info">' + I.box + '<div><b>এখন চালান ' + esc(b.openTrip) + '-এ আছে</b><button type="button" class="sp-x" data-shp="go" data-v="' + esc(b.openTrip) + '">চালানটা খুলুন</button></div></div>';
     h += '<section class="sp-card"><h4>' + I.box + 'ট্রিপ</h4>' + (b.trips.length ? b.trips.map(function (t) { return '<button type="button" class="sp-li" data-shp="go" data-v="' + esc(t.code) + '">' + chip(t.code, I.box) + '<span class="nm">' + t.from + ' → ' + t.to + '<small>' + day(t.at) + ' · ব্যাগ ' + bn(t.bodyNo) + '</small></span><span class="sp-pill ' + (t.done ? 'pk-ok' : 'pk-n') + '" style="margin:0">' + (t.done ? 'মিলেছে' : 'চলছে') + '</span></button>'; }).join('') : '<div class="sp-empty" style="margin:4px 16px 16px">এখনো কোনো ট্রিপ হয়নি</div>') + '</section>';
     if (b.changes.length) h += '<section class="sp-card"><h4>' + I.swap + 'ব্যাগ বদলের ইতিহাস</h4>' + b.changes.map(function (c) { return '<div class="sp-li"><span class="nm">ব্যাগ ' + bn(c.oldBody) + ' → ব্যাগ ' + bn(c.newBody) + '<small data-noi18n>' + esc(c.reason) + ' · ' + esc(c.by) + ' · ' + day(c.at) + '</small></span></div>'; }).join('') + '</section>';
     return h;
   }
+  var PHN = ['সামনে থেকে', 'পাশ থেকে'];
+  function photoSlots(list, min, kind) {
+    var h = '<div class="sp-phs">';
+    list.forEach(function (x, i) { h += '<div class="sp-ph"><img alt="লাগেজের ছবি ' + bn(i + 1) + '" src="' + esc(x.thumb || x.photo) + '"><button type="button" class="x" data-shp="phdel" data-v="' + i + '" aria-label="ছবি ' + bn(i + 1) + ' বাদ দিন">' + I.x + '</button></div>'; });
+    var free = Math.min(6, Math.max(min, list.length + 1)) - list.length;
+    for (var k = 0; k < free; k++) { var n = list.length + k; h += '<label class="sp-ph">' + I.cam + '<span>' + (n < 2 ? 'ছবি ' + bn(n + 1) + ' · ' + PHN[n] : 'আরও ছবি') + '</span><input type="file" accept="image/*" capture="environment" data-ph="' + kind + '"' + (k === free - 1 ? ' multiple' : '') + '></label>'; }
+    return h + '</div>';
+  }
+  function bagNewView() {
+    var ph = SH.newPhotos, ok = ph.length >= 2;
+    return backBtn(SH.bnewFor ? (SH.cur && SH.cur.code ? SH.cur.code + '.pack' : '') : 'bags', 'ফিরে যান') + '<section class="sp-card"><h4>' + I.bag + 'নতুন লাগেজ</h4><div class="sp-form">'
+      + '<div class="sp-fld"><label for="sp_bn">ডাকনাম (যেমন: নীল বড়)</label><input id="sp_bn" maxlength="60" value="' + esc(SH.bnewName || '') + '"></div></div>'
+      + '<h4 style="padding-top:0">' + I.cam + 'লাগেজের ছবি · অন্তত ২টা</h4>' + photoSlots(ph, 2, 'new') + '</section>'
+      + '<div class="sp-act"><button type="button" class="sp-pri" data-shp="bagcreate"' + (ok ? '' : ' disabled') + '>' + I.qr + (ok ? 'লাগেজ তৈরি করুন · কোড আর QR' : 'আরও ' + bn(2 - ph.length) + 'টা ছবি দিন') + '</button></div>';
+  }
   function bagReplaceView(b) {
     return backBtn('b.' + b.code, b.code) + '<div class="sp-banner b-bad">' + I.warn + '<div><b>কোড ' + esc(b.code) + ' আর QR একই থাকবে</b>নতুন ব্যাগ হবে "ব্যাগ ' + bn(b.bodyNo + 1) + '"। পুরনো ব্যাগ থেকে ট্যাগটা কেটে ফেলুন, যাতে একই QR দুই ব্যাগে না থাকে। তারপর নতুন ব্যাগে ট্যাগ প্রিন্ট করে লাগান।</div></div>'
       + '<section class="sp-card"><h4>' + I.swap + 'কেন বদলাচ্ছেন</h4><div class="sp-form"><div class="sp-quick">' + ['ছিঁড়ে গেছে', 'চাকা / হাতল ভাঙা', 'হারিয়ে গেছে', 'চেইন নষ্ট'].map(function (r) { return '<button type="button" data-shp="rsn" data-v="' + esc(r) + '">' + r + '</button>'; }).join('') + '</div>'
       + '<div class="sp-fld"><label for="sp_rr">কারণ</label><input id="sp_rr" maxlength="200"></div><div class="sp-fld"><label for="sp_rn">নতুন ব্যাগের ডাকনাম (না বদলালে খালি রাখুন)</label><input id="sp_rn" maxlength="60" placeholder="' + esc(b.nickname) + '"></div></div></section>'
-      + '<div class="sp-act"><button type="button" class="sp-pri" data-shp="replace">' + I.swap + 'ব্যাগ বদলান · ব্যাগ ' + bn(b.bodyNo + 1) + '</button></div>';
+      + '<section class="sp-card"><h4>' + I.cam + 'নতুন ব্যাগের ছবি · অন্তত ২টা</h4>' + photoSlots(SH.newPhotos, 2, 'new') + '</section>'
+      + '<div class="sp-act"><button type="button" class="sp-pri" data-shp="replace"' + (SH.newPhotos.length >= 2 ? '' : ' disabled') + '>' + I.swap + (SH.newPhotos.length >= 2 ? 'ব্যাগ বদলান · ব্যাগ ' + bn(b.bodyNo + 1) : 'নতুন ব্যাগের ' + bn(2 - SH.newPhotos.length) + 'টা ছবি দিন') + '</button></div>';
   }
   // ---------- a traveller
   function personView(p) {
@@ -69520,7 +69555,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     var r = rt(), page = r.page, detail = '', list = '', tab = '';
     if (/^(BG|C)-\d+$/.test(page)) { if (SH.busy !== 'find:' + page) { SH.busy = 'find:' + page; openFound(page, true); } return '<div class="shp"><div class="sp-wait">খুঁজছি…</div></div>'; }
     if (page === 'people' || /^p\./.test(page) || page === 'pnew' || /^pe\./.test(page)) tab = 'people';
-    else if (page === 'bags' || /^b\./.test(page)) tab = 'bags';
+    else if (page === 'bags' || page === 'bnew' || /^b\./.test(page)) tab = 'bags';
     else if (page === 'notify') tab = 'notify';
     if (tab === 'people') list = top('people') + peopleView(/^p\./.test(page) ? Number(page.slice(2)) : 0);
     else if (tab === 'bags') list = top('bags') + bagsView(/^b\./.test(page) ? page.slice(2).split('.')[0] : '');
@@ -69530,6 +69565,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
       else { var s = SH.cur; detail = r.sub === 'pack' ? (s.step === 0 ? packView(s) : shipView(s)) : r.sub === 'carrier' ? carrierView(s) : r.sub === 'check' ? checkView(s) : r.sub === 'money' ? (canMoney() ? moneyView(s) : shipView(s)) : r.sub === 'air' ? airView(s) : shipView(s); }
     } else if (page === 'new') detail = newView();
     else if (page === 'notify') detail = notifyView();
+    else if (page === 'bnew') detail = bagNewView();
     else if (page === 'pnew') detail = personEdit(null);
     else if (/^pe\./.test(page)) detail = SH.person && SH.person.id === Number(page.slice(3)) ? personEdit(SH.person) : (loadPerson(Number(page.slice(3))), '<div class="sp-wait">লোড হচ্ছে…</div>');
     else if (/^p\./.test(page)) { var id = Number(page.slice(2)); detail = SH.person && SH.person.id === id ? personView(SH.person) : (loadPerson(id), '<div class="sp-wait">লোড হচ্ছে…</div>'); }
@@ -69538,6 +69574,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     if (wide()) return '<div class="shp"><div class="sp-split"><div>' + list + '</div><aside class="sp-pane">' + detail + '</aside></div></div>';
     return '<div class="shp">' + (detail || list) + '</div>';
   }
+  function lightbox(src) { var o = document.createElement('div'); o.className = 'sp-lb'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', 'লাগেজের ছবি'); o.innerHTML = '<img alt="" src="' + esc(src) + '"><button type="button" aria-label="বন্ধ করুন">×</button>'; o.addEventListener('click', function () { o.remove(); }); document.body.appendChild(o); var b = o.querySelector('button'); if (b) b.focus(); }
   function paint() {
     if (typeof VIEW === 'undefined' || VIEW !== 'ship') return;
     var v = el('view'); if (!v) return;
@@ -69559,8 +69596,16 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
   function readImg(file, max, then) {
     var fr = new FileReader(); fr.onload = function () { var im = new Image(); im.onload = function () { var k = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); then(c.toDataURL('image/jpeg', 0.8)); }; im.src = fr.result; }; fr.readAsDataURL(file);
   }
+  function takePhotos(files, each, done) {
+    var list = [].slice.call(files || []).filter(function (f) { return /^image\//.test(f.type); }), left = list.length;
+    if (!left) { toast('এটা ছবি নয়। ক্যামেরা দিয়ে তুলুন বা ছবি বেছে নিন।', true); return; }
+    list.forEach(function (f) { readImg(f, 1100, function (big) { readImg(f, 180, function (small) { each({ photo: big, thumb: small }); if (--left === 0 && done) done(); }); }); });
+  }
   document.addEventListener('change', function (e) {
     if (typeof VIEW === 'undefined' || VIEW !== 'ship') return;
+    var phk = e.target.getAttribute && e.target.getAttribute('data-ph');
+    if (phk === 'new') { var nm = el('sp_bn'); if (nm) SH.bnewName = nm.value; takePhotos(e.target.files, function (x) { if (SH.newPhotos.length < 6) SH.newPhotos.push(x); }, paint); return; }
+    if (phk === 'bag' && SH.bag) { var bg = SH.bag, q = []; takePhotos(e.target.files, function (x) { q.push(x); }, function () { (function next() { var x = q.shift(); if (!x) return; call('erpShipBagPhoto', { id: bg.id, add: x }, function (r) { SH.bag = r; SH.bags = null; next(); }); })(); }); return; }
     if (e.target.getAttribute && e.target.getAttribute('data-echo') != null) { var eo = +e.target.getAttribute('data-echo'), ee = el(e.target.id + '_e'), iso = fromDtl(e.target.value, eo); if (ee) ee.textContent = iso ? when(iso, eo === 9 ? 'ICN' : 'DAC') : ''; }
     if (e.target.id === 'sp_cp') { var nw = el('sp_newp'); if (nw) nw.hidden = !!e.target.value; }
     if (e.target.id === 'sp_pph' && e.target.files && e.target.files[0]) readImg(e.target.files[0], 360, function (d) { SH.photo = d; var l = e.target.parentNode; if (l) { var im = l.querySelector('img') || document.createElement('img'); im.alt = ''; im.src = d; if (!im.parentNode) { var sv = l.querySelector('svg'); if (sv) sv.remove(); l.insertBefore(im, e.target); } } });
@@ -69577,11 +69622,19 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     if (typeof VIEW === 'undefined' || VIEW !== 'ship') return;
     var t = e.target.closest('[data-shp]'); if (!t) return;
     var k = t.getAttribute('data-shp'), v = t.getAttribute('data-v') || '', s = SH.cur;
-    if (k === 'go') { if (v === '' ) SH.list = null; if (v === 'bags') SH.bags = null; if (v === 'people') SH.people = null; if (/^b\./.test(v)) SH.bag = null; return nav(v); }
+    if (k === 'go') { if (v === '' ) SH.list = null; if (v === 'bags') SH.bags = null; if (v === 'people') SH.people = null; if (/^b\./.test(v)) { SH.bag = null; SH.newPhotos = []; } return nav(v); }
     if (k === 'person') { SH.person = null; return nav('p.' + v); }
     if (k === 'newperson') { SH.photo = null; return nav('pnew'); }
     if (k === 'editperson') { SH.photo = null; return nav('pe.' + SH.person.id); }
-    if (k === 'newbag') { var nk = prompt('নতুন লাগেজের ডাকনাম (যেমন: নীল বড়)'); if (!nk) return; return call('erpShipBagNew', { nickname: nk }, function (r) { SH.bag = r; SH.bags = null; nav('b.' + r.code); toast('নতুন কোড ' + esc(r.code) + ' আর QR তৈরি হলো। ট্যাগ প্রিন্ট করুন।'); }); }
+    if (k === 'newbag') { SH.newPhotos = []; SH.bnewName = ''; SH.bnewFor = 0; return nav('bnew'); }
+    if (k === 'bagnewtrip') { SH.newPhotos = []; SH.bnewName = ''; SH.bnewFor = s.id; return nav('bnew'); }
+    if (k === 'phdel') { SH.newPhotos.splice(+v, 1); var nm2 = el('sp_bn'); if (nm2) SH.bnewName = nm2.value; return paint(); }
+    if (k === 'phview') return lightbox(SH.bag.photos[+v].photo);
+    if (k === 'phrm') { if (!confirm('এই ছবিটা বাদ দেবেন?')) return; return call('erpShipBagPhoto', { id: SH.bag.id, remove: +v }, function (r) { SH.bag = r; SH.bags = null; }); }
+    if (k === 'bagcreate') { var bnm = (el('sp_bn') || {}).value || ''; if (!bnm.trim()) { toast('লাগেজের একটা ডাকনাম দিন', true); return; } var forT = SH.bnewFor;
+      return call('erpShipBagNew', { nickname: bnm.trim(), photos: SH.newPhotos }, function (r) { SH.newPhotos = []; SH.bnewName = ''; SH.bags = null; SH.bag = r;
+        if (forT) return call('erpShipBagAdd', { id: forT, bagId: r.id }, function (tr) { setCur(tr); SH.bnewFor = 0; nav(tr.code + '.pack'); toast('লাগেজ ' + esc(r.code) + ' তৈরি হলো আর চালানে যোগ হলো। ট্যাগ প্রিন্ট করুন।'); });
+        nav('b.' + r.code); toast('নতুন কোড ' + esc(r.code) + ' আর QR তৈরি হলো। ট্যাগ প্রিন্ট করুন।'); }); }
     if (k === 'filter') { SH.filter = v; return paint(); }
     if (k === 'scan') return scanThen(function (x) { openFound(x); });
     if (k === 'ntype') { SH.newType = v; return paint(); }
@@ -69590,7 +69643,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     if (k === 'pngperson') return savePersonPng(SH.person);
     if (k === 'bagrename') { var nn = prompt('নতুন ডাকনাম', SH.bag.nickname); if (!nn) return; return call('erpShipBagSave', { id: SH.bag.id, nickname: nn }, function (r) { SH.bag = r; SH.bags = null; }); }
     if (k === 'rsn') { var rr = el('sp_rr'); if (rr) rr.value = v; return; }
-    if (k === 'replace') return call('erpShipBagReplace', { id: SH.bag.id, reason: el('sp_rr').value, nickname: el('sp_rn').value }, function (r) { SH.bag = r; SH.bags = null; nav('b.' + r.code); toast('এখন ব্যাগ ' + bn(r.bodyNo) + '। একই QR প্রিন্ট করে নতুন ব্যাগে লাগান।'); });
+    if (k === 'replace') return call('erpShipBagReplace', { id: SH.bag.id, reason: el('sp_rr').value, nickname: el('sp_rn').value, photos: SH.newPhotos }, function (r) { SH.newPhotos = []; SH.bag = r; SH.bags = null; nav('b.' + r.code); toast('এখন ব্যাগ ' + bn(r.bodyNo) + '। একই QR প্রিন্ট করে নতুন ব্যাগে লাগান।'); });
     if (k === 'nsend') return call('erpShipNotifySend', { id: s.id, kind: v }, function (r) { SH.notes[s.code] = r; SH.notify = null; toast('হোয়াটসঅ্যাপে পাঠানো হলো।'); });
     if (k === 'nsave') return call('erpShipNotifySave', { team: (el('sp_team') || {}).value || '', carrier: !!(el('sp_tc') || {}).checked }, function (r) { SH.notify = r; SH.notes = {}; toast(r.wa && r.wa.connected ? 'সেভ হলো।' : 'সেভ হলো। হোয়াটসঅ্যাপ যুক্ত করলে বার্তা যাওয়া শুরু হবে।'); });
     if (k === 'conn') { try { SET_TAB = 'connections'; } catch (x) {} return go('settings'); }

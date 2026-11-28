@@ -110,7 +110,9 @@ export async function erpShips(ctx, payload) {
 }
 
 async function bagsOf(ctx, shipId) {
-  return ctx.tx`select b.id, b.code, b.nickname, b.body_no as now_body, b.retired_at, tb.body_no from ship_trip_bags tb join ship_bags b on b.id = tb.bag_id
+  return ctx.tx`select b.id, b.code, b.nickname, b.body_no as now_body, b.retired_at, tb.body_no,
+                  (select f.thumb from ship_bag_photos f where f.bag_id = b.id and f.body_no = tb.body_no and f.removed_at is null order by f.id limit 1) as thumb
+                from ship_trip_bags tb join ship_bags b on b.id = tb.bag_id
                 where tb.ship_id = ${shipId} and tb.removed_at is null order by b.code`;
 }
 export async function erpShip(ctx, payload) {
@@ -128,7 +130,7 @@ export async function erpShip(ctx, payload) {
   const carrier = t.carrier_id ? (await ctx.tx`select id, code, name, phone, email, city, wa_ok from ship_people where id = ${t.carrier_id}`)[0] : null;
   const bags = await bagsOf(ctx, t.id);
   return tripOut(t, {
-    bags: bags.map((b) => ({ id: Number(b.id), code: b.code, nickname: b.nickname, bodyNo: b.body_no, nowBody: b.now_body })),
+    bags: bags.map((b) => ({ id: Number(b.id), code: b.code, nickname: b.nickname, bodyNo: b.body_no, nowBody: b.now_body, thumb: b.thumb || '' })),
     items: items.map((i) => ({ id: Number(i.id), name: i.name, qty: i.qty, got: i.got_qty, for: i.for_label, place: i.place, bagId: i.bag_id == null ? null : Number(i.bag_id) })),
     events: events.map((e) => ({ what: e.what, by: e.by_name, at: iso(e.at) })),
     carrier: carrier ? { id: Number(carrier.id), code: carrier.code, name: carrier.name, phone: carrier.phone, email: carrier.email, city: carrier.city, waOk: carrier.wa_ok } : null,
@@ -212,11 +214,25 @@ async function bagRow(ctx, id) {
   if (!b) throw new Error('That bag is not here any more.');
   return b;
 }
-async function bagCreate(ctx, nickname) {
+// ship-6: photos of the physical bag (owner: "at least 2"); each body (bag number) has its own
+const PHOTO_MAX = 6;
+async function photoAdd(ctx, b, ph, who) {
+  const photo = str(ph && ph.photo), thumb = str(ph && ph.thumb);
+  if (!IMG.test(photo) || photo.length > 700000) throw new Error('That photo could not be used. Take it again or choose another one.');
+  if (thumb && (!IMG.test(thumb) || thumb.length > 60000)) throw new Error('That photo could not be used. Take it again or choose another one.');
+  const n = (await ctx.tx`select count(*)::int n from ship_bag_photos where bag_id = ${b.id} and body_no = ${b.body_no} and removed_at is null`)[0].n;
+  if (n >= PHOTO_MAX) throw new Error('At most ' + PHOTO_MAX + ' photos per bag. Remove one first.');
+  await ctx.tx`insert into ship_bag_photos (business_id, bag_id, body_no, photo, thumb, by_name) values (${ctx.biz}, ${b.id}, ${b.body_no}, ${photo}, ${thumb || photo}, ${who})`;
+}
+async function bagCreate(ctx, nickname, photos) {
   const nk = str(nickname).slice(0, 60);
   if (!nk) throw new Error('Give the bag a nickname you can see (for example: blue big).');
+  const list = Array.isArray(photos) ? photos : [];
+  if (list.length > PHOTO_MAX) throw new Error('At most ' + PHOTO_MAX + ' photos per bag.');
   const code = await nextCode(ctx, 'ship_bags', 'BG-');
-  return (await ctx.tx`insert into ship_bags (business_id, code, nickname) values (${ctx.biz}, ${code}, ${nk}) returning *`)[0];
+  const b = (await ctx.tx`insert into ship_bags (business_id, code, nickname) values (${ctx.biz}, ${code}, ${nk}) returning *`)[0];
+  if (list.length) { const who = await whoName(ctx); for (const ph of list) await photoAdd(ctx, b, ph, who); }
+  return b;
 }
 export async function erpShipBagAdd(ctx, payload) {
   await gate(ctx);
@@ -417,9 +433,11 @@ export async function erpShipReturn(ctx, payload) {
 export async function erpShipBags(ctx) {
   await gate(ctx);
   const rows = await ctx.tx`select b.*, (select s.code from ship_trip_bags tb join ships s on s.id = tb.ship_id where tb.bag_id = b.id and tb.removed_at is null and s.checked_at is null order by s.id desc limit 1) as open_trip,
-      (select count(*)::int from ship_trip_bags tb where tb.bag_id = b.id and tb.removed_at is null) as trips
+      (select count(*)::int from ship_trip_bags tb where tb.bag_id = b.id and tb.removed_at is null) as trips,
+      (select f.thumb from ship_bag_photos f where f.bag_id = b.id and f.body_no = b.body_no and f.removed_at is null order by f.id limit 1) as thumb,
+      (select count(*)::int from ship_bag_photos f where f.bag_id = b.id and f.body_no = b.body_no and f.removed_at is null) as photos
     from ship_bags b where b.business_id = ${ctx.biz} order by b.retired_at nulls first, b.code`;
-  return { bags: rows.map((b) => ({ id: Number(b.id), code: b.code, nickname: b.nickname, bodyNo: b.body_no, retired: !!b.retired_at, openTrip: b.open_trip || null, trips: b.trips })) };
+  return { bags: rows.map((b) => ({ id: Number(b.id), code: b.code, nickname: b.nickname, bodyNo: b.body_no, retired: !!b.retired_at, openTrip: b.open_trip || null, trips: b.trips, thumb: b.thumb || '', photos: b.photos })) };
 }
 export async function erpShipBag(ctx, payload) {
   await gate(ctx);
@@ -429,14 +447,29 @@ export async function erpShipBag(ctx, payload) {
   const trips = await ctx.tx`select s.code, s.from_port, s.to_port, s.step, s.checked_at, s.created_at, tb.body_no from ship_trip_bags tb join ships s on s.id = tb.ship_id
                              where tb.bag_id = ${b.id} and tb.removed_at is null order by s.id desc`;
   const changes = await ctx.tx`select old_body, new_body, reason, by_name, at from ship_bag_changes where bag_id = ${b.id} order by id desc`;
-  return { id: Number(b.id), code: b.code, nickname: b.nickname, bodyNo: b.body_no, retired: !!b.retired_at, createdAt: iso(b.created_at),
+  const ph = await ctx.tx`select id, body_no, photo, thumb, by_name, at from ship_bag_photos where bag_id = ${b.id} and removed_at is null order by body_no desc, id`;
+  const cur = ph.filter((x) => x.body_no === b.body_no), old = ph.filter((x) => x.body_no !== b.body_no);
+  return { photos: cur.map((x) => ({ id: Number(x.id), photo: x.photo, thumb: x.thumb, by: x.by_name, at: iso(x.at) })),
+    oldPhotos: old.map((x) => ({ id: Number(x.id), bodyNo: x.body_no, thumb: x.thumb, at: iso(x.at) })), photoMax: PHOTO_MAX,
+    id: Number(b.id), code: b.code, nickname: b.nickname, bodyNo: b.body_no, retired: !!b.retired_at, createdAt: iso(b.created_at),
     openTrip: (trips.find((x) => !x.checked_at) || {}).code || null,
     trips: trips.map((x) => ({ code: x.code, from: x.from_port, to: x.to_port, done: !!x.checked_at, at: iso(x.created_at), bodyNo: x.body_no })),
     changes: changes.map((c) => ({ oldBody: c.old_body, newBody: c.new_body, reason: c.reason, by: c.by_name, at: iso(c.at) })) };
 }
 export async function erpShipBagNew(ctx, payload) {
   await gate(ctx);
-  const b = await bagCreate(ctx, payload && payload.nickname);
+  const b = await bagCreate(ctx, payload && payload.nickname, payload && payload.photos);
+  return erpShipBag(ctx, { code: b.code });
+}
+/** A photo of the bag in hand now: add one, or strike one out ({id, add:{photo, thumb}} | {id, remove}). */
+export async function erpShipBagPhoto(ctx, payload) {
+  await gate(ctx);
+  const p = payload || {};
+  const b = await bagRow(ctx, p.id);
+  if (p.remove) {
+    const r = await ctx.tx`update ship_bag_photos set removed_at = now() where bag_id = ${b.id} and id = ${int(p.remove)} and removed_at is null returning id`;
+    if (!r.length) throw new Error('That photo is not here any more.');
+  } else await photoAdd(ctx, b, p.add, await whoName(ctx));
   return erpShipBag(ctx, { code: b.code });
 }
 export async function erpShipBagSave(ctx, payload) {
@@ -461,6 +494,8 @@ export async function erpShipBagReplace(ctx, payload) {
   await ctx.tx`update ship_bags set body_no = ${nb}, nickname = ${nk || b.nickname} where id = ${b.id}`;
   // a bag waiting to be packed takes the new body along
   await ctx.tx`update ship_trip_bags tb set body_no = ${nb} from ships s where tb.bag_id = ${b.id} and s.id = tb.ship_id and s.step = 0 and tb.removed_at is null`;
+  const list = Array.isArray(p.photos) ? p.photos.slice(0, PHOTO_MAX) : [];
+  if (list.length) { const nb2 = { ...b, body_no: nb }, who = await whoName(ctx); for (const ph of list) await photoAdd(ctx, nb2, ph, who); }
   return erpShipBag(ctx, { code: b.code });
 }
 
@@ -513,4 +548,4 @@ export async function erpShipPersonSave(ctx, payload) {
 }
 
 export const HANDLERS = { erpShips, erpShip, erpShipFind, erpShipNew, erpShipItems, erpShipBagAdd, erpShipBagRemove, erpShipStep, erpShipCarrier, erpShipAir, erpShipCheck,
-  erpShipMoney, erpShipReturn, erpShipBags, erpShipBag, erpShipBagNew, erpShipBagSave, erpShipBagReplace, erpShipPeople, erpShipPerson, erpShipPersonSave };
+  erpShipMoney, erpShipReturn, erpShipBags, erpShipBag, erpShipBagNew, erpShipBagSave, erpShipBagReplace, erpShipBagPhoto, erpShipPeople, erpShipPerson, erpShipPersonSave };

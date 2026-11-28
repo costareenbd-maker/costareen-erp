@@ -151,7 +151,7 @@ export const ERP_ALLOW = {
   erpShipCarrier: 'sales', erpShipAir: 'sales', erpShipCheck: 'sales', erpShipMoney: 'manager', erpShipReturn: 'sales',
   erpShipPeople: 'sales', erpShipPerson: 'sales', erpShipPersonSave: 'sales',
   erpShipNotify: 'sales', erpShipNotes: 'sales', erpShipNotifySave: 'manager', erpShipNotifySend: 'manager',
-  erpShipBagAdd: 'sales', erpShipBagRemove: 'sales', erpShipBags: 'sales', erpShipBag: 'sales', erpShipBagNew: 'sales', erpShipBagSave: 'sales', erpShipBagReplace: 'manager',
+  erpShipBagAdd: 'sales', erpShipBagRemove: 'sales', erpShipBags: 'sales', erpShipBag: 'sales', erpShipBagNew: 'sales', erpShipBagSave: 'sales', erpShipBagReplace: 'manager', erpShipBagPhoto: 'sales',
 };
 
 // Calls that only read (ERP_READS, ERP.js:168). Every other call is taken to
