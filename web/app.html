@@ -70103,7 +70103,8 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
 .dk-consent.no{background:var(--dk-wait-soft);color:var(--dk-wait-ink)}
 .dk-cbox{border:1px solid var(--dk-rule);border-radius:14px;padding:12px;margin:10px 0}
 .dk-cbox.on{box-shadow:0 0 0 2px var(--dk-ink) inset}
-.dk-f{display:grid;gap:4px;margin:0 0 10px;font:600 13px "Hind Siliguri";color:var(--dk-ink2)}
+.dk-f{display:grid;gap:4px;margin:0 0 10px;font:600 13px "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;color:var(--dk-ink2)}
+.dk-wb.calm .dk-btn.amber{background:var(--dk-ink);color:var(--dk-paper)}
 .dk-f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .dk-hrs{display:grid;grid-template-columns:70px 1fr 1fr 1fr 1fr;gap:6px;align-items:center;font-size:13px}
 .dk-hrs .dk-in{min-height:34px;padding:4px 6px;font-size:13px}
@@ -70179,7 +70180,7 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
       var b = K.D.bot || {};
       return '<div class="dk-wb calm"><p>' + (b.on ? 'কিছুই আপনার অপেক্ষায় নেই' : 'বুকিং বটের WhatsApp নম্বর এখনো জোড়া হয়নি') +
         '<small>' + (b.on ? 'বট আজ ' + bn(b.chats) + 'টা চ্যাট দেখেছে, ' + bn(b.booked) + 'টা বুকিং করেছে' : 'Inbox › WhatsApp নম্বর-এ একটা নম্বর জুড়ে কাজ হিসেবে “Doctor booking” বাছুন') + '</small></p>' +
-        (b.on ? '' : '<span class="dk-sp"></span><button type="button" class="dk-btn dark" data-dk="tab" data-v="bot">কীভাবে জুড়বেন</button>') + '</div>';
+        (b.on ? '' : '<span class="dk-sp"></span><button type="button" class="dk-btn amber" data-dk="tab" data-v="bot">কীভাবে জুড়বেন</button>') + '</div>';
     }
     return '<div class="dk-wb"><b class="f">' + bn(w.length) + '</b><p>' + bn(w.length) + 'টা বুকিং ডাক্তারের উত্তরের অপেক্ষায়<small>বট ডাক্তারকে WhatsApp-এ জিজ্ঞেস করেছে; সময় পার হলে রোগীকে অন্য সময় দেবে</small></p><span class="dk-sp"></span>' +
       '<button type="button" class="dk-btn amber" data-dk="jump" data-v="dk-waits">দেখুন</button></div>';
@@ -70317,7 +70318,7 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
     var f = function (k, label, ta) { return '<label class="dk-f">' + label + (ta ? '<textarea class="dk-ta" data-set="' + k + '"' + (own ? '' : ' disabled') + '>' + esc(s[k] || '') + '</textarea>' : '<input class="dk-in" data-set="' + k + '" value="' + esc(s[k] == null ? '' : s[k]) + '"' + (own ? '' : ' disabled') + '>') + '</label>'; };
     return '<div class="dk-wb' + (b.on ? ' calm' : '') + '"><p>' + (b.on ? 'বুকিং বট চালু' + (b.live ? '' : ' (প্র্যাকটিস মোডে)') + ' · ' + esc(b.name) : 'বুকিং বটের WhatsApp নম্বর জোড়া নেই') +
       '<small>' + (b.on ? 'গত ২৪ ঘণ্টায় ' + bn(b.chats) + 'টা চ্যাট, ' + bn(b.booked) + 'টা বুকিং' : 'Alvi-র মতো আলাদা একটা নম্বর লাগবে। Inbox › WhatsApp নম্বর › নতুন নম্বর জুড়ুন › কাজ: “Doctor booking”।') + '</small></p>' +
-      (b.on ? '' : '<span class="dk-sp"></span><button type="button" class="dk-btn dark" data-dk="goinbox">Inbox খুলুন</button>') + '</div>' +
+      (b.on ? '' : '<span class="dk-sp"></span><button type="button" class="dk-btn amber" data-dk="goinbox">Inbox খুলুন</button>') + '</div>' +
       '<div class="dk-cards" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))"><div class="dk-card"><h3 class="dk-h4" style="margin-top:0">বট যা করে</h3><div class="dk-hist" style="--dc:var(--dk-ink)">' +
       ['রোগী লিখলে: সমস্যা আর কতদিন, তারপর সম্মতি, নাম-বয়স — এক প্রশ্নে এক কথা', 'ডাক্তারের ফাঁকা ৩টা সময় দেয়; রোগী বাছলে সময়টা ধরে রাখে', 'ডাক্তারকে WhatsApp-এ জিজ্ঞেস করে; “হ্যাঁ” = পাকা, “না” = রোগীকে অন্য সময়', 'উত্তর না এলে অর্ধেক সময়ে একবার মনে করায়; সময় পার হলে ছেড়ে দেয়', 'আগের দিন আর কলের আগে রোগীকে রিমাইন্ডার (লিংকসহ); ডাক্তারকেও', 'নিজেকে কখনো AI বলে না; রোগ নির্ণয় বা ওষুধের কথা বলে না — ডাক্তার বলবেন'].map(function (t) { return '<div>' + t + '</div>'; }).join('') +
       '</div></div><div class="dk-card"><h3 class="dk-h4" style="margin-top:0">বটের নিয়ম' + (own ? '' : ' (শুধু মালিক বদলাতে পারেন)') + '</h3>' +
