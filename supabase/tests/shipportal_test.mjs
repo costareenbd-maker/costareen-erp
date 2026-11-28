@@ -179,6 +179,20 @@ check('and its shipment the flight time', sh.flight_no === 'BS 361' && new Date(
 x = await act('me', { k: k2 });
 check('history: approved trip with its shipment', x.body.history.some((h) => h.id === outId && h.status === 'made' && h.trip && h.trip.code), x.body.history);
 
+// ship-11: who flies on which flight (however the number is typed), and the ticket scan on the form
+check('flight numbers match however typed', P.flightKey('CZ 007') === 'CZ7' && P.flightKey('cz0007') === 'CZ7' && P.flightKey('KE657') === 'KE657', [P.flightKey('CZ 007'), P.flightKey('cz0007')]);
+x = await act('request', { k, body: { direction: 'kr_bd', fromAirport: 'ICN', toAirport: 'DAC', leaveOn: '2027-04-10', flight: 'CZ 007', bags: 1, agree: true } });
+const kRina = (await sql`select portal_token from ship_people where code = 'C-0001' and business_id = ${B}`)[0].portal_token;
+x = await act('request', { k: k2, body: { direction: 'kr_bd', fromAirport: 'GMP', toAirport: 'DAC', leaveOn: '2027-04-10', flight: 'cz0007', bags: 2, bagKg: 23, agree: true } });
+check('Gimpo accepted', x.status === 200 && x.body.history.some((h) => h.fromAirport === 'GMP'), x.body);
+r = await sales('erpShipFlights', []);
+const g = r.ok && r.result.flights.find((f) => f.day === '2027-04-10' && f.flight === 'CZ7');
+check('two partners on the same flight', g && g.count === 2 && g.bags === 3, r.ok && r.result.flights);
+x = await act('scan', { k: k2, body: { ticket: { name: 'a.exe', mime: 'application/x-msdownload', data: PDF } } });
+check('scan: only PDF or pictures', x.status === 400, x.body);
+x = await act('scan', { k: k2, body: { ticket: { name: 't.pdf', mime: 'application/pdf', data: PDF } } });
+check('scan without an AI key: a plain "write it yourself" answer', x.status === 400 && /নিজে লিখুন/.test(x.body.error), x.body);
+
 // messages: 3 days before, with his own page
 r = await owner('erpShipPersonSave', [{ name: 'Rina', phone: '010-5555-6666', waOk: true }]);
 const p2 = r.result.id;

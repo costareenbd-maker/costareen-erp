@@ -69160,7 +69160,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
 
   if (typeof fdxNav === 'function') fdxNav('ship', 'Shipments', ICON, 'dash');
   try { VIEW_NAMES.ship = 'Shipments'; FDH_SUB.ship = 'Our goods Korea - Bangladesh: travellers with our bags, and air cargo'; } catch (e) {}
-  try { if (!SRV_READS.test('erpShipBags')) SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpShipTicketFile|erpShipRequests|erpShipGuides|erpShipTeam|erpShipNotify|erpShipNotes|erpShipBags|erpShipBag|erpShips|erpShip|erpShipFind|erpShipPeople|erpShipPerson|')); } catch (e) {}
+  try { if (!SRV_READS.test('erpShipBags')) SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpShipFlights|erpShipTicketFile|erpShipRequests|erpShipGuides|erpShipTeam|erpShipNotify|erpShipNotes|erpShipBags|erpShipBag|erpShips|erpShip|erpShipFind|erpShipPeople|erpShipPerson|')); } catch (e) {}
   try { if (typeof BN_DICT !== 'undefined') BN_DICT.Shipments = 'চালান'; } catch (e) {}
 
   // a QR link (#/ship/BG-0007, #/ship/C-0007) opened before the business list is known: the start-up clears the address, so keep it
@@ -69360,8 +69360,16 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     else if (diff) h += '<div class="sp-banner b-warn" style="margin:8px 0 0">' + I.warn + '<div><b>' + bn(diff) + 'টা তথ্য মিলছে না</b>পার্টনারকে ফোন করে নিশ্চিত হোন। টিকিটই ঠিক হলে নিচের বোতাম চাপুন।' + (canMoney() ? '<div style="margin-top:8px"><button type="button" class="sp-mini" data-shp="tkapply" data-v="' + r.id + '">' + I.ok + 'টিকিটের তথ্য বসান</button></div>' : '') + '</div></div>';
     return h;
   }
+  function loadFlights() { if (SH.busy === 'flights' || SH.flights) return; SH.busy = 'flights'; srv('erpShipFlights', [{}], function (r) { SH.busy = ''; SH.flights = r.flights || []; paint(); }, function () { SH.busy = ''; SH.flights = []; paint(); }); }
+  function flightsCard() {
+    loadFlights(); var F = SH.flights;
+    if (!F || !F.length) return '';
+    return '<section class="sp-card" style="margin-top:6px"><h4>' + I.plane + 'একই ফ্লাইটে কারা আসছেন</h4>' + F.map(function (g) {
+      return '<div class="sp-req"><div class="hd"><b><span class="code">' + esc(g.shown || g.flight) + '</span> · ' + dShort(g.day) + '</b><span class="sp-pill ' + (g.count > 1 ? 'pk-ok' : 'pk-n') + '" style="margin:0">' + bn(g.count) + ' জন · ' + bn(g.bags) + 'টা লাগেজ</span></div>'
+        + '<div class="sp-faces" style="padding:4px 0 0">' + g.people.map(function (m) { return '<div class="sp-face">' + faceOf(m) + '<span><b>' + esc(m.name) + '</b><small>' + esc(m.code) + (m.ship ? ' · ' + esc(m.ship) : ' · ' + esc((RQST[m.state] || ['', ''])[0])) + (m.kg ? ' · ' + bn(m.kg) + ' কেজি' : '') + '</small></span></div>'; }).join('') + '</div></div>'; }).join('') + '</section>';
+  }
   function reqView() {
-    loadReqs(); var h = peopleSeg('req');
+    loadReqs(); var h = peopleSeg('req') + flightsCard();
     if (!SH.reqs) return h + '<div class="sp-wait">লোড হচ্ছে…</div>';
     if (!SH.reqs.length) return h + '<div class="sp-empty">এখনো কোনো অনুরোধ নেই। ট্রাভেল পার্টনার নিজের পাতা থেকে "লাগেজ নিতে চাই" চাপলে এখানে আসবে।</div>';
     return h + '<section class="sp-card" style="margin-top:6px">' + SH.reqs.map(function (r) { var st = RQST[r.state] || ['', 'pk-n'];
@@ -69739,7 +69747,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
     if (typeof VIEW === 'undefined' || VIEW !== 'ship') return;
     var t = e.target.closest('[data-shp]'); if (!t) return;
     var k = t.getAttribute('data-shp'), v = t.getAttribute('data-v') || '', s = SH.cur;
-    if (k === 'go') { if (v === '' ) SH.list = null; if (v === 'bags') SH.bags = null; if (v === 'people') SH.people = null; if (/^b\./.test(v)) { SH.bag = null; SH.newPhotos = []; } if (v === 'tmnew' || /^tm\./.test(v)) SH.tmPhoto = null; if (/^gd\./.test(v)) SH.gdPort = ''; if (v === 'req') SH.reqs = null; return nav(v); }
+    if (k === 'go') { if (v === '' ) SH.list = null; if (v === 'bags') SH.bags = null; if (v === 'people') SH.people = null; if (/^b\./.test(v)) { SH.bag = null; SH.newPhotos = []; } if (v === 'tmnew' || /^tm\./.test(v)) SH.tmPhoto = null; if (/^gd\./.test(v)) SH.gdPort = ''; if (v === 'req') { SH.reqs = null; SH.flights = null; } return nav(v); }
     if (k === 'person') { SH.person = null; return nav('p.' + v); }
     if (k === 'newperson') { SH.photo = null; return nav('pnew'); }
     if (k === 'editperson') { SH.photo = null; return nav('pe.' + SH.person.id); }

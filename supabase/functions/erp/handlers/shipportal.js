@@ -203,6 +203,17 @@ export async function portalAct(ctx, a, { k, j, body }) {
         values (${ctx.biz}, ${p.id}, ${dir2}, ${r0.return_on}, ${r0.bags}, ${r0.devices}, ${r0.own_goods}, ${r0.to_airport || (dir2 === 'bd_kr' ? 'DAC' : 'ICN')}, ${r0.from_airport || (dir2 === 'bd_kr' ? 'ICN' : 'DAC')}, ${r0.bag_kg}, ${r0.id})`;
       return { status: 200, body: await mePayload(ctx, p) };
     }
+    if (a === 'scan') {
+      const f = b.ticket || {};
+      const mime = str(f.mime), data = str(f.data).replace(/^data:[^,]*,/, '');
+      if (!TICKET_MIME.test(mime) || !data || data.length > 7_000_000) return bad(400, 'টিকিট PDF বা ছবি (৫ MB-এর কম) দিন।');
+      const dayKey = 'ship_scans:' + p.id + ':' + day(ctx.now);
+      const used = int(await getConfig(ctx, dayKey, '0'));
+      if (used >= 6) return bad(429, 'আজ অনেকবার টিকিট পড়া হয়েছে। ঘরগুলো নিজে লিখুন, বা কাল আবার চেষ্টা করুন।');
+      await setConfig(ctx, dayKey, String(used + 1));
+      try { return { status: 200, body: { ok: true, read: await readTicketData(ctx, mime, data, f.name) } }; }
+      catch (_) { return bad(400, 'টিকিটটা পড়া গেল না। ঘরগুলো নিজে লিখুন, অথবা আরও পরিষ্কার ছবি দিন।'); }
+    }
     if (a === 'ticket') {
       // the e-ticket added later to one of his own trips
       const r0 = (await ctx.tx`select id from ship_requests where business_id = ${ctx.biz} and person_id = ${p.id} and id = ${int(b.requestId)}`)[0];
@@ -322,6 +333,45 @@ const TICKET_PROMPT = 'This is a flight e-ticket or itinerary receipt of a passe
   + '"to_airport": IATA code of the final arrival of the outbound journey, "depart_date": "YYYY-MM-DD", "depart_time": "HH:MM" local, "arrive_date": "YYYY-MM-DD", "arrive_time": "HH:MM" local, '
   + '"return_date": "YYYY-MM-DD" of the return flight if the ticket has one else "", "booking_ref": booking reference / PNR, "baggage_kg": checked baggage allowance in kg as a number or 0}. '
   + 'Use "" or 0 for anything not printed - never guess.';
+/** The ticket's details, read by the business's AI (a PDF or a photo, base64). */
+export async function readTicketData(ctx, mime, data, name) {
+  const { ai } = await import('../lib/ai.js');
+  const part = mime === 'application/pdf' ? { type: 'file', mime: 'application/pdf', data, name: name || 'ticket.pdf' } : { type: 'image', mime, data };
+  let out;
+  try { out = await ai(ctx, { purpose: 'receive', task: 'read', json: true, temperature: 0, maxTokens: 2000, messages: [{ role: 'user', content: [{ type: 'text', text: TICKET_PROMPT }, part] }] }); }
+  catch (e) { throw new Error('The AI could not read the ticket. ' + str(e && e.message).slice(0, 160)); }
+  const j = out && out.json && typeof out.json === 'object' ? out.json : null;
+  if (!j) throw new Error('The AI could not read the ticket. Open it and compare by eye.');
+  const clean = {}; for (const k of ['passenger', 'airline', 'flight', 'from_airport', 'to_airport', 'depart_date', 'depart_time', 'arrive_date', 'arrive_time', 'return_date', 'booking_ref']) clean[k] = str(j[k]).slice(0, 80);
+  clean.baggage_kg = Number(j.baggage_kg) > 0 && Number(j.baggage_kg) < 100 ? Number(j.baggage_kg) : 0;
+  clean.from_airport = clean.from_airport.toUpperCase(); clean.to_airport = clean.to_airport.toUpperCase();
+  return clean;
+}
+/** CZ 007, cz7, CZ0007 -> CZ7 (one flight however it is typed). */
+export function flightKey(f) {
+  const s = str(f).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const m = /^([A-Z0-9]{2})0*(\d{1,4})([A-Z]?)$/.exec(s);
+  return m ? m[1] + m[2] + m[3] : s;
+}
+/** Staff: who flies on which flight (upcoming trips and shipments, grouped by date + flight). */
+export async function erpShipFlights(ctx) {
+  await gate(ctx);
+  const reqs = await ctx.tx`select r.*, p.name, p.code, p.photo from ship_requests r join ship_people p on p.id = r.person_id
+    where r.business_id = ${ctx.biz} and r.state in ('new', 'talked', 'made') and r.leave_on >= current_date - 1 and r.flight <> '' order by r.leave_on`;
+  const ships = await ctx.tx`select s.*, p.name, p.code, p.photo, (select count(*)::int from ship_trip_bags tb where tb.ship_id = s.id and tb.removed_at is null) as bag_n
+    from ships s join ship_people p on p.id = s.carrier_id
+    where s.business_id = ${ctx.biz} and s.type = 'trip' and s.depart_at >= now() - interval '1 day' and s.flight_no <> '' and s.received_at is null`;
+  const G = {};
+  const add = (dayStr, flight, row) => { const k = dayStr + '|' + flightKey(flight); (G[k] = G[k] || { day: dayStr, flight: flightKey(flight), shown: str(flight), people: [] }).people.push(row); };
+  const seen = {};
+  for (const s of ships) { const d = new Date(new Date(s.depart_at).getTime() + (s.from_port === 'ICN' ? 9 : 6) * 3600e3).toISOString().slice(0, 10);
+    seen[s.carrier_id + '|' + d] = 1;
+    add(d, s.flight_no, { name: s.name, code: s.code, photo: s.photo || '', bags: s.bag_n, kg: null, state: 'ship', ship: s.code, from: s.from_port, to: s.to_port }); }
+  for (const r of reqs) { const d = day(r.leave_on); if (seen[r.person_id + '|' + d]) continue;
+    add(d, r.flight, { name: r.name, code: r.code, photo: r.photo || '', bags: r.bags, kg: r.bag_kg == null ? null : Number(r.bag_kg), state: r.state, ship: '', from: r.from_airport, to: r.to_airport }); }
+  const list = Object.values(G).sort((a, b) => (a.day + a.flight).localeCompare(b.day + b.flight));
+  return { flights: list.map((g) => ({ ...g, count: g.people.length, bags: g.people.reduce((n, x) => n + Number(x.bags || 0), 0) })) };
+}
 /** Staff: read the uploaded ticket with the business's AI (stored; the partner's own answers are not touched). */
 export async function erpShipTicketRead(ctx, payload) {
   await gate(ctx);
@@ -331,15 +381,7 @@ export async function erpShipTicketRead(ctx, payload) {
   if (!bytes) throw new Error('The ticket file could not be opened.');
   let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
   const data = btoa(bin);
-  const { ai } = await import('../lib/ai.js');
-  const part = r.ticket_mime === 'application/pdf' ? { type: 'file', mime: 'application/pdf', data, name: r.ticket_name || 'ticket.pdf' } : { type: 'image', mime: r.ticket_mime, data };
-  let out;
-  try { out = await ai(ctx, { purpose: 'receive', task: 'read', json: true, temperature: 0, maxTokens: 2000, messages: [{ role: 'user', content: [{ type: 'text', text: TICKET_PROMPT }, part] }] }); }
-  catch (e) { throw new Error('The AI could not read the ticket. ' + str(e && e.message).slice(0, 160)); }
-  const j = out && out.json && typeof out.json === 'object' ? out.json : null;
-  if (!j) throw new Error('The AI could not read the ticket. Open it and compare by eye.');
-  const clean = {}; for (const k of ['passenger', 'airline', 'flight', 'from_airport', 'to_airport', 'depart_date', 'depart_time', 'arrive_date', 'arrive_time', 'return_date', 'booking_ref']) clean[k] = str(j[k]).slice(0, 80);
-  clean.baggage_kg = Number(j.baggage_kg) > 0 && Number(j.baggage_kg) < 100 ? Number(j.baggage_kg) : 0;
+  const clean = await readTicketData(ctx, r.ticket_mime, data, r.ticket_name);
   await ctx.tx`update ship_requests set ticket_data = ${ctx.tx.json(clean)}, ticket_read_at = now(), updated_at = now() where id = ${r.id}`;
   return erpShipRequests(ctx, {});
 }
@@ -432,4 +474,4 @@ export async function erpShipMeetNote(ctx, payload) {
   return erpShip(ctx, { id: int(p.id) });
 }
 
-export const HANDLERS = { erpShipJoinLink, erpShipPortalLink, erpShipRequests, erpShipRequestSet, erpShipRequestMake, erpShipGuides, erpShipGuideSave, erpShipMeetNote, erpShipTicketRead, erpShipTicketFile, erpShipTicketApply };
+export const HANDLERS = { erpShipJoinLink, erpShipPortalLink, erpShipRequests, erpShipRequestSet, erpShipRequestMake, erpShipGuides, erpShipGuideSave, erpShipMeetNote, erpShipTicketRead, erpShipTicketFile, erpShipTicketApply, erpShipFlights };

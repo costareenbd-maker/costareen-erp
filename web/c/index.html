@@ -86,6 +86,8 @@ section>h2{font-size:17px;margin:0;padding:18px 18px 6px;line-height:1.4}
 .file{display:flex;gap:10px;align-items:center;border:2px dashed var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;position:relative}
 .file input{position:absolute;opacity:0;width:1px;height:1px}.file:focus-within{outline:3px solid var(--focus);outline-offset:2px}
 .file svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;flex:none}
+.scan{border:2px dashed var(--teal);background:var(--okbg)}.scan b{display:block;font-size:16px}.scan span{font-size:14px;color:var(--ink-2)}
+.more{border:1px solid var(--line);border-radius:14px;padding:2px 14px;margin:0 0 14px}.more summary{min-height:46px;display:flex;align-items:center;font-weight:700;cursor:pointer}
 .hint{font-size:14px;color:var(--ink-3);background:var(--soft);border-radius:12px;padding:10px 12px;margin:-4px 0 14px}
 .fld small{font-weight:400;color:var(--ink-3)}
 details.em{border:1px solid var(--line);border-radius:14px;padding:4px 14px;margin:0 0 14px}details.em summary{min-height:44px;display:flex;align-items:center;font-weight:700;cursor:pointer}
@@ -352,30 +354,52 @@ details.em[open]{padding-bottom:6px}
     head('নতুন যাত্রা', 'নাম, ফোন আর ঠিকানা আপনার প্রোফাইল থেকে নেওয়া হবে');
     paintReq();
   }
-  function paintReq() {
+  function paintReq(scanNote) {
     function chips(name, opts, cur) { return '<div class="chips" role="group" aria-label="' + name + '">' + opts.map(function (o) { return '<button type="button" data-chip="' + name + '" data-v="' + o[0] + '" aria-pressed="' + (String(cur) === String(o[0])) + '">' + o[1] + '</button>'; }).join('') + '</div>'; }
     function stp(name, label, v) { return '<div class="fld"><span class="lbl" id="l-' + name + '">' + label + '</span><div class="stp" role="group" aria-labelledby="l-' + name + '"><button type="button" data-stp="' + name + '" data-d="-1" aria-label="কমান">−</button><output id="o-' + name + '">' + bn(v) + '</output><button type="button" data-stp="' + name + '" data-d="1" aria-label="বাড়ান">+</button></div></div>'; }
     var kr = REQ.direction === 'kr_bd', fromL = kr ? APK : APB, toL = kr ? APB : APK;
     if (fromL.indexOf(REQ.fromAirport) < 0) REQ.fromAirport = fromL[0];
     if (toL.indexOf(REQ.toAirport) < 0) REQ.toAirport = toL[0];
     var keep = {}; ['r-leave', 'r-ret', 'r-fl', 'r-note', 'r-kg'].forEach(function (id) { var x = el(id); if (x) keep[id] = x.value; });
+    var moreOpen = !!(REQ.devices || REQ.ownGoods);
     APP.innerHTML = '<section><form id="f-req" class="pad" style="padding-top:18px" novalidate>'
+      // 1. the ticket first: one picture fills everything below
+      + '<div class="fld"><label class="file scan">' + I.cam + '<span><b id="tk-name">' + (TICKET ? esc(TICKET.name) : 'টিকিট আছে? ছবি বা PDF দিন') + '</b><span id="tk-say">' + (scanNote || 'নিচের ঘরগুলো নিজে থেকেই ভরে যাবে। না থাকলে নিজে লিখুন।') + '</span></span><input type="file" accept="application/pdf,image/*" id="r-ticket" aria-label="টিকিটের ছবি বা PDF দিন"></label></div>'
+      // 2. flight number + date
+      + '<div class="fld"><label for="r-fl">ফ্লাইট নম্বর</label><input class="in num" id="r-fl" maxlength="60" placeholder="যেমন KE 657" autocapitalize="characters"><p class="lead" style="margin:6px 0 0;font-size:14px">টিকিটে “Flight” লেখার পাশে থাকে।</p></div>'
+      + '<div class="fld"><label for="r-leave">যাত্রার তারিখ</label><input class="in" type="date" id="r-leave"></div>'
+      // 3. where
       + '<div class="fld"><span class="lbl">যাত্রাপথ</span>' + chips('direction', [['kr_bd', 'কোরিয়া → বাংলাদেশ'], ['bd_kr', 'বাংলাদেশ → কোরিয়া']], REQ.direction) + '</div>'
       + '<div class="fld"><span class="lbl">কোন এয়ারপোর্ট থেকে</span>' + chips('fromAirport', fromL.map(function (a) { return [a, APN[a]]; }), REQ.fromAirport) + '</div>'
       + '<div class="fld"><span class="lbl">কোন এয়ারপোর্টে</span>' + chips('toAirport', toL.map(function (a) { return [a, APN[a]]; }), REQ.toAirport) + '</div>'
-      + '<div class="fld"><label for="r-leave">যাত্রার তারিখ</label><input class="in" type="date" id="r-leave"></div><div class="fld"><label for="r-ret">ফেরার তারিখ <small>(ঐচ্ছিক)</small></label><input class="in" type="date" id="r-ret"></div>'
-      + '<p class="hint">ফেরার তারিখ দিলে পরে এক চাপে ফেরার লাগেজ বুক করতে পারবেন। এখনই কোনো অনুরোধ যাবে না।</p>'
+      // 4. our luggage
       + stp('bags', 'আমাদের কয়টা লাগেজ নিতে পারবেন', REQ.bags)
       + '<div class="fld"><label for="r-kg">প্রতিটা লাগেজ কত কেজি <small>(ঐচ্ছিক)</small></label><input class="in num" id="r-kg" inputmode="decimal" placeholder="যেমন 23" value="' + esc(REQ.kg) + '"></div>'
+      // 5. the way back, only remembered
+      + '<div class="fld"><label for="r-ret">ফেরার তারিখ <small>(ঐচ্ছিক)</small></label><input class="in" type="date" id="r-ret"></div>'
+      + '<p class="hint">ফেরার তারিখ দিলে পরে এক চাপে ফেরার লাগেজ বুক করতে পারবেন। এখনই কোনো অনুরোধ যাবে না।</p>'
+      // 6. the rest, folded
+      + '<details class="more"' + (moreOpen ? ' open' : '') + '><summary>আরও কিছু (ঐচ্ছিক)</summary>'
       + stp('devices', 'হাতে মোবাইল বা ইলেকট্রনিক্স কয়টা নিতে পারবেন', REQ.devices)
       + '<div class="fld"><span class="lbl">আপনার নিজের মালও সাথে থাকবে?</span>' + chips('ownGoods', [['true', 'হ্যাঁ, কিছুটা'], ['false', 'না']], REQ.ownGoods) + '</div>'
-      + '<div class="fld"><label for="r-fl">এয়ারলাইন / ফ্লাইট <small>(ঐচ্ছিক)</small></label><input class="in num" id="r-fl" maxlength="60"></div>'
-      + '<div class="fld"><span class="lbl">ই-টিকিট <small>(ঐচ্ছিক)</small></span><label class="file">' + I.cam + '<span id="tk-name">' + (TICKET ? esc(TICKET.name) : 'টিকিটের PDF বা ছবি দিন') + '</span><input type="file" accept="application/pdf,image/*" id="r-ticket" aria-label="ই-টিকিট দিন"></label></div>'
-      + '<p class="hint">টিকিট দিলে আমরা ফ্লাইটের তথ্য মিলিয়ে নিতে পারি। না থাকলেও চলবে।</p>'
-      + '<div class="fld"><label for="r-note">কিছু বলার থাকলে</label><textarea class="in" id="r-note" rows="2" maxlength="500"></textarea></div>'
+      + '<div class="fld"><label for="r-note">কিছু বলার থাকলে</label><textarea class="in" id="r-note" rows="2" maxlength="500"></textarea></div></details>'
       + '<label class="chk"><input type="checkbox" id="r-ok"> নিষিদ্ধ কিছু নেব না, কাস্টমসের নিয়ম মানব</label>'
       + '<p class="err" id="err"></p><button class="btn pri" type="submit">জমা দিন</button><button class="btn sec" type="button" data-act="home" style="margin-top:10px">ফিরে যান</button></form></section>';
     Object.keys(keep).forEach(function (id) { var x = el(id); if (x) x.value = keep[id]; });
+  }
+  /** The ticket picked on the form: the business's AI reads it and fills the boxes; he only checks them. */
+  function scanTicket(tk) {
+    TICKET = tk;
+    var nm = el('tk-name'), say = el('tk-say'); if (nm) nm.textContent = tk.name; if (say) say.textContent = 'টিকিট পড়া হচ্ছে… একটু অপেক্ষা করুন।';
+    call('scan', { ticket: tk }, true).then(function (d) {
+      if (!d.ok || !d.read) { var s0 = el('tk-say'); if (s0) s0.textContent = (d && d.error) || 'টিকিটটা পড়া গেল না। ঘরগুলো নিজে লিখুন।'; return; }
+      var r = d.read, set = function (id, v) { var x = el(id); if (x && v) x.value = v; };
+      set('r-fl', r.flight || ''); set('r-leave', /^\d{4}-\d\d-\d\d$/.test(r.depart_date) ? r.depart_date : ''); set('r-ret', /^\d{4}-\d\d-\d\d$/.test(r.return_date) ? r.return_date : '');
+      if (APK.indexOf(r.from_airport) >= 0) { REQ.direction = 'kr_bd'; REQ.fromAirport = r.from_airport; } else if (APB.indexOf(r.from_airport) >= 0) { REQ.direction = 'bd_kr'; REQ.fromAirport = r.from_airport; }
+      if (APK.indexOf(r.to_airport) >= 0 || APB.indexOf(r.to_airport) >= 0) REQ.toAirport = r.to_airport;
+      if (r.baggage_kg) { REQ.kg = String(r.baggage_kg); set('r-kg', REQ.kg); }
+      paintReq('টিকিট থেকে ঘরগুলো ভরা হয়েছে। একবার মিলিয়ে নিন, ভুল থাকলে ঠিক করে দিন।');
+    }, function () { var s1 = el('tk-say'); if (s1) s1.textContent = 'নেট পাওয়া যাচ্ছে না। ঘরগুলো নিজে লিখুন, টিকিটটা জমার সাথে যাবে।'; });
   }
   function readTicket(file, then) {
     if (!file) return;
@@ -416,7 +440,7 @@ details.em[open]{padding-bottom:6px}
   }
   var PHOTO;
   document.addEventListener('change', function (e) {
-    if (e.target.id === 'r-ticket') return readTicket(e.target.files && e.target.files[0], function (tk) { TICKET = tk; var n = el('tk-name'); if (n) n.textContent = tk.name; });
+    if (e.target.id === 'r-ticket') return readTicket(e.target.files && e.target.files[0], scanTicket);
     var tid = e.target.getAttribute && e.target.getAttribute('data-ticket');
     if (tid) return readTicket(e.target.files && e.target.files[0], function (tk) { call('ticket', { requestId: +tid, ticket: tk }, true).then(function (d) { if (d.ok) { ME = d; HIST = d.history || []; var i = HIST.findIndex(function (x) { return x.id === +tid; }); showHist(i); } else alert(d.error || 'টিকিট নেওয়া গেল না।'); }, function () { alert('নেট পাওয়া যাচ্ছে না। নেট পেলে আবার দিন।'); }); });
     if (e.target.id === 'f-photo' && e.target.files && e.target.files[0]) shrink(e.target.files[0], 600, function (d) { PHOTO = d; var l = e.target.parentNode; l.querySelectorAll('img,svg').forEach(function (x) { x.remove(); }); var im = new Image(); im.alt = ''; im.src = d; l.insertBefore(im, e.target); });
