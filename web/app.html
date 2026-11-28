@@ -64417,7 +64417,7 @@ Nothing about what the screens show or do changes; only how a redraw lands. Moti
   --ok:var(--fd-positive-text,#15803D);--okbg:var(--fd-positive-soft,#E6F8EC);--warn:var(--fd-warning-text,#9A5B00);--warnbg:var(--fd-warning-soft,#FFF3DC);
   --bad:var(--fd-negative-text,#DC2626);--badbg:var(--fd-negative-soft,#FDE8E8);
   --fb:#1877F2;--ig:#C13584;--tt:#111;--yt:#E62117;
-  color:var(--ink);font-size:15px;max-width:1280px;margin:0 auto;padding:2px 0 48px}
+  color:var(--ink);font-size:15px;max-width:none;margin:0 auto;padding:2px 0 48px}
 .cd *{box-sizing:border-box}
 .cd ::selection{background:color-mix(in srgb,var(--lime) 60%,transparent);color:var(--on-lime)}
 /* head */
@@ -70186,7 +70186,7 @@ html[data-theme="dark"] .shp :focus-visible{outline-color:#E4FF5A}
 <style>
 .dk{--dk-ink:#16181D;--dk-ink2:#454A55;--dk-ink3:#5C626E;--dk-rule:#E4E6EA;--dk-shelf:#F2F3F5;--dk-paper:#fff;--dk-alert:#E0301E;--dk-alert-ink:#A8260F;--dk-alert-soft:#FDECEA;
   --dk-wait:#F2A900;--dk-wait-soft:#FFF4D6;--dk-wait-ink:#6B4A00;--dk-lime:var(--fd-lime,#E4FF5A);--dk-go:#1EA35A;
-  font:400 15px/1.5 "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;color:var(--dk-ink);font-variant-numeric:tabular-nums;max-width:1320px}
+  font:400 15px/1.5 "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;color:var(--dk-ink);font-variant-numeric:tabular-nums;max-width:none}
 html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE;--dk-rule:#2E3238;--dk-shelf:#23262C;--dk-paper:#17191D;--dk-alert-soft:#3A1E1B;--dk-alert-ink:#FF9C8F;--dk-wait-soft:#3A3014;--dk-wait-ink:#FFD877}
 .dk *{box-sizing:border-box}
 .dk ::selection{background:var(--dk-lime);color:#16181D}
@@ -70228,6 +70228,7 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
 .dk-dav{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 15px "Hind Siliguri";flex:none;position:relative}
 .dk-dav i{position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;background:var(--dk-go);border:2px solid var(--dk-paper)}
 .dk-dav i.off{background:#B4B9C1}
+.dk-dav .dk-dimg,.dk-drh .dk-dimg{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:50% 20%;display:block}
 .dk-lane{display:flex;align-items:center;gap:6px;padding:18px 14px 14px;overflow-x:auto;min-width:0;position:relative}
 .dk-lane::-webkit-scrollbar{height:6px}.dk-lane::-webkit-scrollbar-thumb{background:#D5D8DD;border-radius:9px}
 .dk-track{display:flex;align-items:center;gap:6px;background:linear-gradient(var(--dc),var(--dc)) 0 50%/100% 3px no-repeat;flex:none}
@@ -70419,7 +70420,7 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
       '<button type="button" class="dk-ib" data-dk="step" data-v="1" aria-label="পরে">' + I.r + '</button></div></div>';
   }
   function docLabel(d, extra) {
-    return '<button type="button" class="dk-lab" data-dk="doc" data-v="' + d.id + '"><span class="dk-dav" style="background:' + esc(d.color || '#5C626E') + '">' + esc(initial(d.name)) + '<i class="' + (d.active ? '' : 'off') + '"></i></span>' +
+    return '<button type="button" class="dk-lab" data-dk="doc" data-v="' + d.id + '"><span class="dk-dav" style="background:' + esc(d.color || '#5C626E') + '">' + davIn(d) + '<i class="' + (d.active ? '' : 'off') + '"></i></span>' +
       '<span style="min-width:0"><b data-noi18n="1">ডা. ' + esc(d.name) + '</b><small>' + esc((d.treats || 'চর্মরোগ').split(/[,،]/)[0]) + ' · ' + bn(d.slotMin) + ' মিনিট</small>' + (extra ? '<small>' + extra + '</small>' : '') + '</span></button>';
   }
   function dayLane(d) {
@@ -70533,7 +70534,7 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
     var ds = K.D.doctors || [];
     return '<div class="dk-bar"><span class="dk-sp"></span>' + (canAct() ? '<button type="button" class="dk-btn dark" data-dk="newdoc">' + I.plus + 'ডাক্তার যোগ করুন</button>' : '') + '</div>' +
       (ds.length ? '<div class="dk-docs">' + ds.map(function (d) {
-        return '<button type="button" class="dk-doc" data-dk="doc" data-v="' + d.id + '" style="--dc:' + esc(d.color) + '"><div class="top"><span class="dk-dav" style="background:' + esc(d.color) + '">' + esc(initial(d.name)) + '<i class="' + (d.active ? '' : 'off') + '"></i></span><span style="min-width:0"><b data-noi18n="1" style="display:block;font:700 16px \'Hind Siliguri\'">ডা. ' + esc(d.name) + '</b><small style="color:var(--dk-ink3)" data-noi18n="1">' + esc(d.title || 'ডিগ্রি লেখা হয়নি') + '</small></span></div>' +
+        return '<button type="button" class="dk-doc" data-dk="doc" data-v="' + d.id + '" style="--dc:' + esc(d.color) + '"><div class="top"><span class="dk-dav" style="background:' + esc(d.color) + '">' + davIn(d) + '<i class="' + (d.active ? '' : 'off') + '"></i></span><span style="min-width:0"><b data-noi18n="1" style="display:block;font:700 16px \'Hind Siliguri\'">ডা. ' + esc(d.name) + '</b><small style="color:var(--dk-ink3)" data-noi18n="1">' + esc(d.title || 'ডিগ্রি লেখা হয়নি') + '</small></span></div>' +
           '<div style="margin-top:8px;font-size:13.5px;color:var(--dk-ink2)" data-noi18n="1">' + esc(d.treats || '') + '</div><div style="margin-top:6px;font-size:13.5px">৳' + Math.round(d.fee) + ' · ' + bn(d.slotMin) + ' মিনিট · ' + (d.phone ? 'WhatsApp আছে' : '<span style="color:var(--dk-alert-ink)">WhatsApp নেই</span>') + '</div>' + weekBars(d) + '</button>';
       }).join('') + '</div>' : '<div class="dk-idle"><b>এখনো কোনো ডাক্তার নেই</b>যোগ করলে সময়সূচিতে তাঁর নিজের লাইন বসবে।</div>');
   }
@@ -70599,7 +70600,8 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
     (K.dr.photos || []).forEach(function (id) { var b = w.querySelector('[data-ph="' + id + '"]'); if (!b) return; if (K.url[id]) { b.style.backgroundImage = 'url("' + K.url[id] + '")'; return; } srv('erpClinicPhotoUrl', [{ id: id }], function (r) { K.url[id] = r.url; b.style.backgroundImage = 'url("' + r.url + '")'; }, function () {}); });
   }
   function openDr(title, html, extra) { K.dr = Object.assign({ title: title, html: html }, extra || {}); drawDr(); }
-  function drHead(av, title, sub, color) { return '<div class="dk-drh"><span class="' + (color ? 'dk-dav' : 'dk-pav') + '" style="width:52px;height:52px;font-size:19px;' + (color ? 'background:' + esc(color) : '') + '" data-noi18n="1">' + esc(av) + '</span><span style="min-width:0;flex:1"><h3 data-noi18n="1">' + esc(title) + '</h3><small data-noi18n="1">' + esc(sub || '') + '</small></span><button type="button" class="dk-ib" data-dk="close" aria-label="বন্ধ করুন">' + I.x + '</button></div>'; }
+  function davIn(d) { return d && d.photoUrl ? '<img class="dk-dimg" src="' + esc(d.photoUrl) + '" alt="">' : esc(initial(d.name)); }   // oli-look-1: the doctor's photo
+  function drHead(av, title, sub, color, photo) { return '<div class="dk-drh"><span class="' + (color ? 'dk-dav' : 'dk-pav') + '" style="width:' + (photo ? 72 : 52) + 'px;height:' + (photo ? 72 : 52) + 'px;font-size:19px;' + (color ? 'background:' + esc(color) : '') + '" data-noi18n="1">' + (photo ? '<img class="dk-dimg" src="' + esc(photo) + '" alt="">' : esc(av)) + '</span><span style="min-width:0;flex:1"><h3 data-noi18n="1">' + esc(title) + '</h3><small data-noi18n="1">' + esc(sub || '') + '</small></span><button type="button" class="dk-ib" data-dk="close" aria-label="বন্ধ করুন">' + I.x + '</button></div>'; }
   function consultBox(c, focus) {
     var d = docOf(c.doctorId) || { name: c.doctorName || '', color: '#5C626E' };
     var acts = [];
@@ -70642,12 +70644,12 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
     var by = {}; (d.hours || []).forEach(function (h) { (by[h.weekday] = by[h.weekday] || []).push(clock(mOf(h.from)) + '–' + short(mOf(h.to))); });
     var today = (K.D.consults || []).filter(function (c) { return c.doctorId === d.id && dk(c.startsAt).day === K.D.today && (c.state === 'confirmed' || c.state === 'done'); }).length;
     var offs = (K.D.offs || []).filter(function (o) { return o.doctorId === d.id; });
-    var html = drHead(initial(d.name), 'ডা. ' + d.name, [d.title, d.regNo ? 'BMDC ' + d.regNo : ''].filter(Boolean).join(' · '), d.color) +
+    var html = drHead(initial(d.name), 'ডা. ' + d.name, [d.title, d.regNo ? 'BMDC ' + d.regNo : ''].filter(Boolean).join(' · '), d.color, d.photoUrl) +
       '<div class="dk-cards" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px">' + [[bn(today), 'আজ রোগী'], ['৳' + Math.round(d.fee), 'প্রতি দেখা'], [bn(d.slotMin) + ' মি.', 'প্রতি দেখার সময়']].map(function (x) { return '<div style="background:var(--dk-shelf);border-radius:12px;padding:10px 12px"><b style="display:block;font:800 20px \'Hind Siliguri\'">' + x[0] + '</b><small style="color:var(--dk-ink3)">' + x[1] + '</small></div>'; }).join('') + '</div>' +
       '<dl class="dk-kv">' + [['যা দেখেন', d.treats], ['ভাষা', d.langs], ['বিরতি', bn(d.gapMin) + ' মিনিট'], ['WhatsApp', d.phone || 'নেই — বট জিজ্ঞেস করতে পারবে না'], ['উত্তরের অপেক্ষা', bn(d.holdMin) + ' মিনিট' + (d.autoOk ? ' · ফাঁকা সময়ে নিজে পাকা' : '')], ['কলের লিংক', d.videoLink || 'WhatsApp ভিডিও কল'], ['পরিচয়', d.about]].filter(function (x) { return x[1]; }).map(function (x) { return '<dt>' + x[0] + '</dt><dd data-noi18n="1">' + esc(x[1]) + '</dd>'; }).join('') + '</dl>' +
       '<h4 class="dk-h4">সপ্তাহের সময়</h4><dl class="dk-kv">' + [6, 0, 1, 2, 3, 4, 5].map(function (w) { return '<dt>' + DAYSF[w] + '</dt><dd>' + (by[w] ? by[w].join(', ') : '<span style="color:var(--dk-ink3);font-weight:400">বসেন না</span>') + '</dd>'; }).join('') + '</dl>' +
       (offs.length ? '<h4 class="dk-h4">ছুটি</h4>' + offs.map(function (o) { return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span>' + esc(dayLabel(o.day)) + (o.from ? ' ' + clock(mOf(o.from)) + '–' + short(mOf(o.to)) : '') + (o.reason ? ' · <span data-noi18n="1">' + esc(o.reason) + '</span>' : '') + '</span>' + (canAct() ? '<button type="button" class="dk-btn sm ghost" data-dk="unoff" data-v="' + o.id + '">তুলে দিন</button>' : '') + '</div>'; }).join('') : '') +
-      (canAct() ? '<div class="dk-acts" style="margin-top:16px"><button type="button" class="dk-btn dark" data-dk="editdoc" data-v="' + d.id + '">প্রোফাইল ও সময় বদলান</button><button type="button" class="dk-btn ghost" data-dk="offform" data-v="' + d.id + '">ছুটি যোগ করুন</button></div>' : '');
+      (canAct() ? '<div class="dk-acts" style="margin-top:16px"><button type="button" class="dk-btn dark" data-dk="editdoc" data-v="' + d.id + '">প্রোফাইল ও সময় বদলান</button><button type="button" class="dk-btn ghost" data-dk="offform" data-v="' + d.id + '">ছুটি যোগ করুন</button><label class="dk-btn ghost" style="cursor:pointer">' + I.cam + (d.photoUrl ? 'ছবি বদলান' : 'ছবি দিন') + '<input type="file" accept="image/*" data-dkc="dphoto" data-v="' + d.id + '" hidden></label></div>' : '');
     openDr('ডাক্তার', html);
   }
   var WD_ORDER = [6, 0, 1, 2, 3, 4, 5];
@@ -70763,6 +70765,11 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
     var t = ev.target; if (!t.closest || !t.closest('.dk')) return;
     if (t.getAttribute('data-dkc') === 'day' && t.value) { K.day = t.value; load(true); return; }
     if (t.getAttribute('data-bf') === 'doctor' || t.getAttribute('data-bf') === 'day') { fillSlots(); return; }
+    if (t.getAttribute('data-dkc') === 'dphoto' && t.files && t.files[0]) {   // oli-look-1: the doctor's own photo
+      var did = t.getAttribute('data-v'); toast('ছবি রাখা হচ্ছে…');
+      readFile(t.files[0], function (data) { srv('erpClinicDoctorPhoto', [{ doctorId: Number(did), mime: 'image/jpeg', data: data }], function () { toast('ডাক্তারের ছবি রাখা হলো'); closeDr(); load(true); }, function (e) { toast(esc(errOf(e)), true); }); });
+      return;
+    }
     if (t.getAttribute('data-dkc') === 'photo' && t.files && t.files[0]) {
       var pid = t.getAttribute('data-v');
       readFile(t.files[0], function (data) { srv('erpClinicPhotoAdd', [{ patientId: Number(pid), mime: 'image/jpeg', data: data }], function () { toast('ছবি রাখা হলো'); openPatient(pid); }, function (e) { toast(esc(errOf(e)), true); }); });
@@ -71130,5 +71137,67 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
 })();
 </script>
 
+
+<!-- oli-look-1 (29 Nov 2026, owner): inside Oliareen (1) the menu logo slot shows Oliareen's square icon, not the wide
+     "oliareen BEAUTY & SKINCARE" logo cut off in a square (the wide logo stays for invoices / quotations), (2) the whole
+     app wears Oliareen's colours - rose #AB3C50 accent, warm cream page - only while Oliareen is the business in use,
+     (3) the Doctor desk and the Content desk fill the monitor and grow with it on big screens. -->
+<style>
+@media (min-width:1700px){.dk,.cd{zoom:1.1}}
+@media (min-width:2100px){.dk,.cd{zoom:1.22}}
+@media (min-width:2500px){.dk,.cd{zoom:1.35}}
+@media (min-width:3200px){.dk,.cd{zoom:1.6}}
+html[data-oli="1"] .brand .logo.has-img{padding:5px}
+</style>
+<script>
+(function () {
+  var ICON = 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 1000 1000%27 role=%27img%27 aria-label=%27Oliareen%27%3E%3Cg fill=%27%23ab3c50%27 transform=%27translate(-38.1 -344.1) scale(1.2)%27%3E%3Cpath d=%27M723.5 680.0C723.5 840.1 593.6 970.0 433.5 970.0C273.3 970.0 143.5 840.1 143.5 680.0C143.5 519.8 273.3 390.0 433.5 390.0C457.0 390.0 479.9 392.8 501.8 398.0C475.4 421.2 458.8 455.1 458.8 492.9C458.8 494.9 458.8 497.0 458.9 499.0C450.6 497.9 442.1 497.2 433.5 497.2C332.5 497.2 250.8 579.0 250.8 680.0C250.8 780.9 332.5 862.7 433.5 862.7C534.4 862.7 616.2 780.9 616.2 680.0C616.2 658.0 612.3 636.9 605.2 617.4C643.8 611.2 676.6 587.4 695.0 554.5C713.2 592.5 723.5 635.0 723.5 680.0Z%27/%3E%3Cpath d=%27M506.6 492.9a78.3 78.3 0 1 0 156.6 0a78.3 78.3 0 1 0 -156.6 0Z%27/%3E%3C/g%3E%3C/svg%3E';
+  var OLI_LIGHT = { '--fd-bg': '#FBF3F0', '--fd-surface-2': '#F7E9E6', '--fd-surface-3': '#F1DCD8', '--fd-sidebar': '#FFF8F6', '--fd-border': '#EED9D5', '--fd-border-strong': '#E2C1BC' };
+  function bizName() { var n = document.getElementById('bizName'); return (n && n.textContent) || ''; }
+  var CUR = null;   // the business bnSplashRemember was last told about (switchBusiness tells it before BIZ.active moves)
+  function oliOn() {
+    try {
+      if (CUR && CUR.id) return bnSplashOli(CUR.id, CUR.name);
+      if (typeof BIZ !== 'undefined' && BIZ && BIZ.active) { var cur = (BIZ.businesses || []).filter(function (b) { return b.id === BIZ.active; })[0]; return bnSplashOli(BIZ.active, cur ? cur.name : bizName()); }
+      if (typeof BRAND !== 'undefined' && BRAND.biz) return bnSplashOli(BRAND.biz, bizName());
+      return localStorage.getItem('bn_splash_oli') === '1';
+    } catch (e) { return false; }
+  }
+  window.oliOn = oliOn;
+  // (2) the colours: the person's own theme underneath, Oliareen's rose on top - never saved as their choice
+  var themeOld = fdThemeNow;
+  fdThemeNow = function () {
+    var r = themeOld.apply(this, arguments), root = document.documentElement;
+    try {
+      if (oliOn()) {
+        var mode = fdtMode(), set = (FD_THEMES[FDT.theme] || FD_THEMES.filadash)[mode], k;
+        if (mode === 'light') for (k in OLI_LIGHT) root.style.setProperty(k, OLI_LIGHT[k]);
+        var o = fdAccentTokens('#AB3C50', mode, Object.assign({}, set, mode === 'light' ? OLI_LIGHT : {}));
+        for (k in o) root.style.setProperty(k, o[k]);
+        root.setAttribute('data-oli', '1');
+      } else root.removeAttribute('data-oli');
+    } catch (e) {}
+    return r;
+  };
+  fdAccentApply = function () { fdThemeNow(); };
+  // (1) the logo slot
+  var paintOld = brandPaint;
+  brandPaint = function () {
+    var r = paintOld.apply(this, arguments);
+    try {
+      if (oliOn()) {
+        var mk = document.getElementById('bizMark');
+        if (mk) { mk.className = 'logo has-img'; mk.innerHTML = '<img src="' + ICON + '" alt="Oliareen">'; }
+        if (typeof FD_SHELL !== 'undefined') { FD_SHELL.logo = ICON; localStorage.setItem('fd_shell', JSON.stringify(FD_SHELL)); }
+      }
+    } catch (e) {}
+    return r;
+  };
+  // a switch of business repaints both
+  var remOld = bnSplashRemember;
+  bnSplashRemember = function (cur) { CUR = cur || null; var r = remOld.apply(this, arguments); try { fdThemeNow(); brandPaint(); } catch (e) {} return r; };
+  try { fdThemeNow(); brandPaint(); } catch (e) {}
+})();
+</script>
 </body>
 </html>

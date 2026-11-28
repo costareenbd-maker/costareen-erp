@@ -181,7 +181,7 @@ export async function erpClinic(ctx, payload) {
   const bot = await botState(ctx);
   return {
     day, days: span, today, now: ctx.now.toISOString(),
-    doctors: doctors.map((d) => doctorOut(d, hours)),
+    doctors: await withPhotos(ctx, doctors.map((d) => doctorOut(d, hours))),
     consults: consults.map(consultOut),
     offs: offs.map((o) => ({ id: Number(o.id), doctorId: Number(o.doctor_id), day: o.day instanceof Date ? o.day.toISOString().slice(0, 10) : str(o.day).slice(0, 10),
       from: o.start_min == null ? null : hhmm(int(o.start_min)), to: o.end_min == null ? null : hhmm(int(o.end_min)), reason: str(o.reason) })),
@@ -324,6 +324,30 @@ export async function savePatient(ctx, a, by) {
 export async function erpClinicPatientSave(ctx, payload) {
   await gate(ctx);
   return { id: await savePatient(ctx, payload || {}, byName(ctx)) };
+}
+// oli-look-1: a doctor's own photo. The file name sits in business_config (no new column).
+async function withPhotos(ctx, list) {
+  for (const d of list) {
+    const name = str(await getConfig(ctx, 'clinic_dphoto_' + d.id, ''));
+    d.photoUrl = '';
+    if (name) { try { d.photoUrl = str(await fileUrl(ctx, 'clinic', name)); } catch (_) { d.photoUrl = ''; } }
+  }
+  return list;
+}
+export async function erpClinicDoctorPhoto(ctx, payload) {
+  await gate(ctx);
+  const a = payload || {};
+  const d = await doctorRow(ctx, a.doctorId);
+  const mime = str(a.mime) || 'image/jpeg';
+  if (!/^image\/(jpeg|png|webp)$/.test(mime)) throw new Error('শুধু ছবি (JPG, PNG, WEBP)।');
+  const b64 = str(a.data).replace(/^data:[^,]*,/, '');
+  if (!b64) throw new Error('ছবিটা আসেনি। আবার দিন।');
+  const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  if (bytes.length > 6e6) throw new Error('ছবিটা ৬ MB-এর বেশি বড়।');
+  const name = 'd' + d.id + '-' + Date.now().toString(36) + (mime === 'image/png' ? '.png' : mime === 'image/webp' ? '.webp' : '.jpg');
+  await saveFile(ctx, 'clinic', name, bytes, mime);
+  await setConfig(ctx, 'clinic_dphoto_' + d.id, name);
+  return { ok: true };
 }
 export async function erpClinicPhotoAdd(ctx, payload) {
   await gate(ctx);
@@ -944,5 +968,5 @@ async function teamOrder(ctx, ch, ev, sender, s) {
 
 export const HANDLERS = {
   erpClinic, erpClinicSlots, erpClinicPatients, erpClinicPatient, erpClinicDoctorSave, erpClinicHoursSave, erpClinicOffSave, erpClinicOffStrike,
-  erpClinicPatientSave, erpClinicPhotoAdd, erpClinicPhotoUrl, erpClinicPhotoStrike, erpClinicBook, erpClinicAct, erpClinicSettingsSave, erpClinicConnect, erpClinicConnectState,
+  erpClinicPatientSave, erpClinicPhotoAdd, erpClinicDoctorPhoto, erpClinicPhotoUrl, erpClinicPhotoStrike, erpClinicBook, erpClinicAct, erpClinicSettingsSave, erpClinicConnect, erpClinicConnectState,
 };
