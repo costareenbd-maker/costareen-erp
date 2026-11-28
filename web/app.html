@@ -71148,6 +71148,19 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
 @media (min-width:2500px){.dk,.cd{zoom:1.35}}
 @media (min-width:3200px){.dk,.cd{zoom:1.6}}
 html[data-oli="1"] .brand .logo.has-img{padding:5px}
+/* the Clean look pins its colours with !important - Oliareen's rose wins only with the same weight and more selectors */
+html[data-oli="1"][data-skin="fd"]:root, html[data-oli="1"][data-look="clean"][data-skin="fd"]:root {
+ --fd-bg:#FBF3F0 !important; --fd-sidebar:#FBF3F0 !important; --fd-surface-2:#F8EAE7 !important; --fd-surface-3:#F2DEDA !important; --fd-border:#F0DFDB !important; --fd-border-strong:#E3C6C1 !important;
+ --fd-accent:#AB3C50 !important; --fd-accent-hover:#93303F !important; --fd-accent-text:#9A3447 !important; --fd-accent-soft:#FBE8EB !important; --fd-accent-soft-2:#F7D5DB !important;
+ --fd-accent-border:rgba(171,60,80,.35) !important; --fd-text-on-accent:#FFFFFF !important; --fd-accent-gradient:linear-gradient(135deg,#AB3C50 0%,#C25468 100%) !important;
+ --fd-lime:#F7C1C5 !important; --fd-lime-text:#3A1F2B !important; --fd-nav-active-bg:#F7C1C5 !important;
+}
+html[data-oli="1"][data-skin="fd"]:root[data-theme="dark"], html[data-oli="1"][data-look="clean"][data-skin="fd"]:root[data-theme="dark"] {
+ --fd-bg:#151113 !important; --fd-sidebar:#151113 !important; --fd-card:#1E181B !important; --fd-surface-2:#292024 !important; --fd-surface-3:#33282D !important; --fd-border:#3A2E33 !important; --fd-border-strong:#4A3A41 !important;
+ --fd-accent:#E8919F !important; --fd-accent-hover:#F2A9B5 !important; --fd-accent-text:#F0A2AF !important; --fd-accent-soft:rgba(232,145,159,.14) !important; --fd-accent-soft-2:rgba(232,145,159,.22) !important;
+ --fd-accent-border:rgba(232,145,159,.45) !important; --fd-text-on-accent:#2A0E15 !important; --fd-accent-gradient:linear-gradient(135deg,#E8919F 0%,#F7C1C5 100%) !important;
+ --fd-lime:#F7C1C5 !important; --fd-lime-text:#2A0E15 !important;
+}
 </style>
 <script>
 (function () {

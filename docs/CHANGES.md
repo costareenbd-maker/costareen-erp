@@ -5557,6 +5557,8 @@ no number linked yet. Not seen live yet: a real patient chat, the doctor's yes/n
 - Oliareen-only colours: fdThemeNow wrapper puts rose #AB3C50 as the accent (fdAccentTokens, contrast-checked) and, in light
   mode, a warm cream page (#FBF3F0, rose-tinted surfaces / borders / sidebar) on top of the person's own theme; html[data-oli].
   Never saved as their theme choice; any other business keeps its own look; switching business repaints at once.
+  The Clean look pins its colours with !important, so the same palette is also set in CSS under html[data-oli="1"]
+  (light: cream page, rose accent, pink #F7C1C5 for the selected states that were lime; dark: deep plum-grey + light rose).
 - Doctor desk (.dk, was max 1320px) and Content desk (.cd, was max 1280px) now fill the screen; on big monitors they grow:
   zoom 1.1 from 1700px wide, 1.22 from 2100, 1.35 from 2500, 1.6 from 3200.
 - Doctor photo: erpClinicDoctorPhoto (manager+, JPG/PNG/WEBP up to 6 MB, file in the clinic folder, name kept in
