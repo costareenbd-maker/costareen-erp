@@ -58,6 +58,8 @@ export const ERP_ALLOW = {
   erpMoney: 'shareholder', erpCourier: 'manager', erpLinkWebOrder: 'manager',
   erpReorderPlan: 'manager',
   erpStudioRefLink: 'manager',   // studioref-2: a reference video as a link (Content desk Studio)
+  // studiosteps-1: the step-by-step Studio (idea -> pictures -> scene cards -> video); the engine's call is owner + engine key
+  erpStudioStepsStart: 'manager', erpStudioSteps: 'manager', erpStudioStepGo: 'manager', erpStudioPicSet: 'manager', erpStudioPicRedo: 'manager', erpStudioPicsAsk: 'manager', erpStudioPicsMore: 'manager', erpStudioCardsMake: 'manager', erpStudioCardSave: 'manager', erpStudioCardAsk: 'manager', erpStudioCardMove: 'manager', erpStudioCardAdd: 'manager', erpStudioCardRemove: 'manager', erpStudioStepVideo: 'manager', erpContentStudioSteps: 'owner',
   erpSales: 'sales', erpInvoicePdf: 'sales',
   erpReturnPreview: 'manager', erpReturnGoods: 'manager', erpFixInvoice: 'manager',
   erpCancelInvoice: 'manager',

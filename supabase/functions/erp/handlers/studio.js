@@ -34,6 +34,9 @@
 //                                             prompt may be empty. Checked here (JSON.parse, 1 MB guard); the work log
 //                                             shows it. Owner: the JSON is only a gateway - nothing starts on paste; on send
 //                                             the engine gets the raw JSON as her request (like a JSON pasted into an AI chat).
+// studiosteps-1 (owner 28 Nov 2026): the step-by-step Studio (idea -> pictures -> scene cards -> video) lives in
+// handlers/studiosteps.js (migration 190: projects.mode 'steps'). Here: projects say their mode, the one-shot feedback /
+// improve refuse a step project (its video step has its own feedback), the bell and WhatsApp know picture jobs.
 import { roleAtLeast } from '../allow.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { phone11 } from '../lib/phone.js';
@@ -68,6 +71,7 @@ async function engineState(ctx) {
   const fresh = o.at && Date.now() - new Date(o.at).getTime() < STALE_MS;
   return { online: !!fresh, busy: fresh ? str(o.busy) : '', what: fresh ? str(o.what) : '', eta: fresh ? int(o.etaMin) : 0, at: o.at || null };
 }
+export async function studioProject(ctx, id) { return project(ctx, id); }   // studiosteps-1
 async function project(ctx, id) {
   const n = int(id);
   if (!n) throw new Error('কোন ভিডিও? একটা বাছুন।');
@@ -79,6 +83,7 @@ async function project(ctx, id) {
 }
 const projOut = (p, job) => ({ id: Number(p.id), title: str(p.title), state: str(p.state), version: Number(p.version) || 0, videoId: p.video_id == null ? null : Number(p.video_id),
   baseVideoId: p.base_video_id == null ? null : Number(p.base_video_id), mine: undefined, updatedAt: iso(p.updated_at), createdAt: iso(p.created_at),
+  mode: str(p.mode) || 'video', step: Number(p.step) || 0,   // studiosteps-1 (a database without 190: 'video')
   job: job ? { id: Number(job.id), state: str(job.state), kind: str(job.kind), place: job.place || 0, startedAt: iso(job.started_at) } : null });
 
 async function queueOf(ctx) {
@@ -158,6 +163,7 @@ export async function erpStudioAsk(ctx, payload) {
   if (p.projectId) {
     pr = await project(ctx, p.projectId);
     if (pr.user_id !== ctx.s.userId) throw new Error('অন্য কারো ভিডিওতে মতামত দেওয়া যায় না। নিজের নামে নতুন ভিডিও বানান।');
+    if (str(pr.mode) === 'steps') throw new Error(STEP_FB);   // studiosteps-1
     const open = await ctx.tx`select 1 from content_studio_jobs where project_id = ${pr.id} and state in ('queued', 'running')`;
     if (open.length) throw new Error('এই ভিডিওর আগের কাজটা এখনো চলছে। শেষ হলে মতামত দিন।');
     if (!pr.version) throw new Error('প্রথম ভিডিওটা এখনো তৈরি হয়নি।');
@@ -181,6 +187,7 @@ export async function erpStudioAsk(ctx, payload) {
   return { projectId: Number(pr.id), jobId: Number(j.id), msgId: Number(m.id), refs: refs.length, spec: !!spec };
 }
 
+const STEP_FB = 'এই ভিডিওটা ধাপে ধাপে বানানো: "ভিডিও" ধাপে মতামত লিখুন, বা সিনের কার্ডে ফিরে গিয়ে বদলান।';
 export async function erpStudioFinish(ctx, payload) {
   await gate(ctx, 'manager');
   const p = payload || {};
@@ -204,6 +211,7 @@ export async function erpStudioFinish(ctx, payload) {
   }
   if (action === 'improve') {
     if (pr.user_id !== ctx.s.userId) throw new Error('অন্য কারো ভিডিও আরো ভালো করতে নিজের নামে নতুন ভিডিও বানান।');
+    if (str(pr.mode) === 'steps') throw new Error(STEP_FB);   // studiosteps-1
     const open = await ctx.tx`select 1 from content_studio_jobs where project_id = ${pr.id} and state in ('queued', 'running')`;
     if (open.length) throw new Error('এই ভিডিওর আগের কাজটা এখনো চলছে।');
     const last = (await ctx.tx`select max(created_at) last from content_studio_jobs where business_id = ${ctx.biz} and user_id = ${ctx.s.userId}`)[0].last;
@@ -352,6 +360,7 @@ async function refUrl(ctx, path, secs) {
   if (!s || !s.url) return '';
   try { return (await s.url(ctx.biz, 'content', str(path).replace(/^content\//, ''), secs || 3600)) || ''; } catch (_) { return ''; }
 }
+export const refOutPublic = (ctx, r) => refOut(ctx, r, true);   // studiosteps-1
 async function refOut(ctx, r, withUrl) {
   const used = r.used && typeof r.used === 'object' ? r.used : {};
   const link = isLink(r) ? refLinkOf(r.name) : null;   // studioref-2: a link ref's "url" is the link itself
@@ -434,7 +443,7 @@ export async function erpStudioRefRemove(ctx, payload) {
   return { ok: true };
 }
 // the refs a prompt / feedback carries: the person's own, uploaded, not sent yet; at most 6 pictures and 2 videos
-async function takeRefs(ctx, ids) {
+export async function takeRefs(ctx, ids) {
   const want = [...new Set((Array.isArray(ids) ? ids : []).map(int).filter(Boolean))];
   if (!want.length) return [];
   if (want.length > REF_LIMIT.image.max + REF_LIMIT.video.max) throw new Error('এত ফাইল একবারে দেওয়া যায় না।');
@@ -537,11 +546,14 @@ export async function erpStudioPhone(ctx, payload) {
 // ------------------------------------------------------------------ bell + WhatsApp
 export async function studioBell(ctx) {
   try {
-    const rows = await ctx.tx`select j.id, j.version, j.finished_at, j.state, j.note, p.id as pid, p.title from content_studio_jobs j join content_studio_projects p on p.id = j.project_id
+    const rows = await ctx.tx`select j.id, j.version, j.finished_at, j.state, j.note, j.kind, p.id as pid, p.title from content_studio_jobs j join content_studio_projects p on p.id = j.project_id
                               where j.business_id = ${ctx.biz} and j.user_id = ${ctx.s.userId} and j.state in ('done', 'failed') and j.seen_at is null
-                                and j.finished_at > now() - interval '3 days' order by j.id desc limit 5`;
+                              and j.finished_at > now() - interval '3 days'
+                              and (j.kind not in ('pics', 'cards') or (j.kind = 'pics' and coalesce(to_jsonb(j)->'detail'->>'first', '') = 'true'))
+                              order by j.id desc limit 5`;
     return rows.map((r) => ({ key: 'studio-' + r.id, level: 'ok', kind: 'studio', projectId: Number(r.pid), go: 'studio:' + r.pid,
-      title: r.state === 'done' ? 'আপনার ভিডিও তৈরি: ' + str(r.title).slice(0, 60) + ' (v' + r.version + ')' : 'ভিডিওটা বানানো গেল না: ' + str(r.title).slice(0, 60),
+      title: r.kind === 'pics' ? (r.state === 'done' ? 'আপনার ছবি তৈরি: ' + str(r.title).slice(0, 60) : 'ছবি বানানো গেল না: ' + str(r.title).slice(0, 60))
+        : r.state === 'done' ? 'আপনার ভিডিও তৈরি: ' + str(r.title).slice(0, 60) + ' (v' + r.version + ')' : 'ভিডিওটা বানানো গেল না: ' + str(r.title).slice(0, 60),
       detail: r.state === 'done' ? 'কনটেন্ট ডেস্ক → স্টুডিও' : str(r.note).slice(0, 140), view: 'contentdesk', tab: 'studio' }));
   } catch (_) { return []; }
 }
@@ -559,8 +571,13 @@ export async function studioNotifyTick(ctx) {
   let sent = 0;
   for (const j of rows) {
     const ph = str(phones[j.user_id]);
-    if (ph && sendOut) {
-      const text = j.state === 'done'
+    // studiosteps-1: the first pictures of a step video are worth a message (5-10 minutes); a remade picture or a card is not
+    const quiet = j.kind === 'cards' || (j.kind === 'pics' && !(j.detail && j.detail.first));
+    if (ph && sendOut && !quiet) {
+      const text = j.kind === 'pics'
+        ? (j.state === 'done' ? 'আপনার ছবি তৈরি: ' + str(j.title).slice(0, 80) + '। পছন্দেরগুলোয় ✓ দিন: ERP খুলুন → কনটেন্ট ডেস্ক → স্টুডিও।'
+          : 'ছবি বানানো গেল না: ' + str(j.title).slice(0, 80) + '। ' + str(j.note).slice(0, 160))
+        : j.state === 'done'
         ? 'আপনার ভিডিও তৈরি: ' + str(j.title).slice(0, 80) + ' (v' + j.version + ')। দেখতে ERP খুলুন → কনটেন্ট ডেস্ক → স্টুডিও।'
         : 'ভিডিওটা বানানো গেল না: ' + str(j.title).slice(0, 80) + '। ' + str(j.note).slice(0, 160);
       for (const ch of chs) {
