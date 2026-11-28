@@ -57,6 +57,7 @@ export const ERP_ALLOW = {
   erpDues: 'manager', erpRecordPayment: 'manager', erpRebuildDues: 'shareholder',
   erpMoney: 'shareholder', erpCourier: 'manager', erpLinkWebOrder: 'manager',
   erpReorderPlan: 'manager',
+  erpStudioRefLink: 'manager',   // studioref-2: a reference video as a link (Content desk Studio)
   erpSales: 'sales', erpInvoicePdf: 'sales',
   erpReturnPreview: 'manager', erpReturnGoods: 'manager', erpFixInvoice: 'manager',
   erpCancelInvoice: 'manager',

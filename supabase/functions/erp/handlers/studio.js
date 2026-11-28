@@ -24,6 +24,10 @@
 //   erpStudioRefRemove({id})                  take it off before sending (the row stays, state 'removed')
 //   erpStudioAsk({..., refIds: [..]})         sends them with the prompt / feedback; after that they stay with the log
 //   erpContentStudioRefs({biz, key, jobId})   the PC engine: a job's refs with 1-hour links (engine key, like the upload)
+// studioref-2 (28 Nov 2026): a reference VIDEO can also be a link (YouTube, Facebook, Instagram, TikTok). No migration: a
+// link ref is kind 'video', file_path 'link/<uuid>', name = the URL, mime 'text/uri-list', ready at once. The engine
+// downloads it with yt-dlp (720p, first 3 min, <= 200 MB), keeps only the style facts and deletes the file.
+//   erpStudioRefLink({url})                   a pasted link -> a video ref (counts toward the 2 videos per ask)
 import { roleAtLeast } from '../allow.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { phone11 } from '../lib/phone.js';
@@ -233,6 +237,22 @@ const REF_TYPES = {
 };
 export const REF_LIMIT = { image: { max: 6, bytes: 15 * 1024 * 1024, word: 'ছবি', mb: '১৫' }, video: { max: 2, bytes: 200 * 1024 * 1024, word: 'ভিডিও', mb: '২০০' } };
 const bn = (n) => String(n).replace(/[0-9]/g, (d) => '০১২৩৪৫৬৭৮৯'[d]);
+// studioref-2: the video sites a link may come from (subdomains too: m.facebook.com, vm.tiktok.com, www.youtube.com)
+export const LINK_SITES = { 'youtube.com': 'YouTube', 'youtu.be': 'YouTube', 'facebook.com': 'Facebook', 'fb.watch': 'Facebook',
+  'instagram.com': 'Instagram', 'tiktok.com': 'TikTok' };
+export function refLinkOf(raw) {
+  let s = str(raw).replace(/\s+/g, '');
+  if (!s || s.length > 500) return null;
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(s)) s = 'https://' + s.replace(/^\/+/, '');   // "youtu.be/abc" pasted without https://
+  let u;
+  try { u = new URL(s); } catch (_) { return null; }
+  if ((u.protocol !== 'https:' && u.protocol !== 'http:') || u.username || u.password || u.port) return null;
+  const h = u.hostname.toLowerCase().replace(/\.$/, '');
+  const d = Object.keys(LINK_SITES).find((k) => h === k || h.endsWith('.' + k));
+  if (!d || u.pathname.replace(/\/+$/, '') === '') return null;   // the site's home page is not a video
+  return { url: u.toString(), site: LINK_SITES[d] };
+}
+const isLink = (r) => /^link\//.test(str(r.file_path));
 function refType(name, mime) {
   const ext = (str(name).toLowerCase().match(/\.([a-z0-9]{2,5})$/) || [])[1] || '';
   const t = REF_TYPES[ext];
@@ -248,9 +268,12 @@ async function refUrl(ctx, path, secs) {
 }
 async function refOut(ctx, r, withUrl) {
   const used = r.used && typeof r.used === 'object' ? r.used : {};
+  const link = isLink(r) ? refLinkOf(r.name) : null;   // studioref-2: a link ref's "url" is the link itself
   return { id: Number(r.id), kind: str(r.kind), name: str(r.name), mime: str(r.mime), bytes: Number(r.bytes) || 0, note: str(r.note),
     mode: str(r.mode) || 'better', state: str(r.state), msgId: r.msg_id == null ? null : Number(r.msg_id),
-    shown: !!used.shown, night: str(used.night), url: withUrl && r.state !== 'uploading' ? await refUrl(ctx, r.file_path, 3600) : '' };
+    source: isLink(r) ? 'link' : 'file', site: link ? link.site : '', failed: str(used.failed),
+    shown: !!used.shown, night: str(used.night),
+    url: isLink(r) ? (link ? link.url : '') : withUrl && r.state !== 'uploading' ? await refUrl(ctx, r.file_path, 3600) : '' };
 }
 async function myOpenRefs(ctx) {
   return ctx.tx`select * from content_studio_refs where business_id = ${ctx.biz} and user_id = ${ctx.s.userId}
@@ -284,6 +307,20 @@ export async function erpStudioRefUpload(ctx, payload) {
   const r = (await ctx.tx`insert into content_studio_refs (business_id, user_id, kind, file_path, name, mime, bytes)
                           values (${ctx.biz}, ${ctx.s.userId}, ${t.kind}, ${'content/' + name}, ${str(p.name).slice(0, 120) || name}, ${t.mime}, ${bytes}) returning *`)[0];
   return { ref: await refOut(ctx, r, false), upload: { url: up.url, token: up.token, path: 'content/' + name, contentType: t.mime, maxBytes: L.bytes } };
+}
+// studioref-2: a pasted video link (YouTube / Facebook / Instagram / TikTok) -> a video ref, ready at once
+export async function erpStudioRefLink(ctx, payload) {
+  await gate(ctx, 'manager');
+  const raw = str(payload && payload.url);
+  if (!raw) throw new Error('ভিডিওর লিংকটা দিন।');
+  const l = refLinkOf(raw);
+  if (!l) throw new Error('এই লিংকটা নেওয়া যায় না। শুধু YouTube, Facebook, Instagram বা TikTok-এর ভিডিওর লিংক দিন।');
+  const open = (await myOpenRefs(ctx)).filter((r) => r.kind === 'video');
+  if (open.length >= REF_LIMIT.video.max) throw new Error('একবারে সর্বোচ্চ ' + bn(REF_LIMIT.video.max) + 'টা ভিডিও দেওয়া যায় (ফাইল আর লিংক মিলিয়ে)।');
+  if (open.some((r) => isLink(r) && str(r.name) === l.url)) throw new Error('এই লিংকটা আগেই দেওয়া আছে।');
+  const r = (await ctx.tx`insert into content_studio_refs (business_id, user_id, kind, file_path, name, mime, bytes, state, confirmed_at)
+                          values (${ctx.biz}, ${ctx.s.userId}, 'video', ${'link/' + crypto.randomUUID()}, ${l.url}, 'text/uri-list', 0, 'ready', now()) returning *`)[0];
+  return { ref: await refOut(ctx, r, true) };
 }
 export async function erpStudioRefConfirm(ctx, payload) {
   await gate(ctx, 'manager');
@@ -337,12 +374,13 @@ export async function erpContentStudioRefs(ctx, payload) {
   if (p.used && typeof p.used === 'object') {
     for (const [id, u] of Object.entries(p.used)) {
       const v = { shown: !!(u && u.shown), night: str(u && u.night).slice(0, 300) };
+      if (u && u.failed) v.failed = str(u.failed).slice(0, 300);   // studioref-2: a link that could not be downloaded
       await c2.tx`update content_studio_refs set used = ${c2.tx.json(v)} where business_id = ${c2.biz} and job_id = ${job} and id = ${int(id)}`;
     }
   }
   const rows = await c2.tx`select * from content_studio_refs where business_id = ${c2.biz} and job_id = ${job} and state = 'sent' order by id`;
   const out = [];
-  for (const r of rows) out.push({ ...(await refOut(c2, r, true)), path: str(r.file_path) });
+  for (const r of rows) out.push({ ...(await refOut(c2, r, true)), path: str(r.file_path) });   // a link ref: source 'link', url = the link
   return { jobId: job, projectId: Number(j.project_id), refs: out };
 }
 
@@ -452,4 +490,4 @@ export async function studioNotifyTick(ctx) {
 
 export const HANDLERS = { erpStudio, erpStudioProject, erpStudioAsk, erpStudioFinish, erpStudioVideoUrl, erpStudioRules, erpStudioRuleSave,
   erpStudioRuleRemove, erpStudioForget, erpStudioPhone, erpStudioRefUpload, erpStudioRefConfirm, erpStudioRefSet, erpStudioRefRemove,
-  erpContentStudioRefs };
+  erpStudioRefLink, erpContentStudioRefs };

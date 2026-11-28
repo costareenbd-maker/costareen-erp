@@ -5457,3 +5457,28 @@ colours, reminder with the call link, pay first in Bangladesh). Mock + screensho
 - NOT done: the bot's own WhatsApp number (owner gives a SIM, then Inbox > WhatsApp numbers > purpose Doctor booking);
   real doctor + hours on Oliareen (only demo on dev); live release waits for the owner's yes; payment is marked by hand
   (no bKash API); WhatsApp group booking by patients only talks times (health details go to a direct chat, by design).
+- 28 Nov 2026 #84: studioref-1 released to LIVE (owner yes): migration 187 on postgres + both *_native, 4 function files = live + only the studioref diff, page = #83 source + studioref hunks; real browser upload checked; Raj told on WhatsApp with marked screenshots.
+
+## studioref-2 (28 Nov 2026): a reference video as a LINK in the Content desk Studio (DEV)
+
+- Page: the paperclip menu has a third item "লিংক দিন" that opens a small paste box ("YouTube / Facebook লিংক"; Enter or
+  "যোগ করুন"; a pasted good link is added at once). The link becomes a video chip (site name + short link) with the same
+  two choices "হুবহু এই ধরনে" / "এই ধরনে, আরো ভালো করে" and ×. Only http(s) links of youtube.com / youtu.be / facebook.com /
+  fb.watch / instagram.com / tiktok.com (and their subdomains) are taken; anything else gets a plain Bangla error inside
+  the box. A link counts toward the 2 videos per ask (file + link together). The work log shows it as a link that opens
+  the video, plus a plain line when the engine could not download it.
+- Server (no migration): erpStudioRefLink({url}) stores a ref with kind 'video', file_path 'link/<uuid>', name = the URL,
+  mime 'text/uri-list', state 'ready' at once. refOut gives source ('link' | 'file'), site, failed; a link's url is the link
+  itself. erpContentStudioRefs passes the link to the engine and accepts used.failed back. allow.js (manager), activity word.
+- Engine (PC, not in this repo; backup studio_run.py.bak-studioref2): a link ref is downloaded with yt-dlp into the job's
+  refs folder (720p, only the first 3 minutes, at most 200 MB), then read exactly like an uploaded style video (8-frame
+  contact sheet, cut pace, words). Keep the style only: the video, frames and sound are deleted right after reading and
+  the contact sheet once the planner has it; facts.json stays. A private / login-only / removed link: the job goes on with
+  her prompt and the log says so in Bangla ("…লিংকের ভিডিওটা আনা গেল না (ভিডিওটা প্রাইভেট বা লগইন ছাড়া দেখা যায় না)…").
+  Engine unit run: a 5-minute YouTube video cut to 180 s and read (15 cuts, words), a dead link noted, only facts.json left.
+- Tests: studioref_test 60 (24 new: sales refused, 6 bad links refused, empty, Shorts link accepted and stored without a new
+  column, duplicate refused, link without https taken, 2 links / link + file = limit for links and for file uploads,
+  removed link keeps its row, choice on a link, tray, ask with link + file, engine gets the link, failed shows in the log,
+  sent link stays, other business has none). studio_test + contentdesk_test and every other suite green.
+- NOT done: Instagram / TikTok / Facebook often need a login for yt-dlp; then the job runs without the style video and
+  says so (no cookies are used on purpose). Live waits for the owner's yes.
