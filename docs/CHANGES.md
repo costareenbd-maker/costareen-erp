@@ -5375,3 +5375,10 @@ are off (demo phones) and no team numbers are set; one test went to the owner's 
 not fit a shipment can no longer be sent by hand. Known risk: replies to Alvi's number arrive in Costareen's inbox where
 the Costareen AI answers. Live: copy again into the live cargo business when it is made.
 
+
+## ship-5..8 (28 Nov 2026, dev) - Benndar Express, review fixes, bag photos, team, traveller's own page
+- ship-5: impeccable critique (2 isolated assessments) fixes: sticky action reachable, back/forward repaint, one lime, no card borders, AA contrast, 14px Bangla, 40px+ targets, phone header, folded messages, copy. Dev business renamed Benndar Express with the Benndar logo.
+- ship-6: bag photos (migration 181): new bag needs 2 photos (max 6 per bag body), gallery, thumbs on shipment page; replaced bag gets its own photos.
+- ship-7/8: team who meets travellers (182) and the traveller's own page web/c/ (183, handlers/shipportal.js, index.ts ?inbox=portal). Owner's rules: own details only without a bag; shipment view from carrier set until staff receive; his scan only logs; staff scans never change the carrier; new phone = WhatsApp code. Offline: c/sw.js + localStorage copy + cached QR picture. Requests (I can take luggage) -> ERP list -> make shipment. Airport guides + office number + meeting note. Reminder 3 days before the flight. Blueprint/mock .impeccable/mocks/traveller-portal-2026-11-28.
+- NOT done: live; a real iPhone/Android check of install + offline (the preview browser refuses service workers); camera scan of the bag on the traveller page (a tap confirms instead); team members on dev not added; join link not yet sent to anyone.
+
