@@ -5516,3 +5516,10 @@ Owner (for Raj, Oliareen's marketer): "Raz vai ke ekta json er jayga kore dew pr
   word, owner reads it, other business untouched. studio_test 36, studioref_test 60, contentdesk_test 116 green.
 - NOT done: no dev engine render with a JSON yet (unit check only); no new Flow/Veo clips from her JSON (library clips
   only, like the rest of the studio); her voice-over words still pass the script writer / humanizer, so a word can change. Live waits for the owner's yes (one combined kit with studioref-2 is prepared).
+
+### clinic-1 LIVE #87 (29 Nov 2026)
+Owner: "ডাক্তারের ডেস্ক লাইভে দিয়ে দাও". Migration 188, function file-by-file (clinic diff only), page = #86 + clinic block (sw clinic1).
+Doctor desk now in the Today menu group (clinic-1c). Oliareen: 8 unused menu screens off; first doctor Dr. Nusrat Nobi
+(from Raj's WhatsApp: poster + prescription pad; hours, WhatsApp, BMDC still empty); assistant renamed "সাদিয়া".
+The booking bot's WhatsApp lives on its OWN Evolution server (Mac evolution-clinic, /evoc), set as Oliareen's server only;
+no number linked yet. Not seen live yet: a real patient chat, the doctor's yes/no, reminders.
