@@ -5527,3 +5527,7 @@ Owner (for Raj, Oliareen's marketer): "Raz vai ke ekta json er jayga kore dew pr
   no photo (the first load on a new device is always plain, even for the owner; the photo comes from the next load).
 - NOT changed: the splash images stay on the site (a bare URL still opens them); phone once-per-visit / computer every
   load, the 1.8 s minimum and tap-to-skip are the same for both loaders.
+- 1b/1c: the plain-loader class goes with the splash; on a phone the plain loader sits in the middle (the poster
+  version stays low, under the face).
+- Checked on dev (owner, desktop 1440 + phone 390): Demo 3D Shop = poster with photo; Oliareen (demo) = plain B, no
+  splash picture requested; switching business flips the device flag at once.
