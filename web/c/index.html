@@ -86,7 +86,10 @@ section>h2{font-size:17px;margin:0;padding:18px 18px 6px;line-height:1.4}
 .file{display:flex;gap:10px;align-items:center;border:2px dashed var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;position:relative}
 .file input{position:absolute;opacity:0;width:1px;height:1px}.file:focus-within{outline:3px solid var(--focus);outline-offset:2px}
 .file svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;flex:none}
-.picks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.picks label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:64px;border-radius:12px;background:var(--card,#fff);border:1px solid var(--line);font-weight:700;font-size:14px;cursor:pointer;position:relative;color:var(--ink)}
+.upl{margin-top:12px;display:flex;gap:8px;align-items:center;justify-content:center}.upl svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
+.sheetbg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card,#fff);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:18px 16px calc(16px + env(safe-area-inset-bottom))}.sheet h3{margin:0 0 12px;font-size:17px}
+.picks{display:grid;gap:8px}.picks label{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;padding:0 16px;min-height:56px;border-radius:12px;background:var(--card,#fff);border:1px solid var(--line);font-weight:700;font-size:14px;cursor:pointer;position:relative;color:var(--ink)}
 .picks label:focus-within{outline:3px solid var(--focus);outline-offset:2px}.picks input{position:absolute;opacity:0;width:1px;height:1px}.picks svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8}
 .pickbox{border:2px dashed var(--line);border-radius:14px;padding:12px 14px}.pickbox.scan{border-color:var(--teal)}.pickbox .pkh{display:flex;gap:10px;align-items:flex-start}.pickbox .pkh svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;flex:none}
 .scan{border:2px dashed var(--teal);background:var(--okbg)}.scan b{display:block;font-size:16px}.scan span{font-size:14px;color:var(--ink-2)}
@@ -174,6 +177,7 @@ details.em[open]{padding-bottom:6px}
     wa: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1112 20a8 8 0 01-4.1-1.1z"/></svg>',
     plane: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13.5l7-1.5 4-8h2l-1.5 8 5.5 1v2l-5.5 1L16 22h-2l-4-8-7-1.5z"/></svg>',
     pic: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg>',
+    up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 16v4h16v-4"/></svg>',
     doc: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg>',
     cam: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
     ok: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
@@ -287,7 +291,7 @@ details.em[open]{padding-bottom:6px}
     var m = x.trip && x.trip.money && x.trip.money.length ? '<section aria-labelledby="h-money"><h2 id="h-money">আমাদের থেকে পেয়েছেন</h2><dl class="kv">' + x.trip.money.map(function (y) { return '<dt>' + (y.kind === 'fee' ? 'পারিশ্রমিক' : 'কাস্টমস ফেরত') + '</dt><dd class="num">' + esc(money(y)) + '</dd>'; }).join('') + '</dl></section>' : '';
     var canUp = x.status !== 'done' && x.status !== 'no';
     var tk = x.id && (x.ticket || canUp) ? '<section aria-labelledby="h-tk"><h2 id="h-tk">ফ্লাইট আইটিনারারি</h2><div class="pad">' + (x.ticket ? '<p class="lead" style="margin:0 0 10px">' + I.ok.replace('<svg', '<svg style="width:18px;height:18px;vertical-align:-3px;stroke:currentColor;fill:none;stroke-width:2.4"') + ' জমা আছে: ' + esc(x.ticket) + '</p>' : '')
-      + (x.status === 'done' || x.status === 'no' ? '' : '<div class="pickbox"><b>' + (x.ticket ? 'নতুনটা দিন' : 'আইটিনারারি বা ই-টিকিট যোগ করুন') + '</b>' + picks('data-ticket="' + x.id + '"') + '</div>') + '</div></section>' : '';
+      + (x.status === 'done' || x.status === 'no' ? '' : '<button type="button" class="btn sec upl" data-pick="data-ticket=&quot;' + x.id + '&quot;">' + I.up + (x.ticket ? 'নতুনটা আপলোড করুন' : 'আইটিনারারি বা ই-টিকিট আপলোড করুন') + '</button>') + '</div></section>' : '';
     APP.innerHTML = '<section><h2>অবস্থা <span class="chip ' + st[1] + '" style="margin-left:6px">' + st[0] + '</span></h2><p class="pad lead" style="margin:0">' + esc(st[2]) + '</p><dl class="kv">' + rows + '</dl></section>' + m + tk
       + '<section><div class="pad" style="padding-top:16px"><button type="button" class="btn sec" data-act="home">ফিরে যান</button></div></section>';
     window.scrollTo(0, 0);
@@ -370,7 +374,8 @@ details.em[open]{padding-bottom:6px}
     var keep = {}; ['r-leave', 'r-ret', 'r-fl', 'r-kg'].forEach(function (id) { var x = el(id); if (x) keep[id] = x.value; });
         APP.innerHTML = '<section><form id="f-req" class="pad" style="padding-top:18px" novalidate>'
       // 1. the ticket first: one picture fills everything below
-      + '<div class="fld"><div class="pickbox scan"><div class="pkh">' + I.doc + '<span><b id="tk-name">' + (TICKET ? esc(TICKET.name) : 'ফ্লাইট আইটিনারারি বা ই-টিকিট আছে?') + '</b><span id="tk-say">' + (scanNote || 'ছবি তুলুন, গ্যালারি থেকে দিন বা PDF দিন। নিচের ঘরগুলো নিজে থেকেই ভরে যাবে। না থাকলে নিজে লিখুন।') + '</span></span></div>' + picks('data-rticket="1"') + '</div></div>'
+      + '<div class="fld"><div class="pickbox scan"><div class="pkh">' + I.doc + '<span><b id="tk-name">' + (TICKET ? esc(TICKET.name) : 'ফ্লাইট আইটিনারারি বা ই-টিকিট আছে?') + '</b><span id="tk-say">' + (scanNote || 'দিলে নিচের ঘরগুলো নিজে থেকেই ভরে যাবে। না থাকলে নিজে লিখুন।') + '</span></span></div>'
+      + '<button type="button" class="btn pri upl" data-pick="data-rticket=&quot;1&quot;">' + I.up + (TICKET ? 'অন্যটা আপলোড করুন' : 'আইটিনারারি বা ই-টিকিট আপলোড করুন') + '</button></div></div>'
       // 2. flight number + date
       + '<div class="fld"><label for="r-fl">ফ্লাইট নম্বর</label><input class="in num" id="r-fl" maxlength="60" placeholder="যেমন KE 657" autocapitalize="characters"><p class="lead" style="margin:6px 0 0;font-size:14px">আইটিনারারি বা টিকিটে “Flight” লেখার পাশে থাকে।</p></div>'
       + '<div class="fld"><label for="r-leave">যাত্রার তারিখ</label><input class="in" type="date" id="r-leave"></div>'
@@ -400,7 +405,7 @@ details.em[open]{padding-bottom:6px}
       if (APK.indexOf(r.from_airport) >= 0) { REQ.direction = 'kr_bd'; REQ.fromAirport = r.from_airport; } else if (APB.indexOf(r.from_airport) >= 0) { REQ.direction = 'bd_kr'; REQ.fromAirport = r.from_airport; }
       if (APK.indexOf(r.to_airport) >= 0 || APB.indexOf(r.to_airport) >= 0) REQ.toAirport = r.to_airport;
       if (r.baggage_kg) { REQ.kg = String(r.baggage_kg); set('r-kg', REQ.kg); }
-      paintReq('টিকিট থেকে ঘরগুলো ভরা হয়েছে। একবার মিলিয়ে নিন, ভুল থাকলে ঠিক করে দিন।');
+      paintReq('ঘরগুলো ভরা হয়েছে। একবার মিলিয়ে নিন।' + ((d.checks && d.checks.length) ? ' দেখুন: ' + d.checks.join(' ') : ''));
     }, function () { var s1 = el('tk-say'); if (s1) s1.textContent = 'নেট পাওয়া যাচ্ছে না। ঘরগুলো নিজে লিখুন, টিকিটটা জমার সাথে যাবে।'; });
   }
   /** Three ways to give the itinerary: take a photo now, a saved photo, or a PDF/file. attr = 'id="x"' or 'data-ticket="7"'. */
@@ -410,6 +415,20 @@ details.em[open]{padding-bottom:6px}
       + '<label>' + I.pic + 'গ্যালারি<input type="file" accept="image/*" ' + attr + ' aria-label="আগে তোলা ছবি থেকে বেছে নিন"></label>'
       + '<label>' + I.doc + 'PDF / ফাইল<input type="file" accept="application/pdf,image/*" ' + attr + ' aria-label="PDF বা ফাইল বেছে নিন"></label></div>';
   }
+  function closePick() { var o = document.querySelector('.sheetbg'); if (o) { o.remove(); if (PICKER && PICKER.focus) PICKER.focus(); } }
+  var PICKER = null;
+  function openPick(btn) {
+    closePick(); PICKER = btn;
+    var o = document.createElement('div'); o.className = 'sheetbg';
+    o.innerHTML = '<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pk-h"><h3 id="pk-h">কীভাবে দেবেন?</h3>' + picks(btn.getAttribute('data-pick')) + '<button type="button" class="btn sec" data-pickclose="1" style="margin-top:10px">বাদ দিন</button></div>';
+    document.body.appendChild(o);
+    var f = o.querySelector('label'); if (f) { f.setAttribute('tabindex', '-1'); f.focus(); }
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-pick]'); if (b) { e.preventDefault(); return openPick(b); }
+    if (e.target.classList && e.target.classList.contains('sheetbg') || (e.target.closest && e.target.closest('[data-pickclose]'))) closePick();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePick(); });
   function readTicket(file, then) {
     if (!file) return;
     if (/^image\//.test(file.type || '') || /\.(heic|heif|jpe?g|png|webp)$/i.test(file.name || '')) return shrink(file, 2000, function (d) { then({ name: (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg', mime: 'image/jpeg', data: d }); }, 0.85, function () { alert('ছবিটা খোলা গেল না। আরেকটা ছবি বা PDF দিন।'); });
@@ -450,6 +469,7 @@ details.em[open]{padding-bottom:6px}
   }
   var PHOTO;
   document.addEventListener('change', function (e) {
+    if (e.target.closest && e.target.closest('.sheetbg')) setTimeout(closePick, 0);
     if (e.target.getAttribute && e.target.getAttribute('data-rticket')) return readTicket(e.target.files && e.target.files[0], scanTicket);
     var ci = e.target.getAttribute && e.target.getAttribute('data-carry');
     if (ci != null && ME && ME.carryList) { var it = ME.carryList[+ci], at = REQ.carry.indexOf(it); if (e.target.checked && at < 0) REQ.carry.push(it); if (!e.target.checked && at >= 0) REQ.carry.splice(at, 1); return; }

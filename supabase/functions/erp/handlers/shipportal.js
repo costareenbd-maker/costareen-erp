@@ -219,7 +219,7 @@ export async function portalAct(ctx, a, { k, j, body }) {
       const used = int(await getConfig(ctx, dayKey, '0'));
       if (used >= 6) return bad(429, 'আজ অনেকবার টিকিট পড়া হয়েছে। ঘরগুলো নিজে লিখুন, বা কাল আবার চেষ্টা করুন।');
       await setConfig(ctx, dayKey, String(used + 1));
-      try { return { status: 200, body: { ok: true, read: await readTicketData(ctx, mime, data, f.name) } }; }
+      try { const rd = await readTicketData(ctx, mime, data, f.name); const c = checkTicket(rd, p.name, day(ctx.now)); return { status: 200, body: { ok: true, read: c.read, checks: c.checks } }; }
       catch (_) { return bad(400, 'টিকিটটা পড়া গেল না। ঘরগুলো নিজে লিখুন, অথবা আরও পরিষ্কার ছবি দিন।'); }
     }
     if (a === 'ticket') {
@@ -350,10 +350,34 @@ export async function readTicketData(ctx, mime, data, name) {
   catch (e) { throw new Error('The AI could not read the ticket. ' + str(e && e.message).slice(0, 160)); }
   const j = out && out.json && typeof out.json === 'object' ? out.json : null;
   if (!j) throw new Error('The AI could not read the ticket. Open it and compare by eye.');
-  const clean = {}; for (const k of ['passenger', 'airline', 'flight', 'from_airport', 'to_airport', 'depart_date', 'depart_time', 'arrive_date', 'arrive_time', 'return_date', 'booking_ref']) clean[k] = str(j[k]).slice(0, 80);
-  clean.baggage_kg = Number(j.baggage_kg) > 0 && Number(j.baggage_kg) < 100 ? Number(j.baggage_kg) : 0;
-  clean.from_airport = clean.from_airport.toUpperCase(); clean.to_airport = clean.to_airport.toUpperCase();
-  return clean;
+  return checkTicket(j).read;
+}
+const isDay = (v) => /^\d{4}-\d\d-\d\d$/.test(v) && !isNaN(Date.parse(v + 'T00:00:00Z')) && new Date(v + 'T00:00:00Z').toISOString().slice(0, 10) === v;
+/** ship-12c: the AI's answer checked by plain rules: bad dates/times/flight numbers are dropped, odd things are named
+ *  for the partner to look at (past date, unknown airport, both ends in one country, a name that is not his). */
+export function checkTicket(j, profileName, today) {
+  const read = {}; for (const k of ['passenger', 'airline', 'flight', 'from_airport', 'to_airport', 'depart_date', 'depart_time', 'arrive_date', 'arrive_time', 'return_date', 'booking_ref']) read[k] = str(j && j[k]).slice(0, 80);
+  read.baggage_kg = Number(j && j.baggage_kg) > 0 && Number(j && j.baggage_kg) < 100 ? Number(j.baggage_kg) : 0;
+  const checks = [];
+  const fm = /^([A-Z0-9]{2})\s*-?\s*0*(\d{1,4})([A-Z]?)$/.exec(read.flight.toUpperCase().trim());
+  if (fm && /[A-Z]/.test(fm[1])) read.flight = fm[1] + ' ' + fm[2] + fm[3];
+  else { if (read.flight) checks.push('ফ্লাইট নম্বরটা ঠিকমতো পড়া যায়নি, নিজে লিখুন।'); read.flight = ''; }
+  for (const k of ['depart_date', 'arrive_date', 'return_date']) if (!isDay(read[k])) read[k] = '';
+  for (const k of ['depart_time', 'arrive_time']) if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(read[k])) read[k] = '';
+  if (read.arrive_date && read.depart_date && read.arrive_date < read.depart_date) { read.arrive_date = ''; read.arrive_time = ''; }
+  if (read.return_date && read.depart_date && read.return_date <= read.depart_date) read.return_date = '';
+  const now = today || new Date().toISOString().slice(0, 10);
+  if (read.depart_date && read.depart_date < now) checks.push('যাত্রার তারিখটা আগের দিনের। ঠিক আছে কিনা দেখুন।');
+  if (!read.depart_date) checks.push('যাত্রার তারিখ পড়া যায়নি, নিজে দিন।');
+  for (const k of ['from_airport', 'to_airport']) { read[k] = read[k].toUpperCase().replace(/[^A-Z]/g, ''); if (read[k].length !== 3) read[k] = ''; }
+  const fa = AIRPORTS[read.from_airport], ta = AIRPORTS[read.to_airport];
+  if (read.from_airport && !fa) checks.push(read.from_airport + ' এয়ারপোর্ট আমাদের তালিকায় নেই, এয়ারপোর্ট নিজে বেছে নিন।');
+  if (read.to_airport && !ta) checks.push(read.to_airport + ' এয়ারপোর্ট আমাদের তালিকায় নেই, এয়ারপোর্ট নিজে বেছে নিন।');
+  if (fa && ta && fa[0] === ta[0]) checks.push('দুই এয়ারপোর্টই একই দেশের। যাত্রাপথ মিলিয়ে নিন।');
+  const words = (s) => str(s).toUpperCase().replace(/[^A-Z ]/g, ' ').split(/\s+/).filter((w) => w.length > 1 && !/^(MR|MRS|MS|MD|MOHAMMAD|MOHAMMED|MUHAMMAD)$/.test(w));
+  const a = words(read.passenger), b = words(profileName);
+  if (a.length && b.length && !a.some((w) => b.indexOf(w) >= 0)) checks.push('টিকিটের নাম (' + read.passenger + ') আপনার প্রোফাইলের নামের সাথে মেলেনি।');
+  return { read, checks };
 }
 /** CZ 007, cz7, CZ0007 -> CZ7 (one flight however it is typed). */
 export function flightKey(f) {

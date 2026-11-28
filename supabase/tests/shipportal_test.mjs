@@ -193,6 +193,12 @@ x = await act('scan', { k: k2, body: { ticket: { name: 'a.exe', mime: 'applicati
 check('scan: only PDF or pictures', x.status === 400, x.body);
 x = await act('scan', { k: k2, body: { ticket: { name: 't.pdf', mime: 'application/pdf', data: PDF } } });
 check('scan without an AI key: a plain "write it yourself" answer', x.status === 400 && /নিজে লিখুন/.test(x.body.error), x.body);
+let ck = P.checkTicket({ passenger: 'MR RAHIM UDDIN', flight: 'cz0007', from_airport: 'icn', to_airport: 'DAC', depart_date: '2027-04-10', depart_time: '25:99', arrive_date: '2027-04-09', return_date: '2027-03-01', baggage_kg: 23 }, 'Rahim Uddin', '2027-01-01');
+check('rules: flight tidied, bad time/arrival/return dropped, no warnings', ck.read.flight === 'CZ 7' && ck.read.from_airport === 'ICN' && ck.read.depart_time === '' && ck.read.arrive_date === '' && ck.read.return_date === '' && ck.read.baggage_kg === 23 && ck.checks.length === 0, ck);
+ck = P.checkTicket({ passenger: 'KARIM HOSSAIN', flight: 'hello', from_airport: 'NRT', to_airport: 'DAC', depart_date: '2026-02-30' }, 'Rahim Uddin', '2027-01-01');
+check('rules: odd things named for the partner', ck.read.flight === '' && ck.read.depart_date === '' && ck.checks.length === 4 && ck.checks.some((c) => /NRT/.test(c)) && ck.checks.some((c) => /মেলেনি/.test(c)), ck);
+ck = P.checkTicket({ flight: 'BS 341', from_airport: 'DAC', to_airport: 'CGP', depart_date: '2026-12-01' }, 'X', '2027-01-01');
+check('rules: past date and one-country route flagged', ck.read.flight === 'BS 341' && ck.checks.length === 2, ck);
 
 r = await mgr('erpShipGuideSave', [{ carryList: ['মোবাইল ফোন', 'ল্যাপটপ', '', 'ঘড়ি'] }]);
 check('staff set the list partners tick from', r.ok && r.result.carryList.join('|') === 'মোবাইল ফোন|ল্যাপটপ|ঘড়ি', r.ok && r.result.carryList);
