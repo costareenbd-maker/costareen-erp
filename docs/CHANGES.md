@@ -5412,3 +5412,14 @@ structure, with two small choices.
 - NOT done: the night clip desk does not read studio-requests by itself (Flow is by hand, 01:00-07:00 KST); when a night
   clip lands in the brand library, Raj presses "আরো ভালো করুন" to get it in a new version. HEIC pictures show as an icon
   in the browser (the engine converts them). Live waits for the owner's yes.
+- studioref-1b/c (same day): tray chips loaded from the server got no key (the video choice landed on the first chip) -
+  fixed; a failed upload takes its row off. Dev check: real upload into the dev file store from the PC, chips, choice,
+  remove, the work log with thumbnails and the engine's line, desktop + 375 px phone (no sideways scroll). Dev engine
+  run (job 3): her picture shown at 0:05 as a slow push, a night clip wish saved, style video read; 14 min on the PC.
+  Dev only: the dev file store answers the browser's upload preflight (OPTIONS) with 404, so picking a file in the
+  browser fails ON DEV; live's gateway answers it (checked with curl). Not changed (shared Caddy).
+- Engine fixes found on the way (PC, not in this repo): the LIVE job 1 ("show me your creation process", 28 Nov 17:23)
+  re-used the DEV test plan of 26 Nov (same work dir bz-oliareen-d9000001) and then failed at upload (draft id 0
+  refused). Now live jobs use their own work dirs (d91xxxxx), a plan is re-used only when made for the same database,
+  the upload passes no draft id. The engine also runs unchanged on a database without migration 187. That live job
+  stays failed: Raj resends the prompt.
