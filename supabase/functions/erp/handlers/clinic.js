@@ -17,7 +17,7 @@
 //               the doctor is nudged once half-way; reminders the day before and an hour before (with the call link).
 // Never deleted: a consult is cancelled / declined / expired with a reason; a day off and a photo are struck out.
 // Health details stay out of groups: in a group the bot only talks about times; details go in a direct chat.
-import { roleAtLeast } from '../allow.js';
+import { roleAtLeast, actsAsOwner } from '../allow.js';
 import { getConfig, setConfig, saveFile, fileUrl } from '../lib/ext.js';
 import { phone11 } from '../lib/phone.js';
 import { appIsOff } from './apps.js';
@@ -807,7 +807,8 @@ async function wcall(ctx, url, opts) {
   } catch (e) { return { ok: false, status: 0, json: {}, error: String((e && e.message) || e) }; }
 }
 async function ownerOnly(ctx) {
-  if (!roleAtLeast(ctx.s.role, 'shareholder') && !(await platformAdmin(ctx))) throw new Error('বটের WhatsApp শুধু মালিক জুড়তে পারেন।');
+  // clinic-2b (owner 29 Nov): Raj (manager with the 'act' switch) links the bot's phone himself
+  if (!roleAtLeast(ctx.s.role, 'shareholder') && !actsAsOwner(ctx.s) && !(await platformAdmin(ctx))) throw new Error('বটের WhatsApp মালিক বা মালিকের ক্ষমতা পাওয়া কেউ জুড়তে পারেন।');
 }
 export async function erpClinicConnect(ctx, payload) {
   await gate(ctx); await ownerOnly(ctx);
