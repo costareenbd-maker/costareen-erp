@@ -34,7 +34,7 @@ for attempt in range(1, 5):
     try:
         srv = pgserver.get_server(DATA, cleanup_mode='stop'); break
     except Exception as e:
-        print('Postgres is slow to start (try %d): %s' % (attempt, str(e).splitlines()[-1][:120])); time.sleep(8)
+        print('Postgres is slow to start (try %d): %s' % (attempt, ((str(e).splitlines() or [repr(e)])[-1])[:120])); time.sleep(8)
 if srv is None:
     sys.exit('Postgres did not start. Close antivirus scans of local/data, or run start.cmd --fresh.')
 uri = srv.get_uri()
