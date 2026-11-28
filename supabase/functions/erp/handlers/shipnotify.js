@@ -183,7 +183,7 @@ function targets(s, kind, set) {
     const list = phones(set.team);
     return list.length ? list.map((p) => ({ phone: p })) : [{ phone: '', why: 'টিমের কোনো হোয়াটসঅ্যাপ নম্বর দেওয়া নেই' }];
   }
-  if (!set.carrier) return [{ phone: '', why: 'বহনকারীদের বার্তা বন্ধ রাখা আছে' }];
+  if (!set.carrier) return [{ phone: '', why: 'ট্রাভেল পার্টনারদের বার্তা বন্ধ রাখা আছে' }];
   if (!s.c_wa) return [{ phone: '', why: 'উনার প্রোফাইলে "হোয়াটসঅ্যাপে বার্তা" টিক দেওয়া নেই' }];
   const p = waNumber(str(s.c_phone));
   return p ? [{ phone: p }] : [{ phone: '', why: 'ফোন নম্বরটা হোয়াটসঅ্যাপে চলবে না (দেশের কোড সহ লিখুন, যেমন +82 10…)' }];
@@ -241,11 +241,11 @@ export async function shipBell(ctx) {
   if (str(await getConfig(ctx, 'business_kind', '')) !== 'cargo') return [];
   const now = ctx.now, n = new Date(now).getTime(), out = [];
   const nreq = (await ctx.tx`select count(*)::int n from ship_requests where business_id = ${ctx.biz} and state = 'new'`)[0].n;
-  if (nreq) out.push({ key: 'ship:req:' + nreq, level: 'warn', title: bn(nreq) + 'টা নতুন লাগেজ অনুরোধ', detail: 'বহনকারীরা জানিয়েছেন কবে যাচ্ছেন', go: 'ship:req' });
+  if (nreq) out.push({ key: 'ship:req:' + nreq, level: 'warn', title: bn(nreq) + 'টা নতুন যাত্রা জানানো হয়েছে', detail: 'ট্রাভেল পার্টনাররা যাত্রার তারিখ জানিয়েছেন', go: 'ship:req' });
   const ships = await load(ctx, ctx.tx`(s.checked_at is null or s.checked_at > now() - interval '1 day')`);
   for (const s of ships) {
     const st = stepNow(s, now), dep = s.depart_at ? new Date(s.depart_at).getTime() : null, land = s.land_at ? new Date(s.land_at).getTime() : null;
-    const who = s.type === 'air' ? 'এয়ার কার্গো' + (str(s.awb) ? ' ' + str(s.awb) : '') : (str(s.c_name) || 'বহনকারী ঠিক হয়নি');
+    const who = s.type === 'air' ? 'এয়ার কার্গো' + (str(s.awb) ? ' ' + str(s.awb) : '') : (str(s.c_name) || 'ট্রাভেল পার্টনার ঠিক হয়নি');
     const go = 'ship:' + s.code;
     if (s.checked_at) {
       const rows = await shortOf(ctx, s.id);

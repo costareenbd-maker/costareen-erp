@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>mock</title>
+<style>
+@font-face{font-family:"Noto Sans Bengali";src:url(fonts/NotoSansBengali-Regular.ttf);font-weight:400}
+@font-face{font-family:"Noto Sans Bengali";src:url(fonts/NotoSansBengali-Bold.ttf);font-weight:700}
+@font-face{font-family:Comfortaa;src:url(fonts/Comfortaa-Bold.ttf);font-weight:700}
+@font-face{font-family:Inter;src:url(fonts/Inter-latin-var.woff2) format("woff2");font-weight:100 900}
+:root{--teal:#00565A;--coral:#FF746B;--bg:#F3EDE4;--card:#fff;--ink:#0E1E1F;--ink2:#33423F;--ink3:#4A5859;--line:#E2D9CB;--soft:#EFE8DD;--ok:#166534;--okbg:#E5F3EA;--warn:#6B4300;--warnbg:#FFF1D6;--info:#1E4E79;--infobg:#E6EFF8}
+*{box-sizing:border-box}body{margin:0;background:#CFC8BD;font:16px/1.55 "Noto Sans Bengali",Inter,system-ui;color:var(--ink);padding:22px}
+.row{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}.cap{font:600 14px Inter,sans-serif;margin:0 0 8px;color:#222}
+.ph{width:375px;height:860px;background:var(--bg);border-radius:34px;overflow:hidden;box-shadow:0 18px 44px -20px rgba(0,0,0,.45)}
+.top{background:var(--teal);color:#fff;padding:18px 20px 52px;position:relative;overflow:hidden}
+.top:after{content:"";position:absolute;right:-70px;top:-70px;width:200px;height:200px;border-radius:50%;border:22px solid rgba(255,116,107,.22)}
+.brand{display:flex;gap:10px;align-items:center;font:700 17px Comfortaa}.lg{width:34px;height:34px;border-radius:10px;background:#F3EDE4}
+.top h1{margin:14px 0 0;font-size:22px}.top p{margin:2px 0 0;opacity:.9;font-size:15px}
+main{padding:0 14px;margin-top:-34px;position:relative}
+.card{background:var(--card);border-radius:20px;margin-bottom:12px;box-shadow:0 1px 2px rgba(14,30,31,.06),0 10px 26px -18px rgba(14,30,31,.3);overflow:hidden}
+.card h2{font-size:16px;margin:0;padding:16px 16px 6px}.pad{padding:0 16px 16px}
+.hero .route{display:flex;align-items:center;gap:10px;font:800 24px Inter;padding:2px 16px}.hero .route span{color:var(--coral);font-size:20px}
+.hero .when{padding:0 16px;color:var(--ink2)}
+.steps3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:12px 16px 4px}
+.steps3 div{font-size:13.5px;text-align:center;color:var(--ink3)}.steps3 i{display:block;height:6px;border-radius:3px;background:var(--line);margin-bottom:6px}
+.steps3 .on i{background:var(--teal)}.steps3 .on{color:var(--ink);font-weight:700}
+.btn{display:flex;align-items:center;justify-content:center;height:50px;border-radius:14px;font-weight:700;font-size:16px;border:0;width:100%;margin-top:10px}
+.pri{background:var(--teal);color:#fff}.sec{background:var(--soft);color:var(--ink)}.out{background:#fff;color:var(--teal);box-shadow:inset 0 0 0 2px var(--teal)}
+.ret{background:var(--infobg);border-radius:16px;padding:14px;margin:0 16px 16px}.ret b{color:var(--info);display:block}.ret p{margin:2px 0 0;font-size:15px;color:var(--ink2)}
+.hist{border-top:1px solid var(--line);padding:12px 16px;display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.hist b{font-size:15.5px}.hist small{grid-column:1;color:var(--ink3);font-size:14px}
+.chip{font-size:13.5px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.c-sub{background:var(--warnbg);color:var(--warn)}.c-rev{background:var(--infobg);color:var(--info)}.c-ok{background:var(--okbg);color:var(--ok)}.c-done{background:var(--soft);color:var(--ink2)}
+.fld{margin-bottom:12px}.fld label{display:block;font-weight:700;font-size:15px;margin-bottom:5px}.fld small{font-weight:400;color:var(--ink3)}
+.in{height:48px;border-radius:12px;border:1px solid #C9BFB0;background:#fff;display:flex;align-items:center;padding:0 14px;color:var(--ink)}.in.e{color:#7A847F}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chips span{height:44px;padding:0 14px;border-radius:999px;background:var(--soft);display:inline-flex;align-items:center;font-weight:700;font-size:15px}.chips .on{background:var(--teal);color:#fff}
+.hint{font-size:14px;color:var(--ink3);background:var(--soft);border-radius:12px;padding:10px 12px;margin:4px 0 12px}
+.me{display:flex;gap:12px;align-items:center;padding:12px 16px}.av{width:48px;height:48px;border-radius:14px;background:#B9C4CF}
+.me b{display:block}.me span{font-size:14px;color:var(--ink3)}
+.note{font-size:13px;color:#333;max-width:375px;margin:8px 0 0}
+</style></head><body><div class="row">
+
+<div><p class="cap">১ · হোম (যাত্রা জানানো আছে)</p><div class="ph"><div class="top"><div class="brand"><div class="lg"></div>Benndar Express</div><h1>আরিফ হোসেন</h1><p>ট্রাভেল পার্টনার · আইডি C-0001</p></div><main>
+<div class="card hero"><h2>আপনার পরের যাত্রা</h2><div class="route">ICN <span>✈</span> DAC</div><div class="when">১৫ ডিসেম্বর ২০২৬ · আমাদের লাগেজ ২টা</div>
+<div class="steps3"><div class="on"><i></i>জমা হয়েছে</div><div class="on"><i></i>পর্যালোচনায়</div><div><i></i>অনুমোদিত</div></div>
+<div class="pad" style="padding-top:8px;font-size:14.5px;color:var(--ink3)">আমরা শিগগিরই আপনার সাথে যোগাযোগ করব।</div></div>
+<div class="card"><div class="pad" style="padding-top:16px"><button class="btn pri" style="margin:0">+ নতুন যাত্রা জানান</button></div></div>
+<div class="card"><h2>যাত্রার ইতিহাস</h2>
+<div class="hist"><b>ICN → DAC · ১৫ ডিসেম্বর ২০২৬</b><span class="chip c-rev">পর্যালোচনায়</span><small>লাগেজ ২টা · ফেরা ১০ জানুয়ারি ২০২৭</small></div>
+<div class="hist"><b>ICN → DAC · ২ নভেম্বর ২০২৬</b><span class="chip c-done">সম্পন্ন</span><small>লাগেজ ১টা · চালান TR-0004</small></div>
+</div>
+<div class="card"><div class="me"><div class="av"></div><div><b>আমার তথ্য</b><span>ফোন, ঠিকানা, জরুরি যোগাযোগ</span></div><span style="margin-left:auto;font-weight:700;color:var(--teal)">দেখুন ›</span></div></div>
+</main></div><p class="note">উপরে বড় করে "পরের যাত্রা" আর তার অবস্থা ৩ ধাপে। নিচে সব যাত্রা "ইতিহাস" হিসেবে। নিজের তথ্য আলাদা পাতায়।</p></div>
+
+<div><p class="cap">২ · দেশে আছেন, ফেরার তারিখ আগে দেওয়া</p><div class="ph"><div class="top"><div class="brand"><div class="lg"></div>Benndar Express</div><h1>আরিফ হোসেন</h1><p>ট্রাভেল পার্টনার · আইডি C-0001</p></div><main>
+<div class="card"><h2>ফেরার যাত্রায় লাগেজ নেবেন?</h2>
+<div class="ret"><b>DAC ✈ ICN · ১০ জানুয়ারি ২০২৭</b><p>যাওয়ার সময় আপনি এই ফেরার তারিখ দিয়েছিলেন। এখনো কোনো অনুরোধ যায়নি।</p></div>
+<div class="pad" style="padding-top:0"><button class="btn pri" style="margin:0">এক চাপে ফেরার লাগেজ বুক করুন</button><button class="btn sec">তারিখ বদলেছে</button></div></div>
+<div class="card"><h2>যাত্রার ইতিহাস</h2>
+<div class="hist"><b>ICN → DAC · ১৫ ডিসেম্বর ২০২৬</b><span class="chip c-done">সম্পন্ন</span><small>লাগেজ ২টা · চালান TR-0007</small></div>
+<div class="hist"><b>ICN → DAC · ২ নভেম্বর ২০২৬</b><span class="chip c-done">সম্পন্ন</span><small>লাগেজ ১টা · চালান TR-0004</small></div></div>
+</main></div><p class="note">ফেরার তারিখ দিলেও অনুরোধ নিজে থেকে যায় না। এই কার্ডে এক চাপেই যায়, তারিখ আবার লিখতে হয় না।</p></div>
+
+<div><p class="cap">৩ · নতুন যাত্রা জানান (ফর্ম)</p><div class="ph"><div class="top"><div class="brand"><div class="lg"></div>Benndar Express</div><h1>নতুন যাত্রা</h1><p>তথ্যগুলো আপনার প্রোফাইল থেকে নেওয়া হবে</p></div><main>
+<div class="card"><div class="pad" style="padding-top:16px">
+<div class="fld"><label>যাত্রাপথ</label><div class="chips"><span class="on">কোরিয়া → বাংলাদেশ</span><span>বাংলাদেশ → কোরিয়া</span></div></div>
+<div class="fld"><label>যাত্রার তারিখ</label><div class="in">১৫ ডিসেম্বর ২০২৬</div></div>
+<div class="fld"><label>ফেরার তারিখ <small>(ঐচ্ছিক)</small></label><div class="in e">জানা থাকলে দিন</div></div>
+<div class="hint">ফেরার তারিখ দিলে পরে এক চাপে ফেরার লাগেজ বুক করতে পারবেন। এখনই কোনো অনুরোধ যাবে না।</div>
+<div class="fld"><label>আমাদের কয়টা লাগেজ নিতে পারবেন</label><div class="in">২টা</div></div>
+<div class="fld"><label>এয়ারলাইন / ফ্লাইট <small>(ঐচ্ছিক)</small></label><div class="in">Korean Air · KE 0657</div></div>
+<button class="btn pri">জমা দিন</button></div></div>
+</main></div><p class="note">ছোট, পরিষ্কার: যাত্রাপথ দুটো বিকল্প (দুই দিকে আলাদা করে দেওয়া হয়), ফেরা ঐচ্ছিক।</p></div>
+
+</div></body></html>

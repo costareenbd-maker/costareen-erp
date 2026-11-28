@@ -19,7 +19,7 @@
 // ERP: erpShipJoinLink, erpShipPortalLink, erpShipRequests, erpShipRequestSet, erpShipRequestMake, erpShipGuides,
 //      erpShipGuideSave, erpShipMeetNote
 
-import { getConfig, setConfig } from '../lib/ext.js';
+import { getConfig, setConfig, saveFile, readFile, fileUrl } from '../lib/ext.js';
 import { roleAtLeast } from '../allow.js';
 import { stepNow, personUpsert, erpShipNew, erpShip } from './shipments.js';
 import { teamAt, e164 } from './shipteam.js';
@@ -31,6 +31,21 @@ const day = (d) => (d ? new Date(d).toISOString().slice(0, 10) : null);
 const IMG = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
 const PORTS = ['DAC', 'ICN'];
 const DIRS = ['kr_bd', 'bd_kr', 'both'];
+// ship-10: the airports a partner may name (Korea, Bangladesh); the shipment itself still runs ICN <-> DAC
+export const AIRPORTS = { ICN: ['kr', 9], PUS: ['kr', 9], TAE: ['kr', 9], CJU: ['kr', 9], DAC: ['bd', 6], CGP: ['bd', 6], ZYL: ['bd', 6] };
+const TICKET_MIME = /^(application\/pdf|image\/(jpeg|png|webp))$/;
+async function saveTicket(ctx, reqId, f) {
+  if (!f || !f.data) return false;
+  const mime = str(f.mime), data = str(f.data).replace(/^data:[^,]*,/, '');
+  if (!TICKET_MIME.test(mime)) throw new Error('টিকিট PDF বা ছবি (JPG, PNG) হতে হবে।');
+  if (data.length > 7_000_000) throw new Error('ফাইলটা অনেক বড় (৫ MB-এর কম দিন)।');
+  let bytes; try { const bin = atob(data); bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i); } catch (_) { throw new Error('ফাইলটা পড়া গেল না। আবার দিন।'); }
+  const ext = mime === 'application/pdf' ? 'pdf' : mime.split('/')[1];
+  const name = 'ticket_' + reqId + '_' + Date.now() + '.' + ext;
+  await saveFile(ctx, 'tickets', name, bytes, mime);
+  await ctx.tx`update ship_requests set ticket_file = ${name}, ticket_name = ${str(f.name).slice(0, 120) || name}, ticket_mime = ${mime}, ticket_data = null, ticket_read_at = null, updated_at = now() where id = ${reqId}`;
+  return true;
+}
 
 function hex(n) { const b = new Uint8Array(n); globalThis.crypto.getRandomValues(b); return Array.from(b, (x) => x.toString(16).padStart(2, '0')).join(''); }
 async function sha(s) { const h = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return Array.from(new Uint8Array(h), (x) => x.toString(16).padStart(2, '0')).join(''); }
@@ -87,13 +102,36 @@ async function guideOf(ctx, port) {
 }
 function reqOut(r) {
   return { id: Number(r.id), direction: r.direction, leaveOn: day(r.leave_on), returnOn: day(r.return_on), flight: r.flight, bags: r.bags, devices: r.devices,
-    ownGoods: !!r.own_goods, note: r.note, state: r.state, at: iso(r.created_at) };
+    ownGoods: !!r.own_goods, note: r.note, state: r.state, at: iso(r.created_at), fromAirport: r.from_airport || '', toAirport: r.to_airport || '',
+    bagKg: r.bag_kg == null ? null : Number(r.bag_kg), ticket: r.ticket_file ? (r.ticket_name || 'ticket') : '', returnOf: r.return_of == null ? null : Number(r.return_of) };
+}
+/** What he received from us on one shipment (fee paid to him; customs he paid that we give back). */
+function moneyOfShip(s) {
+  const out = [];
+  if (s.fee_amt != null && Number(s.fee_amt) > 0) out.push({ kind: 'fee', amt: Number(s.fee_amt), cur: s.fee_cur });
+  if (s.customs_amt != null && Number(s.customs_amt) > 0 && s.customs_by === 'carrier') out.push({ kind: 'customs', amt: Number(s.customs_amt), cur: 'BDT' });
+  return out;
 }
 
 async function mePayload(ctx, p) {
-  const reqs = await ctx.tx`select * from ship_requests where business_id = ${ctx.biz} and person_id = ${p.id} order by id desc limit 10`;
+  const reqs = await ctx.tx`select * from ship_requests where business_id = ${ctx.biz} and person_id = ${p.id} order by coalesce(leave_on, created_at::date) desc, id desc limit 30`;
+  const ships = await ctx.tx`select s.*, (select count(*)::int from ship_trip_bags tb where tb.ship_id = s.id and tb.removed_at is null) as bag_n
+    from ships s where s.business_id = ${ctx.biz} and s.carrier_id = ${p.id} and s.type = 'trip' order by coalesce(s.depart_at, s.created_at) desc limit 30`;
+  const byId = {}; for (const s of ships) byId[s.id] = s;
+  const tripOf = (s) => s ? { code: s.code, from: s.from_port, to: s.to_port, departAt: iso(s.depart_at), landAt: iso(s.land_at), receivedAt: iso(s.received_at), bags: s.bag_n, flightNo: s.flight_no || '', money: moneyOfShip(s) } : null;
+  // ship-10: one history - his requests (with the shipment made from them) and shipments staff made for him directly
+  const used = {};
+  const history = reqs.map((r) => { const s = r.ship_id ? byId[r.ship_id] : null; if (s) used[s.id] = 1;
+    return { ...reqOut(r), status: s && s.received_at ? 'done' : r.state, trip: tripOf(s) }; });
+  for (const s of ships) if (!used[s.id]) history.push({ id: 0, direction: s.from_port === 'DAC' ? 'bd_kr' : 'kr_bd', leaveOn: day(s.depart_at || s.created_at), fromAirport: s.from_port, toAirport: s.to_port,
+    bags: s.bag_n, status: s.received_at ? 'done' : 'made', trip: tripOf(s) });
+  history.sort((x, y) => String(y.leaveOn || '').localeCompare(String(x.leaveOn || '')));
+  // the way back he only noted: one tap books it (never booked on its own)
+  const today = day(ctx.now);
+  const back = reqs.find((r) => r.return_on && day(r.return_on) >= today && r.state !== 'no' && !reqs.some((x) => Number(x.return_of) === Number(r.id)));
   const out = { ok: true, biz: { name: str(ctx.s.businessName), logo: await logoOf(ctx), hotline: e164(await getConfig(ctx, 'ship_hotline', '')) },
-    me: meOut(p), requests: reqs.map(reqOut), active: null, thanks: false, at: new Date().toISOString() };
+    me: meOut(p), requests: reqs.map(reqOut), history, returnOffer: back ? { fromId: Number(back.id), on: day(back.return_on), from: back.to_airport || (back.direction === 'bd_kr' ? 'ICN' : 'DAC'), to: back.from_airport || (back.direction === 'bd_kr' ? 'DAC' : 'ICN'), bags: back.bags } : null,
+    active: null, thanks: false, at: new Date().toISOString() };
   const s = await activeTrip(ctx, p.id);
   if (s) {
     const bags = await ctx.tx`select b.code, b.nickname, tb.body_no,
@@ -143,9 +181,33 @@ export async function portalAct(ctx, a, { k, j, body }) {
       if (ret && ret < leave) return bad(400, 'ফেরার তারিখ যাওয়ার পরে হবে।');
       if (!b.agree) return bad(400, 'নিয়মে রাজি থাকলে টিক দিন।');
       const open = (await ctx.tx`select count(*)::int n from ship_requests where person_id = ${p.id} and state in ('new', 'talked')`)[0].n;
-      if (open >= 3) return bad(400, 'আপনার ৩টা অনুরোধ এখনো দেখা হচ্ছে। আমরা যোগাযোগ করব।');
-      await ctx.tx`insert into ship_requests (business_id, person_id, direction, leave_on, return_on, flight, bags, devices, own_goods, note)
-        values (${ctx.biz}, ${p.id}, ${dir}, ${leave}, ${ret}, ${str(b.flight).slice(0, 60)}, ${Math.max(0, Math.min(6, int(b.bags)))}, ${Math.max(0, Math.min(10, int(b.devices)))}, ${!!b.ownGoods}, ${str(b.note).slice(0, 500)})`;
+      if (open >= 3) return bad(400, 'আপনার ৩টা যাত্রা এখনো পর্যালোচনায়। আমরা যোগাযোগ করব।');
+      const side = dir === 'bd_kr' ? ['bd', 'kr'] : ['kr', 'bd'];
+      const fa = AIRPORTS[str(b.fromAirport)] && AIRPORTS[str(b.fromAirport)][0] === side[0] ? str(b.fromAirport) : (side[0] === 'kr' ? 'ICN' : 'DAC');
+      const ta = AIRPORTS[str(b.toAirport)] && AIRPORTS[str(b.toAirport)][0] === side[1] ? str(b.toAirport) : (side[1] === 'kr' ? 'ICN' : 'DAC');
+      const kg = b.bagKg === undefined || b.bagKg === '' || b.bagKg === null ? null : Number(b.bagKg);
+      if (kg != null && !(kg > 0 && kg <= 50)) return bad(400, 'লাগেজের ওজন ১ থেকে ৫০ কেজির মধ্যে দিন।');
+      const id = (await ctx.tx`insert into ship_requests (business_id, person_id, direction, leave_on, return_on, flight, bags, devices, own_goods, note, from_airport, to_airport, bag_kg)
+        values (${ctx.biz}, ${p.id}, ${dir}, ${leave}, ${ret}, ${str(b.flight).slice(0, 60)}, ${Math.max(0, Math.min(6, int(b.bags)))}, ${Math.max(0, Math.min(10, int(b.devices)))}, ${!!b.ownGoods}, ${str(b.note).slice(0, 500)}, ${fa}, ${ta}, ${kg})
+        returning id`)[0].id;
+      try { await saveTicket(ctx, id, b.ticket); } catch (e) { return bad(400, str(e.message)); }
+      return { status: 200, body: await mePayload(ctx, p) };
+    }
+    if (a === 'return') {
+      // one tap: the way back of a trip he told us about, with the return date he gave then
+      const r0 = (await ctx.tx`select * from ship_requests where business_id = ${ctx.biz} and person_id = ${p.id} and id = ${int(b.fromId)}`)[0];
+      if (!r0 || !r0.return_on) return bad(400, 'এই যাত্রায় ফেরার তারিখ দেওয়া নেই।');
+      if ((await ctx.tx`select 1 from ship_requests where return_of = ${r0.id}`).length) return bad(400, 'ফেরার যাত্রা আগেই জানানো হয়েছে।');
+      const dir2 = r0.direction === 'bd_kr' ? 'kr_bd' : 'bd_kr';
+      await ctx.tx`insert into ship_requests (business_id, person_id, direction, leave_on, bags, devices, own_goods, from_airport, to_airport, bag_kg, return_of)
+        values (${ctx.biz}, ${p.id}, ${dir2}, ${r0.return_on}, ${r0.bags}, ${r0.devices}, ${r0.own_goods}, ${r0.to_airport || (dir2 === 'bd_kr' ? 'DAC' : 'ICN')}, ${r0.from_airport || (dir2 === 'bd_kr' ? 'ICN' : 'DAC')}, ${r0.bag_kg}, ${r0.id})`;
+      return { status: 200, body: await mePayload(ctx, p) };
+    }
+    if (a === 'ticket') {
+      // the e-ticket added later to one of his own trips
+      const r0 = (await ctx.tx`select id from ship_requests where business_id = ${ctx.biz} and person_id = ${p.id} and id = ${int(b.requestId)}`)[0];
+      if (!r0) return bad(404, 'এই যাত্রা পাওয়া গেল না।');
+      try { if (!(await saveTicket(ctx, r0.id, b.ticket))) return bad(400, 'ফাইল দিন।'); } catch (e) { return bad(400, str(e.message)); }
       return { status: 200, body: await mePayload(ctx, p) };
     }
     if (a === 'took') {
@@ -185,7 +247,7 @@ export async function portalAct(ctx, a, { k, j, body }) {
     const tok = await portalToken(ctx, id);
     const url = portalUrl(ctx, tok);
     const wa = (await ctx.tx`select phone from ship_people where id = ${id}`)[0].phone;
-    if (url && b.waOk && wa) await sendWa(ctx, wa, 'আসসালামু আলাইকুম ' + str(b.name) + '। আপনার বহনকারী প্রোফাইলের লিংক, রেখে দিন: ' + url);
+    if (url && b.waOk && wa) await sendWa(ctx, wa, 'আসসালামু আলাইকুম ' + str(b.name) + '। Benndar Express-এ আপনার ট্রাভেল পার্টনার প্রোফাইলের লিংক, রেখে দিন: ' + url);
     return { status: 200, body: { ok: true, key: tok } };
   }
   if (a === 'code') {
@@ -237,7 +299,86 @@ export async function erpShipRequests(ctx, payload) {
   const st = str(payload && payload.state);
   const rows = await ctx.tx`select r.*, p.name, p.code, p.phone, p.photo, s.code as ship_code from ship_requests r join ship_people p on p.id = r.person_id
     left join ships s on s.id = r.ship_id where r.business_id = ${ctx.biz} order by (r.state in ('new', 'talked')) desc, r.leave_on nulls last, r.id desc limit 200`;
-  return { requests: rows.filter((r) => !st || r.state === st).map((r) => ({ ...reqOut(r), person: { id: Number(r.person_id), name: r.name, code: r.code, phone: r.phone, photo: r.photo || '' }, shipCode: r.ship_code || '' })) };
+  return { requests: rows.filter((r) => !st || r.state === st).map((r) => ({ ...reqOut(r), person: { id: Number(r.person_id), name: r.name, code: r.code, phone: r.phone, photo: r.photo || '' }, shipCode: r.ship_code || '',
+    ticketData: r.ticket_data || null, ticketReadAt: iso(r.ticket_read_at), ticketAppliedAt: iso(r.ticket_applied_at), ticketAppliedBy: r.ticket_applied_by || '', compare: compareTicket(r) })) };
+}
+/** What the partner typed next to what his ticket says (staff call him before copying anything). */
+function compareTicket(r) {
+  const t = r.ticket_data; if (!t) return null;
+  const rows = [
+    ['যাত্রার তারিখ', day(r.leave_on) || '', str(t.depart_date)],
+    ['কোথা থেকে', r.from_airport || '', str(t.from_airport).toUpperCase()],
+    ['কোথায়', r.to_airport || '', str(t.to_airport).toUpperCase()],
+    ['ফ্লাইট', str(r.flight), [str(t.airline), str(t.flight)].filter(Boolean).join(' ')],
+    ['ফেরার তারিখ', day(r.return_on) || '', str(t.return_date)],
+    ['লাগেজের ওজন (কেজি)', r.bag_kg == null ? '' : String(Number(r.bag_kg)), t.baggage_kg ? String(Number(t.baggage_kg)) : ''],
+  ];
+  const norm = (v) => str(v).toUpperCase().replace(/[^A-Z0-9-]/g, '');
+  return { passenger: str(t.passenger), bookingRef: str(t.booking_ref), departTime: str(t.depart_time), arriveDate: str(t.arrive_date), arriveTime: str(t.arrive_time),
+    rows: rows.map(([f, a, b]) => ({ field: f, partner: a, ticket: b, same: !b || norm(a) === norm(b) || (!!a && norm(b).indexOf(norm(a)) >= 0) })) };
+}
+const TICKET_PROMPT = 'This is a flight e-ticket or itinerary receipt of a passenger flying between South Korea and Bangladesh. Read it and answer JSON only: '
+  + '{"passenger": name as printed, "airline": airline name, "flight": flight number of the first leg (e.g. "KE 657"), "from_airport": IATA code of the first departure, '
+  + '"to_airport": IATA code of the final arrival of the outbound journey, "depart_date": "YYYY-MM-DD", "depart_time": "HH:MM" local, "arrive_date": "YYYY-MM-DD", "arrive_time": "HH:MM" local, '
+  + '"return_date": "YYYY-MM-DD" of the return flight if the ticket has one else "", "booking_ref": booking reference / PNR, "baggage_kg": checked baggage allowance in kg as a number or 0}. '
+  + 'Use "" or 0 for anything not printed - never guess.';
+/** Staff: read the uploaded ticket with the business's AI (stored; the partner's own answers are not touched). */
+export async function erpShipTicketRead(ctx, payload) {
+  await gate(ctx);
+  const r = (await ctx.tx`select * from ship_requests where business_id = ${ctx.biz} and id = ${int(payload && payload.id)}`)[0];
+  if (!r || !r.ticket_file) throw new Error('No ticket on this trip.');
+  const bytes = await readFile(ctx, 'tickets', r.ticket_file);
+  if (!bytes) throw new Error('The ticket file could not be opened.');
+  let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  const data = btoa(bin);
+  const { ai } = await import('../lib/ai.js');
+  const part = r.ticket_mime === 'application/pdf' ? { type: 'file', mime: 'application/pdf', data, name: r.ticket_name || 'ticket.pdf' } : { type: 'image', mime: r.ticket_mime, data };
+  let out;
+  try { out = await ai(ctx, { purpose: 'receive', task: 'read', json: true, temperature: 0, maxTokens: 2000, messages: [{ role: 'user', content: [{ type: 'text', text: TICKET_PROMPT }, part] }] }); }
+  catch (e) { throw new Error('The AI could not read the ticket. ' + str(e && e.message).slice(0, 160)); }
+  const j = out && out.json && typeof out.json === 'object' ? out.json : null;
+  if (!j) throw new Error('The AI could not read the ticket. Open it and compare by eye.');
+  const clean = {}; for (const k of ['passenger', 'airline', 'flight', 'from_airport', 'to_airport', 'depart_date', 'depart_time', 'arrive_date', 'arrive_time', 'return_date', 'booking_ref']) clean[k] = str(j[k]).slice(0, 80);
+  clean.baggage_kg = Number(j.baggage_kg) > 0 && Number(j.baggage_kg) < 100 ? Number(j.baggage_kg) : 0;
+  await ctx.tx`update ship_requests set ticket_data = ${ctx.tx.json(clean)}, ticket_read_at = now(), updated_at = now() where id = ${r.id}`;
+  return erpShipRequests(ctx, {});
+}
+/** Staff: a link to open the ticket file. */
+export async function erpShipTicketFile(ctx, payload) {
+  await gate(ctx);
+  const r = (await ctx.tx`select ticket_file from ship_requests where business_id = ${ctx.biz} and id = ${int(payload && payload.id)}`)[0];
+  if (!r || !r.ticket_file) throw new Error('No ticket on this trip.');
+  return { url: await fileUrl(ctx, 'tickets', r.ticket_file) };
+}
+function utcOf(dateStr, timeStr, ap) {
+  if (!/^\d{4}-\d\d-\d\d$/.test(str(dateStr))) return null;
+  const m = /^(\d{1,2}):(\d\d)/.exec(str(timeStr)); if (!m) return null;
+  const off = (AIRPORTS[ap] || [0, 6])[1];
+  const [y, mo, d] = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(y, mo - 1, d, Number(m[1]) - off, Number(m[2])));
+}
+/** Staff, after a call with the partner: copy the ticket's details into his trip (and its shipment) in one click. */
+export async function erpShipTicketApply(ctx, payload) {
+  await gate(ctx);
+  const r = (await ctx.tx`select * from ship_requests where business_id = ${ctx.biz} and id = ${int(payload && payload.id)}`)[0];
+  if (!r || !r.ticket_data) throw new Error('Read the ticket first.');
+  const t = r.ticket_data;
+  const f = {};
+  if (/^\d{4}-\d\d-\d\d$/.test(str(t.depart_date))) f.leave_on = t.depart_date;
+  if (/^\d{4}-\d\d-\d\d$/.test(str(t.return_date))) f.return_on = t.return_date;
+  if (AIRPORTS[str(t.from_airport).toUpperCase()]) f.from_airport = str(t.from_airport).toUpperCase();
+  if (AIRPORTS[str(t.to_airport).toUpperCase()]) f.to_airport = str(t.to_airport).toUpperCase();
+  const fl = [str(t.airline), str(t.flight)].filter(Boolean).join(' ').slice(0, 60); if (fl) f.flight = fl;
+  if (t.baggage_kg) f.bag_kg = Number(t.baggage_kg);
+  const who = (await ctx.tx`select coalesce(full_name, email) n from profiles where id = ${ctx.s.userId}`)[0];
+  await ctx.tx`update ship_requests set ${ctx.tx(f)}, ticket_applied_at = now(), ticket_applied_by = ${str(who && who.n) || str(ctx.s.name)}, updated_at = now() where id = ${r.id}`;
+  if (r.ship_id) {
+    const dep = utcOf(t.depart_date, t.depart_time, f.from_airport || r.from_airport), land = utcOf(t.arrive_date, t.arrive_time, f.to_airport || r.to_airport);
+    const sf = {}; if (str(t.flight)) sf.flight_no = str(t.flight).toUpperCase().slice(0, 20); if (dep) sf.depart_at = dep; if (land && (!dep || land > dep)) sf.land_at = land;
+    if (Object.keys(sf).length) { await ctx.tx`update ships set ${ctx.tx(sf)}, updated_at = now() where id = ${r.ship_id} and step < 5`;
+      await ctx.tx`insert into ship_events (business_id, ship_id, what, by_name) values (${ctx.biz}, ${r.ship_id}, 'Flight details copied from the ticket', ${str(who && who.n)})`; }
+  }
+  return erpShipRequests(ctx, {});
 }
 export async function erpShipRequestSet(ctx, payload) {
   await gate(ctx);
@@ -291,4 +432,4 @@ export async function erpShipMeetNote(ctx, payload) {
   return erpShip(ctx, { id: int(p.id) });
 }
 
-export const HANDLERS = { erpShipJoinLink, erpShipPortalLink, erpShipRequests, erpShipRequestSet, erpShipRequestMake, erpShipGuides, erpShipGuideSave, erpShipMeetNote };
+export const HANDLERS = { erpShipJoinLink, erpShipPortalLink, erpShipRequests, erpShipRequestSet, erpShipRequestMake, erpShipGuides, erpShipGuideSave, erpShipMeetNote, erpShipTicketRead, erpShipTicketFile, erpShipTicketApply };

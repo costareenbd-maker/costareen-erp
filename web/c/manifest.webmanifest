@@ -1,6 +1,6 @@
 {
-  "name": "আমার পাতা · Benndar Express",
-  "short_name": "Benndar",
+  "name": "Benndar Express",
+  "short_name": "Benndar Express",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

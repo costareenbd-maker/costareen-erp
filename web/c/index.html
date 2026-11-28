@@ -6,7 +6,10 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#00565A">
-<title>বহনকারী প্রোফাইল · Benndar Express</title>
+<title>Benndar Express</title>
+<meta name="application-name" content="Benndar Express">
+<meta name="apple-mobile-web-app-title" content="Benndar Express">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -52,7 +55,7 @@ section>h2{font-size:17px;margin:0;padding:18px 18px 6px;line-height:1.4}
 .btn[disabled]{opacity:.5;cursor:not-allowed}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fld{margin:0 0 14px}.fld label,.lbl{display:block;font-weight:700;font-size:15px;margin:0 0 6px}
-.in{width:100%;min-height:50px;border-radius:12px;border:1px solid #C9BFB0;background:var(--card);padding:10px 14px;font-size:16px}
+.in{width:100%;max-width:100%;min-width:0;min-height:50px;border-radius:12px;border:1px solid #C9BFB0;background:var(--card);padding:10px 14px;font-size:16px}
 @media (prefers-color-scheme:dark){.in{border-color:#3A5655}}
 .in:focus-visible{outline:3px solid var(--focus);outline-offset:1px}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
@@ -69,6 +72,22 @@ section>h2{font-size:17px;margin:0;padding:18px 18px 6px;line-height:1.4}
 .req{display:grid;gap:4px;font-size:15px}.req .hd{display:flex;justify-content:space-between;gap:10px;align-items:center}.req .hd b{font-size:16px}
 .req .ln{color:var(--ink-2)}.req .why{color:var(--ink-3);font-size:14px}
 .wab{display:inline-block;margin-left:6px;font:700 12.5px Inter,sans-serif;color:var(--ok);background:var(--okbg);border-radius:999px;padding:1px 8px;vertical-align:2px}
+.steps3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:10px 18px 4px}
+.steps3 div{font-size:14px;text-align:center;color:var(--ink-3)}.steps3 i{display:block;height:6px;border-radius:3px;background:var(--line);margin-bottom:6px}
+.steps3 .on i{background:var(--teal)}.steps3 .on{color:var(--ink);font-weight:700}
+.hroute{display:flex;align-items:center;gap:10px;font:800 24px Inter,sans-serif;padding:2px 18px}.hroute span{color:var(--coral-ink);font-size:20px}
+.hist{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:13px 18px;cursor:pointer;min-height:56px}
+.hist b{font-size:15.5px}.hist small{grid-column:1;color:var(--ink-3);font-size:14px}.hist:hover{background:var(--soft)}
+.chip{font-size:14px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.c-new{background:var(--warnbg);color:var(--warn)}.c-talked{background:#E6EFF8;color:#1E4E79}.c-made{background:var(--okbg);color:var(--ok)}.c-done{background:var(--soft);color:var(--ink-2)}.c-no{background:var(--soft);color:var(--ink-3)}
+@media (prefers-color-scheme:dark){.c-talked{background:#16304A;color:#9CC7F0}}
+.ret{background:#E6EFF8;border-radius:16px;padding:14px;margin:0 18px 14px}.ret b{color:#1E4E79;display:block}.ret p{margin:2px 0 0;font-size:15px;color:var(--ink-2)}
+@media (prefers-color-scheme:dark){.ret{background:#16304A}.ret b{color:#9CC7F0}}
+.file{display:flex;gap:10px;align-items:center;border:2px dashed var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;position:relative}
+.file input{position:absolute;opacity:0;width:1px;height:1px}.file:focus-within{outline:3px solid var(--focus);outline-offset:2px}
+.file svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;flex:none}
+.hint{font-size:14px;color:var(--ink-3);background:var(--soft);border-radius:12px;padding:10px 12px;margin:-4px 0 14px}
+.fld small{font-weight:400;color:var(--ink-3)}
 details.em{border:1px solid var(--line);border-radius:14px;padding:4px 14px;margin:0 0 14px}details.em summary{min-height:44px;display:flex;align-items:center;font-weight:700;cursor:pointer}
 details.em[open]{padding-bottom:6px}
 .pill{font-size:14px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap;background:var(--warnbg);color:var(--warn)}.pill.done{background:var(--okbg);color:var(--ok)}.pill.no{background:var(--soft);color:var(--ink-3)}
@@ -118,7 +137,7 @@ details.em[open]{padding-bottom:6px}
 </head>
 <body>
 <header class="top"><div class="brand"><span id="logo"></span><b id="bname">Benndar Express</b></div>
-  <div class="hi"><h1 id="h1">বহনকারী প্রোফাইল</h1><p id="sub"></p></div></header>
+  <div class="hi"><h1 id="h1">Benndar Express</h1><p id="sub"></p></div></header>
 <main id="app" aria-live="polite"><div class="skel"></div><div class="skel" style="height:110px"></div></main>
 <p class="foot" id="foot" hidden><b style="font-family:Comfortaa,Inter,sans-serif">Benndar Express</b> · এই লিংকটি শুধু আপনার জন্য। অন্য কাউকে দেবেন না।</p>
 <script>
@@ -137,7 +156,11 @@ details.em[open]{padding-bottom:6px}
   if (K && q.get('j')) { try { history.replaceState(null, '', location.pathname + '?k=' + K + (q.get('api') ? '&api=' + encodeURIComponent(q.get('api')) : '')); } catch (e) {} }
   var BN = '০১২৩৪৫৬৭৮৯', MON = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
   var CITY = { ICN: 'সিউল (ইনচন)', DAC: 'ঢাকা' }, CITY1 = { ICN: 'সিউল', DAC: 'ঢাকা' }, TZ = { ICN: 9, DAC: 6 };
-  var DIRN = { kr_bd: 'কোরিয়া → ঢাকা', bd_kr: 'ঢাকা → কোরিয়া', both: 'দুই দিকে' };
+  var DIRN = { kr_bd: 'কোরিয়া → বাংলাদেশ', bd_kr: 'বাংলাদেশ → কোরিয়া', both: 'দুই দিকে' };
+  var APN = { ICN: 'ইনচন (সিউল)', PUS: 'গিমহে (বুসান)', TAE: 'দেগু', CJU: 'জেজু', DAC: 'ঢাকা', CGP: 'চট্টগ্রাম', ZYL: 'সিলেট' }, APK = ['ICN', 'PUS', 'TAE', 'CJU'], APB = ['DAC', 'CGP', 'ZYL'];
+  var ST2 = { 'new': ['জমা হয়েছে', 'c-new', 'আমরা শিগগিরই আপনার সাথে যোগাযোগ করব।'], talked: ['পর্যালোচনায়', 'c-talked', 'আমাদের কথা হয়েছে। চূড়ান্ত হলে এখানে জানাব।'], made: ['অনুমোদিত', 'c-made', 'যাত্রাটি অনুমোদিত। লাগেজ বুঝিয়ে দেওয়ার পর সব বিস্তারিত এখানে দেখবেন।'], done: ['সম্পন্ন', 'c-done', 'লাগেজ বুঝে নেওয়া হয়েছে। সহযোগিতার জন্য ধন্যবাদ।'], no: ['এবার নয়', 'c-no', 'এবারের যাত্রায় লাগেজ লাগবে না।'] };
+  function money(m) { return (m.cur === 'KRW' ? '₩ ' : m.cur === 'USD' ? '$ ' : '৳ ') + Number(m.amt).toLocaleString('en-US'); }
+  function routeTxt(h) { return (h.fromAirport || (h.direction === 'bd_kr' ? 'DAC' : 'ICN')) + ' → ' + (h.toAirport || (h.direction === 'bd_kr' ? 'ICN' : 'DAC')); }
   var STN = { 'new': ['অপেক্ষায়', '', 'অনুরোধ পেয়েছি। শিগগিরই যোগাযোগ করব।'], talked: ['আলোচনায়', '', 'কথা হয়েছে। চূড়ান্ত হলে জানাব।'], made: ['নিশ্চিত', 'done', 'চালান ঠিক হয়েছে। বিস্তারিত এই পাতায় দেখবেন।'], no: ['এবার নয়', 'no', 'এবারের যাত্রায় লাগেজ লাগবে না। সহযোগিতার জন্য ধন্যবাদ।'] };
   var I = {
     call: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h3l2 5-2.5 1.5a11 11 0 006 6L16 13l5 2v3a2 2 0 01-2 2A16 16 0 014 5a2 2 0 012-2z"/></svg>',
@@ -200,34 +223,69 @@ details.em[open]{padding-bottom:6px}
   function offlineNote(at) {
     return '<div class="note warn" role="status"><span>নেট পাওয়া যাচ্ছে না। ফোনে রাখা কপি দেখাচ্ছি · শেষ আপডেট ' + esc(ago(at)) + '।</span><button type="button" class="btn sec" data-act="reload">আবার চেষ্টা</button></div>';
   }
+  var HIST = [];
   function showMe(d, offline) {
     brand(d.biz); el('foot').hidden = false;
     put('cp:me', JSON.stringify(d));
     if (d.active) return showTrip(d, offline);
-    var me = d.me;
-    head(me.name, 'বহনকারী প্রোফাইল · আইডি ' + me.code);
+    var me = d.me; HIST = d.history || [];
+    head(me.name, 'ট্রাভেল পার্টনার · আইডি ' + me.code);
     var h = offline ? offlineNote(d.at) : '';
     if (d.thanks) h += '<div class="note ok">' + I.ok + '<span>আমাদের লাগেজ বুঝে নেওয়া হয়েছে। সহযোগিতার জন্য ধন্যবাদ।</span></div>';
+    var today = new Date(Date.now() + 6 * 3600e3).toISOString().slice(0, 10);
+    var next = HIST.filter(function (x) { return (x.status === 'new' || x.status === 'talked' || x.status === 'made') && (x.leaveOn || '') >= today; }).sort(function (a, b) { return (a.leaveOn || '').localeCompare(b.leaveOn || ''); })[0];
+    if (d.returnOffer) { var ro = d.returnOffer;
+      h += '<section aria-labelledby="h-ret"><h2 id="h-ret">ফেরার যাত্রায় লাগেজ নেবেন?</h2><div class="ret"><b>' + esc(ro.from) + ' → ' + esc(ro.to) + ' · ' + dayBn(ro.on) + '</b><p>আগে আপনি এই ফেরার তারিখ দিয়েছিলেন। এখনো কোনো অনুরোধ যায়নি।</p></div>'
+        + '<div class="pad"><button type="button" class="btn pri" data-act="return" data-v="' + ro.fromId + '">এক চাপে ফেরার লাগেজ বুক করুন</button><button type="button" class="btn sec" data-act="req" style="margin-top:10px">তারিখ বদলেছে</button></div></section>'; }
+    if (next) { var st = ST2[next.status] || ST2['new'], k3 = next.status === 'new' ? 1 : next.status === 'talked' ? 2 : 3;
+      h += '<section aria-labelledby="h-next"><h2 id="h-next">আপনার পরের যাত্রা</h2><div class="hroute">' + esc(routeTxt(next).replace(' → ', ' ✈ ')).replace('✈', '<span>✈</span>') + '</div>'
+        + '<p class="pad lead" style="margin:2px 0 0;padding-bottom:0">' + dayBn(next.leaveOn) + ' · আমাদের লাগেজ ' + bn(next.bags || 0) + 'টা' + (next.bagKg ? ' (' + bn(next.bagKg) + ' কেজি করে)' : '') + '</p>'
+        + '<div class="steps3" role="list" aria-label="অবস্থা"><div role="listitem" class="on"><i></i>জমা হয়েছে</div><div role="listitem" class="' + (k3 >= 2 ? 'on' : '') + '"><i></i>পর্যালোচনায়</div><div role="listitem" class="' + (k3 >= 3 ? 'on' : '') + '"><i></i>অনুমোদিত</div></div>'
+        + '<p class="pad lead" style="margin:6px 0 0">' + esc(st[2]) + '</p></section>'; }
+    h += '<section><div class="pad" style="padding-top:18px"><button type="button" class="btn pri" data-act="req">+ নতুন যাত্রা জানান</button></div></section>';
+    h += '<section aria-labelledby="h-hist"><h2 id="h-hist">যাত্রার ইতিহাস</h2>';
+    if (!HIST.length) h += '<p class="pad lead">এখনো কোনো যাত্রা নেই।</p>';
+    HIST.forEach(function (x, i) { var s2 = ST2[x.status] || ['', 'c-no'];
+      h += '<button type="button" class="hist" data-act="hist" data-v="' + i + '"><b>' + esc(routeTxt(x)) + ' · ' + dayBn(x.leaveOn) + '</b><span class="chip ' + s2[1] + '">' + s2[0] + '</span><small>লাগেজ ' + bn(x.bags || 0) + 'টা' + (x.trip ? ' · চালান ' + esc(x.trip.code) : '') + (x.returnOn ? ' · ফেরা ' + dayBn(x.returnOn) : '') + '</small></button>'; });
+    h += '</section>';
+    h += '<section><button type="button" class="hist" data-act="profile"><b>আমার তথ্য</b><span class="chip c-done">দেখুন ›</span><small>ফোন, ঠিকানা, জরুরি যোগাযোগ</small></button></section>';
+    h += installCard();
+    APP.innerHTML = h;
+  }
+  function showProfile(d) {
+    var me = d.me;
+    head('আমার তথ্য', 'ট্রাভেল পার্টনার · আইডি ' + me.code);
     function numRow(label, n, wa) { return '<dt>' + label + '</dt><dd class="num">' + (n ? esc(pretty(n)) + (wa ? '<span class="wab">WhatsApp</span>' : '') : '—') + '</dd>'; }
     var waKr = me.phone && me.phone === me.phoneKr, waBd = me.phone && me.phone === me.phoneBd && !waKr;
-    h += '<section aria-labelledby="h-me"><h2 id="h-me">আপনার তথ্য</h2><div class="me">' + face(me) + '<div><b>' + esc(me.name) + '</b><span>আইডি <b class="code" style="display:inline;font-size:15px">' + esc(me.code) + '</b></span></div></div>'
+    APP.innerHTML = '<section><div class="me" style="padding-top:18px">' + face(me) + '<div><b>' + esc(me.name) + '</b><span>আইডি <b class="code" style="display:inline;font-size:15px">' + esc(me.code) + '</b></span></div></div>'
       + '<dl class="kv">' + numRow('কোরিয়ার নম্বর', me.phoneKr, waKr) + numRow('বাংলাদেশের নম্বর', me.phoneBd, waBd)
       + '<dt>কোরিয়ার ঠিকানা</dt><dd>' + esc(me.addrKr || '—') + '</dd><dt>বাংলাদেশের ঠিকানা</dt><dd>' + esc(me.addrBd || '—') + '</dd>'
       + (me.emName || me.emPhone ? '<dt>জরুরি যোগাযোগ</dt><dd>' + esc([me.emName, me.emRelation ? '(' + me.emRelation + ')' : ''].filter(Boolean).join(' ')) + (me.emPhone ? '<br><span class="num">' + esc(pretty(me.emPhone)) + '</span>' : '') + '</dd>' : '')
-      + '</dl><div class="pad"><button type="button" class="btn sec" data-act="edit">তথ্য হালনাগাদ করুন</button></div></section>';
-    h += '<section aria-labelledby="h-rq"><h2 id="h-rq">লাগেজ নিতে আগ্রহী?</h2><div class="pad"><p class="lead">যাত্রার তারিখ জানালে আমরা যোগাযোগ করব।</p><button type="button" class="btn pri" data-act="req">লাগেজ নেওয়ার অনুরোধ</button></div>';
-    if ((d.requests || []).length) h += '<h2 style="font-size:15px;padding:4px 18px 8px;margin:0;border-top:1px solid var(--line);padding-top:14px">আপনার অনুরোধ</h2>';
-    (d.requests || []).forEach(function (r) { var st = STN[r.state] || ['', '', ''];
-      h += '<div class="row req"><div class="hd"><b>' + esc(DIRN[r.direction]) + '</b><span class="pill ' + st[1] + '">' + st[0] + '</span></div>'
-        + '<span class="ln">যাওয়া: ' + dayBn(r.leaveOn) + (r.returnOn ? ' · ফেরা: ' + dayBn(r.returnOn) : '') + '</span>'
-        + '<span class="ln">আমাদের লাগেজ: ' + bn(r.bags) + 'টা' + (r.devices ? ' · হাতে ইলেকট্রনিক্স: ' + bn(r.devices) + 'টা' : '') + '</span>'
-        + '<span class="why">' + esc(st[2]) + '</span></div>'; });
-    h += '</section>' + installCard();
-    APP.innerHTML = h;
+      + '</dl><div class="pad"><button type="button" class="btn sec" data-act="edit">তথ্য হালনাগাদ করুন</button><button type="button" class="btn sec" data-act="home" style="margin-top:10px">ফিরে যান</button></div></section>';
+    window.scrollTo(0, 0);
+  }
+  function showHist(i) {
+    var x = HIST[i]; if (!x) return showMe(ME, false);
+    var st = ST2[x.status] || ['', 'c-no', ''];
+    head(routeTxt(x), dayBn(x.leaveOn));
+    var rows = '<dt>যাত্রাপথ</dt><dd>' + esc(APN[x.fromAirport] || x.fromAirport || '') + ' → ' + esc(APN[x.toAirport] || x.toAirport || '') + '</dd>'
+      + '<dt>যাত্রার তারিখ</dt><dd>' + dayBn(x.leaveOn) + '</dd>' + (x.returnOn ? '<dt>ফেরার তারিখ</dt><dd>' + dayBn(x.returnOn) + '</dd>' : '')
+      + '<dt>আমাদের লাগেজ</dt><dd>' + bn(x.bags || 0) + 'টা' + (x.bagKg ? ' · ' + bn(x.bagKg) + ' কেজি করে' : '') + '</dd>'
+      + (x.devices ? '<dt>হাতে ইলেকট্রনিক্স</dt><dd>' + bn(x.devices) + 'টা</dd>' : '')
+      + (x.flight || (x.trip && x.trip.flightNo) ? '<dt>ফ্লাইট</dt><dd class="num">' + esc(x.flight || x.trip.flightNo) + '</dd>' : '')
+      + (x.trip ? '<dt>চালান</dt><dd class="num">' + esc(x.trip.code) + '</dd>' : '')
+      + (x.trip && x.trip.receivedAt ? '<dt>বুঝে নেওয়া হয়েছে</dt><dd>' + when(x.trip.receivedAt, x.trip.to) + '</dd>' : '');
+    var m = x.trip && x.trip.money && x.trip.money.length ? '<section aria-labelledby="h-money"><h2 id="h-money">আমাদের থেকে পেয়েছেন</h2><dl class="kv">' + x.trip.money.map(function (y) { return '<dt>' + (y.kind === 'fee' ? 'পারিশ্রমিক' : 'কাস্টমস ফেরত') + '</dt><dd class="num">' + esc(money(y)) + '</dd>'; }).join('') + '</dl></section>' : '';
+    var canUp = x.status !== 'done' && x.status !== 'no';
+    var tk = x.id && (x.ticket || canUp) ? '<section aria-labelledby="h-tk"><h2 id="h-tk">টিকিট</h2><div class="pad">' + (x.ticket ? '<p class="lead" style="margin:0 0 10px">' + I.ok.replace('<svg', '<svg style="width:18px;height:18px;vertical-align:-3px;stroke:currentColor;fill:none;stroke-width:2.4"') + ' জমা আছে: ' + esc(x.ticket) + '</p>' : '')
+      + (x.status === 'done' || x.status === 'no' ? '' : '<label class="file">' + I.cam + '<span>' + (x.ticket ? 'নতুন টিকিট দিন' : 'ই-টিকিট (PDF বা ছবি) যোগ করুন') + '</span><input type="file" accept="application/pdf,image/*" data-ticket="' + x.id + '" aria-label="ই-টিকিট যোগ করুন"></label>') + '</div></section>' : '';
+    APP.innerHTML = '<section><h2>অবস্থা <span class="chip ' + st[1] + '" style="margin-left:6px">' + st[0] + '</span></h2><p class="pad lead" style="margin:0">' + esc(st[2]) + '</p><dl class="kv">' + rows + '</dl></section>' + m + tk
+      + '<section><div class="pad" style="padding-top:16px"><button type="button" class="btn sec" data-act="home">ফিরে যান</button></div></section>';
+    window.scrollTo(0, 0);
   }
   function showTrip(d, offline) {
     var s = d.active, me = d.me;
-    head('চালান ' + s.code, me.name + ' · আইডি ' + me.code + ' · ' + CITY1[s.from] + ' থেকে ' + CITY1[s.to]);
+    head('চালান ' + s.code, me.name + ' · ট্রাভেল পার্টনার · আইডি ' + me.code);
     var h = offline ? offlineNote(d.at) : '<div class="note ok">' + I.ok + '<span>এই পাতা ফোনে রাখা থাকল। নামার পর নেট না থাকলেও খুলবে।</span></div>';
     h += '<section aria-labelledby="h-meet"><h2 id="h-meet">' + esc(CITY1[s.to]) + ' এয়ারপোর্টে যিনি আমাদের লাগেজ বুঝে নেবেন</h2>';
     if (s.team && s.team.length) s.team.forEach(function (m) {
@@ -263,7 +321,7 @@ details.em[open]{padding-bottom:6px}
   function showJoin(info) {
     brand(info && info.biz); el('foot').hidden = false;
     REQ.waOn = 'kr';
-    head('বহনকারী হিসেবে নিবন্ধন', 'তথ্যগুলো একবার দিলেই হবে। পরে এখান থেকেই হালনাগাদ করতে পারবেন।');
+    head('ট্রাভেল পার্টনার হিসেবে নিবন্ধন', 'তথ্যগুলো একবার দিলেই হবে। পরে এখান থেকেই হালনাগাদ করতে পারবেন।');
     APP.innerHTML = '<section><form id="f-join" class="pad" style="padding-top:18px" novalidate>' + profileFields({}) + '<label class="chk"><input type="checkbox" id="f-wa" checked> হোয়াটসঅ্যাপে আমাকে মনে করিয়ে দিতে পারেন</label><p class="err" id="err"></p><button class="btn pri" type="submit">জমা দিন</button></form></section>'
       + '<section><div class="pad" style="padding-top:14px"><button type="button" class="link" data-act="codeflow">আগে নিবন্ধন করেছেন? ফোন নম্বর দিয়ে প্রবেশ করুন</button></div></section>';
   }
@@ -283,25 +341,46 @@ details.em[open]{padding-bottom:6px}
   }
   function showEdit(d) {
     REQ.waOn = d.me.waOn || 'kr';
-    head('তথ্য হালনাগাদ', 'বহনকারী প্রোফাইল · আইডি ' + d.me.code);
+    head('তথ্য হালনাগাদ', 'ট্রাভেল পার্টনার · আইডি ' + d.me.code);
     APP.innerHTML = '<section><form id="f-edit" class="pad" style="padding-top:18px" novalidate>' + profileFields(d.me) + '<label class="chk"><input type="checkbox" id="f-wa"' + (d.me.waOk ? ' checked' : '') + '> হোয়াটসঅ্যাপে আমাকে মনে করিয়ে দিতে পারেন</label><p class="err" id="err"></p><button class="btn pri" type="submit">সেভ করুন</button><button class="btn sec" type="button" data-act="home" style="margin-top:10px">ফিরে যান</button></form></section>';
   }
-  var REQ = { direction: 'kr_bd', bags: 1, devices: 0, ownGoods: false };
+  var REQ = { direction: 'kr_bd', bags: 1, devices: 0, ownGoods: false, fromAirport: 'ICN', toAirport: 'DAC', kg: '' }, TICKET = null;
   function showReq(d) {
-    var last = (d.requests || [])[0];
-    if (last) { REQ.direction = last.direction; REQ.bags = last.bags; REQ.devices = last.devices; REQ.ownGoods = last.ownGoods; }
-    head('লাগেজ নেওয়ার অনুরোধ', 'আপনার নাম, ফোন আর ঠিকানা প্রোফাইল থেকে নেওয়া হবে।');
+    var last = (d.history || []).filter(function (x) { return x.id; })[0];
+    if (last) { REQ.bags = last.bags || 1; REQ.devices = last.devices || 0; REQ.ownGoods = !!last.ownGoods; REQ.kg = last.bagKg || ''; }
+    TICKET = null;
+    head('নতুন যাত্রা', 'নাম, ফোন আর ঠিকানা আপনার প্রোফাইল থেকে নেওয়া হবে');
+    paintReq();
+  }
+  function paintReq() {
     function chips(name, opts, cur) { return '<div class="chips" role="group" aria-label="' + name + '">' + opts.map(function (o) { return '<button type="button" data-chip="' + name + '" data-v="' + o[0] + '" aria-pressed="' + (String(cur) === String(o[0])) + '">' + o[1] + '</button>'; }).join('') + '</div>'; }
     function stp(name, label, v) { return '<div class="fld"><span class="lbl" id="l-' + name + '">' + label + '</span><div class="stp" role="group" aria-labelledby="l-' + name + '"><button type="button" data-stp="' + name + '" data-d="-1" aria-label="কমান">−</button><output id="o-' + name + '">' + bn(v) + '</output><button type="button" data-stp="' + name + '" data-d="1" aria-label="বাড়ান">+</button></div></div>'; }
+    var kr = REQ.direction === 'kr_bd', fromL = kr ? APK : APB, toL = kr ? APB : APK;
+    if (fromL.indexOf(REQ.fromAirport) < 0) REQ.fromAirport = fromL[0];
+    if (toL.indexOf(REQ.toAirport) < 0) REQ.toAirport = toL[0];
+    var keep = {}; ['r-leave', 'r-ret', 'r-fl', 'r-note', 'r-kg'].forEach(function (id) { var x = el(id); if (x) keep[id] = x.value; });
     APP.innerHTML = '<section><form id="f-req" class="pad" style="padding-top:18px" novalidate>'
-      + '<div class="fld"><span class="lbl">কোন দিকে</span>' + chips('direction', [['kr_bd', 'কোরিয়া → ঢাকা'], ['bd_kr', 'ঢাকা → কোরিয়া'], ['both', 'দুই দিকে']], REQ.direction) + '</div>'
-      + '<div class="two"><div class="fld"><label for="r-leave">যাওয়ার তারিখ</label><input class="in" type="date" id="r-leave"></div><div class="fld"><label for="r-ret">ফেরার তারিখ</label><input class="in" type="date" id="r-ret"></div></div>'
-      + '<div class="fld"><label for="r-fl">এয়ারলাইন / ফ্লাইট (জানা থাকলে)</label><input class="in num" id="r-fl" maxlength="60" value="' + esc(last ? last.flight : '') + '"></div>'
-      + stp('bags', 'আমাদের কয়টা লাগেজ নিতে পারবেন', REQ.bags) + stp('devices', 'হাতে মোবাইল বা ইলেকট্রনিক্স কয়টা নিতে পারবেন', REQ.devices)
+      + '<div class="fld"><span class="lbl">যাত্রাপথ</span>' + chips('direction', [['kr_bd', 'কোরিয়া → বাংলাদেশ'], ['bd_kr', 'বাংলাদেশ → কোরিয়া']], REQ.direction) + '</div>'
+      + '<div class="fld"><span class="lbl">কোন এয়ারপোর্ট থেকে</span>' + chips('fromAirport', fromL.map(function (a) { return [a, APN[a]]; }), REQ.fromAirport) + '</div>'
+      + '<div class="fld"><span class="lbl">কোন এয়ারপোর্টে</span>' + chips('toAirport', toL.map(function (a) { return [a, APN[a]]; }), REQ.toAirport) + '</div>'
+      + '<div class="fld"><label for="r-leave">যাত্রার তারিখ</label><input class="in" type="date" id="r-leave"></div><div class="fld"><label for="r-ret">ফেরার তারিখ <small>(ঐচ্ছিক)</small></label><input class="in" type="date" id="r-ret"></div>'
+      + '<p class="hint">ফেরার তারিখ দিলে পরে এক চাপে ফেরার লাগেজ বুক করতে পারবেন। এখনই কোনো অনুরোধ যাবে না।</p>'
+      + stp('bags', 'আমাদের কয়টা লাগেজ নিতে পারবেন', REQ.bags)
+      + '<div class="fld"><label for="r-kg">প্রতিটা লাগেজ কত কেজি <small>(ঐচ্ছিক)</small></label><input class="in num" id="r-kg" inputmode="decimal" placeholder="যেমন 23" value="' + esc(REQ.kg) + '"></div>'
+      + stp('devices', 'হাতে মোবাইল বা ইলেকট্রনিক্স কয়টা নিতে পারবেন', REQ.devices)
       + '<div class="fld"><span class="lbl">আপনার নিজের মালও সাথে থাকবে?</span>' + chips('ownGoods', [['true', 'হ্যাঁ, কিছুটা'], ['false', 'না']], REQ.ownGoods) + '</div>'
+      + '<div class="fld"><label for="r-fl">এয়ারলাইন / ফ্লাইট <small>(ঐচ্ছিক)</small></label><input class="in num" id="r-fl" maxlength="60"></div>'
+      + '<div class="fld"><span class="lbl">ই-টিকিট <small>(ঐচ্ছিক)</small></span><label class="file">' + I.cam + '<span id="tk-name">' + (TICKET ? esc(TICKET.name) : 'টিকিটের PDF বা ছবি দিন') + '</span><input type="file" accept="application/pdf,image/*" id="r-ticket" aria-label="ই-টিকিট দিন"></label></div>'
+      + '<p class="hint">টিকিট দিলে আমরা ফ্লাইটের তথ্য মিলিয়ে নিতে পারি। না থাকলেও চলবে।</p>'
       + '<div class="fld"><label for="r-note">কিছু বলার থাকলে</label><textarea class="in" id="r-note" rows="2" maxlength="500"></textarea></div>'
       + '<label class="chk"><input type="checkbox" id="r-ok"> নিষিদ্ধ কিছু নেব না, কাস্টমসের নিয়ম মানব</label>'
-      + '<p class="err" id="err"></p><button class="btn pri" type="submit">অনুরোধ পাঠান</button><button class="btn sec" type="button" data-act="home" style="margin-top:10px">ফিরে যান</button></form></section>';
+      + '<p class="err" id="err"></p><button class="btn pri" type="submit">জমা দিন</button><button class="btn sec" type="button" data-act="home" style="margin-top:10px">ফিরে যান</button></form></section>';
+    Object.keys(keep).forEach(function (id) { var x = el(id); if (x) x.value = keep[id]; });
+  }
+  function readTicket(file, then) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('ফাইলটা অনেক বড়। ৫ MB-এর কম দিন।'); return; }
+    var fr = new FileReader(); fr.onload = function () { then({ name: file.name, mime: file.type || 'application/pdf', data: String(fr.result) }); }; fr.readAsDataURL(file);
   }
   function showCode(step, phone) {
     head('ফোন নম্বর দিয়ে প্রবেশ', 'আপনার হোয়াটসঅ্যাপে একটা কোড যাবে');
@@ -337,6 +416,9 @@ details.em[open]{padding-bottom:6px}
   }
   var PHOTO;
   document.addEventListener('change', function (e) {
+    if (e.target.id === 'r-ticket') return readTicket(e.target.files && e.target.files[0], function (tk) { TICKET = tk; var n = el('tk-name'); if (n) n.textContent = tk.name; });
+    var tid = e.target.getAttribute && e.target.getAttribute('data-ticket');
+    if (tid) return readTicket(e.target.files && e.target.files[0], function (tk) { call('ticket', { requestId: +tid, ticket: tk }, true).then(function (d) { if (d.ok) { ME = d; HIST = d.history || []; var i = HIST.findIndex(function (x) { return x.id === +tid; }); showHist(i); } else alert(d.error || 'টিকিট নেওয়া গেল না।'); }, function () { alert('নেট পাওয়া যাচ্ছে না। নেট পেলে আবার দিন।'); }); });
     if (e.target.id === 'f-photo' && e.target.files && e.target.files[0]) shrink(e.target.files[0], 600, function (d) { PHOTO = d; var l = e.target.parentNode; l.querySelectorAll('img,svg').forEach(function (x) { x.remove(); }); var im = new Image(); im.alt = ''; im.src = d; l.insertBefore(im, e.target); });
   });
   function errOut(t) { var x = el('err'); if (x) { x.textContent = t; x.focus && x.setAttribute('tabindex', '-1'); x.focus(); } }
@@ -352,7 +434,7 @@ details.em[open]{padding-bottom:6px}
         errOut(d.error || 'জমা হলো না। আবার চেষ্টা করুন।'); }, function () { busy(f, false); errOut('নেট পাওয়া যাচ্ছে না। নেট পেলে আবার জমা দিন।'); }); }
     if (f.id === 'f-edit') { busy(f, true);
       call('save', profileBody(), true).then(function (d) { busy(f, false); if (d.ok) { PHOTO = null; ME = d; showMe(d, false); } else errOut(d.error || 'সেভ হলো না।'); }, function () { busy(f, false); errOut('নেট পাওয়া যাচ্ছে না। নেট পেলে আবার সেভ করুন।'); }); }
-    if (f.id === 'f-req') { var body = { direction: REQ.direction, leaveOn: el('r-leave').value, returnOn: el('r-ret').value, flight: el('r-fl').value, bags: REQ.bags, devices: REQ.devices, ownGoods: REQ.ownGoods, note: el('r-note').value, agree: el('r-ok').checked };
+    if (f.id === 'f-req') { var body = { direction: REQ.direction, fromAirport: REQ.fromAirport, toAirport: REQ.toAirport, leaveOn: el('r-leave').value, returnOn: el('r-ret').value, flight: el('r-fl').value, bags: REQ.bags, bagKg: el('r-kg').value.replace(/[^0-9.]/g, ''), devices: REQ.devices, ownGoods: REQ.ownGoods, note: el('r-note').value, agree: el('r-ok').checked, ticket: TICKET || undefined };
       if (!body.leaveOn) return errOut('যাওয়ার তারিখ দিন।'); if (!body.agree) return errOut('নিয়মে রাজি থাকলে টিক দিন।'); busy(f, true);
       call('request', body, true).then(function (d) { busy(f, false); if (d.ok) { ME = d; showMe(d, false); window.scrollTo(0, 0); } else errOut(d.error || 'পাঠানো গেল না।'); }, function () { busy(f, false); errOut('নেট পাওয়া যাচ্ছে না। নেট পেলে আবার পাঠান।'); }); }
     if (f.id === 'f-code') { var step = +APP.getAttribute('data-step') || 1, ph = el('c-phone').value.trim(); busy(f, true);
@@ -361,13 +443,16 @@ details.em[open]{padding-bottom:6px}
   });
   document.addEventListener('click', function (e) {
     var c = e.target.closest('[data-chip]');
-    if (c) { var nm = c.getAttribute('data-chip'), v = c.getAttribute('data-v'); REQ[nm] = nm === 'ownGoods' ? v === 'true' : v; c.parentNode.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b === c)); }); return; }
+    if (c) { var nm = c.getAttribute('data-chip'), v = c.getAttribute('data-v'); REQ[nm] = nm === 'ownGoods' ? v === 'true' : v; if (nm === 'direction') return paintReq(); c.parentNode.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b === c)); }); return; }
     var s = e.target.closest('[data-stp]');
     if (s) { var n2 = s.getAttribute('data-stp'), max = n2 === 'bags' ? 6 : 10; REQ[n2] = Math.max(0, Math.min(max, REQ[n2] + (+s.getAttribute('data-d')))); el('o-' + n2).textContent = bn(REQ[n2]); return; }
     var a = e.target.closest('[data-act]'); if (!a) return;
     var act = a.getAttribute('data-act');
     if (act === 'reload') return K ? loadMe() : start();
     if (act === 'edit') return showEdit(ME);
+    if (act === 'profile') return showProfile(ME);
+    if (act === 'hist') return showHist(+a.getAttribute('data-v'));
+    if (act === 'return') { if (!confirm('ফেরার যাত্রায় লাগেজ নেওয়ার অনুরোধ পাঠাব?')) return; a.disabled = true; return call('return', { fromId: +a.getAttribute('data-v') }, true).then(function (d) { if (d.ok) { ME = d; showMe(d, false); } else { a.disabled = false; alert(d.error || 'হলো না।'); } }, function () { a.disabled = false; alert('নেট পাওয়া যাচ্ছে না।'); }); }
     if (act === 'req') return showReq(ME);
     if (act === 'home') return showMe(ME, false);
     if (act === 'codeflow') return showCode(1, '');

@@ -63,7 +63,7 @@ const rid = r.result.requests[0].id;
 check('staff see the request', r.ok && r.result.requests[0].person.name === 'Arif' && r.result.requests[0].leaveOn === '2026-12-15', r);
 r = await sales('erpAlerts', []);   // sales has no bell, managers do
 r = await mgr('erpAlerts', []);
-check('bell: new request', r.ok && r.result.alerts.some((a) => /লাগেজ অনুরোধ/.test(a.title)), r.ok && r.result.alerts);
+check('bell: new request', r.ok && r.result.alerts.some((a) => /যাত্রা জানানো/.test(a.title)), r.ok && r.result.alerts);
 
 // staff make the shipment from it: his page opens the shipment at once (owner: from the moment his name is given)
 r = await sales('erpShipRequestMake', [{ id: rid }]);
@@ -142,6 +142,42 @@ check('ERP shows both numbers', r.ok && r.result.phoneKr === '+821077778888' && 
 evo.sent.length = 0;
 x = await act('code', { j, body: { phone: '01712-555666' } });
 check('code asked with the other number goes to his WhatsApp number', x.status === 200 && evo.sent.length === 1 && evo.sent[0].number === '821077778888', evo.sent);
+
+// ship-10: airports, weight, optional e-ticket; return date only remembered; one tap for the way back; history
+const PDF = 'data:application/pdf;base64,' + Buffer.from('%PDF-1.4 fake ticket').toString('base64');
+x = await act('request', { k: k2, body: { direction: 'kr_bd', fromAirport: 'PUS', toAirport: 'CGP', leaveOn: '2027-02-01', returnOn: '2027-03-01', bags: 2, bagKg: 23, flight: 'BS 362', agree: true, ticket: { name: 'eticket.pdf', mime: 'application/pdf', data: PDF } } });
+check('trip with airports, kg and ticket', x.status === 200 && x.body.history[0].fromAirport === 'PUS' && x.body.history[0].toAirport === 'CGP' && x.body.history[0].bagKg === 23 && x.body.history[0].ticket === 'eticket.pdf', x.body.history && x.body.history[0]);
+check('return date noted, nothing booked for it yet', x.body.returnOffer && x.body.returnOffer.on === '2027-03-01' && x.body.returnOffer.from === 'CGP' && x.body.returnOffer.to === 'PUS' && x.body.history.filter((h) => h.direction === 'bd_kr').length === 0, x.body.returnOffer);
+x = await act('request', { k: k2, body: { direction: 'kr_bd', fromAirport: 'DAC', leaveOn: '2027-02-05', bagKg: 80, agree: true } });
+check('weight over 50 kg refused', x.status === 400, x.body);
+x = await act('return', { k: k2, body: { fromId: x.body ? 0 : 0 } });
+check('return for an unknown trip refused', x.status === 400, x.body);
+const outId = (await sql`select id from ship_requests where flight = 'BS 362'`)[0].id;
+x = await act('return', { k: k2, body: { fromId: outId } });
+check('one tap: the way back booked with the noted date', x.status === 200 && x.body.history.some((h) => h.direction === 'bd_kr' && h.leaveOn === '2027-03-01' && h.fromAirport === 'CGP' && h.toAirport === 'PUS' && h.returnOf === outId) && !x.body.returnOffer, x.body.history);
+x = await act('return', { k: k2, body: { fromId: outId } });
+check('not twice', x.status === 400, x.body);
+x = await act('ticket', { k, body: { requestId: outId, ticket: { name: 'x.pdf', mime: 'application/pdf', data: PDF } } });
+check('another person cannot add a ticket to his trip', x.status === 404, x.body);
+x = await act('ticket', { k: k2, body: { requestId: outId, ticket: { name: 'x.exe', mime: 'application/x-msdownload', data: PDF } } });
+check('only PDF or pictures', x.status === 400, x.body);
+// staff compare the ticket with what he typed; nothing changes until they apply it
+await sql`update ship_requests set ticket_data = ${sql.json({ passenger: 'KARIM', airline: 'US-Bangla', flight: 'BS 361', from_airport: 'PUS', to_airport: 'DAC', depart_date: '2027-02-02', depart_time: '10:30', arrive_date: '2027-02-02', arrive_time: '15:40', return_date: '', booking_ref: 'ABC123', baggage_kg: 30 })} where id = ${outId}`;
+r = await sales('erpShipRequests', []);
+let rq = r.result.requests.find((q) => q.id === outId);
+check('staff see what differs', rq && rq.compare && rq.compare.rows.find((x2) => x2.field === 'যাত্রার তারিখ').same === false && rq.compare.rows.find((x2) => x2.field === 'কোথা থেকে').same === true && rq.compare.passenger === 'KARIM', rq && rq.compare);
+check('his own answers untouched before applying', rq.leaveOn === '2027-02-01' && rq.toAirport === 'CGP', rq);
+r = await sales('erpShipTicketApply', [{ id: outId }]);
+check('sales cannot apply', !r.ok, r);
+r = await mgr('erpShipRequestMake', [{ id: outId }]);
+const shipFromReq = r.result.id;
+r = await mgr('erpShipTicketApply', [{ id: outId }]);
+rq = r.result.requests.find((q) => q.id === outId);
+check('applied: trip takes the ticket details', r.ok && rq.leaveOn === '2027-02-02' && rq.toAirport === 'DAC' && rq.flight === 'US-Bangla BS 361' && rq.bagKg === 30 && rq.ticketAppliedBy, rq);
+const sh = (await sql`select flight_no, depart_at from ships where id = ${shipFromReq}`)[0];
+check('and its shipment the flight time', sh.flight_no === 'BS 361' && new Date(sh.depart_at).toISOString() === '2027-02-02T01:30:00.000Z', sh);
+x = await act('me', { k: k2 });
+check('history: approved trip with its shipment', x.body.history.some((h) => h.id === outId && h.status === 'made' && h.trip && h.trip.code), x.body.history);
 
 // messages: 3 days before, with his own page
 r = await owner('erpShipPersonSave', [{ name: 'Rina', phone: '010-5555-6666', waOk: true }]);
