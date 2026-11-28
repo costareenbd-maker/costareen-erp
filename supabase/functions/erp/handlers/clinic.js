@@ -868,6 +868,27 @@ export async function erpClinicConnect(ctx, payload) {
   const code = str(c.json.pairingCode).toUpperCase();
   return { state: state || 'connecting', linked: false, channelId: ch.id, code: code ? code.slice(0, 4) + '-' + code.slice(4) : '', qr };
 }
+// clinicqr-1 (29 Nov 2026, owner: Raj could not link - the QR on screen was already dead when he scanned). WhatsApp
+// replaces the link QR about every 20 s and Evolution keeps only the newest; the page asks here every 3 s and swaps the
+// picture. While the server is 'connecting', GET /instance/connect returns the current QR without restarting anything;
+// when it gave up ('close', after its QR limit) the same call starts a fresh round.
+export async function erpClinicConnectQr(ctx) {
+  await gate(ctx); await ownerOnly(ctx);
+  const ch = (await ctx.tx`select * from inbox_channels where business_id = ${ctx.biz} and kind = 'wa_evo' and status <> 'removed' and settings->>'purpose' = 'clinic' order by created_at desc limit 1`)[0];
+  if (!ch) return { state: 'none', linked: false, qr: '', code: '' };
+  const { chSecret } = await import('./inboxch.js');
+  const base = str(await chSecret(ctx, ch, 'URL')).replace(/\/+$/, ''), key = str(await chSecret(ctx, ch, 'KEY'));
+  const st = await wcall(ctx, base + '/instance/connectionState/' + encodeURIComponent(ch.external_id), { method: 'GET', headers: { apikey: key } });
+  const state = str((st.json.instance && st.json.instance.state) || st.json.state);
+  if (state === 'open') return { state, linked: true, qr: '', code: '' };
+  const ph = str((ch.settings || {}).number_wanted);
+  const c = await wcall(ctx, base + '/instance/connect/' + encodeURIComponent(ch.external_id) + (state === 'connecting' || !ph ? '' : '?number=' + wa(ph)), { method: 'GET', headers: { apikey: key } });
+  if (!c.ok) return { state: state || 'close', linked: false, qr: '', code: '', error: 'WhatsApp সার্ভার উত্তর দিল না (' + (c.status || 'উত্তর নেই') + ')' };
+  if (str((c.json.instance && c.json.instance.state) || c.json.state) === 'open') return { state: 'open', linked: true, qr: '', code: '' };
+  let qr = str(c.json.base64); if (qr && qr.indexOf('data:image') !== 0) qr = 'data:image/png;base64,' + qr;
+  const code = str(c.json.pairingCode).toUpperCase();
+  return { state: state || 'connecting', linked: false, qr, code: code ? code.slice(0, 4) + '-' + code.slice(4) : '', count: Number(c.json.count) || 0 };
+}
 export async function erpClinicConnectState(ctx) {
   await gate(ctx);
   const ch = (await ctx.tx`select * from inbox_channels where business_id = ${ctx.biz} and kind = 'wa_evo' and status <> 'removed' and settings->>'purpose' = 'clinic' order by created_at desc limit 1`)[0];
@@ -968,5 +989,5 @@ async function teamOrder(ctx, ch, ev, sender, s) {
 
 export const HANDLERS = {
   erpClinic, erpClinicSlots, erpClinicPatients, erpClinicPatient, erpClinicDoctorSave, erpClinicHoursSave, erpClinicOffSave, erpClinicOffStrike,
-  erpClinicPatientSave, erpClinicPhotoAdd, erpClinicDoctorPhoto, erpClinicPhotoUrl, erpClinicPhotoStrike, erpClinicBook, erpClinicAct, erpClinicSettingsSave, erpClinicConnect, erpClinicConnectState,
+  erpClinicPatientSave, erpClinicPhotoAdd, erpClinicDoctorPhoto, erpClinicPhotoUrl, erpClinicPhotoStrike, erpClinicBook, erpClinicAct, erpClinicSettingsSave, erpClinicConnect, erpClinicConnectState, erpClinicConnectQr,
 };

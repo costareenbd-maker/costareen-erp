@@ -228,5 +228,21 @@ r = await owner('erpClinicConnect', [{ phone: '01700000009' }]);
 check('asking again reuses the same number', r && r.channelId === nch[0].id, r);
 r = await mgr('erpClinicConnectState', []);
 check('the page reads whether the phone is linked', r && r.state === 'connecting' && r.linked === false, r);
+// clinicqr-1: the page asks for the current QR every few seconds
+const evoUrls = [];
+web.on(/evoc\.test/, (url) => {
+  evoUrls.push(url);
+  if (/connectionState/.test(url)) return { status: 200, body: { instance: { state: 'connecting' } } };
+  if (/instance\/connect\//.test(url)) return { status: 200, body: { pairingCode: null, base64: 'iVBORw0KGgoNEW=', count: 7 } };
+  return { status: 200, body: {} };
+});
+r = await sales('erpClinicConnectQr', []);
+check('sales cannot read the link QR', r && r.error, r);
+r = await owner('erpClinicConnectQr', []);
+check('the current QR comes back while connecting', r && r.qr === 'data:image/png;base64,iVBORw0KGgoNEW=' && r.linked === false && r.count === 7, r);
+check('while connecting the QR is read without a new round (no number sent)', evoUrls.some((u) => /instance\/connect\//.test(u) && !/number=/.test(u)), evoUrls);
+web.on(/evoc\.test/, (url) => /connectionState/.test(url) ? { status: 200, body: { instance: { state: 'open' } } } : { status: 200, body: {} });
+r = await owner('erpClinicConnectQr', []);
+check('once scanned the page is told it is linked', r && r.linked === true, r);
 
 done();

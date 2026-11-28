@@ -70415,7 +70415,7 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
 
   if (typeof fdxNav === 'function') fdxNav('clinic', 'Doctor desk', ICON, 'dash');
   try { VIEW_NAMES.clinic = 'Doctor desk'; FDH_SUB.clinic = 'Doctors, patients and the booking assistant'; } catch (e) {}
-  try { SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpClinicConnectState|erpClinic|erpClinicSlots|erpClinicPatients|erpClinicPatient|erpClinicPhotoUrl|')); } catch (e) {}
+  try { SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpClinicConnectState|erpClinicConnectQr|erpClinic|erpClinicSlots|erpClinicPatients|erpClinicPatient|erpClinicPhotoUrl|')); } catch (e) {}
   try { if (typeof BN_DICT !== 'undefined') BN_DICT['Doctor desk'] = 'ডাক্তার ডেস্ক'; } catch (e) {}
   try { if (typeof I18N_BN !== 'undefined') I18N_BN['Doctor desk'] = 'ডাক্তার ডেস্ক'; } catch (e) {}
   try { if (typeof AP_LOOK !== 'undefined' && AP_LOOK && !AP_LOOK.clinic) AP_LOOK.clinic = { c: '#0E7C86', i: ICON }; } catch (e) {}
@@ -70579,16 +70579,28 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
       '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end"><label class="dk-f" style="margin:0;flex:1 1 220px">বটের সিমের নম্বর<input class="dk-in" type="tel" data-dkc="connph" placeholder="01XXXXXXXXX" value="' + esc(c.phone || '') + '"></label>' +
       '<button type="button" class="dk-btn dark" data-dk="connect"' + (c.busy ? ' disabled' : '') + '>' + (c.busy ? 'আনছি…' : c.code ? 'নতুন কোড' : 'কোড আনুন') + '</button></div>' +
       (c.code ? '<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-top:14px"><div><div style="font:800 34px/1 \'Pretendard Variable\',sans-serif;letter-spacing:.08em" data-noi18n="1">' + esc(c.code) + '</div>' + steps +
-        '<div style="margin-top:8px;font-size:13px;color:var(--dk-ink3)">' + (c.state === 'open' ? 'যুক্ত হয়েছে' : 'ফোনে কোড দেওয়ার অপেক্ষায়… (কোড কয়েক মিনিট পর বদলে যায়; না হলে “নতুন কোড”)') + '</div></div>' +
-        (c.qr ? '<div style="text-align:center"><img alt="QR" src="' + esc(c.qr) + '" style="width:168px;height:168px;border-radius:12px;border:1px solid var(--dk-rule)"><div style="font-size:12px;color:var(--dk-ink3)">অথবা এই QR স্ক্যান করুন</div></div>' : '') + '</div>' : '') + '</div>';
+        '<div style="margin-top:8px;font-size:13px;color:var(--dk-ink3)" data-dkqrst="1">' + (c.state === 'open' ? 'যুক্ত হয়েছে' : c.stale ? 'কোড/QR আনা যাচ্ছে না — “নতুন কোড” চাপুন' : 'QR নিজে নিজে নতুন হচ্ছে — যেকোনো সময় স্ক্যান করুন') + '</div></div>' +
+        (c.qr ? '<div style="text-align:center"><img alt="QR" data-dkqr="1" src="' + esc(c.qr) + '" style="width:220px;height:220px;border-radius:12px;border:1px solid var(--dk-rule);background:#fff"><div style="font-size:12.5px;color:var(--dk-ink2);margin-top:4px">বটের ফোনে WhatsApp › Linked devices › Link a device › এই QR স্ক্যান করুন</div><div style="font-size:12px;color:var(--dk-ink3)" data-dkqrt="1">এইমাত্র নতুন হয়েছে</div></div>' : '') + '</div>' : '') + '</div>';
   }
-  function connPoll() {
+  function connPoll() {   // clinicqr-1: WhatsApp replaces the QR about every 20 s - fetch the current one every 3 s
     if (K.connT) clearTimeout(K.connT);
+    if (!K.connSince) K.connSince = Date.now();
     K.connT = setTimeout(function () {
       K.connT = null;
-      if (typeof VIEW === 'undefined' || VIEW !== 'clinic' || K.tab !== 'bot' || !K.conn || !K.conn.code || K.conn.linked) return;
-      srv('erpClinicConnectState', [], function (r) { K.conn.state = r.state; K.conn.linked = !!r.linked; if (r.linked) { toast('বটের WhatsApp যুক্ত হয়েছে'); load(true); } else connPoll(); paint(); }, function () { connPoll(); });
-    }, 5000);
+      if (typeof VIEW === 'undefined' || VIEW !== 'clinic' || K.tab !== 'bot' || !K.conn || !(K.conn.code || K.conn.qr) || K.conn.linked) { K.connSince = 0; return; }
+      if (Date.now() - K.connSince > 240000) { K.connSince = 0; K.conn.stale = true; paint(); return; }   // 4 minutes: stop; "নতুন কোড" starts again
+      srv('erpClinicConnectQr', [], function (r) {
+        if (r.linked) { K.conn.linked = true; K.conn.state = 'open'; K.connSince = 0; toast('বটের WhatsApp যুক্ত হয়েছে'); load(true); paint(); return; }
+        K.conn.state = r.state;
+        if (r.qr && r.qr !== K.conn.qr) {
+          K.conn.qr = r.qr; K.conn.qrAt = Date.now();
+          var im = document.querySelector('.dk img[data-dkqr]'); if (im) im.src = r.qr; else paint();
+        }
+        if (r.code && r.code !== K.conn.code) { K.conn.code = r.code; paint(); }
+        var t = document.querySelector('.dk [data-dkqrt]'); if (t && K.conn.qrAt) { var sec = Math.round((Date.now() - K.conn.qrAt) / 1000); t.textContent = sec < 4 ? 'এইমাত্র নতুন হয়েছে' : bn(sec) + ' সেকেন্ড আগে নতুন হয়েছে'; }
+        connPoll();
+      }, function () { connPoll(); });
+    }, 3000);
   }
   function botHtml() {
     var b = K.D.bot || {}, s = K.D.settings || {}, own = ME && (ME.role === 'owner' || ME.platform);
@@ -70789,7 +70801,7 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
     if (k === 'connect') {
       var inp = document.querySelector('[data-dkc="connph"]'); var ph = inp ? inp.value.trim() : '';
       K.conn = Object.assign(K.conn || {}, { phone: ph, busy: true }); paint();
-      srv('erpClinicConnect', [{ phone: ph }], function (r) { K.conn = { phone: ph, code: r.code, qr: r.qr, state: r.state, linked: !!r.linked }; paint(); if (!r.linked) connPoll(); else load(true); },
+      srv('erpClinicConnect', [{ phone: ph }], function (r) { K.connSince = 0; K.conn = { phone: ph, code: r.code, qr: r.qr, qrAt: Date.now(), state: r.state, linked: !!r.linked }; paint(); if (!r.linked) connPoll(); else load(true); },
         function (e) { K.conn.busy = false; paint(); toast(esc(errOf(e)), true); });
       return;
     }

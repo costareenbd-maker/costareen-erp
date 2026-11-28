@@ -5618,3 +5618,14 @@ no number linked yet. Not seen live yet: a real patient chat, the doctor's yes/n
 - Doctor sheet: a 104px 4:5 portrait beside the name when there is a photo (the round initial stays when there is none).
 - Dev checked 1440 + 390 (no sideways scroll). Only the card markup line, drHead and the clinic CSS changed.
 - LIVE #93 29 Nov 2026 (owner yes): #92 page + these hunks, sw cz-shell-v4-native-dkcard1, costareen-erp + office-erp.
+
+2026-11-29 — clinicqr-1 (owner: "Raj cannot connect the bot's WhatsApp ... make it fast, scan and it takes it")
+- Cause: the bot-link box showed the QR once; WhatsApp replaces the link QR about every 20 s (the first after ~60 s), so the
+  picture on screen was dead by the time Raj scanned. Evolution log: the instance ended in repeated LOGOUT (QR ran out), one
+  Baileys "Invalid buffer" on a pairing-code try.
+- erpClinicConnectQr (a read, manager+ with the owner's act switch like erpClinicConnect): connectionState, then GET
+  /instance/connect - while 'connecting' Evolution returns its newest QR without a new round (checked on the live clinic
+  server: count 18 -> 19 rotated in place); 'close' starts a fresh round (with the number); 'open' = linked.
+- Page: the box asks every 3 s, swaps the QR image in place (no flicker), shows "N সেকেন্ড আগে নতুন হয়েছে", 220px QR with
+  the steps for the QR, stops after 4 minutes ("নতুন কোড" starts again), and turns into "যুক্ত হয়েছে" the moment the scan lands.
+- Tests: clinic_test 65 (4 new: sales refused, current QR while connecting, no new round while connecting, linked when open).
