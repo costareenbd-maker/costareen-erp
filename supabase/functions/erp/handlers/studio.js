@@ -32,7 +32,8 @@
 // duration - what ChatGPT and other AI tools write). Migration 189: content_studio_msgs.spec + content_studio_jobs.spec.
 //   erpStudioAsk({..., spec})                 the JSON (text or object) with a prompt or a feedback, or alone: then the
 //                                             prompt may be empty. Checked here (JSON.parse, 1 MB guard); the work log
-//                                             shows it, the engine's planner follows it as her structured spec.
+//                                             shows it. Owner: the JSON is only a gateway - nothing starts on paste; on send
+//                                             the engine gets the raw JSON as her request (like a JSON pasted into an AI chat).
 import { roleAtLeast } from '../allow.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { phone11 } from '../lib/phone.js';

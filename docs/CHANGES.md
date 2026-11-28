@@ -5501,18 +5501,18 @@ Owner (for Raj, Oliareen's marketer): "Raz vai ke ekta json er jayga kore dew pr
   "JSON ভিডিও · Nটা দৃশ্য". erpStudioProject log lines carry spec; the feedback list names a JSON-only line "JSON প্রম্পট".
   No new call names (allow.js / security.js unchanged). Gate = manager, as the Studio.
 - Engine (PC, not in this repo; backup G:/bendar-brand/bizdesk/studio/studio_run.py.bak-studiojson1; bizvideo.py
-  unchanged): job.spec is her STRUCTURED SPEC. New video: the brief writer gets SPEC_BRIEF + her JSON (numbered scene list
-  in her order, her voice-over and on-screen words word for word, duration, style; her text wins where they differ; unknown
-  keys = context; locked rules win, every left-out item goes into "dropped" in Bangla); the scene planner gets SPEC_PLAN via
-  STUDIO ref_text (same order and scene count, her on-screen text, clips matched to her shot / camera wish from the library,
-  no new Flow). Feedback: the revise step gets "structured_spec" and changes only what it names. The log line adds
-  "আপনার JSON মেনে বানানো (Nটা দৃশ্য চাওয়া, ভিডিওতে Mটা)", fewer scenes than asked goes into dropped, a JSON over 24,000
-  characters is read up to there and the log says so. Every new line runs only when a JSON is present; a database without
-  189 (live today) returns no spec key and the old path runs unchanged. Engine unit check 13/13 (no DB, no AI).
+  unchanged). Owner's clarification the same day: "the JSON is only a gateway" - like a JSON prompt pasted into an AI
+  chat. So no spec-mapping machinery: the raw JSON (pretty, whole; only a JSON over 60,000 characters is cut, and the log
+  says so) goes to the brief writer, the scene planner (STUDIO ref_text) and the revise step as her request ("the
+  marketer gave this JSON prompt; build the video from it"); the owner's locked rules still win and anything they do not
+  allow goes into "dropped" in Bangla. Every new line runs only when a JSON is present; a database without 189 (live
+  today) gives no spec key and the old path runs unchanged. Engine unit check 8/8 (no DB, no AI).
+- studiojson-1c (same day): nothing starts on paste or attach - only the send button sends. No extra steps: a good JSON
+  pasted into the box becomes the chip at once, and send takes a JSON still open in the box (checked first). 1b: the box
+  header icon had no size on dev (fixed).
 - Tests: new studiojson_test (27): pure checks, sales refused, bad JSON with line/column, unfinished JSON, string-only,
   empty, > 1 MB, 3-character rule without JSON, nothing written by refusals, JSON-only ask, key order kept on the job row,
   titles, JSON + prompt, old ask without spec, JSON-only feedback = revise with its own JSON, log keeps both, rules log
   word, owner reads it, other business untouched. studio_test 36, studioref_test 60, contentdesk_test 116 green.
-- NOT done: no dev engine render with a JSON yet (unit check only); Flow/Veo shots from her JSON are not made (library
-  clips only, like the rest of the studio); her voice-over lines still pass the script writer / humanizer, so a word can
-  change. Live waits for the owner's yes (one combined kit with studioref-2 is prepared).
+- NOT done: no dev engine render with a JSON yet (unit check only); no new Flow/Veo clips from her JSON (library clips
+  only, like the rest of the studio); her voice-over words still pass the script writer / humanizer, so a word can change. Live waits for the owner's yes (one combined kit with studioref-2 is prepared).

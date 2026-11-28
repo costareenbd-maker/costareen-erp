@@ -68638,7 +68638,10 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
      studiojson-1 (owner 28 Nov 2026, for Raj): a fourth menu item "JSON দিন" opens a small box under the bar: a monospace
      paste area (no length limit) + "ফাইল (.json) বাছুন"; checked with JSON.parse, a mistake is said in Bangla with its
      line / column; a good JSON becomes a chip "JSON · <scenes or top keys>" (tap = view / edit, × = remove). With a JSON
-     the prompt may be empty. The work log shows each JSON (folded, pretty-printed). -->
+     the prompt may be empty. The work log shows each JSON (folded, pretty-printed).
+     studiojson-1c (owner 28 Nov: "the JSON is only a gateway"): nothing starts on paste or attach - only the send button
+     sends, like a JSON pasted into an AI chat. No extra steps: a good JSON pasted into the box becomes the chip at once,
+     and send takes a JSON still open in the box (checked first). -->
 <style>
 .st-q{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:16px;background:var(--ink);color:var(--card);margin:0 0 14px}
 .st-q .ring{width:30px;height:30px;flex:none;border-radius:50%;border:3px solid color-mix(in srgb,var(--card) 22%,transparent);border-top-color:var(--fd-lime,#E4FF5A);animation:st-spin 1.1s linear infinite}
@@ -68869,7 +68872,7 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
       '<textarea id="st_json" aria-label="JSON প্রম্পট" data-st-in="jsonVal" data-noi18n="1" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder=\'{ "scenes": [ { "shot": "…", "voiceover": "…", "on_screen_text": "…" } ] }\'' + (S.jsonErr ? ' aria-invalid="true" aria-describedby="st_jerr"' : '') + '>' + esc(S.jsonVal || '') + '</textarea>' +
       (S.jsonErr ? '<p class="err" id="st_jerr" role="alert">' + esc(S.jsonErr) + '</p>' : '') +
       '<div class="row"><button type="button" class="cd-btn pri" data-st="jsonadd" data-id="' + where + '">' + (editing ? 'রাখুন' : 'যোগ করুন') + '</button><button type="button" class="cd-btn" data-st="jsonfile" data-id="' + where + '">ফাইল (.json) বাছুন</button></div>' +
-      (S.jsonErr ? '' : '<small>ChatGPT বা অন্য AI যে JSON ভিডিও প্রম্পট দেয় (দৃশ্য, ভয়েস, লেখা, ক্যামেরা, সময়), সেটা এখানে দিন। প্রম্পটে লেখা না দিলেও চলবে।</small>') + '</div>';
+      (S.jsonErr ? '' : '<small>ChatGPT বা অন্য AI যে JSON ভিডিও প্রম্পট দেয়, সেটা এখানে পেস্ট করুন। পাঠান বোতাম চাপলে তবেই ভিডিও বানানো শুরু হবে। প্রম্পটে লেখা না দিলেও চলবে।</small>') + '</div>';
   }
   function jsonChip(where) {
     var x = S.spec[where]; if (!x) return '';
@@ -69118,6 +69121,10 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
     if (e.key === 'Enter') { e.preventDefault(); addLink(); }
     else if (e.key === 'Escape') { S.attOpen = ''; S.attLink = 0; S.linkErr = ''; repaint2(); }
   });
+  document.addEventListener('paste', function (e) {   // studiojson-1c: a good pasted JSON becomes the chip at once (not sent)
+    var t = e.target; if (!t || t.id !== 'st_json') return;
+    setTimeout(function () { S.jsonVal = t.value; if (!jsonCheck(t.value).err) jsonAdd(S.jsonOpen, t.value); }, 0);
+  });
   document.addEventListener('paste', function (e) {   // a pasted good link is added at once
     var t = e.target; if (!t || t.id !== 'st_link') return;
     setTimeout(function () { S.linkVal = t.value; if (linkOf(t.value)) addLink(); }, 0);
@@ -69147,8 +69154,8 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
     else if (w === 'like') { var v = ((S.home && S.home.desk) || []).filter(function (x) { return String(x.id) === id; })[0];
       S.like = Number(id); S.draft = 'এই ভিডিওটার মতো করে বানান: "' + (v ? v.title : '') + '"। '; repaint2(); setTimeout(function () { var ta = el('st_ta'); if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); ta.scrollIntoView({ block: 'center' }); } }, 30); }
     else if (w === 'ask') {
+      if (S.jsonOpen === 'home' && String(S.jsonVal || '').trim()) { jsonAdd('home', S.jsonVal); if (S.jsonOpen === 'home') return; }   // studiojson-1c: checked, then sent
       var pr = String(S.draft || '').trim(), sp = S.spec.home; if (!sp && pr.length < 3) { toast('কী ভিডিও চান, একটু লিখুন, বা একটা JSON দিন।', true); return; }
-      if (S.jsonOpen === 'home' && String(S.jsonVal || '').trim()) { toast('JSON-টা আগে "যোগ করুন" চাপুন, বা বন্ধ করুন।', true); return; }
       if (trayBusy()) { toast('ফাইল এখনো উঠছে। একটু অপেক্ষা করে পাঠান।', true); return; }
       S.busy.ask = 1; repaint2();
       srv('erpStudioAsk', [{ prompt: pr, baseVideoId: S.like && S.draft.indexOf('এই ভিডিওটার মতো') === 0 ? S.like : undefined, refIds: readyIds(), spec: sp ? sp.text : undefined }], function (r) { S.busy.ask = 0; S.draft = ''; S.like = null; S.tray = []; S.spec.home = null; toast('পাঠানো হলো। তৈরি হলে খবর পাবেন।');
@@ -69156,8 +69163,8 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
         function (x) { S.busy.ask = 0; toast(esc(errOf(x)), true, 9000); repaint2(); });
     }
     else if (w === 'feedback') {
+      if (S.jsonOpen === 'fb' && String(S.jsonVal || '').trim()) { jsonAdd('fb', S.jsonVal); if (S.jsonOpen === 'fb') return; }   // studiojson-1c
       var fb = String(S.fb || '').trim(), sf = S.spec.fb; if (!sf && fb.length < 3) { toast('কী বদলাতে চান, লিখুন, বা একটা JSON দিন।', true); return; }
-      if (S.jsonOpen === 'fb' && String(S.jsonVal || '').trim()) { toast('JSON-টা আগে "যোগ করুন" চাপুন, বা বন্ধ করুন।', true); return; }
       if (trayBusy()) { toast('ফাইল এখনো উঠছে। একটু অপেক্ষা করে পাঠান।', true); return; }
       S.busy.ask = 1; repaint2();
       srv('erpStudioAsk', [{ projectId: S.pid, prompt: fb, refIds: readyIds(), spec: sf ? sf.text : undefined }], function () { S.busy.ask = 0; S.fb = ''; S.tray = []; S.spec.fb = null; toast('পাঠানো হলো। নতুন ভার্সন তৈরি হলে খবর পাবেন।'); loadProj(); },
