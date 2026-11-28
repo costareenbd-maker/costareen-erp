@@ -43622,7 +43622,7 @@ html[data-look="clean"][data-skin="fd"]:root .t2line span { color:var(--fd-text-
 <script>
 /* the seven menu groups (D10): id, English, Bangla, the screens in it (menu order) */
 var NIGHT_GROUPS = [
-  ['today', 'Today', 'আজ', ['dash', 'contentdesk', 'mindmap', 'home']],
+  ['today', 'Today', 'আজ', ['dash', 'contentdesk', 'clinic', 'mindmap', 'home']],
   ['sell', 'Sell', 'বিক্রি', ['invoice', 'holds', 'sales', 'weborders', 'quotes', 'preorders', 'repairs', 'printjobs', 'resell']],
   ['cust', 'Customers', 'কাস্টমার', ['inbox', 'customers', 'leads', 'campaigns']],
   ['goods', 'Goods', 'মাল', ['products', 'costs', 'stock', 'shipments', 'suppliers', 'market', 'joint']],
@@ -70359,6 +70359,8 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
   try { VIEW_NAMES.clinic = 'Doctor desk'; FDH_SUB.clinic = 'Doctors, patients and the booking assistant'; } catch (e) {}
   try { SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpClinic|erpClinicSlots|erpClinicPatients|erpClinicPatient|erpClinicPhotoUrl|')); } catch (e) {}
   try { if (typeof BN_DICT !== 'undefined') BN_DICT['Doctor desk'] = 'ডাক্তার ডেস্ক'; } catch (e) {}
+  try { if (typeof I18N_BN !== 'undefined') I18N_BN['Doctor desk'] = 'ডাক্তার ডেস্ক'; } catch (e) {}
+  try { if (typeof AP_LOOK !== 'undefined' && AP_LOOK && !AP_LOOK.clinic) AP_LOOK.clinic = { c: '#0E7C86', i: ICON }; } catch (e) {}
   function navSync() { var b = document.querySelector('#nav button[data-view="clinic"]'); if (b) b.style.display = on() ? '' : 'none'; }
 
   function load(force) {
