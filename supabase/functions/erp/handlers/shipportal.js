@@ -32,7 +32,7 @@ const IMG = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
 const PORTS = ['DAC', 'ICN'];
 const DIRS = ['kr_bd', 'bd_kr', 'both'];
 // ship-10: the airports a partner may name (Korea, Bangladesh); the shipment itself still runs ICN <-> DAC
-export const AIRPORTS = { ICN: ['kr', 9], PUS: ['kr', 9], TAE: ['kr', 9], CJU: ['kr', 9], DAC: ['bd', 6], CGP: ['bd', 6], ZYL: ['bd', 6] };
+export const AIRPORTS = { ICN: ['kr', 9], GMP: ['kr', 9], PUS: ['kr', 9], TAE: ['kr', 9], CJU: ['kr', 9], CJJ: ['kr', 9], MWX: ['kr', 9], YNY: ['kr', 9], DAC: ['bd', 6], CGP: ['bd', 6], ZYL: ['bd', 6] };
 const TICKET_MIME = /^(application\/pdf|image\/(jpeg|png|webp))$/;
 async function saveTicket(ctx, reqId, f) {
   if (!f || !f.data) return false;

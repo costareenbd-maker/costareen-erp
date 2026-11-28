@@ -157,7 +157,7 @@ details.em[open]{padding-bottom:6px}
   var BN = '০১২৩৪৫৬৭৮৯', MON = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
   var CITY = { ICN: 'সিউল (ইনচন)', DAC: 'ঢাকা' }, CITY1 = { ICN: 'সিউল', DAC: 'ঢাকা' }, TZ = { ICN: 9, DAC: 6 };
   var DIRN = { kr_bd: 'কোরিয়া → বাংলাদেশ', bd_kr: 'বাংলাদেশ → কোরিয়া', both: 'দুই দিকে' };
-  var APN = { ICN: 'ইনচন (সিউল)', PUS: 'গিমহে (বুসান)', TAE: 'দেগু', CJU: 'জেজু', DAC: 'ঢাকা', CGP: 'চট্টগ্রাম', ZYL: 'সিলেট' }, APK = ['ICN', 'PUS', 'TAE', 'CJU'], APB = ['DAC', 'CGP', 'ZYL'];
+  var APN = { ICN: 'ইনচন (সিউল)', GMP: 'গিম্পো (সিউল)', PUS: 'গিমহে (বুসান)', TAE: 'দেগু', CJU: 'জেজু', CJJ: 'চেওংজু', MWX: 'মুয়ান', YNY: 'ইয়াংইয়াং', DAC: 'ঢাকা', CGP: 'চট্টগ্রাম', ZYL: 'সিলেট' }, APK = ['ICN', 'GMP', 'PUS', 'TAE', 'CJU', 'CJJ', 'MWX', 'YNY'], APB = ['DAC', 'CGP', 'ZYL'];
   var ST2 = { 'new': ['জমা হয়েছে', 'c-new', 'আমরা শিগগিরই আপনার সাথে যোগাযোগ করব।'], talked: ['পর্যালোচনায়', 'c-talked', 'আমাদের কথা হয়েছে। চূড়ান্ত হলে এখানে জানাব।'], made: ['অনুমোদিত', 'c-made', 'যাত্রাটি অনুমোদিত। লাগেজ বুঝিয়ে দেওয়ার পর সব বিস্তারিত এখানে দেখবেন।'], done: ['সম্পন্ন', 'c-done', 'লাগেজ বুঝে নেওয়া হয়েছে। সহযোগিতার জন্য ধন্যবাদ।'], no: ['এবার নয়', 'c-no', 'এবারের যাত্রায় লাগেজ লাগবে না।'] };
   function money(m) { return (m.cur === 'KRW' ? '₩ ' : m.cur === 'USD' ? '$ ' : '৳ ') + Number(m.amt).toLocaleString('en-US'); }
   function routeTxt(h) { return (h.fromAirport || (h.direction === 'bd_kr' ? 'DAC' : 'ICN')) + ' → ' + (h.toAirport || (h.direction === 'bd_kr' ? 'ICN' : 'DAC')); }

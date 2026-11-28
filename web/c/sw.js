@@ -1,7 +1,7 @@
 // ship-8: keeps the traveller's page on the phone so it opens at the arrival airport with no network.
 // The page, its fonts, icons and the small QR maker are kept; the data (his details, the shipment) is kept by the page
 // itself in localStorage. Network first for the page (so updates arrive), cache when offline.
-const V = 'cp-v2';
+const V = 'cp-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png',
   '../fonts/NotoSansBengali-Regular.ttf', '../fonts/NotoSansBengali-Bold.ttf', '../fonts/Comfortaa-Bold.ttf', '../fonts/Inter-latin-var.woff2'];
 const QR = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
