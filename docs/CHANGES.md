@@ -5565,3 +5565,5 @@ no number linked yet. Not seen live yet: a real patient chat, the doctor's yes/n
   business_config clinic_dphoto_<doctor id> - no migration); erpClinic gives photoUrl per doctor. The page shows it in the
   doctor card, the schedule lane and the doctor sheet (72px), with a "ছবি দিন / ছবি বদলান" button on the doctor sheet.
 - Tests: clinic_test 61 (4 new: sales refused, non-picture refused, manager sets it, photo link only for that doctor).
+- LIVE #92 29 Nov 2026 (owner asked): function file-by-file (allow, clinic, security = live + the photo diff only), page = #91 +
+  these hunks (sw cz-shell-v4-native-olilook1). Dr Nusrat Nobi's photo set on live. Dev checked at 1920 / 2560 (photo stand-in on a demo doctor).
