@@ -52,8 +52,9 @@ x = await act('save', { k, body: { addrBd: 'Uttara', phone: '010-4410-2291' } })
 check('he edits his own details', x.status === 200 && x.body.me.addrBd === 'Uttara', x.body);
 
 // luggage request
-x = await act('request', { k, body: { direction: 'kr_bd', leaveOn: '2026-12-15', bags: 2, devices: 1, ownGoods: true } });
-check('request needs the rules tick', x.status === 400, x.body);
+x = await act('request', { k, body: { direction: 'kr_bd', leaveOn: '2026-12-15', bags: 2, devices: 1, ownGoods: true, carry: ['ল্যাপটপ', 'something else'] } });
+check('no rules tick needed; only items from our list kept', x.status === 200 && x.body.history[0].carry.join() === 'ল্যাপটপ' && x.body.carryList.indexOf('মোবাইল ফোন') >= 0, x.body);
+await sql`delete from ship_requests where carry::text like '%ল্যাপটপ%'`;
 x = await act('request', { k, body: { direction: 'kr_bd', leaveOn: '2026-12-15', returnOn: '2026-12-01', agree: true } });
 check('return before leaving refused', x.status === 400, x.body);
 x = await act('request', { k, body: { direction: 'kr_bd', leaveOn: '2026-12-15', returnOn: '2027-01-10', flight: 'KE 657', bags: 2, devices: 1, ownGoods: true, agree: true } });
@@ -192,6 +193,11 @@ x = await act('scan', { k: k2, body: { ticket: { name: 'a.exe', mime: 'applicati
 check('scan: only PDF or pictures', x.status === 400, x.body);
 x = await act('scan', { k: k2, body: { ticket: { name: 't.pdf', mime: 'application/pdf', data: PDF } } });
 check('scan without an AI key: a plain "write it yourself" answer', x.status === 400 && /নিজে লিখুন/.test(x.body.error), x.body);
+
+r = await mgr('erpShipGuideSave', [{ carryList: ['মোবাইল ফোন', 'ল্যাপটপ', '', 'ঘড়ি'] }]);
+check('staff set the list partners tick from', r.ok && r.result.carryList.join('|') === 'মোবাইল ফোন|ল্যাপটপ|ঘড়ি', r.ok && r.result.carryList);
+x = await act('me', { k: k2 });
+check('partner page carries the new list', x.body.carryList.length === 3, x.body.carryList);
 
 // messages: 3 days before, with his own page
 r = await owner('erpShipPersonSave', [{ name: 'Rina', phone: '010-5555-6666', waOk: true }]);

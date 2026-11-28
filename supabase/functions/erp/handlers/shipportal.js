@@ -33,6 +33,13 @@ const PORTS = ['DAC', 'ICN'];
 const DIRS = ['kr_bd', 'bd_kr', 'both'];
 // ship-10: the airports a partner may name (Korea, Bangladesh); the shipment itself still runs ICN <-> DAC
 export const AIRPORTS = { ICN: ['kr', 9], GMP: ['kr', 9], PUS: ['kr', 9], TAE: ['kr', 9], CJU: ['kr', 9], CJJ: ['kr', 9], MWX: ['kr', 9], YNY: ['kr', 9], DAC: ['bd', 6], CGP: ['bd', 6], ZYL: ['bd', 6] };
+// ship-12: what a partner may tick he can carry besides our bags (the business edits the list)
+const CARRY_DEFAULT = ['মোবাইল ফোন', 'ল্যাপটপ', 'ট্যাবলেট', 'স্মার্টওয়াচ', 'ক্যামেরা', 'কসমেটিকস'];
+export async function carryList(ctx) {
+  const raw = str(await getConfig(ctx, 'ship_carry_items', ''));
+  const l = raw ? raw.split(/\r?\n/).map(str).filter(Boolean).slice(0, 20) : CARRY_DEFAULT;
+  return l;
+}
 const TICKET_MIME = /^(application\/pdf|image\/(jpeg|png|webp))$/;
 async function saveTicket(ctx, reqId, f) {
   if (!f || !f.data) return false;
@@ -102,7 +109,7 @@ async function guideOf(ctx, port) {
 }
 function reqOut(r) {
   return { id: Number(r.id), direction: r.direction, leaveOn: day(r.leave_on), returnOn: day(r.return_on), flight: r.flight, bags: r.bags, devices: r.devices,
-    ownGoods: !!r.own_goods, note: r.note, state: r.state, at: iso(r.created_at), fromAirport: r.from_airport || '', toAirport: r.to_airport || '',
+    ownGoods: !!r.own_goods, note: r.note, state: r.state, at: iso(r.created_at), carry: Array.isArray(r.carry) ? r.carry : [], fromAirport: r.from_airport || '', toAirport: r.to_airport || '',
     bagKg: r.bag_kg == null ? null : Number(r.bag_kg), ticket: r.ticket_file ? (r.ticket_name || 'ticket') : '', returnOf: r.return_of == null ? null : Number(r.return_of) };
 }
 /** What he received from us on one shipment (fee paid to him; customs he paid that we give back). */
@@ -130,7 +137,7 @@ async function mePayload(ctx, p) {
   const today = day(ctx.now);
   const back = reqs.find((r) => r.return_on && day(r.return_on) >= today && r.state !== 'no' && !reqs.some((x) => Number(x.return_of) === Number(r.id)));
   const out = { ok: true, biz: { name: str(ctx.s.businessName), logo: await logoOf(ctx), hotline: e164(await getConfig(ctx, 'ship_hotline', '')) },
-    me: meOut(p), requests: reqs.map(reqOut), history, returnOffer: back ? { fromId: Number(back.id), on: day(back.return_on), from: back.to_airport || (back.direction === 'bd_kr' ? 'ICN' : 'DAC'), to: back.from_airport || (back.direction === 'bd_kr' ? 'DAC' : 'ICN'), bags: back.bags } : null,
+    me: meOut(p), carryList: await carryList(ctx), requests: reqs.map(reqOut), history, returnOffer: back ? { fromId: Number(back.id), on: day(back.return_on), from: back.to_airport || (back.direction === 'bd_kr' ? 'ICN' : 'DAC'), to: back.from_airport || (back.direction === 'bd_kr' ? 'DAC' : 'ICN'), bags: back.bags } : null,
     active: null, thanks: false, at: new Date().toISOString() };
   const s = await activeTrip(ctx, p.id);
   if (s) {
@@ -179,7 +186,6 @@ export async function portalAct(ctx, a, { k, j, body }) {
       if (!leave) return bad(400, 'যাওয়ার তারিখ দিন।');
       const ret = /^\d{4}-\d\d-\d\d$/.test(str(b.returnOn)) ? str(b.returnOn) : null;
       if (ret && ret < leave) return bad(400, 'ফেরার তারিখ যাওয়ার পরে হবে।');
-      if (!b.agree) return bad(400, 'নিয়মে রাজি থাকলে টিক দিন।');
       const open = (await ctx.tx`select count(*)::int n from ship_requests where person_id = ${p.id} and state in ('new', 'talked')`)[0].n;
       if (open >= 3) return bad(400, 'আপনার ৩টা যাত্রা এখনো পর্যালোচনায়। আমরা যোগাযোগ করব।');
       const side = dir === 'bd_kr' ? ['bd', 'kr'] : ['kr', 'bd'];
@@ -187,8 +193,10 @@ export async function portalAct(ctx, a, { k, j, body }) {
       const ta = AIRPORTS[str(b.toAirport)] && AIRPORTS[str(b.toAirport)][0] === side[1] ? str(b.toAirport) : (side[1] === 'kr' ? 'ICN' : 'DAC');
       const kg = b.bagKg === undefined || b.bagKg === '' || b.bagKg === null ? null : Number(b.bagKg);
       if (kg != null && !(kg > 0 && kg <= 50)) return bad(400, 'লাগেজের ওজন ১ থেকে ৫০ কেজির মধ্যে দিন।');
-      const id = (await ctx.tx`insert into ship_requests (business_id, person_id, direction, leave_on, return_on, flight, bags, devices, own_goods, note, from_airport, to_airport, bag_kg)
-        values (${ctx.biz}, ${p.id}, ${dir}, ${leave}, ${ret}, ${str(b.flight).slice(0, 60)}, ${Math.max(0, Math.min(6, int(b.bags)))}, ${Math.max(0, Math.min(10, int(b.devices)))}, ${!!b.ownGoods}, ${str(b.note).slice(0, 500)}, ${fa}, ${ta}, ${kg})
+      const allowed = await carryList(ctx);
+      const carry = (Array.isArray(b.carry) ? b.carry : []).map(str).filter((x) => allowed.indexOf(x) >= 0).slice(0, 20);
+      const id = (await ctx.tx`insert into ship_requests (business_id, person_id, direction, leave_on, return_on, flight, bags, devices, own_goods, note, from_airport, to_airport, bag_kg, carry)
+        values (${ctx.biz}, ${p.id}, ${dir}, ${leave}, ${ret}, ${str(b.flight).slice(0, 60)}, ${Math.max(0, Math.min(6, int(b.bags)))}, ${Math.max(0, Math.min(10, int(b.devices)))}, ${!!b.ownGoods}, ${str(b.note).slice(0, 500)}, ${fa}, ${ta}, ${kg}, ${ctx.tx.json(carry)})
         returning id`)[0].id;
       try { await saveTicket(ctx, id, b.ticket); } catch (e) { return bad(400, str(e.message)); }
       return { status: 200, body: await mePayload(ctx, p) };
@@ -199,8 +207,8 @@ export async function portalAct(ctx, a, { k, j, body }) {
       if (!r0 || !r0.return_on) return bad(400, 'এই যাত্রায় ফেরার তারিখ দেওয়া নেই।');
       if ((await ctx.tx`select 1 from ship_requests where return_of = ${r0.id}`).length) return bad(400, 'ফেরার যাত্রা আগেই জানানো হয়েছে।');
       const dir2 = r0.direction === 'bd_kr' ? 'kr_bd' : 'bd_kr';
-      await ctx.tx`insert into ship_requests (business_id, person_id, direction, leave_on, bags, devices, own_goods, from_airport, to_airport, bag_kg, return_of)
-        values (${ctx.biz}, ${p.id}, ${dir2}, ${r0.return_on}, ${r0.bags}, ${r0.devices}, ${r0.own_goods}, ${r0.to_airport || (dir2 === 'bd_kr' ? 'DAC' : 'ICN')}, ${r0.from_airport || (dir2 === 'bd_kr' ? 'ICN' : 'DAC')}, ${r0.bag_kg}, ${r0.id})`;
+      await ctx.tx`insert into ship_requests (business_id, person_id, direction, leave_on, bags, devices, own_goods, from_airport, to_airport, bag_kg, return_of, carry)
+        values (${ctx.biz}, ${p.id}, ${dir2}, ${r0.return_on}, ${r0.bags}, ${r0.devices}, ${r0.own_goods}, ${r0.to_airport || (dir2 === 'bd_kr' ? 'DAC' : 'ICN')}, ${r0.from_airport || (dir2 === 'bd_kr' ? 'ICN' : 'DAC')}, ${r0.bag_kg}, ${r0.id}, ${ctx.tx.json(Array.isArray(r0.carry) ? r0.carry : [])})`;
       return { status: 200, body: await mePayload(ctx, p) };
     }
     if (a === 'scan') {
@@ -446,7 +454,7 @@ export async function erpShipGuides(ctx) {
   await gate(ctx);
   const out = {};
   for (const port of PORTS) out[port] = (await guideOf(ctx, port)) || { terminal: '', meet: '', steps: [], photos: [] };
-  return { guides: out, canEdit: roleAtLeast(ctx.s.role, 'manager'), hotline: str(await getConfig(ctx, 'ship_hotline', '')) };
+  return { guides: out, canEdit: roleAtLeast(ctx.s.role, 'manager'), hotline: str(await getConfig(ctx, 'ship_hotline', '')), carryList: await carryList(ctx) };
 }
 export async function erpShipGuideSave(ctx, payload) {
   await gate(ctx);
@@ -455,6 +463,10 @@ export async function erpShipGuideSave(ctx, payload) {
     const h = str(p.hotline) ? e164(p.hotline) : '';
     if (str(p.hotline) && !h) throw new Error('Write the office number with + and the country code.');
     await setConfig(ctx, 'ship_hotline', h);
+  }
+  if (p.carryList !== undefined) {
+    const l = (Array.isArray(p.carryList) ? p.carryList : str(p.carryList).split(/\r?\n|,/)).map(str).filter(Boolean).slice(0, 20).map((x) => x.slice(0, 40));
+    await setConfig(ctx, 'ship_carry_items', l.join('\n'));
   }
   if (p.port !== undefined) {
     const port = PORTS.indexOf(str(p.port)) >= 0 ? str(p.port) : '';
