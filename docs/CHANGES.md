@@ -5516,6 +5516,21 @@ Owner (for Raj, Oliareen's marketer): "Raz vai ke ekta json er jayga kore dew pr
   word, owner reads it, other business untouched. studio_test 36, studioref_test 60, contentdesk_test 116 green.
 - NOT done: no dev engine render with a JSON yet (unit check only); no new Flow/Veo clips from her JSON (library clips
   only, like the rest of the studio); her voice-over words still pass the script writer / humanizer, so a word can change. Live waits for the owner's yes (one combined kit with studioref-2 is prepared).
+2026-11-28 — nosplash-oli-1 (owner: "ERP-তে লোড হওয়ার সময় আমার যে ছবি আসে ... অলিয়ারিনে ঢুকবে এমন কেউ সেই ছবি দেখবে না")
+- The loading poster (bnsplash-1, icons/splash-*.webp) carries the owner's own photo. Brand fence: nobody who opens
+  Oliareen sees it, Raj (manager) included. Oliareen now gets the plain loader: the animated Benndar B "লোড হচ্ছে…" on the
+  light background, no photo.
+- The splash runs before the server says which business is active, so the page decides from this device: the photo
+  shows only when localStorage `bn_splash_pic` = 1. `applyBusinesses` sets it when the active business is not Oliareen
+  (`bnSplashOli`: id starts 1d1ed79e live / 11826232 dev demo, or the name says Oliareen / অলিয়ারিন) and removes it otherwise;
+  `switchBusiness` updates it at once; both sign-outs remove it. A new device, a fresh key link or any unknown state =
+  no photo (the first load on a new device is always plain, even for the owner; the photo comes from the next load).
+- NOT changed: the splash images stay on the site (a bare URL still opens them); phone once-per-visit / computer every
+  load, the 1.8 s minimum and tap-to-skip are the same for both loaders.
+- 1b/1c: the plain-loader class goes with the splash; on a phone the plain loader sits in the middle (the poster
+  version stays low, under the face).
+- Checked on dev (owner, desktop 1440 + phone 390): Demo 3D Shop = poster with photo; Oliareen (demo) = plain B, no
+  splash picture requested; switching business flips the device flag at once.
 
 ### clinic-1 LIVE #87 (29 Nov 2026)
 Owner: "ডাক্তারের ডেস্ক লাইভে দিয়ে দাও". Migration 188, function file-by-file (clinic diff only), page = #86 + clinic block (sw clinic1).
