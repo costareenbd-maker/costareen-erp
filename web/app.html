@@ -68634,7 +68634,11 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
      The work log shows each prompt's files and what the engine did with them.
      studioref-2 (28 Nov 2026): a third menu item "লিংক দিন" opens a small paste box (YouTube / Facebook / Instagram /
      TikTok); the link becomes a video chip (site + short link) with the same two choices and ×; it counts toward the
-     2 videos. The work log shows it as a link that opens the video. -->
+     2 videos. The work log shows it as a link that opens the video.
+     studiojson-1 (owner 28 Nov 2026, for Raj): a fourth menu item "JSON দিন" opens a small box under the bar: a monospace
+     paste area (no length limit) + "ফাইল (.json) বাছুন"; checked with JSON.parse, a mistake is said in Bangla with its
+     line / column; a good JSON becomes a chip "JSON · <scenes or top keys>" (tap = view / edit, × = remove). With a JSON
+     the prompt may be empty. The work log shows each JSON (folded, pretty-printed). -->
 <style>
 .st-q{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:16px;background:var(--ink);color:var(--card);margin:0 0 14px}
 .st-q .ring{width:30px;height:30px;flex:none;border-radius:50%;border:3px solid color-mix(in srgb,var(--card) 22%,transparent);border-top-color:var(--fd-lime,#E4FF5A);animation:st-spin 1.1s linear infinite}
@@ -68689,6 +68693,26 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
 .st-chip.vid .vt.lk{background:var(--ink);flex-direction:column;gap:2px;font:700 9.5px Inter,system-ui,sans-serif;letter-spacing:.02em}
 .st-chip.vid small{display:block;font-size:11.5px;color:var(--soft);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:759px){.st-attl{left:0;right:0;width:auto}}
+/* studiojson-1: a JSON video prompt */
+.st-jbox{margin:10px 0 0;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--rule2);box-shadow:0 12px 32px -16px rgba(0,0,0,.3)}
+.st-jbox .hd{display:flex;align-items:center;gap:8px;margin:0 0 8px}.st-jbox .hd b{font-size:14.5px;flex:1}
+.st-jbox textarea{display:block;width:100%;min-height:180px;max-height:55vh;resize:vertical;font:13px/1.5 "JetBrains Mono",ui-monospace,Consolas,monospace;color:var(--ink);background:var(--pan);border:1px solid var(--rule2);border-radius:10px;padding:10px;tab-size:2;white-space:pre;overflow:auto}
+.st-jbox textarea:focus{outline:none;border-color:var(--ink);background:var(--card)}
+.st-jbox textarea[aria-invalid="true"]{border-color:var(--bad,#b42318)}
+.st-jbox .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center}
+.st-jbox .row .cd-btn{min-height:44px}
+.st-jbox .err{margin:8px 0 0;font-size:13.5px;line-height:1.45;color:var(--bad,#b42318)}
+.st-jbox small{display:block;margin-top:8px;font-size:12.5px;color:var(--soft);line-height:1.45}
+.st-chip.js{display:flex;align-items:center;border-radius:12px;background:var(--pan);max-width:100%}
+.st-chip.js .jb{display:flex;align-items:center;gap:10px;border:0;background:none;font:inherit;color:var(--ink);text-align:left;padding:6px 38px 6px 6px;min-height:58px;cursor:pointer;min-width:0;border-radius:12px}
+.st-chip.js .jb:hover{background:var(--pan3)}
+.st-chip.js .jt{width:44px;height:44px;border-radius:8px;background:var(--ink);color:var(--card);display:grid;place-items:center;flex:none;font:700 13px "JetBrains Mono",ui-monospace,Consolas,monospace}
+.st-chip.js b{display:block;font-size:13px;line-height:1.3}
+.st-chip.js small{display:block;font-size:12px;color:var(--soft);max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-chip.js .st-rm{top:50%;transform:translateY(-50%);right:6px}
+.st-ljs{margin:6px 0 2px;border-radius:10px;background:var(--pan);max-width:100%}
+.st-ljs summary{cursor:pointer;padding:8px 10px;font-size:13px;font-weight:600;color:var(--ink);list-style-position:inside}
+.st-ljs pre{margin:0;padding:0 10px 10px;max-height:340px;overflow:auto;font:12px/1.5 "JetBrains Mono",ui-monospace,Consolas,monospace;white-space:pre;color:var(--ink2)}
 .st-ta:focus{outline:none;background:var(--card);border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 14%,transparent)}
 .st-ta::placeholder{color:var(--fd-placeholder,#686C77)}
 .st-send{position:absolute;right:10px;bottom:10px;width:44px;height:44px;border-radius:50%;border:0;background:var(--pri);color:var(--on-pri);display:grid;place-items:center;cursor:pointer}
@@ -68766,8 +68790,96 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
     play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>',
     clip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 11.5-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></svg>',
     pic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>',
-    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4L12 5.6"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4L12 18.4"/></svg>'
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3.2-3.2a4.5 4.5 0 0 0-6.4-6.4L12 5.6"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3.2 3.2a4.5 4.5 0 0 0 6.4 6.4L12 18.4"/></svg>',
+    json: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4c-2 0-2.5 1-2.5 3v2c0 1.5-.8 2.5-2 3 1.2.5 2 1.5 2 3v2c0 2 .5 3 2.5 3M16 4c2 0 2.5 1 2.5 3v2c0 1.5.8 2.5 2 3-1.2.5-2 1.5-2 3v2c0 2-.5 3-2.5 3"/></svg>'
   };
+  // studiojson-1: a JSON video prompt per bar ('home' = new video, 'fb' = feedback). The same scanner as the server
+  // (handlers/studio.js jsonErrAt) says where a JSON breaks.
+  S.spec = { home: null, fb: null };
+  function jsonErrAt(t) {
+    var i = 0, n = t.length;
+    function ws() { while (i < n && ' \t\n\r'.indexOf(t[i]) >= 0) i++; }
+    function fail() { throw i; }
+    function str() { i++; while (i < n) { var c = t[i]; if (c === '"') { i++; return; } if (c === '\\') { i += 2; continue; } if (c < ' ') fail(); i++; } fail(); }
+    function val() {
+      ws(); var c = t[i], m;
+      if (c === '{') { i++; ws(); if (t[i] === '}') { i++; return; }
+        for (;;) { ws(); if (t[i] !== '"') fail(); str(); ws(); if (t[i] !== ':') fail(); i++; val(); ws(); if (t[i] === ',') { i++; continue; } if (t[i] === '}') { i++; return; } fail(); } }
+      if (c === '[') { i++; ws(); if (t[i] === ']') { i++; return; }
+        for (;;) { val(); ws(); if (t[i] === ',') { i++; continue; } if (t[i] === ']') { i++; return; } fail(); } }
+      if (c === '"') return str();
+      m = /^(-?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d+)?|true|false|null)/.exec(t.slice(i, i + 64));
+      if (m) { i += m[0].length; return; }
+      fail();
+    }
+    try { val(); ws(); if (i < n) fail(); return -1; } catch (e) { return typeof e === 'number' ? e : -1; }
+  }
+  var SCENE_KEY = /scene|shot|segment|beat|দৃশ্য/i;
+  function specScenes(v) {
+    if (Array.isArray(v)) return v;
+    if (!v || typeof v !== 'object') return null;
+    var k = Object.keys(v).filter(function (x) { return SCENE_KEY.test(x) && Array.isArray(v[x]); })[0], o;
+    if (k) return v[k];
+    for (var x in v) { o = v[x]; if (o && typeof o === 'object' && !Array.isArray(o)) { k = Object.keys(o).filter(function (y) { return SCENE_KEY.test(y) && Array.isArray(o[y]); })[0]; if (k) return o[k]; } }
+    return null;
+  }
+  function specSum(v) {
+    var sc = specScenes(v);
+    if (sc) return bn(sc.length) + 'টা দৃশ্য';
+    var ks = Object.keys(v || {});
+    return ks.slice(0, 3).join(', ') + (ks.length > 3 ? ' +' + bn(ks.length - 3) : '');
+  }
+  function jsonCheck(raw) {   // -> { obj } or { err }
+    var t = String(raw == null ? '' : raw).replace(/^\uFEFF/, '').trim(), v, at, before;
+    if (!t) return { err: 'JSON-টা এখানে পেস্ট করুন, বা একটা .json ফাইল বাছুন।' };
+    if (new Blob([t]).size > 1048576) return { err: 'JSON ১ MB-এর বেশি হলে নেওয়া যায় না। ছোট করে দিন।' };
+    try { v = JSON.parse(t); } catch (e) {
+      at = jsonErrAt(t);
+      if (at < 0) return { err: 'JSON-টা ঠিক নেই। কমা, উদ্ধৃতি চিহ্ন (") আর { } [ ] মিলিয়ে দেখুন।' };
+      before = t.slice(0, at).split('\n');
+      return { err: 'JSON-টা ঠিক নেই: ' + (at >= t.length ? 'শেষটা অসম্পূর্ণ (' + bn(before.length) + ' নম্বর লাইনে)' : bn(before.length) + ' নম্বর লাইনের ' + bn(before[before.length - 1].length + 1) + ' নম্বর ঘরের কাছে ভুল') +
+        '। কমা, উদ্ধৃতি চিহ্ন (") আর { } [ ] মিলিয়ে দেখুন।', at: at };
+    }
+    if (!v || typeof v !== 'object') return { err: 'JSON-এ { } বা [ ] দিয়ে লেখা অংশ থাকতে হবে।' };
+    if (Array.isArray(v) ? !v.length : !Object.keys(v).length) return { err: 'JSON-টা খালি। ভেতরে দৃশ্য বা লেখা দিন।' };
+    return { obj: v, text: t };
+  }
+  function jsonOpen(where) { var cur = S.spec[where]; S.attOpen = ''; S.attLink = 0; S.jsonOpen = where; S.jsonVal = cur ? cur.text : (S.jsonVal || ''); S.jsonErr = ''; repaint2();
+    setTimeout(function () { var a = el('st_json'); if (a) { a.focus(); a.scrollIntoView({ block: 'nearest' }); } }, 20); }
+  function jsonClose() { S.jsonOpen = ''; S.jsonErr = ''; S.jsonVal = ''; repaint2(); }
+  function jsonAdd(where, raw) {
+    var c = jsonCheck(raw);
+    if (c.err) { S.jsonOpen = where; S.jsonVal = String(raw || ''); S.jsonErr = c.err; repaint2();
+      setTimeout(function () { var a = el('st_json'); if (a) { a.focus(); if (c.at != null) a.setSelectionRange(c.at, Math.min(c.at + 1, a.value.length)); } }, 20); return; }
+    S.spec[where] = { obj: c.obj, text: c.text, sum: specSum(c.obj) }; S.jsonOpen = ''; S.jsonVal = ''; S.jsonErr = ''; repaint2();
+  }
+  var jsonFileIn = null;
+  function jsonPick(where) {
+    if (!jsonFileIn) { jsonFileIn = document.createElement('input'); jsonFileIn.type = 'file'; jsonFileIn.accept = '.json,application/json,text/plain'; jsonFileIn.style.display = 'none'; document.body.appendChild(jsonFileIn);
+      jsonFileIn.addEventListener('change', function () { var f = jsonFileIn.files && jsonFileIn.files[0], w = jsonFileIn.getAttribute('data-where') || 'home'; jsonFileIn.value = ''; if (!f) return;
+        if (f.size > 1048576) { S.jsonOpen = w; S.jsonErr = 'JSON ১ MB-এর বেশি হলে নেওয়া যায় না। ছোট করে দিন।'; repaint2(); return; }
+        var rd = new FileReader(); rd.onload = function () { jsonAdd(w, String(rd.result || '')); }; rd.onerror = function () { S.jsonOpen = w; S.jsonErr = 'ফাইলটা পড়া গেল না। আবার বাছুন।'; repaint2(); }; rd.readAsText(f); }); }
+    jsonFileIn.setAttribute('data-where', where); jsonFileIn.click();
+  }
+  function jsonBox(where) {
+    if (S.jsonOpen !== where) return '';
+    var editing = !!S.spec[where];
+    return '<div class="st-jbox" role="group" aria-label="JSON প্রম্পট"><div class="hd">' + I.json + '<b>' + (editing ? 'JSON দেখুন / বদলান' : 'JSON প্রম্পট দিন') + '</b><button type="button" class="st-ico" data-st="jsonclose" aria-label="বন্ধ করুন">' + I.x + '</button></div>' +
+      '<textarea id="st_json" aria-label="JSON প্রম্পট" data-st-in="jsonVal" data-noi18n="1" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder=\'{ "scenes": [ { "shot": "…", "voiceover": "…", "on_screen_text": "…" } ] }\'' + (S.jsonErr ? ' aria-invalid="true" aria-describedby="st_jerr"' : '') + '>' + esc(S.jsonVal || '') + '</textarea>' +
+      (S.jsonErr ? '<p class="err" id="st_jerr" role="alert">' + esc(S.jsonErr) + '</p>' : '') +
+      '<div class="row"><button type="button" class="cd-btn pri" data-st="jsonadd" data-id="' + where + '">' + (editing ? 'রাখুন' : 'যোগ করুন') + '</button><button type="button" class="cd-btn" data-st="jsonfile" data-id="' + where + '">ফাইল (.json) বাছুন</button></div>' +
+      (S.jsonErr ? '' : '<small>ChatGPT বা অন্য AI যে JSON ভিডিও প্রম্পট দেয় (দৃশ্য, ভয়েস, লেখা, ক্যামেরা, সময়), সেটা এখানে দিন। প্রম্পটে লেখা না দিলেও চলবে।</small>') + '</div>';
+  }
+  function jsonChip(where) {
+    var x = S.spec[where]; if (!x) return '';
+    return '<div class="st-chip js" title="আপনার JSON প্রম্পট: এটা মেনে বানানো হবে"><button type="button" class="jb" data-st="jsonview" data-id="' + where + '" aria-label="JSON দেখুন বা বদলান"><span class="jt">{ }</span><span style="min-width:0"><b>JSON</b><small data-noi18n="1">' + esc(x.sum) + '</small></span></button>' +
+      '<button type="button" class="st-rm" data-st="jsonrm" data-id="' + where + '" aria-label="JSON সরান">' + I.x + '</button></div>';
+  }
+  function logSpec(m) {
+    if (m.spec == null) return '';
+    var t; try { t = JSON.stringify(m.spec, null, 2); } catch (e) { t = ''; }
+    return '<details class="st-ljs"><summary>JSON · <span data-noi18n="1">' + esc(specSum(m.spec)) + '</span></summary><pre data-noi18n="1">' + esc(t) + '</pre></details>';
+  }
   function core() { return window.cdCore; }
   function repaint2() { var c = core(); if (c) c.paint(); }
   function dhm(t) { if (!t) return ''; var d = new Date(new Date(t).getTime() + 6 * 3600e3), h = d.getUTCHours(), m = d.getUTCMinutes();
@@ -68810,9 +68922,9 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
       '<button type="button" data-st="linkadd"' + (S.busy.link ? ' disabled' : '') + '>যোগ করুন</button></div>' +
       (S.linkErr ? '<p class="err" id="st_lerr" role="alert">' + esc(S.linkErr) + '</p>' : '<small>Instagram, TikTok-এর লিংকও চলবে। ভিডিওর ধরন মেনে বানানো হবে।</small>') + '</div>';
   }
-  function trayHtml() {
-    if (!S.tray.length) return '';
-    return '<div class="st-tray" aria-label="সাথে দেওয়া ফাইল">' + S.tray.map(function (t) {
+  function trayHtml(where) {
+    if (!S.tray.length && !S.spec[where]) return '';
+    return '<div class="st-tray" aria-label="সাথে দেওয়া ফাইল">' + jsonChip(where) + S.tray.map(function (t) {
       var up = t.state !== 'ready', src = t.local || t.url, pct = up ? '<span class="pct"><i style="width:' + Math.round(t.pct || 0) + '%"></i></span>' : '';
       var rm = '<button type="button" class="st-rm" data-st="refrm" data-id="' + t.key + '" aria-label="সরান">' + I.x + '</button>';
       if (t.kind === 'image') return '<div class="st-chip img' + (up ? ' up' : '') + '" title="আপনার ছবি: ভিডিওর ভেতরে দেখানো হবে, দরকার হলে এ দিয়ে নতুন ক্লিপ বানানো হবে">' +
@@ -68825,9 +68937,10 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
     }).join('') + '</div>';
   }
   function attBtn(where) {
-    return '<button type="button" class="st-att" data-st="att" data-id="' + where + '" aria-label="ছবি, ভিডিও বা লিংক দিন" aria-expanded="' + (S.attOpen === where) + '">' + I.clip + '</button>' +
+    return '<button type="button" class="st-att" data-st="att" data-id="' + where + '" aria-label="ছবি, ভিডিও, লিংক বা JSON দিন" aria-expanded="' + (S.attOpen === where) + '">' + I.clip + '</button>' +
       (S.attOpen === where ? (S.attLink ? linkSheet() : '<div class="st-attm" role="menu"><button type="button" role="menuitem" data-st="attpick" data-id="image">' + I.pic + 'ছবি দিন</button><button type="button" role="menuitem" data-st="attpick" data-id="video">' + I.film + 'ভিডিও দিন</button>' +
-        '<button type="button" role="menuitem" data-st="attlink" data-id="' + where + '">' + I.link + 'লিংক দিন</button></div>') : '');
+        '<button type="button" role="menuitem" data-st="attlink" data-id="' + where + '">' + I.link + 'লিংক দিন</button>' +
+        '<button type="button" role="menuitem" data-st="attjson" data-id="' + where + '">' + I.json + 'JSON দিন</button></div>') : '');
   }
   function trayFind(key) { return S.tray.filter(function (t) { return String(t.key) === String(key); })[0]; }
   function putFile(up, file, t, ok, bad) {
@@ -68917,8 +69030,8 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
     var row = function (p) { return '<button type="button" class="st-row" data-st="open" data-id="' + p.id + '"><span class="st-th">' + I.film + '</span><span style="min-width:0"><b data-noi18n="1">' + esc(p.title || 'ভিডিও') + '</b><span class="cd-row">' + pill(p) +
       (p.version ? '<span class="st-v">v' + p.version + '</span>' : '') + (p.mine ? '' : '<span class="cd-meta" data-noi18n="1">' + esc(p.who || '') + '</span>') + '</span></span>' + I.go + '</button>'; };
     var out = strip(h) +
-      '<div class="cd-panel st-ask"><label for="st_ta">কী ভিডিও চান?</label>' + trayHtml() + '<div class="st-bar att"><textarea id="st_ta" class="st-ta" data-st-in="draft" placeholder="যেমন: Niacinamide serum নিয়ে বাংলায় ৩০ সেকেন্ডের ভিডিও, শুরুতে একটা প্রশ্ন…">' + esc(S.draft) + '</textarea>' +
-      attBtn('home') + '<button type="button" class="st-send" data-st="ask" aria-label="ভিডিও বানান"' + (S.busy.ask ? ' disabled' : '') + '>' + I.up + '</button></div>' +
+      '<div class="cd-panel st-ask"><label for="st_ta">কী ভিডিও চান?</label>' + trayHtml('home') + '<div class="st-bar att"><textarea id="st_ta" class="st-ta" data-st-in="draft" placeholder="যেমন: Niacinamide serum নিয়ে বাংলায় ৩০ সেকেন্ডের ভিডিও, শুরুতে একটা প্রশ্ন…">' + esc(S.draft) + '</textarea>' +
+      attBtn('home') + '<button type="button" class="st-send" data-st="ask" aria-label="ভিডিও বানান"' + (S.busy.ask ? ' disabled' : '') + '>' + I.up + '</button></div>' + jsonBox('home') +
       '<p class="st-sub">আপনার ' + bn(h.rules || 0) + 'টা নিয়ম মেনে বানাবে · <button type="button" class="st-link" data-st="rules">আমার নিয়ম দেখুন</button></p></div>' +
       '<div class="cd-panel" style="margin-top:14px"><div class="st-hd"><h2>আপনার ভিডিও</h2><span class="cd-sp"></span><span class="cd-meta">' + bn(mine.length) + 'টা</span></div>' +
       (mine.length ? '<div class="st-list">' + mine.map(row).join('') + '</div>' : '<div class="cd-empty">এখনো কিছু নেই। উপরে লিখে পাঠান।</div>') + '</div>';
@@ -68951,11 +69064,11 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
     else h += '<div class="st-wait"><b>ভিডিওটা বানানো যায়নি</b><span>' + esc(r.failed || '') + '</span><span>নিচে লিখে আবার চেষ্টা করুন।</span></div>';
     var dropped = cur && cur.dropped && cur.dropped.length ? '<div class="st-drop">মালিকের নিয়মের সাথে মেলেনি, তাই বাদ: ' + cur.dropped.map(function (x) { return esc(x); }).join('; ') + '</div>' : '';
     var log = r.log.map(function (m) {
-      return '<div class="st-m"><span class="st-who' + (m.engine ? '' : ' me') + '">' + (m.engine ? 'AI' : esc(initials(m.who))) + '</span><div><p' + (m.engine ? '' : ' data-noi18n="1"') + '>' + (m.version && m.engine ? '<span class="st-vt">v' + m.version + '</span>' : '') + esc(m.body) + '</p>' + logRefs(m) + '<span class="cd-meta">' + (m.engine ? '' : esc(m.who || '') + ' · ') + dhm(m.at) + '</span></div></div>'; }).join('');
+      return '<div class="st-m"><span class="st-who' + (m.engine ? '' : ' me') + '">' + (m.engine ? 'AI' : esc(initials(m.who))) + '</span><div><p' + (m.engine ? '' : ' data-noi18n="1"') + '>' + (m.version && m.engine ? '<span class="st-vt">v' + m.version + '</span>' : '') + esc(m.body || (m.spec != null ? 'JSON প্রম্পট' : '')) + '</p>' + logSpec(m) + logRefs(m) + '<span class="cd-meta">' + (m.engine ? '' : esc(m.who || '') + ' · ') + dhm(m.at) + '</span></div></div>'; }).join('');
     var rem = (r.remembered || []).map(function (x) { return '<div class="st-done">' + I.ok + '<span><span data-noi18n="1">"' + esc(x.body) + '"</span> পরের ভিডিওতেও মনে রাখবে' + (r.mine ? ' · <button type="button" class="st-link" data-st="forget" data-id="' + x.id + '">না, শুধু এটায়</button>' : '') + '</span></div>'; }).join('');
     h += '<div class="cd-panel" style="margin-top:14px"><div class="st-hd" style="flex-wrap:wrap"><h2>কাজের খাতা</h2></div><p class="cd-meta" style="margin:2px 16px 10px">সব ভার্সন আর মতামত এখানে থাকে, কিছু মোছে না</p>' +
       '<div class="st-log">' + log + '</div>' + dropped + rem +
-      (r.mine && p.version ? '<div class="st-fb">' + trayHtml() + '<div class="st-bar att"><textarea class="st-ta sm" data-st-in="fb" placeholder="যা বদলাতে চান, লিখুন…" aria-label="মতামত">' + esc(S.fb) + '</textarea>' + attBtn('fb') + '<button type="button" class="st-send" data-st="feedback" aria-label="পাঠান"' + (S.busy.ask || p.job ? ' disabled' : '') + '>' + I.up + '</button></div></div>' : '<div style="height:14px"></div>') + '</div>';
+      (r.mine && p.version ? '<div class="st-fb">' + trayHtml('fb') + '<div class="st-bar att"><textarea class="st-ta sm" data-st-in="fb" placeholder="যা বদলাতে চান, লিখুন…" aria-label="মতামত">' + esc(S.fb) + '</textarea>' + attBtn('fb') + '<button type="button" class="st-send" data-st="feedback" aria-label="পাঠান"' + (S.busy.ask || p.job ? ' disabled' : '') + '>' + I.up + '</button></div>' + jsonBox('fb') + '</div>' : '<div style="height:14px"></div>') + '</div>';
     return h;
   }
   function rulesHtml() {
@@ -68994,6 +69107,11 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
   document.addEventListener('click', function (e) {   // a tap outside closes the attach menu
     if (!S.attOpen || (e.target.closest && e.target.closest('.st-att,.st-attm'))) return; S.attOpen = ''; S.attLink = 0; repaint2();
   }, true);
+  document.addEventListener('keydown', function (e) {   // studiojson-1: Ctrl+Enter adds the JSON, Esc closes the box
+    var t = e.target; if (!t || t.id !== 'st_json') return;
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); jsonAdd(S.jsonOpen, t.value); }
+    else if (e.key === 'Escape') { e.preventDefault(); jsonClose(); }
+  });
   document.addEventListener('keydown', function (e) {   // studioref-2: Enter adds the link, Esc closes the box
     var t = e.target; if (!t || t.id !== 'st_link') return;
     if (e.key === 'Enter') { e.preventDefault(); addLink(); }
@@ -69009,11 +69127,16 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
     if (w === 'att') { S.attOpen = S.attOpen === id ? '' : id; S.attLink = 0; S.linkErr = ''; repaint2(); return; }
     if (w === 'attlink') { S.attOpen = id; S.attLink = 1; S.linkErr = ''; repaint2(); focusLink(); return; }
     if (w === 'linkadd') { addLink(); return; }
+    if (w === 'attjson' || w === 'jsonview') { jsonOpen(id); return; }   // studiojson-1
+    if (w === 'jsonadd') { jsonAdd(id, (el('st_json') || {}).value != null ? el('st_json').value : S.jsonVal); return; }
+    if (w === 'jsonfile') { jsonPick(id); return; }
+    if (w === 'jsonclose') { jsonClose(); return; }
+    if (w === 'jsonrm') { S.spec[id] = null; if (S.jsonOpen === id) { S.jsonOpen = ''; S.jsonVal = ''; S.jsonErr = ''; } repaint2(); return; }
     if (w === 'attpick') { S.attOpen = ''; repaint2(); pick(id); return; }
     if (w === 'refrm') { var tr = trayFind(id); if (!tr) return; tr.gone = 1; S.tray = S.tray.filter(function (x) { return x !== tr; }); if (tr.id) srv('erpStudioRefRemove', [{ id: tr.id }], function () {}, function (x) { toast(esc(errOf(x)), true); }); repaint2(); return; }
     if (w === 'refmode') { var tm = trayFind(id); if (!tm) return; tm.mode = t.getAttribute('data-m'); repaint2(); if (tm.id && tm.state === 'ready') srv('erpStudioRefSet', [{ id: tm.id, mode: tm.mode }], function () {}, function (x) { toast(esc(errOf(x)), true); }); return; }
-    if (w === 'home') { S.view = 'home'; S.pid = null; S.home = null; repaint2(); window.scrollTo(0, 0); }
-    else if (w === 'open') { S.view = 'proj'; S.pid = Number(id); S.proj = null; S.ver = null; S.fb = ''; repaint2(); window.scrollTo(0, 0); }
+    if (w === 'home') { S.view = 'home'; S.pid = null; S.home = null; if (S.jsonOpen === 'fb') S.jsonOpen = ''; repaint2(); window.scrollTo(0, 0); }
+    else if (w === 'open') { S.view = 'proj'; S.pid = Number(id); S.proj = null; S.ver = null; S.fb = ''; S.spec.fb = null; if (S.jsonOpen === 'fb') S.jsonOpen = ''; repaint2(); window.scrollTo(0, 0); }
     else if (w === 'rules') { S.view = 'rules'; S.rules = null; S.ruleOf = null; repaint2(); window.scrollTo(0, 0); }
     else if (w === 'rof') { S.ruleOf = id; S.rules = null; repaint2(); }
     else if (w === 'ver') { S.ver = Number(id); repaint2(); }
@@ -69023,18 +69146,20 @@ colours, amber, red and lime stay; the phone-post previews keep each network's o
     else if (w === 'like') { var v = ((S.home && S.home.desk) || []).filter(function (x) { return String(x.id) === id; })[0];
       S.like = Number(id); S.draft = 'এই ভিডিওটার মতো করে বানান: "' + (v ? v.title : '') + '"। '; repaint2(); setTimeout(function () { var ta = el('st_ta'); if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); ta.scrollIntoView({ block: 'center' }); } }, 30); }
     else if (w === 'ask') {
-      var pr = String(S.draft || '').trim(); if (pr.length < 3) { toast('কী ভিডিও চান, একটু লিখুন।', true); return; }
+      var pr = String(S.draft || '').trim(), sp = S.spec.home; if (!sp && pr.length < 3) { toast('কী ভিডিও চান, একটু লিখুন, বা একটা JSON দিন।', true); return; }
+      if (S.jsonOpen === 'home' && String(S.jsonVal || '').trim()) { toast('JSON-টা আগে "যোগ করুন" চাপুন, বা বন্ধ করুন।', true); return; }
       if (trayBusy()) { toast('ফাইল এখনো উঠছে। একটু অপেক্ষা করে পাঠান।', true); return; }
       S.busy.ask = 1; repaint2();
-      srv('erpStudioAsk', [{ prompt: pr, baseVideoId: S.like && S.draft.indexOf('এই ভিডিওটার মতো') === 0 ? S.like : undefined, refIds: readyIds() }], function (r) { S.busy.ask = 0; S.draft = ''; S.like = null; S.tray = []; toast('পাঠানো হলো। তৈরি হলে খবর পাবেন।');
+      srv('erpStudioAsk', [{ prompt: pr, baseVideoId: S.like && S.draft.indexOf('এই ভিডিওটার মতো') === 0 ? S.like : undefined, refIds: readyIds(), spec: sp ? sp.text : undefined }], function (r) { S.busy.ask = 0; S.draft = ''; S.like = null; S.tray = []; S.spec.home = null; toast('পাঠানো হলো। তৈরি হলে খবর পাবেন।');
         S.view = 'proj'; S.pid = r.projectId; S.proj = null; S.ver = null; S.home = null; repaint2(); window.scrollTo(0, 0); },
         function (x) { S.busy.ask = 0; toast(esc(errOf(x)), true, 9000); repaint2(); });
     }
     else if (w === 'feedback') {
-      var fb = String(S.fb || '').trim(); if (fb.length < 2) { toast('কী বদলাতে চান, লিখুন।', true); return; }
+      var fb = String(S.fb || '').trim(), sf = S.spec.fb; if (!sf && fb.length < 3) { toast('কী বদলাতে চান, লিখুন, বা একটা JSON দিন।', true); return; }
+      if (S.jsonOpen === 'fb' && String(S.jsonVal || '').trim()) { toast('JSON-টা আগে "যোগ করুন" চাপুন, বা বন্ধ করুন।', true); return; }
       if (trayBusy()) { toast('ফাইল এখনো উঠছে। একটু অপেক্ষা করে পাঠান।', true); return; }
       S.busy.ask = 1; repaint2();
-      srv('erpStudioAsk', [{ projectId: S.pid, prompt: fb, refIds: readyIds() }], function () { S.busy.ask = 0; S.fb = ''; S.tray = []; toast('পাঠানো হলো। নতুন ভার্সন তৈরি হলে খবর পাবেন।'); loadProj(); },
+      srv('erpStudioAsk', [{ projectId: S.pid, prompt: fb, refIds: readyIds(), spec: sf ? sf.text : undefined }], function () { S.busy.ask = 0; S.fb = ''; S.tray = []; S.spec.fb = null; toast('পাঠানো হলো। নতুন ভার্সন তৈরি হলে খবর পাবেন।'); loadProj(); },
         function (x) { S.busy.ask = 0; toast(esc(errOf(x)), true, 9000); repaint2(); });
     }
     else if (w === 'fin') {

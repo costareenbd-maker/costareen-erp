@@ -28,6 +28,11 @@
 // link ref is kind 'video', file_path 'link/<uuid>', name = the URL, mime 'text/uri-list', ready at once. The engine
 // downloads it with yt-dlp (720p, first 3 min, <= 200 MB), keeps only the style facts and deletes the file.
 //   erpStudioRefLink({url})                   a pasted link -> a video ref (counts toward the 2 videos per ask)
+// studiojson-1 (owner 28 Nov 2026): a "JSON video prompt" (scenes, voice-over lines, on-screen text, camera, style,
+// duration - what ChatGPT and other AI tools write). Migration 189: content_studio_msgs.spec + content_studio_jobs.spec.
+//   erpStudioAsk({..., spec})                 the JSON (text or object) with a prompt or a feedback, or alone: then the
+//                                             prompt may be empty. Checked here (JSON.parse, 1 MB guard); the work log
+//                                             shows it, the engine's planner follows it as her structured spec.
 import { roleAtLeast } from '../allow.js';
 import { getConfig, setConfig } from '../lib/ext.js';
 import { phone11 } from '../lib/phone.js';
@@ -129,7 +134,7 @@ export async function erpStudioProject(ctx, payload) {
     project: projOut(p, open ? { ...open, place } : null), mine: p.user_id === ctx.s.userId,
     versions, failed, engine: await engineState(ctx),
     log: msgs.map((m) => ({ id: Number(m.id), engine: !m.user_id, who: m.user_id ? str(m.who) : '', body: str(m.body), version: m.version == null ? null : Number(m.version), at: iso(m.created_at),
-      refs: refsOf[Number(m.id)] || [] })),
+      refs: refsOf[Number(m.id)] || [], spec: specRead(m.spec) })),   // studiojson-1: the JSON sent with it
     attach: p.user_id === ctx.s.userId ? await openOut(ctx) : [],
     remembered: remembered.map((r) => ({ id: Number(r.id), body: str(r.body), msgId: r.msg_id == null ? null : Number(r.msg_id) })),
   };
@@ -139,7 +144,8 @@ export async function erpStudioAsk(ctx, payload) {
   await gate(ctx, 'manager');
   const p = payload || {};
   const prompt = str(p.prompt);
-  if (prompt.length < 3) throw new Error('কী ভিডিও চান, একটু লিখুন।');
+  const spec = specOf(p.spec);   // studiojson-1: a JSON alone is enough; without one, the 3-character rule stays
+  if (!spec && prompt.length < 3) throw new Error('কী ভিডিও চান, একটু লিখুন।');
   // owner 26 Nov 2026 (nobody may probe the platform): no daily limit on videos, but no flooding either - at most
   // MAX_OPEN jobs of one person waiting at once and one ask per ASK_GAP_S seconds
   const mine = (await ctx.tx`select count(*) filter (where state in ('queued', 'running'))::int open,
@@ -161,16 +167,17 @@ export async function erpStudioAsk(ctx, payload) {
       if (!v) throw new Error('যে ভিডিওটা দেখে বানাতে চান, সেটা আর নেই।');
       base = Number(v.id);
     }
-    const title = prompt.replace(/\s+/g, ' ').slice(0, 70);
+    const title = prompt.length >= 3 ? prompt.replace(/\s+/g, ' ').slice(0, 70) : specTitle(spec);
     pr = (await ctx.tx`insert into content_studio_projects (business_id, user_id, title, base_video_id) values (${ctx.biz}, ${ctx.s.userId}, ${title}, ${base}) returning *`)[0];
   }
   const kind = p.projectId ? 'revise' : 'new';
-  const m = (await ctx.tx`insert into content_studio_msgs (business_id, project_id, user_id, body) values (${ctx.biz}, ${pr.id}, ${ctx.s.userId}, ${prompt}) returning id`)[0];
-  const j = (await ctx.tx`insert into content_studio_jobs (business_id, project_id, user_id, kind, prompt) values (${ctx.biz}, ${pr.id}, ${ctx.s.userId}, ${kind}, ${prompt}) returning id`)[0];
+  const sj = spec ? JSON.stringify(spec) : null;   // as text -> json (a jsonb parameter would sort her keys)
+  const m = (await ctx.tx`insert into content_studio_msgs (business_id, project_id, user_id, body, spec) values (${ctx.biz}, ${pr.id}, ${ctx.s.userId}, ${prompt}, ${sj}::json) returning id`)[0];
+  const j = (await ctx.tx`insert into content_studio_jobs (business_id, project_id, user_id, kind, prompt, spec) values (${ctx.biz}, ${pr.id}, ${ctx.s.userId}, ${kind}, ${prompt}, ${sj}::json) returning id`)[0];
   await ctx.tx`update content_studio_projects set updated_at = now() where id = ${pr.id}`;
   if (refs.length) await ctx.tx`update content_studio_refs set state = 'sent', sent_at = now(), project_id = ${pr.id}, msg_id = ${m.id}, job_id = ${j.id}
                                 where id in ${ctx.tx(refs.map((r) => r.id))}`;
-  return { projectId: Number(pr.id), jobId: Number(j.id), msgId: Number(m.id), refs: refs.length };
+  return { projectId: Number(pr.id), jobId: Number(j.id), msgId: Number(m.id), refs: refs.length, spec: !!spec };
 }
 
 export async function erpStudioFinish(ctx, payload) {
@@ -253,6 +260,84 @@ export function refLinkOf(raw) {
   return { url: u.toString(), site: LINK_SITES[d] };
 }
 const isLink = (r) => /^link\//.test(str(r.file_path));
+// ------------------------------------------------------------------ studiojson-1: a JSON video prompt
+export const SPEC_MAX = 1024 * 1024;   // a sane guard only (a long JSON prompt is a few KB)
+const utf8 = (t) => new TextEncoder().encode(t).length;
+const SCENE_KEY = /scene|shot|segment|beat|দৃশ্য/i;
+// where a JSON breaks, in her words (line / column). Newer V8 messages do not always say a position, so a small scanner
+// finds the first wrong character itself (the page uses the same scanner, so both say the same place).
+export function jsonErrAt(t) {
+  let i = 0;
+  const n = t.length;
+  const ws = () => { while (i < n && ' \t\n\r'.indexOf(t[i]) >= 0) i++; };
+  const fail = () => { throw i; };
+  const str = () => { i++; while (i < n) { const c = t[i]; if (c === '"') { i++; return; } if (c === '\\') { i += 2; continue; } if (c < ' ') fail(); i++; } fail(); };
+  const val = () => {
+    ws();
+    const c = t[i];
+    if (c === '{') {
+      i++; ws(); if (t[i] === '}') { i++; return; }
+      for (;;) { ws(); if (t[i] !== '"') fail(); str(); ws(); if (t[i] !== ':') fail(); i++; val(); ws(); if (t[i] === ',') { i++; continue; } if (t[i] === '}') { i++; return; } fail(); }
+    }
+    if (c === '[') {
+      i++; ws(); if (t[i] === ']') { i++; return; }
+      for (;;) { val(); ws(); if (t[i] === ',') { i++; continue; } if (t[i] === ']') { i++; return; } fail(); }
+    }
+    if (c === '"') return str();
+    const m = /^(-?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d+)?|true|false|null)/.exec(t.slice(i, i + 64));
+    if (m) { i += m[0].length; return; }
+    fail();
+  };
+  try { val(); ws(); if (i < n) fail(); return -1; } catch (e) { return typeof e === 'number' ? e : -1; }
+}
+export function specWhere(text) {
+  const t = String(text || ''), at = jsonErrAt(t);
+  if (at < 0) return null;
+  const before = t.slice(0, at).split('\n');
+  return { line: before.length, col: before[before.length - 1].length + 1, end: at >= t.length };
+}
+export function specOf(raw) {
+  if (raw == null) return null;
+  let v = raw;
+  if (typeof raw === 'string') {
+    const t = raw.replace(/^\uFEFF/, '').trim();
+    if (!t) return null;
+    if (utf8(t) > SPEC_MAX) throw new Error('JSON ১ MB-এর বেশি হলে নেওয়া যায় না। ছোট করে দিন।');
+    try { v = JSON.parse(t); } catch (e) {
+      const w = specWhere(t);
+      throw new Error('JSON-টা ঠিক নেই' + (w ? (w.end ? ': শেষটা অসম্পূর্ণ (' + bn(w.line) + ' নম্বর লাইনে)' : ': ' + bn(w.line) + ' নম্বর লাইনের ' + bn(w.col) + ' নম্বর ঘরের কাছে ভুল') : '') +
+        '। কমা, উদ্ধৃতি চিহ্ন (") আর { } [ ] মিলিয়ে দেখুন।');
+    }
+  }
+  if (!v || typeof v !== 'object') throw new Error('JSON-এ { } বা [ ] দিয়ে লেখা অংশ থাকতে হবে।');
+  if (Array.isArray(v) ? !v.length : !Object.keys(v).length) throw new Error('JSON-টা খালি। ভেতরে দৃশ্য বা লেখা দিন।');
+  let txt;
+  try { txt = JSON.stringify(v); } catch (_) { throw new Error('JSON-টা পড়া গেল না।'); }
+  if (utf8(txt) > SPEC_MAX) throw new Error('JSON ১ MB-এর বেশি হলে নেওয়া যায় না। ছোট করে দিন।');
+  // the database cannot keep a NUL character inside JSON text: take it out (it is never meant)
+  return txt.indexOf('\\u0000') >= 0 ? JSON.parse(txt, (k, x) => (typeof x === 'string' ? x.replace(/\u0000/g, '') : x)) : v;
+}
+// the scene list of a spec: a list itself, or the first list under a key like scenes / shots / দৃশ্য (top level or one down)
+export function specScenes(v) {
+  if (Array.isArray(v)) return v;
+  if (!v || typeof v !== 'object') return null;
+  const k = Object.keys(v).find((x) => SCENE_KEY.test(x) && Array.isArray(v[x]));
+  if (k) return v[k];
+  for (const x of Object.keys(v)) {
+    const o = v[x];
+    if (o && typeof o === 'object' && !Array.isArray(o)) { const kk = Object.keys(o).find((y) => SCENE_KEY.test(y) && Array.isArray(o[y])); if (kk) return o[kk]; }
+  }
+  return null;
+}
+// a json column comes back as text from the driver (jsonb would be parsed, but it sorts her keys)
+const specRead = (v) => { if (v == null) return null; if (typeof v !== 'string') return v; try { return JSON.parse(v); } catch (_) { return null; } };
+function specTitle(v) {
+  const o = v && !Array.isArray(v) ? v : {};
+  const t = ['title', 'name', 'video_title', 'topic', 'concept'].map((k) => o[k]).find((x) => typeof x === 'string' && x.trim());
+  if (t) return t.replace(/\s+/g, ' ').trim().slice(0, 70);
+  const sc = specScenes(v);
+  return 'JSON ভিডিও' + (sc ? ' · ' + bn(sc.length) + 'টা দৃশ্য' : '');
+}
 function refType(name, mime) {
   const ext = (str(name).toLowerCase().match(/\.([a-z0-9]{2,5})$/) || [])[1] || '';
   const t = REF_TYPES[ext];
@@ -394,7 +479,7 @@ export async function erpStudioRules(ctx, payload) {
   await gate(ctx, 'manager');
   const u = await whose(ctx, payload && payload.userId);
   const rules = await ctx.tx`select * from content_studio_rules where business_id = ${ctx.biz} and user_id = ${u} order by active desc, id desc`;
-  const fb = await ctx.tx`select m.id, m.body, m.created_at, p.title, p.id as pid from content_studio_msgs m join content_studio_projects p on p.id = m.project_id
+  const fb = await ctx.tx`select m.id, m.body, (m.spec is not null) as has_spec, m.created_at, p.title, p.id as pid from content_studio_msgs m join content_studio_projects p on p.id = m.project_id
                           where m.business_id = ${ctx.biz} and m.user_id = ${u} order by m.id desc limit 300`;
   let locked = LOCKED_DEFAULT;
   try { const c = await getConfig(ctx, 'studio_locked_rules', ''); if (c) { const a = JSON.parse(c); if (Array.isArray(a) && a.length) locked = a.map(str).filter(Boolean); } } catch (_) { /* default list */ }
@@ -406,7 +491,7 @@ export async function erpStudioRules(ctx, payload) {
     rules: rules.map((r) => ({ id: Number(r.id), kind: str(r.kind), body: str(r.body), source: str(r.source), used: Number(r.used) || 0, active: !!r.active,
       at: iso(r.created_at), projectId: r.project_id == null ? null : Number(r.project_id) })),
     locked,
-    feedback: fb.map((m) => ({ id: Number(m.id), body: str(m.body), at: iso(m.created_at), title: str(m.title), projectId: Number(m.pid) })),
+    feedback: fb.map((m) => ({ id: Number(m.id), body: str(m.body) || (m.has_spec ? 'JSON প্রম্পট' : ''), spec: !!m.has_spec, at: iso(m.created_at), title: str(m.title), projectId: Number(m.pid) })),
   };
 }
 export async function erpStudioRuleSave(ctx, payload) {

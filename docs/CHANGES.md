@@ -5484,3 +5484,35 @@ colours, reminder with the call link, pay first in Bangladesh). Mock + screensho
   says so (no cookies are used on purpose). Live waits for the owner's yes.
 
 - 28 Nov 2026 nolimit-1: the Studio prompt / feedback has no length limit any more (was 4000 characters, cut silently). Owner asked; Raj told on WhatsApp. Test: a 13,000-character prompt is kept whole (studio_test 36/36).
+
+## studiojson-1 (28 Nov 2026): a JSON video prompt in the Content desk Studio (DEV)
+
+Owner (for Raj, Oliareen's marketer): "Raz vai ke ekta json er jayga kore dew promt er jaygay ekta option".
+- Page: the paperclip menu has a fourth item "JSON দিন". It opens a small box under the bar (new-video bar and feedback
+  bar): a monospace paste area with no length limit + "ফাইল (.json) বাছুন" (FileReader, 1 MB guard), "যোগ করুন"
+  (Ctrl+Enter), Esc / × closes. Checked with JSON.parse; a mistake is said in plain Bangla with the line and column of the
+  first wrong character (a small scanner, the same on the server, because newer V8 messages often give no position) and
+  the cursor jumps there. A good JSON becomes a chip "JSON · <N টা দৃশ্য | first top keys>" with ×; a tap opens it again
+  to view / edit. With a JSON the prompt may be empty; without one the 3-character rule stays (feedback now 3 too, as the
+  server always had). The work log shows each JSON folded ("JSON · ৩টা দৃশ্য"), pretty-printed when opened.
+- Server: migration 189_studio_json.sql (additive): content_studio_msgs.spec + content_studio_jobs.spec, type json (not
+  jsonb: jsonb sorts her keys; stored as text cast to json so her key order stays). erpStudioAsk takes spec (text or
+  object): must parse, be an object/list, not empty, <= 1 MB; a JSON-only new video is named from its title/name key or
+  "JSON ভিডিও · Nটা দৃশ্য". erpStudioProject log lines carry spec; the feedback list names a JSON-only line "JSON প্রম্পট".
+  No new call names (allow.js / security.js unchanged). Gate = manager, as the Studio.
+- Engine (PC, not in this repo; backup G:/bendar-brand/bizdesk/studio/studio_run.py.bak-studiojson1; bizvideo.py
+  unchanged): job.spec is her STRUCTURED SPEC. New video: the brief writer gets SPEC_BRIEF + her JSON (numbered scene list
+  in her order, her voice-over and on-screen words word for word, duration, style; her text wins where they differ; unknown
+  keys = context; locked rules win, every left-out item goes into "dropped" in Bangla); the scene planner gets SPEC_PLAN via
+  STUDIO ref_text (same order and scene count, her on-screen text, clips matched to her shot / camera wish from the library,
+  no new Flow). Feedback: the revise step gets "structured_spec" and changes only what it names. The log line adds
+  "আপনার JSON মেনে বানানো (Nটা দৃশ্য চাওয়া, ভিডিওতে Mটা)", fewer scenes than asked goes into dropped, a JSON over 24,000
+  characters is read up to there and the log says so. Every new line runs only when a JSON is present; a database without
+  189 (live today) returns no spec key and the old path runs unchanged. Engine unit check 13/13 (no DB, no AI).
+- Tests: new studiojson_test (27): pure checks, sales refused, bad JSON with line/column, unfinished JSON, string-only,
+  empty, > 1 MB, 3-character rule without JSON, nothing written by refusals, JSON-only ask, key order kept on the job row,
+  titles, JSON + prompt, old ask without spec, JSON-only feedback = revise with its own JSON, log keeps both, rules log
+  word, owner reads it, other business untouched. studio_test 36, studioref_test 60, contentdesk_test 116 green.
+- NOT done: no dev engine render with a JSON yet (unit check only); Flow/Veo shots from her JSON are not made (library
+  clips only, like the rest of the studio); her voice-over lines still pass the script writer / humanizer, so a word can
+  change. Live waits for the owner's yes (one combined kit with studioref-2 is prepared).
