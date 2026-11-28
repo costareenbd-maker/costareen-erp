@@ -251,7 +251,7 @@ export async function erpClinicDoctorSave(ctx, payload) {
   if (hold < 5 || hold > 240) throw new Error('ডাক্তারের উত্তরের অপেক্ষা ৫ থেকে ২৪০ মিনিট।');
   const link = str(a.videoLink);
   if (link && !/^https:\/\/\S+$/.test(link)) throw new Error('ভিডিও লিংকটা https:// দিয়ে শুরু হতে হবে।');
-  const v = { name, title: str(a.title).slice(0, 200), reg_no: str(a.regNo).slice(0, 40), phone, about: str(a.about).slice(0, 2000), treats: str(a.treats).slice(0, 500),
+  const v = { name, title: str(a.title).slice(0, 600), reg_no: str(a.regNo).slice(0, 40), phone, about: str(a.about).slice(0, 2000), treats: str(a.treats).slice(0, 500),
               langs: str(a.langs).slice(0, 100) || 'বাংলা', fee: Math.max(0, num(a.fee)), slot_min: slot, gap_min: gap, hold_min: hold, auto_ok: !!a.autoOk, video_link: link,
               active: a.active === undefined ? true : !!a.active };
   if (a.id) {

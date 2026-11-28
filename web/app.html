@@ -70575,12 +70575,13 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
   function view() {
     if (!on()) return '<div class="dk"><div class="dk-idle"><b>ডাক্তার ডেস্ক এই ব্যবসায় চালু নেই</b>Apps › Only me থেকে চালু করুন।</div></div>';
     var w = K.D ? (K.D.waits || []).length : 0;
-    var tabs = [['sched', 'সময়সূচি', w], ['pats', 'রোগী', 0], ['docs', 'ডাক্তার', 0], ['bot', 'বুকিং বট', 0]];
+    var tabs = [['sched', 'সময়সূচি', w], ['pats', 'রোগী', 0]].concat(window.dkRx ? [['rx', 'প্রেসক্রিপশন', 0]] : []).concat([['docs', 'ডাক্তার', 0], ['bot', 'বুকিং বট', 0]]);   // clinic-rx: + tab
     var head = '<div class="dk-head"><h1>ডাক্তার ডেস্ক</h1><div class="dk-tabs" role="tablist" aria-label="ডাক্তার ডেস্ক">' + tabs.map(function (t) { return '<button type="button" role="tab" aria-selected="' + (K.tab === t[0]) + '" data-dk="tab" data-v="' + t[0] + '">' + t[1] + (t[2] ? '<em>' + bn(t[2]) + '</em>' : '') + '</button>'; }).join('') + '</div><span class="dk-sp"></span>' +
       (canAct() && K.tab === 'sched' ? '<button type="button" class="dk-btn ghost" data-dk="book">' + I.plus + 'হাতে বুকিং</button>' : '') + '<button type="button" class="dk-ib" data-dk="reload" aria-label="নতুন করে আনুন">' + I.reload + '</button></div>';
     if (K.err && !K.D) return '<div class="dk">' + head + '<div class="dk-idle"><b>আনা গেল না</b>' + esc(K.err) + '<br><br><button type="button" class="dk-btn" data-dk="reload">আবার চেষ্টা</button></div></div>';
     if (!K.D) return '<div class="dk">' + head + '<div class="dk-load"></div><div class="dk-load" style="margin-top:10px;height:160px"></div></div>';
-    var body = { sched: schedHtml, pats: patsHtml, docs: docsHtml, bot: botHtml }[K.tab] || schedHtml;
+    var body = { sched: schedHtml, pats: patsHtml, docs: docsHtml, bot: botHtml, rx: function () { if (window.dkRx) window.dkRx.reset && K._rxTab !== 1 && (window.dkRx.reset(), K._rxTab = 1); return window.dkRx ? window.dkRx.listHtml() : ''; } }[K.tab] || schedHtml;
+    if (K.tab !== 'rx') K._rxTab = 0;
     return '<div class="dk">' + head + body() + '</div>';
   }
   function paint() { navSync(); if (typeof VIEW === 'undefined' || VIEW !== 'clinic') return; var v = el('view'); if (!v) return; var y = window.scrollY; var a = document.activeElement, keep = a && a.getAttribute && a.getAttribute('data-dkc'); var pos = keep && a.selectionStart; v.innerHTML = view(); if (keep) { var n = v.querySelector('[data-dkc="' + keep + '"]'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} } } window.scrollTo(0, y); drawDr(); }
@@ -70611,6 +70612,7 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
       if (c.state === 'requested' || c.state === 'confirmed') acts.push(['cancel', 'বাতিল', 'ghost']);
       if ((c.state === 'confirmed' || c.state === 'done') && c.fee) acts.push(['paid', c.paid ? 'ফি-র দাগ তুলুন' : 'ফি পেয়েছি', 'ghost']);
       if (c.state === 'done') acts.push(['note', 'ডাক্তারের নোট', 'ghost']);
+      if ((c.state === 'confirmed' || c.state === 'done') && window.dkRx) acts.unshift(['rx', 'প্রেসক্রিপশন', 'dark']);   // clinic-rx
     }
     return '<div class="dk-cbox' + (focus ? ' on' : '') + '" style="--dc:' + esc(d.color) + '"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>' + esc(whenOf(c.startsAt)) + '</b><span class="dk-tag' + (c.state === 'requested' ? ' w' : /no_show|cancelled|declined|expired/.test(c.state) ? ' x' : c.state === 'confirmed' ? ' ok' : '') + '">' + (ST[c.state] || c.state) + '</span></div>' +
       '<div style="font-size:13.5px;color:var(--dk-ink2);margin:4px 0 8px">ডা. <span data-noi18n="1">' + esc(d.name) + '</span> · ' + esc(c.no) + (c.fee ? ' · ৳' + Math.round(c.fee) + (c.paid ? ' পাওয়া গেছে' + (c.payNote ? ' (' + esc(c.payNote) + ')' : '') : ' বাকি') : '') + (c.source === 'bot' ? ' · বট বুক করেছে' : '') + '</div>' +
@@ -70758,6 +70760,7 @@ html[data-theme="dark"] .dk{--dk-ink:#ECEDF0;--dk-ink2:#C3C7CF;--dk-ink3:#9EA4AE
       if (a === 'paid') { var pn2 = c2.paid ? '' : prompt('কীভাবে পেলেন (যেমন bKash শেষ ৪ সংখ্যা)', ''); if (pn2 === null) return; act(v, 'paid', { paid: !c2.paid, note: pn2 || '' }); return; }
       if (a === 'no_show') { act(v, 'no_show', { tell: confirm('রোগীকে নতুন সময়ের কথা জানাবেন?') }); return; }
       if (a === 'move') { openDr('সময় বদল', bookForm({ doctor: c2.doctorId, day: dk(c2.startsAt).day, patient: c2.patientId, patientName: c2.patientName })); K.dr.move = Number(v); fillSlots(); return; }
+      if (a === 'rx') { closeDr(); if (window.dkRx) window.dkRx.open(v); return; }   // clinic-rx
       act(v, a); return;
     }
   });
@@ -71199,5 +71202,219 @@ html[data-oli="1"] .brand .logo.has-img{padding:5px}
   try { fdThemeNow(); brandPaint(); } catch (e) {}
 })();
 </script>
+<!-- clinic-rx (owner 29 Nov 2026): the prescription editor, made like New invoice. A full-screen sheet over the Doctor
+     desk: the form on the left (patient strip, concerns / history / findings / diagnosis, product lines from the
+     catalogue, medicines, advice from the doctor's own lines, follow-up), the doctor's pad on the right, live (the same
+     HTML the PDF is made from: erpClinicRxHtml). Draft -> "শেষ করুন" locks it and keeps the PDF -> send to the patient on
+     the bot's WhatsApp; a correction strikes it out and opens the next version. Classes dkx-*. -->
+<style>
+.dkx{position:fixed;inset:0;z-index:9100;background:var(--dk-shelf,#F2F3F5);display:flex;flex-direction:column;font:400 15px/1.5 "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;color:#16181D}
+html[data-theme="dark"] .dkx{background:#121316;color:#ECEDF0}
+.dkx *{box-sizing:border-box}
+.dkx button{font:inherit;color:inherit;cursor:pointer}
+.dkx-bar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#fff;border-bottom:1px solid #E4E6EA;flex-wrap:wrap}
+html[data-theme="dark"] .dkx-bar,html[data-theme="dark"] .dkx-form,html[data-theme="dark"] .dkx-card{background:#17191D;border-color:#2E3238}
+.dkx-bar h2{font:700 18px "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;margin:0}
+.dkx-bar .sp{flex:1}
+.dkx-st{font:600 12.5px "Hind Siliguri";border-radius:999px;padding:2px 10px;background:#F2F3F5}
+.dkx-st.final{background:#16181D;color:#fff}.dkx-st.struck{background:#FDECEA;color:#A8260F}
+.dkx-btn{min-height:38px;border-radius:10px;border:0;background:#F2F3F5;padding:0 14px;font:600 14px "Hind Siliguri";display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.dkx-btn.dark{background:#16181D;color:#fff}.dkx-btn.amber{background:#F2A900;color:#16181D}.dkx-btn.ghost{background:none;box-shadow:0 0 0 1px #E4E6EA inset}
+.dkx-btn[disabled]{opacity:.5;cursor:default}
+.dkx-btn svg{width:16px;height:16px}
+.dkx-main{flex:1;display:grid;grid-template-columns:minmax(380px,560px) minmax(0,1fr);gap:14px;padding:14px;min-height:0}
+.dkx-form{background:#fff;border:1px solid #E4E6EA;border-radius:18px;overflow:auto;padding:16px 18px 40px}
+.dkx-prev{position:relative;overflow:auto;border-radius:18px;background:#E7E8EC;display:flex;justify-content:center;padding:16px}
+.dkx-prev iframe{border:0;background:#fff;width:794px;height:1123px;transform-origin:top center;box-shadow:0 2px 8px rgba(22,24,29,.10),0 18px 40px rgba(22,24,29,.10);border-radius:4px;flex:none}
+.dkx-pt{display:flex;gap:12px;align-items:center;background:#F2F3F5;border-radius:14px;padding:10px 12px;margin-bottom:12px}
+html[data-theme="dark"] .dkx-pt{background:#23262C}
+.dkx-pt b{font:700 16px "Hind Siliguri"}.dkx-pt small{display:block;color:#5C626E}
+.dkx-h{font:700 15px "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;margin:18px 0 8px;display:flex;align-items:center;gap:8px}
+.dkx-h::after{content:"";flex:1;height:1px;background:#E4E6EA}
+.dkx-g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dkx-f{display:grid;gap:4px;font:600 13px "Hind Siliguri","Pretendard Variable",system-ui,sans-serif;color:#454A55}
+.dkx-in,.dkx-ta{width:100%;min-height:38px;border:1px solid #E4E6EA;border-radius:10px;padding:7px 10px;font:500 14px "Hind Siliguri","Pretendard Variable",sans-serif;background:#fff;color:inherit}
+html[data-theme="dark"] .dkx-in,html[data-theme="dark"] .dkx-ta{background:#121316;border-color:#2E3238}
+.dkx-ta{min-height:64px;resize:vertical}
+.dkx-in:focus,.dkx-ta:focus{outline:none;border-color:#16181D;box-shadow:0 0 0 3px #16181D14}
+.dkx-in[readonly],.dkx-ta[readonly]{background:#F7F8F9;color:#454A55}
+.dkx-row{border:1px solid #E4E6EA;border-radius:12px;padding:8px;margin-bottom:8px;display:grid;grid-template-columns:22px 1fr 34px;gap:8px;align-items:start}
+.dkx-row .num{font:700 13px "Pretendard Variable";color:#5C626E;padding-top:9px;text-align:center}
+.dkx-row .gr{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.dkx-row .gr .w{grid-column:1/-1}
+.dkx-x{width:34px;height:34px;border:0;border-radius:9px;background:none;color:#5C626E}
+.dkx-x:hover{background:#FDECEA;color:#A8260F}
+.dkx-add{border:1px dashed #C9CDD4;border-radius:10px;background:none;padding:8px 12px;font:600 13.5px "Hind Siliguri";color:#454A55;width:100%;text-align:left}
+.dkx-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.dkx-chip{border:0;border-radius:999px;padding:4px 11px;background:#F2F3F5;font:600 12.5px "Hind Siliguri";color:#454A55;text-align:left}
+.dkx-chip:hover{background:#E7E9EC}
+.dkx-adv{display:grid;grid-template-columns:22px 1fr 34px;gap:8px;align-items:start;margin-bottom:6px}
+.dkx-sug{position:absolute;z-index:3;left:0;right:0;top:100%;background:#fff;border:1px solid #E4E6EA;border-radius:10px;box-shadow:0 10px 30px rgba(22,24,29,.15);max-height:240px;overflow:auto}
+.dkx-sug button{display:block;width:100%;text-align:left;border:0;background:none;padding:8px 10px;font:500 13.5px "Hind Siliguri"}
+.dkx-sug button:hover{background:#F2F3F5}
+.dkx-sug small{color:#5C626E}
+.dkx-note{font-size:13px;color:#5C626E;margin:6px 0 0}
+.dkx-mobile-prev{display:none}
+@media (max-width:900px){
+  .dkx-main{grid-template-columns:1fr;padding:8px}
+  .dkx-prev{display:none}.dkx.showprev .dkx-prev{display:flex;position:fixed;inset:56px 0 0;z-index:2}
+  .dkx-mobile-prev{display:inline-flex}
+  .dkx-bar{padding:8px 10px}.dkx-bar h2{font-size:16px}
+}
+</style>
+<script>
+(function () {
+  if (typeof srv !== 'function') return;
+  var R = { open: false, list: null, q: '' };
+  var bn = function (s) { return String(s).replace(/[0-9]/g, function (d) { return '০১২৩৪৫৬৭৮৯'[d]; }); };
+  var errOf = function (e) { return (e && e.message) || String(e); };
+  var SV = function (p) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; };
+  var IX = SV('<path d="M6 6l12 12M18 6 6 18"/>'), IB = SV('<path d="M15 5l-7 7 7 7"/>'), IP = SV('<path d="M6 3h9l3 3v15H6z"/><path d="M9 12h6M9 16h6"/>'), IW = SV('<path d="M4 20l1.3-3.8A8 8 0 1 1 8 19z"/>');
+  var FREQ = ['Once daily', 'Twice daily', 'At night', 'Morning', 'Every 2 days'], DOSE = ['1+0+0', '0+0+1', '1+0+1', '1+1+1'], DUR = ['2 weeks', '1 month', '3 months'];
+  var FU = [['২ সপ্তাহ', 'After two weeks.', 14], ['১ মাস', 'After one month.', 30], ['৩ মাস', 'After three months.', 90]];
+  try { SRV_READS = new RegExp(SRV_READS.source.replace('^(', '^(erpClinicRx|erpClinicRxHtml|erpClinicRxPdf|erpClinicRxList|erpClinicRxProducts|')); } catch (e) {}
+  function locked() { return R.rx && R.rx.state !== 'draft'; }
+  function addDays(day, n) { return new Date(Date.parse(day + 'T00:00:00Z') + n * 864e5).toISOString().slice(0, 10); }
+  function ta(k, label) { return '<label class="dkx-f">' + label + '<textarea class="dkx-ta" data-rxf="' + k + '"' + (locked() ? ' readonly' : '') + '>' + esc(R.data[k] || '') + '</textarea></label>'; }
+  function inp(attr, v, ph, extra) { return '<input class="dkx-in" ' + attr + ' value="' + esc(v || '') + '" placeholder="' + esc(ph || '') + '"' + (locked() ? ' readonly' : '') + (extra || '') + '>'; }
+  function chips(list, attr) { return locked() ? '' : '<div class="dkx-chips">' + list.map(function (x) { return '<button type="button" class="dkx-chip" ' + attr + '="' + esc(x) + '">' + esc(x) + '</button>'; }).join('') + '</div>'; }
+  function formHtml() {
+    var p = R.patient, d = R.doctor, D = R.data;
+    var sex = p.gender === 'f' ? 'মহিলা' : p.gender === 'm' ? 'পুরুষ' : '';
+    var prods = D.products.map(function (r, i) {
+      return '<div class="dkx-row"><span class="num">' + bn(i + 1) + '</span><div class="gr"><div class="w" style="position:relative">' + inp('data-pr="' + i + '" data-k="name"', r.name, 'প্রোডাক্ট (নাম লিখলে Oliareen-এর প্রোডাক্ট আসবে)', ' autocomplete="off"') + (R.sug && R.sug.i === i ? R.sug.html : '') + '</div>' +
+        '<div class="w">' + inp('data-pr="' + i + '" data-k="how"', r.how, 'কীভাবে লাগাবেন') + '</div>' + inp('data-pr="' + i + '" data-k="freq"', r.freq, 'কতবার') + inp('data-pr="' + i + '" data-k="duration"', r.duration, 'কতদিন') +
+        '<div class="w">' + chips(FREQ, 'data-prq="' + i + '"') + '</div></div>' + (locked() ? '' : '<button type="button" class="dkx-x" data-rx="delp" data-v="' + i + '" aria-label="এই লাইন সরান">' + IX + '</button>') + '</div>';
+    }).join('');
+    var meds = D.medicines.map(function (m, i) {
+      return '<div class="dkx-row"><span class="num">' + bn(i + 1) + '</span><div class="gr"><div class="w">' + inp('data-md="' + i + '" data-k="name"', m.name, 'ওষুধ (যেমন Cap. Reticap 20mg)') + '</div>' +
+        inp('data-md="' + i + '" data-k="dose"', m.dose, 'ডোজ (0+0+1)') + inp('data-md="' + i + '" data-k="duration"', m.duration, 'কতদিন') + '<div class="w">' + chips(DOSE, 'data-mdq="' + i + '"') + '</div></div>' +
+        (locked() ? '' : '<button type="button" class="dkx-x" data-rx="delm" data-v="' + i + '" aria-label="এই ওষুধ সরান">' + IX + '</button>') + '</div>';
+    }).join('');
+    var adv = D.advice.map(function (a, i) { return '<div class="dkx-adv"><span class="num" style="font:700 13px \'Pretendard Variable\';color:#5C626E;padding-top:9px;text-align:center">' + bn(i + 1) + '</span><textarea class="dkx-ta" style="min-height:44px" data-ad="' + i + '"' + (locked() ? ' readonly' : '') + '>' + esc(a) + '</textarea>' + (locked() ? '' : '<button type="button" class="dkx-x" data-rx="dela" data-v="' + i + '" aria-label="সরান">' + IX + '</button>') + '</div>'; }).join('');
+    var unused = (R.presets || []).filter(function (x) { return D.advice.indexOf(x) < 0; }).slice(0, 8);
+    return '<div class="dkx-pt"><span style="width:44px;height:44px;border-radius:50%;background:#fff;display:grid;place-items:center;font:700 17px \'Hind Siliguri\'" data-noi18n="1">' + esc((p.name || '?')[0]) + '</span><span style="flex:1;min-width:0"><b data-noi18n="1">' + esc(p.name) + '</b><small>' + [p.age ? bn(p.age) + ' বছর' : '', sex, R.date ? R.date.split('-').reverse().join('.') : ''].filter(Boolean).join(' · ') + ' · ডা. <span data-noi18n="1">' + esc(d.name) + '</span></small></span></div>' +
+      (R.rx && R.rx.state === 'struck' ? '<p class="dkx-note" style="color:#A8260F">এটা কাটা হয়েছে: ' + esc(R.rx.struckReason) + '</p>' : '') +
+      '<div class="dkx-g2">' + ta('concerns', 'সমস্যা (Presenting concerns)') + ta('history', 'আগের ইতিহাস (Relevant history)') + ta('findings', 'পরীক্ষায় যা পাওয়া গেছে (Examination findings)') + ta('diagnosis', 'রোগ নির্ণয় (Diagnosis)') + '</div>' +
+      '<h3 class="dkx-h">প্রোডাক্ট (Recommended products)</h3>' + prods + (locked() ? '' : '<button type="button" class="dkx-add" data-rx="addp">+ প্রোডাক্ট যোগ করুন</button>') +
+      '<h3 class="dkx-h">ওষুধ (Medicine)</h3>' + meds + (locked() ? '' : '<button type="button" class="dkx-add" data-rx="addm">+ ওষুধ যোগ করুন</button>') +
+      '<label class="dkx-f" style="margin-top:10px">ডাক্তারের রিভিউ (Frequency for doctor review, ঐচ্ছিক)' + inp('data-rxf="review"', D.review, '2–3 times daily') + '</label>' +
+      '<h3 class="dkx-h">পরামর্শ (Advice)</h3>' + adv + (unused.length && !locked() ? '<div class="dkx-note">ডাক্তারের আগের পরামর্শ থেকে যোগ করুন:</div>' + chips(unused, 'data-adq') : '') + (locked() ? '' : '<button type="button" class="dkx-add" data-rx="adda">+ নতুন পরামর্শ লিখুন</button>') +
+      '<h3 class="dkx-h">ফলো-আপ (Follow-up)</h3>' + (locked() ? '' : '<div class="dkx-chips">' + FU.map(function (f) { return '<button type="button" class="dkx-chip" data-fu="' + f[2] + '" data-t="' + esc(f[1]) + '">' + f[0] + '</button>'; }).join('') + '</div>') +
+      '<div class="dkx-g2"><label class="dkx-f">লেখা' + inp('data-rxf="followUp"', D.followUp, 'After one month.') + '</label><label class="dkx-f">তারিখ<input class="dkx-in" type="date" data-rxf="followDate" value="' + esc(D.followDate || '') + '"' + (locked() ? ' readonly' : '') + '></label></div>' +
+      (R.history && R.history.length > 1 ? '<h3 class="dkx-h">এই রোগীর প্রেসক্রিপশন</h3>' + R.history.map(function (x) { return '<button type="button" class="dkx-chip" data-rxopen="' + x.id + '" style="margin:0 6px 6px 0">' + esc(x.no) + (x.version > 1 ? ' v' + x.version : '') + ' · ' + x.date.split('-').reverse().join('.') + (x.state === 'struck' ? ' (কাটা)' : x.state === 'draft' ? ' (খসড়া)' : '') + '</button>'; }).join('') : '');
+  }
+  function barHtml() {
+    var st = R.rx ? R.rx.state : 'draft', no = R.rx ? R.rx.no + (R.rx.version > 1 ? ' · সংস্করণ ' + bn(R.rx.version) : '') : 'নতুন';
+    var b = '<button type="button" class="dkx-btn ghost" data-rx="close">' + IB + 'ফিরে যান</button><h2>প্রেসক্রিপশন <span style="color:#5C626E;font-weight:600" data-noi18n="1">' + esc(no) + '</span></h2><span class="dkx-st ' + st + '">' + (st === 'final' ? 'শেষ করা' : st === 'struck' ? 'কাটা' : 'খসড়া') + '</span>' +
+      (R.saving ? '<span class="dkx-note" style="margin:0">সেভ হচ্ছে…</span>' : R.savedAt ? '<span class="dkx-note" style="margin:0">সেভ হয়েছে</span>' : '') + '<span class="sp"></span><button type="button" class="dkx-btn ghost dkx-mobile-prev" data-rx="prev">প্যাড দেখুন</button>';
+    if (st === 'draft') b += '<button type="button" class="dkx-btn ghost" data-rx="save">সেভ</button><button type="button" class="dkx-btn dark" data-rx="final">' + IP + 'শেষ করুন ও PDF</button>';
+    if (st === 'final') b += '<button type="button" class="dkx-btn ghost" data-rx="pdf">' + IP + 'PDF</button><button type="button" class="dkx-btn amber" data-rx="send">' + IW + (R.rx.sentAt ? 'আবার পাঠান' : 'রোগীকে WhatsApp-এ পাঠান') + '</button><button type="button" class="dkx-btn ghost" data-rx="amend">সংশোধন</button>';
+    return b;
+  }
+  function draw(keepForm) {
+    var w = document.getElementById('dkx'); if (!R.open) { if (w) w.remove(); document.documentElement.style.overflow = ''; return; }
+    if (!w) {
+      w = document.createElement('div'); w.id = 'dkx'; w.className = 'dkx'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-modal', 'true'); w.setAttribute('aria-label', 'প্রেসক্রিপশন');
+      w.innerHTML = '<div class="dkx-bar"></div><div class="dkx-main"><div class="dkx-form"></div><div class="dkx-prev"><iframe title="প্যাড" sandbox="allow-same-origin"></iframe></div></div>';
+      document.body.appendChild(w); document.documentElement.style.overflow = 'hidden';
+    }
+    w.querySelector('.dkx-bar').innerHTML = barHtml();
+    if (!keepForm) { var f = w.querySelector('.dkx-form'), y = f.scrollTop; f.innerHTML = R.loading ? '<div class="dkx-note">আনছি…</div>' : formHtml(); f.scrollTop = y; }
+    fit();
+  }
+  function fit() { var w = document.getElementById('dkx'); if (!w) return; var box = w.querySelector('.dkx-prev'), fr = box.querySelector('iframe'); var s = Math.min(1, (box.clientWidth - 32) / 794); fr.style.transform = 'scale(' + s + ')'; fr.style.marginBottom = (-(1123 * (1 - s))) + 'px'; }
+  window.addEventListener('resize', function () { if (R.open) fit(); });
+  var pT = null;
+  function preview() {
+    clearTimeout(pT);
+    pT = setTimeout(function () {
+      var args = R.rx && R.rx.state !== 'draft' ? { id: R.rx.id } : { consultId: R.consultId, id: R.rx ? R.rx.id : undefined, data: R.data };
+      if (R.rx && R.rx.state === 'draft') { args = { id: R.rx.id, data: R.data }; }
+      srv('erpClinicRxHtml', [args], function (r) { var w = document.getElementById('dkx'); if (w) w.querySelector('iframe').srcdoc = r.html; }, function () {});
+    }, 450);
+  }
+  var sT = null;
+  function autosave() { if (locked()) return; clearTimeout(sT); sT = setTimeout(function () { save(); }, 2500); }
+  function save(cb) {
+    if (locked()) { if (cb) cb(); return; }
+    R.saving = true; draw(true);
+    srv('erpClinicRxSave', [R.rx ? { id: R.rx.id, data: R.data } : { consultId: R.consultId, data: R.data }], function (r) {
+      R.saving = false; R.savedAt = Date.now();
+      if (!R.rx) R.rx = { id: r.id, no: r.no, version: 1, state: 'draft' };
+      draw(true); if (cb) cb();
+    }, function (e) { R.saving = false; draw(true); toast(esc(errOf(e)), true); });
+  }
+  function load(args) {
+    R.loading = true; draw();
+    srv('erpClinicRx', [args], function (r) {
+      R.loading = false; R.rx = r.rx; R.data = r.data; R.consultId = r.consultId; R.doctor = r.doctor; R.patient = r.patient; R.presets = r.presets; R.history = r.history; R.date = r.date; R.savedAt = null;
+      draw(); preview();
+    }, function (e) { R.open = false; draw(); toast(esc(errOf(e)), true); });
+  }
+  window.dkRx = {
+    open: function (consultId) { R.open = true; R.rx = null; R.consultId = consultId; load({ consultId: Number(consultId) }); },
+    openId: function (id) { R.open = true; load({ id: Number(id) }); },
+    listHtml: function () {
+      if (!R.list) { srv('erpClinicRxList', [{ q: R.q }], function (r) { R.list = r.list; if (typeof repaint === 'function') repaint(); }, function (e) { R.list = []; toast(esc(errOf(e)), true); }); return '<div class="dk-load"></div>'; }
+      var rows = R.list.map(function (x) {
+        return '<button type="button" class="dk-pl" data-rxopen="' + x.id + '"><span class="dk-pav" data-noi18n="1">' + esc((x.patientName || '?')[0]) + '</span><span style="min-width:0"><b data-noi18n="1">' + esc(x.patientName) + '</b><small style="display:block;color:var(--dk-ink3)"><span data-noi18n="1">' + esc(x.no) + '</span>' + (x.version > 1 ? ' · সংস্করণ ' + bn(x.version) : '') + ' · ডা. <span data-noi18n="1">' + esc(x.doctorName) + '</span> · ' + x.date.split('-').reverse().join('.') + '</small></span>' +
+          '<span class="dk-tag' + (x.state === 'final' ? ' ok' : x.state === 'struck' ? ' x' : ' w') + '">' + (x.state === 'final' ? (x.sentAt ? 'পাঠানো' : 'শেষ করা') : x.state === 'struck' ? 'কাটা' : 'খসড়া') + '</span></button>';
+      }).join('');
+      return '<div class="dk-search"><input class="dk-in" type="search" placeholder="রোগীর নাম বা নম্বর (O-28-0001)" value="' + esc(R.q) + '" data-rxq="1" aria-label="প্রেসক্রিপশন খুঁজুন"></div>' +
+        (R.list.length ? rows : '<div class="dk-idle"><b>এখনো কোনো প্রেসক্রিপশন নেই</b>সময়সূচিতে কোনো বুকিংয়ে চাপুন › "প্রেসক্রিপশন"।</div>');
+    },
+    reset: function () { R.list = null; }
+  };
+  document.addEventListener('click', function (ev) {
+    var t = ev.target;
+    var op = t.closest && t.closest('[data-rxopen]'); if (op) { window.dkRx.openId(op.getAttribute('data-rxopen')); return; }
+    if (!t.closest || !t.closest('#dkx')) return;
+    var b = t.closest('[data-rx]'), k = b && b.getAttribute('data-rx'), v = b && b.getAttribute('data-v');
+    if (t.closest('[data-prq]')) { var i1 = +t.closest('[data-prq]').getAttribute('data-prq'); R.data.products[i1].freq = t.closest('[data-prq]').textContent; draw(); preview(); autosave(); return; }
+    if (t.closest('[data-mdq]')) { var i2 = +t.closest('[data-mdq]').getAttribute('data-mdq'); R.data.medicines[i2].dose = t.closest('[data-mdq]').textContent; draw(); preview(); autosave(); return; }
+    if (t.closest('[data-adq]')) { R.data.advice.push(t.closest('[data-adq]').getAttribute('data-adq')); draw(); preview(); autosave(); return; }
+    if (t.closest('[data-fu]')) { var f = t.closest('[data-fu]'); R.data.followUp = f.getAttribute('data-t'); R.data.followDate = addDays(R.date, +f.getAttribute('data-fu')); draw(); preview(); autosave(); return; }
+    if (t.closest('[data-sugp]')) { var s = t.closest('[data-sugp]'); var i3 = +s.getAttribute('data-sugp'); R.data.products[i3].name = s.getAttribute('data-n'); R.data.products[i3].sku = s.getAttribute('data-s'); R.sug = null; draw(); preview(); autosave(); return; }
+    if (!k) return;
+    if (k === 'close') { if (!locked() && R.rx) save(); R.open = false; draw(); if (window.dkRx) window.dkRx.reset(); if (typeof repaint === 'function') repaint(); return; }
+    if (k === 'prev') { document.getElementById('dkx').classList.toggle('showprev'); fit(); return; }
+    if (k === 'addp') { R.data.products.push({ name: '', sku: '', how: '', freq: '', duration: '' }); draw(); return; }
+    if (k === 'addm') { R.data.medicines.push({ name: '', dose: '', duration: '', note: '' }); draw(); return; }
+    if (k === 'adda') { R.data.advice.push(''); draw(); var a = document.querySelectorAll('#dkx [data-ad]'); if (a.length) a[a.length - 1].focus(); return; }
+    if (k === 'delp') { R.data.products.splice(+v, 1); draw(); preview(); autosave(); return; }
+    if (k === 'delm') { R.data.medicines.splice(+v, 1); draw(); preview(); autosave(); return; }
+    if (k === 'dela') { R.data.advice.splice(+v, 1); draw(); preview(); autosave(); return; }
+    if (k === 'save') { save(function () { toast('সেভ হয়েছে'); }); return; }
+    if (k === 'final') {
+      if (!confirm('শেষ করলে আর বদলানো যাবে না (ভুল হলে "সংশোধন" করে নতুন সংস্করণ)। শেষ করবেন?')) return;
+      b.disabled = true;
+      save(function () { srv('erpClinicRxFinal', [{ id: R.rx.id }], function () { toast('শেষ হয়েছে, PDF রাখা হলো'); load({ id: R.rx.id }); }, function (e) { b.disabled = false; toast(esc(errOf(e)), true); }); });
+      return;
+    }
+    if (k === 'pdf') { srv('erpClinicRxPdf', [{ id: R.rx.id }], function (r) { window.open(r.url, '_blank', 'noopener'); }, function (e) { toast(esc(errOf(e)), true); }); return; }
+    if (k === 'send') { b.disabled = true; srv('erpClinicRxSend', [{ id: R.rx.id }], function () { toast('রোগীকে WhatsApp-এ পাঠানো হলো'); load({ id: R.rx.id }); }, function (e) { b.disabled = false; toast(esc(errOf(e)), true); }); return; }
+    if (k === 'amend') { var why = prompt('কেন সংশোধন? (এক লাইনে)'); if (!why) return; srv('erpClinicRxAmend', [{ id: R.rx.id, reason: why }], function (r) { toast('নতুন সংস্করণ খোলা হলো'); load({ id: r.id }); }, function (e) { toast(esc(errOf(e)), true); }); return; }
+  });
+  var qT = null, sugT = null;
+  document.addEventListener('input', function (ev) {
+    var t = ev.target;
+    if (t.getAttribute && t.getAttribute('data-rxq')) { R.q = t.value; clearTimeout(qT); qT = setTimeout(function () { R.list = null; if (typeof repaint === 'function') repaint(); }, 350); return; }
+    if (!t.closest || !t.closest('#dkx') || locked()) return;
+    if (t.hasAttribute('data-rxf')) R.data[t.getAttribute('data-rxf')] = t.value;
+    else if (t.hasAttribute('data-pr')) {
+      var i = +t.getAttribute('data-pr'), k = t.getAttribute('data-k'); R.data.products[i][k] = t.value;
+      if (k === 'name') { R.data.products[i].sku = ''; clearTimeout(sugT); var q = t.value; sugT = setTimeout(function () { if (q.length < 2) { if (R.sug) { R.sug = null; draw(); } return; } srv('erpClinicRxProducts', [{ q: q }], function (r) { if (!r.products.length) { R.sug = null; return; } R.sug = { i: i, html: '<div class="dkx-sug">' + r.products.map(function (p) { return '<button type="button" data-sugp="' + i + '" data-n="' + esc(p.name) + '" data-s="' + esc(p.sku) + '">' + esc(p.name) + (p.brand ? ' <small>' + esc(p.brand) + '</small>' : '') + '</button>'; }).join('') + '</div>' }; var foc = document.activeElement, pos = foc && foc.selectionStart; draw(); var n = document.querySelector('#dkx [data-pr="' + i + '"][data-k="name"]'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} } }, function () {}); }, 300); }
+    }
+    else if (t.hasAttribute('data-md')) R.data.medicines[+t.getAttribute('data-md')][t.getAttribute('data-k')] = t.value;
+    else if (t.hasAttribute('data-ad')) R.data.advice[+t.getAttribute('data-ad')] = t.value;
+    else return;
+    R.savedAt = null; draw(true); preview(); autosave();
+  });
+  document.addEventListener('change', function (ev) { var t = ev.target; if (t.closest && t.closest('#dkx') && t.getAttribute('data-rxf') === 'followDate' && !locked()) { R.data.followDate = t.value; preview(); autosave(); } });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && R.open) { if (R.sug) { R.sug = null; draw(); return; } var c = document.querySelector('#dkx [data-rx="close"]'); if (c) c.click(); } });
+})();
+</script>
+
 </body>
 </html>
