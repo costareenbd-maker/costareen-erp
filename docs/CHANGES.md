@@ -5531,6 +5531,8 @@ Owner (for Raj, Oliareen's marketer): "Raz vai ke ekta json er jayga kore dew pr
   version stays low, under the face).
 - Checked on dev (owner, desktop 1440 + phone 390): Demo 3D Shop = poster with photo; Oliareen (demo) = plain B, no
   splash picture requested; switching business flips the device flag at once.
+- LIVE #88 29 Nov 2026 (owner yes): page = #87 clinic-1 live source + these hunks, sw cz-shell-v4-native-nosplasholi1,
+  costareen-erp + office-erp. Checked live: a device with no key gets the plain loader, then the sign-in card.
 
 ### clinic-1 LIVE #87 (29 Nov 2026)
 Owner: "ডাক্তারের ডেস্ক লাইভে দিয়ে দাও". Migration 188, function file-by-file (clinic diff only), page = #86 + clinic block (sw clinic1).
