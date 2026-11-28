@@ -581,7 +581,7 @@ d.style.setProperty('--bn-sp','url("'+u+'")');d.style.setProperty('--bn-sp-bg',n
 try{var im=new Image();im.onload=im.onerror=function(){if(im.decode)im.decode().then(rdy,rdy);else rdy()};im.src=u;if(im.complete&&im.naturalWidth)rdy()}catch(e){rdy()}setTimeout(rdy,2500);}
 else{d.classList.add('bn-splash','bn-sp-plain');rdy()}
 var t0=Date.now(),MIN=1800,done=false;
-function out(){if(done)return;done=true;d.classList.add('bn-splash-out');setTimeout(function(){d.classList.remove('bn-splash','bn-splash-out','bn-sp-ready')},500)}
+function out(){if(done)return;done=true;d.classList.add('bn-splash-out');setTimeout(function(){d.classList.remove('bn-splash','bn-splash-out','bn-sp-ready','bn-sp-plain')},500)}
 var iv=setInterval(function(){if(!d.classList.contains('erp-boot')&&!d.classList.contains('bd-landing')&&Date.now()-t0>=MIN){clearInterval(iv);out()}},120);
 setTimeout(function(){clearInterval(iv);out()},35000);
 d.addEventListener('pointerdown',function(){if(Date.now()-t0>600&&!d.classList.contains('erp-boot')&&!d.classList.contains('bd-landing')){clearInterval(iv);out()}},{once:false});
