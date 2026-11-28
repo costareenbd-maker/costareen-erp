@@ -3,6 +3,8 @@
 // video gets "same" or "better"; removing before sending keeps the row; the ask carries the refs (new video and feedback);
 // the project log shows them with links; the engine reads a job's refs with the business's engine key only; a
 // salesperson is refused; the other business sees nothing.
+// studioref-2 (28 Nov 2026): a reference video as a LINK (YouTube / Facebook / Instagram / TikTok): checked, counts toward
+// the 2 videos, carried by the ask, the engine gets the link itself; a link the engine could not download says so.
 import { sql, FIX, owner as owner0, mgr as mgr0, sales as sales0, check, done, files } from './harness.mjs';
 
 const un = (x) => (x && x.ok && 'result' in x ? x.result : x);
@@ -123,10 +125,65 @@ check('a manager cannot send the owner\'s file', r && r.error, r);
 r = await owner('erpStudioProject', [{ id: P }]);
 check('the owner reads the manager\'s log with the refs (no tray for him there)', r && r.log.find((m) => m.id === M1).refs.length === 6 && r.attach.length === 0, r && r.attach);
 
+// studioref-2: a reference video as a link
+r = await sales('erpStudioRefLink', [{ url: 'https://www.youtube.com/shorts/abc123' }]);
+check('link: a salesperson cannot add one', r && r.error, r);
+for (const bad of ['https://example.com/video/1', 'https://youtube.com.evil.com/shorts/x', 'javascript:alert(1)', 'https://www.youtube.com/', 'ftp://youtube.com/x', 'http://me:pw@youtube.com/x']) {
+  r = await mgr('erpStudioRefLink', [{ url: bad }]);
+  check('link: refused with a plain Bangla error: ' + bad, r && r.error && /YouTube, Facebook/.test(r.error), r);
+}
+r = await mgr('erpStudioRefLink', [{ url: '' }]);
+check('link: an empty link is refused', r && r.error, r);
+r = await mgr('erpStudioRefLink', [{ url: ' https://www.youtube.com/shorts/abc123 ' }]);
+check('link: a YouTube Shorts link becomes a ready video ref (source link, the link as its url)', r && r.ref && r.ref.kind === 'video' && r.ref.source === 'link'
+  && r.ref.state === 'ready' && r.ref.url === 'https://www.youtube.com/shorts/abc123' && r.ref.site === 'YouTube', r);
+const L1 = r.ref.id;
+const l1row = (await sql`select file_path, name, mime, bytes from content_studio_refs where id = ${L1}`)[0];
+check('link: stored without a new column (file_path link/<uuid>, name = the URL)', /^link\/[0-9a-f-]{36}$/.test(l1row.file_path) && l1row.name === 'https://www.youtube.com/shorts/abc123' && l1row.mime === 'text/uri-list', l1row);
+r = await mgr('erpStudioRefLink', [{ url: 'https://www.youtube.com/shorts/abc123' }]);
+check('link: the same link twice is refused', r && r.error && /আগেই/.test(r.error), r);
+r = await mgr('erpStudioRefLink', [{ url: 'fb.watch/xyz987/' }]);
+check('link: a Facebook link pasted without https:// is taken', r && r.ref && r.ref.site === 'Facebook' && r.ref.url === 'https://fb.watch/xyz987/', r);
+const L2 = r.ref.id;
+r = await mgr('erpStudioRefLink', [{ url: 'https://www.instagram.com/reel/C0abc/' }]);
+check('link: a third video (2 links open) is refused', r && r.error && /২টা/.test(r.error), r);
+r = await mgr('erpStudioRefUpload', [{ name: 'more.mp4', mime: 'video/mp4', bytes: MB }]);
+check('link: links count toward the 2 videos for file uploads too', r && r.error && /২টা/.test(r.error), r);
+r = await mgr('erpStudioRefRemove', [{ id: L2 }]);
+check('link: taken off before sending (row stays)', r && r.ok && (await sql`select state from content_studio_refs where id = ${L2}`)[0].state === 'removed', r);
+r = await mgr('erpStudioRefUpload', [{ name: 'mine.mp4', mime: 'video/mp4', bytes: 5 * MB }]);
+check('link: after one link is off, a file video fits again', r && r.ref, r);
+const FV = r.ref.id;
+await mgr('erpStudioRefConfirm', [{ id: FV }]);
+r = await mgr('erpStudioRefLink', [{ url: 'https://vm.tiktok.com/ZSabc/' }]);
+check('link: a file video + a link = 2, a TikTok link now refused', r && r.error && /২টা/.test(r.error), r);
+r = await mgr('erpStudioRefSet', [{ id: L1, mode: 'same' }]);
+check('link: the choice "same" works on a link', r && r.ref && r.ref.mode === 'same', r);
+r = await mgr('erpStudio', []);
+const tl = r && r.attach && r.attach.find((a) => a.id === L1);
+check('link: the home tray shows the link chip (site, link, choice)', tl && tl.source === 'link' && tl.site === 'YouTube' && tl.url === 'https://www.youtube.com/shorts/abc123' && tl.mode === 'same', r && r.attach);
+await older();
+r = await mgr('erpStudioAsk', [{ prompt: 'এই YouTube ভিডিওর ধরনে sunscreen নিয়ে ভিডিও', refIds: [L1, FV] }]);
+check('link: an ask carries a link and a file video', r && r.projectId > 0 && r.refs === 2, r);
+const P3 = r.projectId, J3 = r.jobId, M3 = r.msgId;
+r = await owner('erpContentStudioRefs', [{ biz: B, key: 'eng-key-1', jobId: J3 }]);
+const el = r && r.refs && r.refs.find((x) => x.id === L1);
+check('link: the engine gets the link itself (source link, path link/...) next to the file video', r && r.refs.length === 2 && el && el.source === 'link'
+  && el.url === 'https://www.youtube.com/shorts/abc123' && /^link\//.test(el.path) && r.refs.find((x) => x.id === FV).source === 'file', r);
+r = await owner('erpContentStudioRefs', [{ biz: B, key: 'eng-key-1', jobId: J3, used: { [L1]: { failed: 'ভিডিওটা নামানো গেল না (প্রাইভেট)' } } }]);
+r = await mgr('erpStudioProject', [{ id: P3 }]);
+const m3 = r && r.log && r.log.find((m) => m.id === M3);
+const ml = m3 && m3.refs.find((x) => x.id === L1);
+check('link: the work log shows the link (clickable) and that it could not be downloaded', ml && ml.url === 'https://www.youtube.com/shorts/abc123' && ml.site === 'YouTube' && /প্রাইভেট/.test(ml.failed), m3);
+r = await mgr('erpStudioRefRemove', [{ id: L1 }]);
+check('link: a sent link stays with the log', r && r.error, r);
+
 // the other business
 const other = await sql`select count(*)::int n from content_studio_refs where business_id = ${B2}`;
 check('the other business has no refs', other[0].n === 0);
 const keep = await sql`select count(*)::int n from content_studio_refs where business_id = ${B}`;
-check('nothing deleted (6 pictures + 2 videos + the owner\'s)', keep[0].n === 9, keep);
+check('nothing deleted (6 pictures + 2 videos + the owner\'s + 2 links + 1 file video)', keep[0].n === 12, keep);
+const otherL = await sql`select count(*)::int n from content_studio_refs where business_id = ${B2} or (business_id <> ${B} and file_path like 'link/%')`;
+check('link: the other business has no link refs', otherL[0].n === 0, otherL);
 
 done();
